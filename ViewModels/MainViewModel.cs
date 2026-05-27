@@ -1,505 +1,730 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Windows;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Flow.Models;
-using Flow.Services;
+using Volt.Extensions;
+using Volt.ViewModels;
 
-namespace Flow.ViewModels;
+namespace Volt.ViewModels;
 
 /// <summary>
-/// Central ViewModel for the Flow launcher. Manages search state, results,
-/// window visibility, extension dispatching, and AI responses.
+/// Central orchestrator for the Volt launcher.
+/// Owns the search query, result list, selection, category filter,
+/// and all action state (AI streaming, timer countdown, color/IP data).
 /// </summary>
-public partial class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject
 {
-    // ─── Injected services ───────────────────────────────────────────
-    private readonly AppDiscoveryService _appDiscovery;
-    private readonly FileSearchService _fileSearch;
-    private readonly ConfigService _configService;
+    // ── Services ──────────────────────────────────────────────────────
+    private readonly AppDiscoveryService  _apps      = new();
+    private readonly FileSearchService    _files     = new();
+    private readonly FrequencyService     _freq      = new();
+    private readonly ConfigService        _configSvc = new();
 
-    // ─── Search debounce ─────────────────────────────────────────────
-    private CancellationTokenSource? _debounceCts;
-    private static readonly TimeSpan DebounceDelay = TimeSpan.FromMilliseconds(150);
+    private static readonly IAction[] Actions =
+    [
+        new CalculatorAction(),
+        new ColorAction(),
+        new TimerAction(),
+        new IpAction(),
+        new AiAction(),
+    ];
 
-    // ─── Combined search corpus ──────────────────────────────────────
-    private List<SearchResult> _allApps = new();
+    // ── App catalog (loaded once on startup) ─────────────────────────
+    private List<SearchResult> _appCatalog = [];
 
-    // ─── Observable properties (source-generated) ────────────────────
+    // ── Search debounce ──────────────────────────────────────────────
+    private CancellationTokenSource? _searchCts;
 
-    /// <summary>Current text in the search bar.</summary>
+    // ── Constructor ──────────────────────────────────────────────────
+    public MainViewModel()
+    {
+        Config   = _configSvc.Load();
+        Settings = new SettingsViewModel(Config, _configSvc, this);
+        _ = LoadAppsAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Observable properties
+    // ═══════════════════════════════════════════════════════════════
+
     [ObservableProperty]
-    private string _query = "";
+    [NotifyPropertyChangedFor(nameof(HasQuery))]
+    [NotifyPropertyChangedFor(nameof(HasResults))]
+    private string _query = string.Empty;
 
-    /// <summary>Current list of search results displayed in the UI.</summary>
     [ObservableProperty]
-    private ObservableCollection<SearchResult> _results = new();
+    private VoltConfig _config;
 
-    /// <summary>Zero-based index of the highlighted result.</summary>
     [ObservableProperty]
+    private SettingsViewModel _settings;
+
+    /// <summary>Flat list: items are either <see cref="SectionLabel"/> or <see cref="SearchResult"/>.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResults))]
+    private ObservableCollection<object> _results = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedResult))]
     private int _selectedIndex = -1;
 
-    /// <summary>True while a search operation is in progress.</summary>
+    /// <summary>Null = all categories. Values: "apps" | "files" | "clipboard" | "actions".</summary>
     [ObservableProperty]
-    private bool _isLoading;
+    private string? _activeCategory;
 
-    /// <summary>True when the Flow window is visible on screen.</summary>
     [ObservableProperty]
-    private bool _isWindowOpen;
+    private bool _isSettingsOpen;
 
-    /// <summary>
-    /// Identifier of the active extension, or null when showing search results.
-    /// Possible values: "calculator", "clipboard", "color", "timer", "ip", "ai", "settings".
-    /// </summary>
+    // ── Action preview state ─────────────────────────────────────────
+
     [ObservableProperty]
-    private string? _activeExtension;
+    [NotifyPropertyChangedFor(nameof(IsPreviewVisible))]
+    private string? _activeActionId;   // "calc", "color", "timer", "ip", "ai"
 
-    /// <summary>Streamed AI response text, built up token by token.</summary>
-    [ObservableProperty]
-    private string _aiResponse = "";
+    [ObservableProperty] private string  _calcResult   = string.Empty;
+    [ObservableProperty] private string  _calcExpr     = string.Empty;
 
-    /// <summary>True while an AI request is in flight.</summary>
-    [ObservableProperty]
-    private bool _aiIsLoading;
+    [ObservableProperty] private string  _colorHex     = string.Empty;
+    [ObservableProperty] private string  _colorRgb     = string.Empty;
+    [ObservableProperty] private string  _colorHsl     = string.Empty;
+    [ObservableProperty] private Color   _colorSwatch  = Colors.Transparent;
 
-    /// <summary>Error message from a failed AI call, or null on success.</summary>
-    [ObservableProperty]
-    private string? _aiError;
+    [ObservableProperty] private string  _timerDisplay = "00:00";
+    [ObservableProperty] private double  _timerProgress = 100;
+    [ObservableProperty] private bool    _timerRunning = false;
+    private TimeSpan _timerRemaining;
+    private TimeSpan _timerTotal;
+    private DispatcherTimer? _timerTick;
 
-    /// <summary>Current user configuration loaded from disk.</summary>
-    [ObservableProperty]
-    private FlowConfig _config = new();
+    [ObservableProperty] private string  _ipLocal      = "Fetching…";
+    [ObservableProperty] private string  _ipPublic     = "Fetching…";
 
-    /// <summary>Tracks how many times each app/file path has been launched.</summary>
-    [ObservableProperty]
-    private Dictionary<string, int> _usageMap = new();
+    [ObservableProperty] private string  _aiText       = string.Empty;
+    [ObservableProperty] private bool    _aiLoading    = false;
+    [ObservableProperty] private string  _aiError      = string.Empty;
+    private CancellationTokenSource? _aiCts;
 
-    /// <summary>
-    /// Content displayed in the detail panel. Can be a SearchResult, a string,
-    /// or any object the detail panel knows how to render.
-    /// </summary>
-    [ObservableProperty]
-    private object? _detailContent;
+    // ═══════════════════════════════════════════════════════════════
+    // Computed properties
+    // ═══════════════════════════════════════════════════════════════
 
-    // ─── Constructor ─────────────────────────────────────────────────
+    public bool HasQuery   => !string.IsNullOrEmpty(Query);
+    public bool HasResults => Results.Count > 0;
+    public bool IsPreviewVisible => ActiveActionId is not null;
 
-    public MainViewModel(AppDiscoveryService appDiscovery, FileSearchService fileSearch, ConfigService configService)
+    public SearchResult? SelectedResult
     {
-        _appDiscovery = appDiscovery;
-        _fileSearch = fileSearch;
-        _configService = configService;
-
-        // Kick off startup tasks.
-        _ = InitializeAsync();
+        get
+        {
+            if (SelectedIndex < 0 || SelectedIndex >= Results.Count) return null;
+            return Results[SelectedIndex] as SearchResult;
+        }
     }
 
-    private async Task InitializeAsync()
-    {
-        await LoadConfigCommand.ExecuteAsync(null);
-        await LoadAppsAsync();
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // Query change handler — debounced search
+    // ═══════════════════════════════════════════════════════════════
 
-    private async Task LoadAppsAsync()
+    partial void OnQueryChanged(string value)
     {
         try
         {
-            await _appDiscovery.LoadAppsAsync();
-            _allApps = _appDiscovery.InstalledApps.ToList();
+            _searchCts?.Cancel();
+            _searchCts = new CancellationTokenSource();
+            var ct = _searchCts.Token;
+
+            if (string.IsNullOrEmpty(value) && ActiveCategory is null)
+            {
+                ClearAll();
+                return;
+            }
+
+            var delay = Task.Delay(60, ct);
+            delay.ContinueWith(_ =>
+            {
+                if (!ct.IsCancellationRequested)
+                    Application.Current?.Dispatcher.InvokeAsync(() => RunSearch(value, ct));
+            }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to load apps: {ex.Message}");
-            _allApps = new List<SearchResult>();
+            Debug.WriteLine($"[Volt] OnQueryChanged error: {ex.Message}");
+            Console.WriteLine($"[Volt] OnQueryChanged error: {ex.Message}");
         }
     }
 
-    // ─── Query change handler ────────────────────────────────────────
-
-    /// <summary>Called whenever <see cref="Query"/> changes.</summary>
-    partial void OnQueryChanged(string value)
+    partial void OnActiveCategoryChanged(string? value)
     {
-        HandleQueryChanged(value);
+        OnQueryChanged(Query ?? string.Empty);
     }
 
-    private void HandleQueryChanged(string query)
+    // ═══════════════════════════════════════════════════════════════
+    // Search pipeline
+    // ═══════════════════════════════════════════════════════════════
+
+    private void RunSearch(string query, CancellationToken ct)
     {
-        // Cancel any in-flight debounced search.
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = null;
-
-        if (string.IsNullOrWhiteSpace(query))
+        try
         {
-            ResetSearchCommand.Execute(null);
-            return;
+            if (ct.IsCancellationRequested) return;
+
+            // 1. Check built-in actions first (calculator, color, timer, ip, ai)
+            var action = Actions.FirstOrDefault(a => a.CanHandle(query));
+            if (action is not null)
+            {
+                ActivateAction(action, query);
+                return;
+            }
+
+            // 2. Cancel any running action work
+            CancelActionWork();
+
+            // 3. Fuzzy search
+            _ = SearchAsync(query, ct);
         }
-
-        // Check if the query triggers a built-in extension.
-        var extension = DetectExtension(query);
-        if (extension != null)
+        catch (Exception ex)
         {
-            ActiveExtension = extension;
-            Results.Clear();
-            SelectedIndex = -1;
-            DetailContent = null;
-            AiError = null;
-            AiIsLoading = false;
-
-            if (extension == "ai")
-            {
-                var aiQuery = ExtractAiQuery(query);
-                if (!string.IsNullOrWhiteSpace(aiQuery))
-                {
-                    DetailContent = $"AI: {aiQuery}";
-                }
-            }
-            else if (extension == "settings")
-            {
-                DetailContent = "settings";
-            }
-            else
-            {
-                DetailContent = $"Extension: {extension} — {query}";
-            }
-
-            return;
+            Debug.WriteLine($"[Volt] RunSearch error: {ex.Message}");
+            Console.WriteLine($"[Volt] RunSearch error: {ex.Message}");
         }
+    }
 
-        ActiveExtension = null;
-        DetailContent = null;
-        AiError = null;
-        AiIsLoading = false;
-
-        // Debounced search.
-        _debounceCts = new CancellationTokenSource();
-        var token = _debounceCts.Token;
-
-        _ = Task.Run(async () =>
+    private async Task SearchAsync(string query, CancellationToken ct)
+    {
+        try
         {
-            try
-            {
-                await Task.Delay(DebounceDelay, token);
-                if (token.IsCancellationRequested)
-                    return;
+            var newResults = new List<object>();
 
-                Application.Current?.Dispatcher.Invoke(() => IsLoading = true);
-
-                // Fuzzy search across combined apps + files.
-                var fileResults = await _fileSearch.SearchAsync(query, Config.MaxFileResults, token);
-                var combined = PerformFuzzySearch(query, _allApps, fileResults);
-
-                if (!token.IsCancellationRequested)
+            // Apps
+            bool showApps = ActiveCategory is null or "apps";
+            if (showApps && _appCatalog is not null)
+        {
+            var appMatches = _appCatalog
+                .Select(a =>
                 {
-                    Application.Current?.Dispatcher.Invoke(() =>
+                    var score = string.IsNullOrEmpty(query) ? 0 : FuzzySearch.Score(query, a.Name);
+                    if (score < 0) return null;
+                    var clone = Clone(a);
+                    clone.Score = score + a.FrequencyScore * 0.3;
+                    if (Config.PinnedItems.Contains(a.Id))
                     {
-                        Results = new ObservableCollection<SearchResult>(combined);
-                        SelectedIndex = Results.Count > 0 ? 0 : -1;
-                        IsLoading = false;
+                        clone.IsPinned = true;
+                        clone.Score += 10000;
+                    }
+                    return clone;
+                })
+                .Where(a => a is not null)
+                .Cast<SearchResult>()
+                .OrderByDescending(a => a.Score)
+                .Take(Config.ResultsCount)
+                .ToList();
 
-                        if (Results.Count > 0)
-                            DetailContent = Results[0];
-                    });
-                }
-            }
-            catch (OperationCanceledException)
+            if (appMatches.Count > 0)
             {
-                // Expected on debounce cancellation — swallow.
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Search error: {ex.Message}");
-                Application.Current?.Dispatcher.Invoke(() => IsLoading = false);
-            }
-        }, token);
-    }
-
-    // ─── Extension detection ─────────────────────────────────────────
-
-    /// <summary>
-    /// Returns the extension identifier if the query triggers one; otherwise null.
-    /// </summary>
-    private static string? DetectExtension(string query)
-    {
-        var trimmed = query.TrimStart();
-
-        // "ai " or "ai:" prefix
-        if (trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ||
-            trimmed.StartsWith("ai:", StringComparison.OrdinalIgnoreCase))
-            return "ai";
-
-        // "settings"
-        if (trimmed.Equals("settings", StringComparison.OrdinalIgnoreCase))
-            return "settings";
-
-        // "calc " prefix
-        if (trimmed.StartsWith("calc ", StringComparison.OrdinalIgnoreCase))
-            return "calculator";
-
-        // Math expression: starts with digit and contains operators
-        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^[\d\s\+\-\*\/\(\)\.\%\^]+$") &&
-            System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"[\+\-\*\/\%\^]"))
-            return "calculator";
-
-        // "clip" — clipboard history
-        if (trimmed.Equals("clip", StringComparison.OrdinalIgnoreCase) ||
-            trimmed.Equals("clipboard", StringComparison.OrdinalIgnoreCase))
-            return "clipboard";
-
-        // "color #..." or "#RRGGBB"
-        if (trimmed.StartsWith("color ", StringComparison.OrdinalIgnoreCase))
-            return "color";
-        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^#[0-9a-fA-F]{3,8}$"))
-            return "color";
-
-        // "timer 10m" / "timer 30s"
-        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed,
-                @"^timer\s+\d+\s*(s|sec|second|seconds|m|min|minute|minutes|h|hour|hours)\s*$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
-            return "timer";
-
-        // "ip"
-        if (trimmed.Equals("ip", StringComparison.OrdinalIgnoreCase) ||
-            trimmed.Equals("ipaddress", StringComparison.OrdinalIgnoreCase) ||
-            trimmed.Equals("my ip", StringComparison.OrdinalIgnoreCase))
-            return "ip";
-
-        return null;
-    }
-
-    private static string ExtractAiQuery(string query)
-    {
-        var trimmed = query.TrimStart();
-        if (trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
-            return trimmed[3..].Trim();
-        if (trimmed.StartsWith("ai:", StringComparison.OrdinalIgnoreCase))
-            return trimmed[3..].Trim();
-        return trimmed;
-    }
-
-    // ─── Fuzzy search ────────────────────────────────────────────────
-
-    private static List<SearchResult> PerformFuzzySearch(
-        string query,
-        List<SearchResult> apps,
-        List<SearchResult> files)
-    {
-        var results = new List<SearchResult>();
-        var lowerQuery = query.ToLowerInvariant();
-
-        // Score apps — apps are weighted higher.
-        foreach (var app in apps)
-        {
-            var score = ComputeFuzzyScore(app.Name, lowerQuery);
-            if (score > 0)
-            {
-                app.Score = score * 1.5; // App weight boost
-                results.Add(app);
+                newResults.Add(new SectionLabel("APPLICATIONS"));
+                newResults.AddRange(appMatches);
             }
         }
 
-        // Score files.
-        foreach (var file in files)
+        if (ct.IsCancellationRequested) return;
+
+        // Files
+        bool showFiles = Config.FileSearchEnabled && ActiveCategory is null or "files";
+        if (showFiles)
         {
-            var score = ComputeFuzzyScore(file.Name, lowerQuery);
-            if (score > 0)
+            var fileMatches = await _files.SearchAsync(query, Config.ResultsCount);
+            if (ct.IsCancellationRequested) return;
+            if (fileMatches.Count > 0)
             {
-                file.Score = score;
-                results.Add(file);
+                newResults.Add(new SectionLabel("FILES"));
+                newResults.AddRange(fileMatches);
             }
         }
 
-        // Sort descending by score.
-        results.Sort((a, b) => b.Score.CompareTo(a.Score));
-
-        return results;
-    }
-
-    /// <summary>
-    /// Simple fuzzy scoring: rewards contiguous matches and early matches.
-    /// Returns 0.0 for no match, up to 1.0 for a perfect match.
-    /// </summary>
-    private static double ComputeFuzzyScore(string text, string lowerQuery)
-    {
-        var lowerText = text.ToLowerInvariant();
-        if (lowerText == lowerQuery)
-            return 1.0;
-
-        // Contiguous substring match.
-        int index = lowerText.IndexOf(lowerQuery, StringComparison.Ordinal);
-        if (index >= 0)
+        // Clipboard
+        bool showClip = Config.ClipboardEnabled && ActiveCategory is null or "clipboard";
+        if (showClip)
         {
-            double positionBonus = 1.0 - (double)index / lowerText.Length;
-            double lengthRatio = (double)lowerQuery.Length / lowerText.Length;
-            return 0.5 + (0.5 * positionBonus * (0.5 + 0.5 * lengthRatio));
-        }
-
-        // Abbreviation / initial-character matching.
-        if (MatchesInitials(lowerText, lowerQuery))
-            return 0.4;
-
-        // Partial subsequence match.
-        if (MatchesSubsequence(lowerText, lowerQuery))
-            return 0.25;
-
-        return 0.0;
-    }
-
-    private static bool MatchesInitials(string text, string query)
-    {
-        int qi = 0;
-        bool started = false;
-        foreach (var ch in text)
-        {
-            if (!started || ch == ' ' || ch == '.' || ch == '-' || ch == '_')
-            {
-                started = true;
-                if (qi < query.Length && char.ToLowerInvariant(ch) == query[qi])
+            int limit = string.IsNullOrEmpty(query) && ActiveCategory == "clipboard" ? 5 : Config.ResultsCount;
+            var clips = ClipboardService.GetHistory()
+                .Where(c => string.IsNullOrEmpty(query) || FuzzySearch.Score(query, c.Preview) >= 0)
+                .Take(limit)
+                .Select(c => new SearchResult
                 {
-                    qi++;
-                    if (qi == query.Length)
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
+                    Id         = $"clip:{c.Timestamp.Ticks}",
+                    Type       = ResultType.Clipboard,
+                    Name       = c.Preview,
+                    Subtitle   = c.TimeAgo,
+                    LucideIcon = "clipboard",
+                    ClipContent = c.Content,
+                    ClipTimestamp = c.Timestamp,
+                })
+                .Select(c =>
+                {
+                    if (Config.PinnedItems.Contains(c.Id))
+                    {
+                        c.IsPinned = true;
+                        c.Score = 10000; // Force to top
+                    }
+                    return c;
+                })
+                .OrderByDescending(c => c.IsPinned)
+                .ToList();
 
-    private static bool MatchesSubsequence(string text, string query)
-    {
-        int qi = 0;
-        foreach (var ch in text)
-        {
-            if (qi < query.Length && ch == query[qi])
+            if (clips.Count > 0)
             {
-                qi++;
-                if (qi == query.Length)
-                    return true;
+                newResults.Add(new SectionLabel("CLIPBOARD"));
+                newResults.AddRange(clips);
             }
         }
-        return false;
+
+        if (ct.IsCancellationRequested) return;
+
+        // Commit results on UI thread
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            Results.Clear();
+            foreach (var r in newResults) Results.Add(r);
+            SelectedIndex = Results.Count > 0 ? FindFirstResultIndex() : -1;
+        });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Volt] SearchAsync error: {ex.Message}");
+            Console.WriteLine($"[Volt] SearchAsync error: {ex.Message}");
+        }
     }
 
-    // ─── Commands ────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // Action activation
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Toggles the Flow window between visible and hidden.</summary>
-    [RelayCommand]
-    private void ToggleWindow()
+    private void ActivateAction(IAction action, string query)
     {
-        IsWindowOpen = !IsWindowOpen;
+        CancelActionWork();
+
+        var result = action.BuildResult(query);
+        Results.Clear();
+        Results.Add(new SectionLabel("ACTIONS"));
+        Results.Add(result);
+        SelectedIndex = 1; // the result row (index 0 = section label)
+
+        ActiveActionId = action.Id;
+
+        switch (action.Id)
+        {
+            case "calc":  StartCalc(query);           break;
+            case "color": StartColor(query);          break;
+            case "timer": StartTimerPreview(query);   break;
+            case "ip":    _ = StartIpAsync();         break;
+            // AI does NOT auto-start — user must press Enter
+            case "ai":    break;
+        }
     }
 
-    /// <summary>Opens the currently selected search result.</summary>
-    [RelayCommand]
-    private void OpenSelected()
+    private void StartCalc(string query)
     {
-        if (SelectedIndex < 0 || SelectedIndex >= Results.Count)
+        CalcExpr   = query.Trim();
+        CalcResult = CalculatorAction.Evaluate(query);
+    }
+
+    private void StartColor(string query)
+    {
+        var hex = ColorAction.Normalize(query.Trim());
+        ColorAction.ParseHex(hex, out var r, out var g, out var b);
+        ColorAction.RgbToHsl(r, g, b, out var h, out var s, out var l);
+
+        ColorHex    = hex.ToUpperInvariant();
+        ColorRgb    = $"RGB({r}, {g}, {b})";
+        ColorHsl    = $"HSL({h:F0}°, {s:F0}%, {l:F0}%)";
+        ColorSwatch = Color.FromRgb(r, g, b);
+    }
+
+    private void StartTimerPreview(string query)
+    {
+        if (!TimerAction.TryParse(query, out var duration)) return;
+        _timerTotal     = duration;
+        _timerRemaining = duration;
+        UpdateTimerDisplay();
+        TimerRunning = false;
+    }
+
+    private async Task StartIpAsync()
+    {
+        IpLocal  = IpAction.GetLocalIp() ?? "Not connected";
+        IpPublic = "Fetching…";
+        var pub  = await IpAction.GetPublicIpAsync();
+        IpPublic = pub ?? "Unavailable";
+    }
+
+    private async Task StartAiAsync(string query)
+    {
+        _aiCts?.Cancel();
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+
+        var question = AiAction.ExtractQuestion(query);
+        AiText    = string.Empty;
+        AiError   = string.Empty;
+        AiLoading = true;
+
+        var (key, model) = GetAiConfig();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            AiError   = $"Add your {Config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+            AiLoading = false;
             return;
+        }
 
-        var result = Results[SelectedIndex];
-        ExecuteOpen(result);
+        try
+        {
+            await AiService.StreamAsync(Config.AiProvider, model, key, question, token =>
+            {
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    AiText    += token;
+                    AiLoading  = AiText.Length == 0;
+                });
+            }, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // User cancelled — silent
+        }
+        catch (TaskCanceledException)
+        {
+            AiError = "Request timed out. Please try again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            AiError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            AiError = $"Unexpected error: {ex.Message}";
+        }
+        finally { AiLoading = false; }
     }
 
-    private void ExecuteOpen(SearchResult result)
+    private (string Key, string Model) GetAiConfig() => Config.AiProvider switch
     {
+        "gemini"     => (Config.GeminiApiKey,     Config.GeminiModel),
+        "openrouter" => (Config.OpenRouterApiKey, Config.OpenRouterModel),
+        "deepseek"   => (Config.DeepSeekApiKey,   Config.DeepSeekModel),
+        _            => (Config.GroqApiKey,        Config.GroqModel),
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // Timer commands
+    // ═══════════════════════════════════════════════════════════════
+
+    [RelayCommand]
+    private void StartTimer()
+    {
+        if (TimerRunning || _timerTotal == TimeSpan.Zero) return;
+        _timerRemaining = _timerTotal;
+        TimerRunning    = true;
+
+        _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _timerTick.Tick += OnTimerTick;
+        _timerTick.Start();
+    }
+
+    private void OnTimerTick(object? sender, EventArgs e)
+    {
+        _timerRemaining -= TimeSpan.FromMilliseconds(100);
+        if (_timerRemaining <= TimeSpan.Zero)
+        {
+            _timerRemaining = TimeSpan.Zero;
+            _timerTick?.Stop();
+            TimerRunning = false;
+            NotificationService.Show("Volt Timer", "Your timer has finished!");
+        }
+        UpdateTimerDisplay();
+    }
+
+    private void UpdateTimerDisplay()
+    {
+        TimerDisplay = _timerRemaining.TotalHours >= 1
+            ? _timerRemaining.ToString(@"hh\:mm\:ss")
+            : _timerRemaining.ToString(@"mm\:ss");
+
+        TimerProgress = _timerTotal > TimeSpan.Zero
+            ? _timerRemaining.TotalMilliseconds / _timerTotal.TotalMilliseconds * 100.0
+            : 0;
+    }
+
+    [RelayCommand]
+    private void CancelTimer()
+    {
+        _timerTick?.Stop();
+        _timerTick  = null;
+        TimerRunning = false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Open / Execute
+    // ═══════════════════════════════════════════════════════════════
+
+    [RelayCommand]
+    public void OpenSelected()
+    {
+        var result = SelectedResult;
+        if (result is null) return;
+
         switch (result.Type)
         {
-            case "app":
-                if (!string.IsNullOrEmpty(result.ExecutablePath))
-                {
-                    AppDiscoveryService.LaunchApp(result.ExecutablePath);
-                    IncrementUsageCommand.Execute(result.ExecutablePath);
-                }
+            case ResultType.App:
+                if (result.LnkPath is not null)
+                    Launch(result.LnkPath);
+                else if (result.ExePath is not null)
+                    Launch(result.ExePath);
+                _freq.Increment(result.ExePath ?? result.LnkPath ?? "");
+                result.FrequencyScore = _freq.Get(result.ExePath ?? "");
+                RequestHide?.Invoke();
                 break;
-            case "file":
-                if (!string.IsNullOrEmpty(result.FullPath))
+
+            case ResultType.File:
+                if (result.FilePath is not null)
+                    Launch(result.FilePath);
+                RequestHide?.Invoke();
+                break;
+
+            case ResultType.Clipboard:
+                if (result.ClipContent is not null)
+                    ClipboardService.CopyToSystem(result.ClipContent);
+                RequestHide?.Invoke();
+                break;
+
+            case ResultType.Action:
+                // Timer: start countdown on Enter
+                if (result.ActionId == "timer")
+                    StartTimerCommand.Execute(null);
+                // AI: start streaming on Enter
+                else if (result.ActionId == "ai")
                 {
-                    FileSearchService.OpenFile(result.FullPath);
-                    IncrementUsageCommand.Execute(result.FullPath);
+                    try { _ = StartAiAsync(Query); }
+                    catch (Exception ex) { Debug.WriteLine($"[Volt] StartAiAsync error: {ex.Message}"); Console.WriteLine($"[Volt] StartAiAsync error: {ex.Message}"); }
                 }
+                // Calc/Color/IP: Enter copies result to clipboard
+                else if (result.ActionId == "calc")
+                    ClipboardService.CopyToSystem(CalcResult.TrimStart('=', ' '));
+                else if (result.ActionId == "color")
+                    ClipboardService.CopyToSystem(ColorHex);
+                else if (result.ActionId == "ip")
+                    ClipboardService.CopyToSystem(IpLocal);
                 break;
         }
-
-        // Dismiss the window after launching.
-        IsWindowOpen = false;
     }
 
-    /// <summary>Moves the selection highlight up one row (with wrap-around).</summary>
     [RelayCommand]
-    private void MoveSelectionUp()
+    public void OpenFolder()
     {
-        if (Results.Count == 0)
-            return;
+        var result = SelectedResult;
+        if (result is null) return;
 
-        if (SelectedIndex <= 0)
-            SelectedIndex = Results.Count - 1;
+        switch (result.Type)
+        {
+            case ResultType.Clipboard:
+                // Ctrl+Enter on clipboard: copy without hiding window
+                if (result.ClipContent is not null)
+                    ClipboardService.CopyToSystem(result.ClipContent);
+                return;
+
+            case ResultType.App:
+            case ResultType.File:
+                break;
+
+            default:
+                return;
+        }
+
+        string? folder = result.Type switch
+        {
+            ResultType.App  => result.ExePath is not null ? Path.GetDirectoryName(result.ExePath) : null,
+            ResultType.File => result.FilePath is not null ? Path.GetDirectoryName(result.FilePath) : null,
+            _               => null,
+        };
+
+        if (folder is not null && Directory.Exists(folder))
+            Process.Start("explorer.exe", folder);
+    }
+
+    /// <summary>Launches the selected app as administrator (UAC elevation).</summary>
+    [RelayCommand]
+    public void RunAsAdmin()
+    {
+        var result = SelectedResult;
+        if (result is null) return;
+
+        string? target = result.Type switch
+        {
+            ResultType.App  => result.ExePath,
+            ResultType.File => result.FilePath,
+            _               => null,
+        };
+
+        if (target is null) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName  = target,
+                UseShellExecute = true,
+                Verb      = "runas",
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Volt] RunAsAdmin failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>Pins or unpins the given result. Persists to config.</summary>
+    [RelayCommand]
+    public void TogglePin(SearchResult? result)
+    {
+        if (result is null) return;
+        if (Config.PinnedItems.Contains(result.Id))
+            Config.PinnedItems.Remove(result.Id);
         else
-            SelectedIndex--;
+            Config.PinnedItems.Add(result.Id);
+
+        result.IsPinned = Config.PinnedItems.Contains(result.Id);
+        _configSvc.Save(Config);
+
+        // Refresh display so pin icon updates
+        var idx = Results.IndexOf(result);
+        if (idx >= 0)
+        {
+            Results.RemoveAt(idx);
+            Results.Insert(idx, result);
+        }
     }
 
-    /// <summary>Moves the selection highlight down one row (with wrap-around).</summary>
-    [RelayCommand]
-    private void MoveSelectionDown()
+    /// <summary>Called when the user clicks the clipboard category button.</summary>
+    public void ActivateClipboardCategory()
     {
-        if (Results.Count == 0)
-            return;
-
-        if (SelectedIndex >= Results.Count - 1)
-            SelectedIndex = 0;
-        else
-            SelectedIndex++;
+        ActiveCategory = ActiveCategory == "clipboard" ? null : "clipboard";
+        if (ActiveCategory == "clipboard" && !string.IsNullOrEmpty(Query))
+        {
+            Query = string.Empty;
+        }
     }
 
-    /// <summary>Increments the usage count for the given path.</summary>
-    [RelayCommand]
-    private void IncrementUsage(string path)
+    private static void Launch(string path)
     {
-        if (string.IsNullOrEmpty(path))
-            return;
-
-        if (UsageMap.TryGetValue(path, out int count))
-            UsageMap[path] = count + 1;
-        else
-            UsageMap[path] = 1;
+        try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
+        catch (Exception ex) { Debug.WriteLine($"[Volt] Launch failed: {ex.Message}"); }
     }
 
-    /// <summary>Programmatically sets the search query (e.g. from the settings button).</summary>
-    [RelayCommand]
-    private void SetQuery(string query)
+    // ═══════════════════════════════════════════════════════════════
+    // Keyboard navigation
+    // ═══════════════════════════════════════════════════════════════
+
+    public void MoveSelection(int delta)
     {
-        Query = query ?? "";
+        if (Results.Count == 0) return;
+
+        var next = SelectedIndex + delta;
+        // Skip section labels
+        while (next >= 0 && next < Results.Count && Results[next] is SectionLabel)
+            next += delta;
+
+        if (next >= 0 && next < Results.Count)
+            SelectedIndex = next;
     }
 
-    /// <summary>Resets search state to its initial idle condition.</summary>
-    [RelayCommand]
-    private void ResetSearch()
+    public void CycleCategory()
     {
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = null;
+        ActiveCategory = ActiveCategory switch
+        {
+            null        => "apps",
+            "apps"      => "files",
+            "files"     => "clipboard",
+            "clipboard" => "actions",
+            _           => null,
+        };
+    }
 
-        Query = "";
+    // ═══════════════════════════════════════════════════════════════
+    // Settings
+    // ═══════════════════════════════════════════════════════════════
+
+    [RelayCommand]
+    public void OpenSettings()
+    {
+        IsSettingsOpen = !IsSettingsOpen;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Window events
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Raised when the VM wants the window to hide itself.</summary>
+    public event Action? RequestHide;
+
+    public void OnWindowShown()
+    {
+        // Refresh clipboard category when window opens
+    }
+
+    public void Reset()
+    {
+        Query          = string.Empty;
+        ActiveCategory = null;
+        IsSettingsOpen = false;
+        CancelActionWork();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Helpers
+    // ═══════════════════════════════════════════════════════════════
+
+    private async Task LoadAppsAsync()
+    {
+        _appCatalog = await _apps.DiscoverAsync();
+
+        // Apply persisted frequency scores
+        foreach (var app in _appCatalog)
+            if (app.ExePath is not null)
+                app.FrequencyScore = _freq.Get(app.ExePath);
+
+        // Pre-warm icon cache in background
+        _ = IconService.PreloadAsync(_appCatalog
+            .Where(a => a.IconPath is not null)
+            .Select(a => a.IconPath!));
+    }
+
+    private void ClearAll()
+    {
         Results.Clear();
-        SelectedIndex = -1;
-        IsLoading = false;
-        ActiveExtension = null;
-        AiResponse = "";
-        AiIsLoading = false;
-        AiError = null;
-        DetailContent = null;
+        SelectedIndex  = -1;
+        CancelActionWork();
+        ActiveActionId = null;
     }
 
-    /// <summary>Persists the current config to disk.</summary>
-    [RelayCommand]
-    private async Task SaveConfig()
+    private void CancelActionWork()
     {
-        await _configService.SaveAsync(Config);
+        _aiCts?.Cancel();
+        _timerTick?.Stop();
+        _timerTick   = null;
+        TimerRunning = false;
+        ActiveActionId = null;
     }
 
-    /// <summary>Loads configuration from disk (called on startup).</summary>
-    [RelayCommand]
-    private async Task LoadConfig()
+    private int FindFirstResultIndex()
     {
-        Config = await _configService.LoadAsync();
+        for (int i = 0; i < Results.Count; i++)
+            if (Results[i] is SearchResult) return i;
+        return -1;
     }
+
+    private static SearchResult Clone(SearchResult s) => new()
+    {
+        Id = s.Id, Type = s.Type, Name = s.Name, Subtitle = s.Subtitle,
+        IconPath = s.IconPath, LucideIcon = s.LucideIcon,
+        Score = s.Score, FrequencyScore = s.FrequencyScore,
+        ExePath = s.ExePath, LnkPath = s.LnkPath,
+        FilePath = s.FilePath, FileExtension = s.FileExtension,
+        ClipContent = s.ClipContent, ClipTimestamp = s.ClipTimestamp,
+        ActionId = s.ActionId,
+    };
 }

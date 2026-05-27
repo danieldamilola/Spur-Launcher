@@ -1,50 +1,228 @@
-﻿<Window x:Class="Flow.MainWindow"
+<Window x:Class="Volt.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:views="clr-namespace:Flow.Views"
-        Title="Flow"
+        xmlns:views="clr-namespace:Volt.Views"
+        xmlns:vm="clr-namespace:Volt.ViewModels"
+        Title="Volt"
         Width="680"
+        MinHeight="136"
         SizeToContent="Height"
-        MaxHeight="560"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
+        ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
-        ShowInTaskbar="False"
-        KeyDown="Window_KeyDown"
-        Deactivated="Window_Deactivated">
+        Opacity="0"
+        Loaded="OnLoaded">
 
-    <!-- Outer border: window radius, only shadow in the app, 1px line-strong border -->
-    <Border Background="{StaticResource BgPage}"
-            CornerRadius="{StaticResource RadiusWindow}"
-            BorderBrush="{StaticResource BorderStrong}"
-            BorderThickness="1"
-            Effect="{StaticResource WindowShadow}">
-        <Grid>
-            <Grid.RowDefinitions>
-                <!-- Search bar -->
-                <RowDefinition Height="56" />
-                <!-- 1px line divider -->
-                <RowDefinition Height="1" />
-                <!-- Results / Settings -->
-                <RowDefinition Height="Auto" MaxHeight="503" />
-            </Grid.RowDefinitions>
+    <Window.Resources>
+    </Window.Resources>
 
-            <!-- ── Search Bar ── -->
-            <views:SearchBar Grid.Row="0"
-                             MouseLeftButtonDown="SearchBar_MouseDown" />
+    <!-- Root glass border -->
+    <!-- Margin is required so the DropShadow is not clipped by Window bounds -->
+    <!-- Root layout border (fully transparent structural container) -->
+    <!-- Margin is required so the DropShadow is not clipped by Window bounds -->
+    <Border x:Name="RootBorder"
+            Margin="40"
+            CornerRadius="28"
+            Background="Transparent"
+            BorderBrush="Transparent"
+            BorderThickness="0">
 
-            <!-- ── 1px hairline divider ── -->
-            <Rectangle Grid.Row="1" Fill="{StaticResource Border}" />
+        <Border.RenderTransform>
+            <ScaleTransform x:Name="WindowScale" ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
+        <Border.RenderTransformOrigin>0.5,0.1</Border.RenderTransformOrigin>
 
-            <!-- ── Results List ── -->
-            <views:ResultsList Grid.Row="2" />
+        <!-- Parent transparent grid mapping Column 0 (Search) and Column 1 (Categories) -->
+        <Grid MouseEnter="OnMainGridMouseEnter"
+              MouseLeave="OnMainGridMouseLeave">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>                                 <!-- Left: Search Card -->
+                <ColumnDefinition x:Name="CategoryColumn" Width="Auto"/>       <!-- Right: Category Buttons -->
+            </Grid.ColumnDefinitions>
 
-            <!-- ── Settings Panel overlay — shown when ActiveExtension="settings" ── -->
-            <views:SettingsPanel x:Name="SettingsPanelView"
-                                 Grid.Row="2"
-                                 Visibility="Collapsed" />
+            <!-- ── Left: Search & Results Card (Frosted Glass) ────────────── -->
+            <Border x:Name="SearchCardBorder"
+                    Grid.Column="0"
+                    CornerRadius="{DynamicResource RadiusPill}"
+                    Background="{DynamicResource GlassBg}"
+                    BorderBrush="{DynamicResource GlassBorder}"
+                    BorderThickness="1">
+                <Border.Effect>
+                    <!-- Main dropdown card drop shadow -->
+                    <DropShadowEffect BlurRadius="48"
+                                      ShadowDepth="12"
+                                      Direction="270"
+                                      Opacity="0.25"
+                                      Color="#000000"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="56"/>        <!-- Search bar -->
+                        <RowDefinition Height="Auto"/>      <!-- Content area -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Search input & icon -->
+                    <views:SearchBar x:Name="SearchBarControl"
+                                     Grid.Row="0"
+                                     DataContext="{Binding}"/>
+
+                    <!-- Expandable results area -->
+                    <Grid Grid.Row="1"
+                          x:Name="ContentArea"
+                          Visibility="Collapsed"
+                          MaxHeight="464">
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1"/>     <!-- Hairline divider -->
+                            <RowDefinition Height="Auto"/>  <!-- Results / Settings -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Hairline divider -->
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource BorderBrush}"/>
+
+                        <!-- Results + Preview / Settings -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="200"/>
+                                <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Results list -->
+                            <views:ResultsList x:Name="ResultsListControl"
+                                               Grid.Column="0"
+                                               DataContext="{Binding}"
+                                               MaxHeight="463"/>
+
+                            <!-- Preview panel -->
+                            <views:PreviewPanel x:Name="PreviewPanelControl"
+                                                Grid.Column="1"
+                                                DataContext="{Binding}"
+                                                Width="300"/>
+
+                            <!-- Settings overlay -->
+                            <views:SettingsView x:Name="SettingsViewControl"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="2"
+                                                DataContext="{Binding Settings}"
+                                                Visibility="Collapsed"
+                                                MaxHeight="463"/>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ── Right: Category Buttons (Separate Frosted Glass Circles) ──── -->
+            <Border x:Name="CategoryPanelContainer"
+                    Grid.Column="1"
+                    Width="0"
+                    ClipToBounds="True"
+                    VerticalAlignment="Top"
+                    Height="56">
+                
+                <StackPanel Orientation="Horizontal"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center">
+
+                    <!-- Apps Circle -->
+                    <Border Width="36" Height="36"
+                            CornerRadius="18"
+                            Margin="0,0,8,0"
+                            Background="{DynamicResource GlassBg}"
+                            BorderBrush="{DynamicResource GlassBorder}"
+                            BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                        </Border.Effect>
+                        <Button x:Name="BtnApps"
+                                Tag="apps"
+                                Click="OnCategoryClick"
+                                ToolTip="Apps (Ctrl+1)"
+                                Style="{StaticResource CategoryButtonStyle}">
+                            <Path Data="M3 3h7v7H3V3zm11 0h7v7h-7V3zm0 11h7v7h-7v-7zM3 14h7v7H3v-7z"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  x:Name="IconApps"
+                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                  StrokeLineJoin="Round" Fill="Transparent"/>
+                        </Button>
+                    </Border>
+
+                    <!-- Files Circle -->
+                    <Border Width="36" Height="36"
+                            CornerRadius="18"
+                            Margin="0,0,8,0"
+                            Background="{DynamicResource GlassBg}"
+                            BorderBrush="{DynamicResource GlassBorder}"
+                            BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                        </Border.Effect>
+                        <Button x:Name="BtnFiles"
+                                Tag="files"
+                                Click="OnCategoryClick"
+                                ToolTip="Files (Ctrl+2)"
+                                Style="{StaticResource CategoryButtonStyle}">
+                            <Path Data="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  x:Name="IconFiles"
+                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                  StrokeLineJoin="Round" Fill="Transparent"/>
+                        </Button>
+                    </Border>
+
+                    <!-- Clipboard Circle -->
+                    <Border Width="36" Height="36"
+                            CornerRadius="18"
+                            Margin="0,0,8,0"
+                            Background="{DynamicResource GlassBg}"
+                            BorderBrush="{DynamicResource GlassBorder}"
+                            BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                        </Border.Effect>
+                        <Button x:Name="BtnClipboard"
+                                Tag="clipboard"
+                                Click="OnCategoryClick"
+                                ToolTip="Clipboard (Ctrl+3)"
+                                Style="{StaticResource CategoryButtonStyle}">
+                            <Path Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  x:Name="IconClipboard"
+                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                  StrokeLineJoin="Round" Fill="Transparent"/>
+                        </Button>
+                    </Border>
+
+                    <!-- Actions Circle -->
+                    <Border Width="36" Height="36"
+                            CornerRadius="18"
+                            Background="{DynamicResource GlassBg}"
+                            BorderBrush="{DynamicResource GlassBorder}"
+                            BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                        </Border.Effect>
+                        <Button x:Name="BtnActions"
+                                Tag="actions"
+                                Click="OnCategoryClick"
+                                ToolTip="Actions (Ctrl+4)"
+                                Style="{StaticResource CategoryButtonStyle}">
+                            <Path Data="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  x:Name="IconActions"
+                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                  StrokeLineJoin="Round"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Fill="Transparent"/>
+                        </Button>
+                    </Border>
+
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </Window>

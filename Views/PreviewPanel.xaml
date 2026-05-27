@@ -1,0 +1,223 @@
+<UserControl x:Class="Volt.Views.PreviewPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Volt.ViewModels"
+             Width="300">
+
+    <Border BorderBrush="{DynamicResource BorderStrong}"
+            BorderThickness="1,0,0,0"
+            Padding="20">
+
+        <!-- Grid wrapping all panels so Border only has one child -->
+        <Grid>
+
+        <!-- Calculator -->
+        <Grid x:Name="CalcPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       x:Name="CalcExprText"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextMuted}"
+                       TextWrapping="Wrap"/>
+
+            <TextBlock Grid.Row="1"
+                       x:Name="CalcResultText"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="{DynamicResource FontXxl}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource Green}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"/>
+
+            <TextBlock Grid.Row="2"
+                       Text="↵ copy"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       Foreground="{DynamicResource TextMuted}"
+                       HorizontalAlignment="Right"/>
+        </Grid>
+
+        <!-- Color -->
+        <Grid x:Name="ColorPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    x:Name="ColorSwatch"
+                    Width="80" Height="80"
+                    CornerRadius="8"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    Margin="0,0,0,16"
+                    HorizontalAlignment="Left"/>
+
+            <TextBlock Grid.Row="1"
+                       x:Name="ColorHexText"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="{DynamicResource FontXl}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimary}"
+                       Margin="0,0,0,8"/>
+
+            <StackPanel Grid.Row="2">
+                <TextBlock x:Name="ColorRgbText"
+                           FontFamily="{DynamicResource MonoFont}"
+                           FontSize="{DynamicResource FontSm}"
+                           Foreground="{DynamicResource TextSecondary}"/>
+                <TextBlock x:Name="ColorHslText"
+                           FontFamily="{DynamicResource MonoFont}"
+                           FontSize="{DynamicResource FontSm}"
+                           Foreground="{DynamicResource TextSecondary}"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Timer -->
+        <Grid x:Name="TimerPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       x:Name="TimerCountdown"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="{DynamicResource FontDisplay}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimary}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+            <!-- Progress bar -->
+            <Border Grid.Row="1"
+                    Height="6"
+                    CornerRadius="3"
+                    Background="{DynamicResource SurfaceLow}"
+                    Margin="0,16,0,0">
+                <Border x:Name="TimerBar"
+                        CornerRadius="3"
+                        Background="{DynamicResource Accent}"
+                        HorizontalAlignment="Left"/>
+            </Border>
+
+            <TextBlock Grid.Row="2"
+                       x:Name="TimerStatus"
+                       Text="Press ↵ to start"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontSm}"
+                       Foreground="{DynamicResource TextMuted}"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,0"/>
+
+            <Button Grid.Row="3"
+                    x:Name="CancelTimerBtn"
+                    Content="Cancel"
+                    HorizontalAlignment="Right"
+                    Margin="0,8,0,0"
+                    Visibility="Collapsed"
+                    Click="OnCancelTimer"/>
+        </Grid>
+
+        <!-- IP Address -->
+        <Grid x:Name="IpPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="LOCAL"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextMuted}"/>
+            <TextBlock Grid.Row="1"
+                       x:Name="IpLocalText"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="16"
+                       Foreground="{DynamicResource TextPrimary}"
+                       Margin="0,4,0,0"/>
+
+            <TextBlock Grid.Row="3"
+                       Text="PUBLIC"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextMuted}"/>
+            <TextBlock Grid.Row="4"
+                       x:Name="IpPublicText"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontSize="16"
+                       Foreground="{DynamicResource TextPrimary}"
+                       Margin="0,4,0,0"/>
+        </Grid>
+
+        <!-- AI -->
+        <Grid x:Name="AiPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <ScrollViewer Grid.Row="0"
+                          x:Name="AiScroll"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock x:Name="AiLoadingText"
+                               Text="Thinking…"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontBase}"
+                               Foreground="{DynamicResource TextMuted}"
+                               Visibility="Collapsed"/>
+                    <TextBlock x:Name="AiResponseText"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontBase}"
+                               Foreground="{DynamicResource TextPrimary}"
+                               TextWrapping="Wrap"
+                               LineHeight="22"/>
+                    <TextBlock x:Name="AiErrorText"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontBase}"
+                               Foreground="{DynamicResource Red}"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <TextBlock Grid.Row="1"
+                       x:Name="AiFooter"
+                       Text="Powered by Groq"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="10"
+                       Foreground="{DynamicResource TextMuted}"
+                       HorizontalAlignment="Right"
+                       Margin="0,8,0,0"
+                       Visibility="Collapsed"/>
+        </Grid>
+
+        <!-- Empty state -->
+        <TextBlock x:Name="EmptyState"
+                   Text="Select a result to preview"
+                   FontFamily="{DynamicResource UIFont}"
+                   FontSize="{DynamicResource FontBase}"
+                   Foreground="{DynamicResource TextMuted}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+
+        </Grid><!-- end outer Grid -->
+    </Border>
+</UserControl>

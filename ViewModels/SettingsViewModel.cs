@@ -1,160 +1,194 @@
-using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Media;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Flow.Models;
-using Flow.Services;
-
-namespace Flow.ViewModels;
+namespace Volt.ViewModels;
 
 /// <summary>
-/// ViewModel for the settings panel. Wraps a working copy of <see cref="FlowConfig"/>
-/// so edits can be committed or discarded.
+/// Wraps VoltConfig with instant-save semantics.
+/// Every property setter persists the config to disk immediately.
 /// </summary>
-public partial class SettingsViewModel : ObservableObject
+public sealed partial class SettingsViewModel : ObservableObject
 {
-    private readonly ConfigService _configService;
-    private readonly MainViewModel _mainVm;
+    private readonly ConfigService  _configService;
+    private readonly MainViewModel  _main;
+    private VoltConfig              _config;
 
-    /// <summary>Snapshot of the config before editing, for cancel/revert.</summary>
-    private FlowConfig _originalConfig;
-
-    // ─── Editable config properties ──────────────────────────────────
-
-    [ObservableProperty]
-    private string _theme = "dark";
-
-    [ObservableProperty]
-    private string _preset = "flow-dark";
-
-    [ObservableProperty]
-    private string _accentColor = "#007AFF";
-
-    [ObservableProperty]
-    private double _opacity = 1.0;
-
-    [ObservableProperty]
-    private string _borderRadius = "rounded";
-
-    [ObservableProperty]
-    private string _fontSize = "comfortable";
-
-    [ObservableProperty]
-    private string _shortcut = "Alt+Space";
-
-    [ObservableProperty]
-    private bool _showDetailPanel = true;
-
-    [ObservableProperty]
-    private string _groqApiKey = "";
-
-    // ─── Dropdown options (read-only) ────────────────────────────────
-
-    public static List<string> ThemeOptions { get; } = new() { "dark", "light", "system" };
-    public static List<string> PresetOptions { get; } = new() { "flow-dark", "flow-light", "dracula", "nord", "catppuccin" };
-    public static List<string> FontSizeOptions { get; } = new() { "compact", "comfortable", "spacious" };
-    public static List<string> BorderRadiusOptions { get; } = new() { "sharp", "rounded", "square" };
-
-    // ─── Constructor ─────────────────────────────────────────────────
-
-    public SettingsViewModel(ConfigService configService, MainViewModel mainVm)
+    public SettingsViewModel(VoltConfig config, ConfigService configService, MainViewModel main)
     {
+        _config        = config;
         _configService = configService;
-        _mainVm = mainVm;
-        _originalConfig = mainVm.Config.Clone();
-        LoadFromConfig(mainVm.Config);
+        _main          = main;
     }
 
-    /// <summary>Populates properties from a <see cref="FlowConfig"/> instance.</summary>
-    private void LoadFromConfig(FlowConfig config)
+    // ── Theme ──────────────────────────────────────────────────────
+    public bool ThemeDark
     {
-        Theme = config.Theme;
-        Preset = config.Preset;
-        AccentColor = config.AccentColor;
-        Opacity = config.Opacity;
-        BorderRadius = config.BorderRadius;
-        FontSize = config.FontSize;
-        Shortcut = config.Shortcut;
-        ShowDetailPanel = config.ShowDetailPanel;
-        GroqApiKey = config.GroqApiKey;
+        get => _config.Theme == "dark";
+        set { if (value) SetTheme("dark"); }
+    }
+    public bool ThemeLight
+    {
+        get => _config.Theme == "light";
+        set { if (value) SetTheme("light"); }
+    }
+    public bool ThemeSystem
+    {
+        get => _config.Theme == "system";
+        set { if (value) SetTheme("system"); }
     }
 
-    /// <summary>Builds a <see cref="FlowConfig"/> from the current property values.</summary>
-    private FlowConfig BuildConfig()
+    private void SetTheme(string theme)
     {
-        return new FlowConfig
+        _config.Theme = theme;
+        Save();
+        ThemeManager.Apply(theme);
+        OnPropertyChanged(nameof(ThemeDark));
+        OnPropertyChanged(nameof(ThemeLight));
+        OnPropertyChanged(nameof(ThemeSystem));
+    }
+
+    // ── Shortcut ───────────────────────────────────────────────────
+    public string Shortcut
+    {
+        get => _config.Shortcut;
+        set
         {
-            Theme = Theme,
-            Preset = Preset,
-            AccentColor = AccentColor,
-            Opacity = Opacity,
-            BorderRadius = BorderRadius,
-            FontSize = FontSize,
-            Shortcut = Shortcut,
-            ShowDetailPanel = ShowDetailPanel,
-            GroqApiKey = GroqApiKey,
+            if (_config.Shortcut == value || string.IsNullOrWhiteSpace(value)) return;
+            _config.Shortcut = value;
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    // ── AI Provider ────────────────────────────────────────────────
+    public string[] Providers { get; } = ["groq", "gemini", "openrouter", "deepseek"];
+
+    public string AiProvider
+    {
+        get => _config.AiProvider;
+        set
+        {
+            if (_config.AiProvider == value) return;
+            _config.AiProvider = value;
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ApiKey));
+            OnPropertyChanged(nameof(AiModel));
+            OnPropertyChanged(nameof(CurrentModels));
+        }
+    }
+
+    // ── API Key (routed to current provider) ───────────────────────
+    public string ApiKey
+    {
+        get => _config.AiProvider switch
+        {
+            "gemini"     => _config.GeminiApiKey,
+            "openrouter" => _config.OpenRouterApiKey,
+            "deepseek"   => _config.DeepSeekApiKey,
+            _            => _config.GroqApiKey,
         };
-    }
-
-    // ─── Commands ────────────────────────────────────────────────────
-
-    /// <summary>Saves settings, persists to disk, and updates the main ViewModel.</summary>
-    [RelayCommand]
-    private async Task Save()
-    {
-        var newConfig = BuildConfig();
-        await _configService.SaveAsync(newConfig);
-        _mainVm.Config = newConfig;
-        _originalConfig = newConfig.Clone();
-    }
-
-    /// <summary>Reverts all changes back to the original values.</summary>
-    [RelayCommand]
-    private void Cancel()
-    {
-        LoadFromConfig(_originalConfig);
-    }
-
-    /// <summary>Resets all settings to factory defaults.</summary>
-    [RelayCommand]
-    private void Reset()
-    {
-        var defaults = new FlowConfig();
-        LoadFromConfig(defaults);
-    }
-
-    // ─── Converters ─────────────────────────────────────────────────
-
-    /// <summary>
-    /// Converts a hex colour string (e.g. "#007AFF") to a <see cref="Color"/>.
-    /// Used by the SettingsPanel XAML to display the accent-colour preview circle.
-    /// </summary>
-    public static readonly IValueConverter ColorStringConverter = new ColorStringToColorConverter();
-
-    private sealed class ColorStringToColorConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        set
         {
-            if (value is string hex && !string.IsNullOrEmpty(hex))
+            switch (_config.AiProvider)
             {
-                try
-                {
-                    return (Color)ColorConverter.ConvertFromString(hex);
-                }
-                catch
-                {
-                    return Colors.Transparent;
-                }
+                case "gemini":     _config.GeminiApiKey     = value; break;
+                case "openrouter": _config.OpenRouterApiKey = value; break;
+                case "deepseek":   _config.DeepSeekApiKey   = value; break;
+                default:           _config.GroqApiKey       = value; break;
             }
-            return Colors.Transparent;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is Color color)
-                return color.ToString();
-            return "#007AFF";
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
         }
     }
+
+    // ── AI Model ───────────────────────────────────────────────────
+    public string[] CurrentModels => _config.AiProvider switch
+    {
+        "groq"       => ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b"],
+        "gemini"     => ["gemini-2.0-flash", "gemini-2.5-pro-exp-03-25", "gemini-1.5-flash"],
+        "openrouter" => ["google/gemini-2.0-flash-001", "meta-llama/llama-3.1-8b-instruct", "deepseek/deepseek-chat"],
+        "deepseek"   => ["deepseek-chat", "deepseek-reasoner"],
+        _            => [],
+    };
+
+    public string AiModel
+    {
+        get => _config.AiProvider switch
+        {
+            "gemini"     => _config.GeminiModel,
+            "openrouter" => _config.OpenRouterModel,
+            "deepseek"   => _config.DeepSeekModel,
+            _            => _config.GroqModel,
+        };
+        set
+        {
+            switch (_config.AiProvider)
+            {
+                case "gemini":     _config.GeminiModel     = value; break;
+                case "openrouter": _config.OpenRouterModel = value; break;
+                case "deepseek":   _config.DeepSeekModel   = value; break;
+                default:           _config.GroqModel       = value; break;
+            }
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    // ── Results count ──────────────────────────────────────────────
+    public bool Results5  { get => _config.ResultsCount == 5;  set { if (value) SetCount(5);  } }
+    public bool Results8  { get => _config.ResultsCount == 8;  set { if (value) SetCount(8);  } }
+    public bool Results10 { get => _config.ResultsCount == 10; set { if (value) SetCount(10); } }
+
+    private void SetCount(int n)
+    {
+        _config.ResultsCount = n;
+        _main.Config = _config.Clone();
+        Save();
+        OnPropertyChanged(nameof(Results5));
+        OnPropertyChanged(nameof(Results8));
+        OnPropertyChanged(nameof(Results10));
+    }
+
+    // ── Toggles ────────────────────────────────────────────────────
+    public bool FileSearchEnabled
+    {
+        get => _config.FileSearchEnabled;
+        set
+        {
+            if (_config.FileSearchEnabled == value) return;
+            _config.FileSearchEnabled = value;
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ClipboardEnabled
+    {
+        get => _config.ClipboardEnabled;
+        set
+        {
+            if (_config.ClipboardEnabled == value) return;
+            _config.ClipboardEnabled = value;
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    // ── Clear usage data ───────────────────────────────────────────
+    [RelayCommand]
+    private void ClearUsageData()
+    {
+        new FrequencyService().ClearAll();
+        OnPropertyChanged(nameof(Version));
+    }
+
+    // ── Version ────────────────────────────────────────────────────
+    public string Version => "Volt v0.1.0";
+
+    // ── Persist ───────────────────────────────────────────────────
+    private void Save() => _configService.Save(_config);
 }

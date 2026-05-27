@@ -1,20 +1,35 @@
-using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows;
+using Volt.ViewModels;
 
-namespace Flow.Views;
+namespace Volt.Views;
 
 public partial class SearchBar : UserControl
 {
+    private MainViewModel? _vm;
+
     public SearchBar()
     {
         InitializeComponent();
-        Loaded += (_, _) => SearchInput.Focus();
+        DataContextChanged += OnDataContextChanged;
+        Loaded += (_, _) => FocusInput();
     }
 
-    private void SearchInput_TextChanged(object sender, TextChangedEventArgs e)
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        var hasText = !string.IsNullOrEmpty(SearchInput.Text);
-        Placeholder.Visibility = hasText ? Visibility.Collapsed : Visibility.Visible;
-        HintBadge.Visibility = hasText ? Visibility.Collapsed : Visibility.Visible;
+        _vm = e.NewValue as MainViewModel;
+    }
+
+    public void FocusInput()
+    {
+        SearchInput.Focus();
+        SearchInput.CaretIndex = SearchInput.Text.Length;
+    }
+
+    private void OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        Placeholder.Visibility = SearchInput.Text.Length == 0
+            ? Visibility.Visible : Visibility.Collapsed;
     }
 }

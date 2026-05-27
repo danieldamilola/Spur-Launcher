@@ -1,77 +1,49 @@
-namespace Flow.Models;
+namespace Volt.Models;
+
+/// <summary>Result type discriminator.</summary>
+public enum ResultType { App, File, Clipboard, Action }
 
 /// <summary>
-/// A unified search result that can represent either an application or a file.
-/// Used as the common item type for the main search list in the UI.
+/// Unified search result for apps, files, clipboard items, and built-in actions.
 /// </summary>
 public class SearchResult
 {
-    /// <summary>
-    /// Unique identifier for this result, derived from the type and path.
-    /// </summary>
-    public string Id { get; set; } = "";
+    public string Id { get; set; } = string.Empty;
+    public ResultType Type { get; set; }
 
-    /// <summary>
-    /// The kind of result: "app" or "file".
-    /// </summary>
-    public string Type { get; set; } = "";
+    /// <summary>Primary display name.</summary>
+    public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// The primary display name shown in the results list.
-    /// </summary>
-    public string Name { get; set; } = "";
+    /// <summary>Secondary line — path, description, or preview.</summary>
+    public string Subtitle { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Secondary text displayed below the name (e.g. executable path or folder).
-    /// </summary>
-    public string Subtitle { get; set; } = "";
+    /// <summary>Path used by PathToIconConverter. May be null for non-file results.</summary>
+    public string? IconPath { get; set; }
 
-    /// <summary>
-    /// Path or resource identifier for the icon to display alongside the result.
-    /// </summary>
-    public string Icon { get; set; } = "";
+    /// <summary>Lucide icon name used for non-file results (e.g. "clipboard", "zap").</summary>
+    public string? LucideIcon { get; set; }
 
-    /// <summary>
-    /// Combined relevance score from fuzzy matching and frequency ranking.
-    /// </summary>
     public double Score { get; set; }
-
-    /// <summary>
-    /// The frequency-based component of the relevance score.
-    /// </summary>
     public double FrequencyScore { get; set; }
 
-    // ---- App-specific fields ----
+    /// <summary>Whether this item is pinned by the user.</summary>
+    public bool IsPinned { get; set; }
 
-    /// <summary>
-    /// For app results, the path to the target executable.
-    /// </summary>
-    public string? ExecutablePath { get; set; }
+    // ── App-specific ──────────────────────────────────
+    public string? ExePath { get; set; }
+    public string? LnkPath { get; set; }
 
-    /// <summary>
-    /// For app results, the path to the .lnk shortcut file.
-    /// </summary>
-    public string? ShortcutPath { get; set; }
+    // ── File-specific ─────────────────────────────────
+    public string? FilePath { get; set; }
+    public string? FileExtension { get; set; }
 
-    // ---- File-specific fields ----
+    // ── Clipboard-specific ────────────────────────────
+    public string? ClipContent { get; set; }
+    public DateTime ClipTimestamp { get; set; }
 
-    /// <summary>
-    /// For file results, the absolute path to the file.
-    /// </summary>
-    public string? FullPath { get; set; }
-
-    /// <summary>
-    /// For file results, the file extension including the leading dot.
-    /// </summary>
-    public string? Extension { get; set; }
-
-    /// <summary>
-    /// For file results, a human-readable last-modified timestamp.
-    /// </summary>
-    public string? LastModified { get; set; }
-
-    /// <summary>
-    /// For file results, the file size in bytes.
-    /// </summary>
-    public long Size { get; set; }
+    // ── Action-specific ───────────────────────────────
+    public string? ActionId { get; set; }
 }
+
+/// <summary>Section header shown between groups of results (e.g. "APPLICATIONS", "FILES").</summary>
+public record SectionLabel(string Title);

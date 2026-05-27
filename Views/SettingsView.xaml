@@ -1,0 +1,395 @@
+<UserControl x:Class="Volt.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Volt.ViewModels">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20,12,20,20">
+
+            <!-- ── Theme ──────────────────────────────────────── -->
+            <Grid Height="48" Margin="0,0,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Theme"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <!-- Segmented control -->
+                <Border Grid.Column="1"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusButton}"
+                        Background="{DynamicResource SurfaceLow}"
+                        Padding="3">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="ThemeDark"
+                                     Content="Dark"
+                                     IsChecked="{Binding ThemeDark}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                        <RadioButton x:Name="ThemeLight"
+                                     Content="Light"
+                                     IsChecked="{Binding ThemeLight}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                        <RadioButton x:Name="ThemeSystem"
+                                     Content="Windows"
+                                     IsChecked="{Binding ThemeSystem}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── Shortcut ───────────────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="160"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Open shortcut"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <Border Grid.Column="1"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusSm}"
+                        Background="{DynamicResource SurfaceLow}"
+                        Padding="10,0">
+                    <TextBox Text="{Binding Shortcut, UpdateSourceTrigger=LostFocus}"
+                             VerticalAlignment="Center"
+                             FontFamily="{DynamicResource MonoFont}"
+                             FontSize="{DynamicResource FontSm}"
+                             Foreground="{DynamicResource TextPrimary}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             CaretBrush="{DynamicResource Accent}"/>
+                </Border>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── API Key ───────────────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="200"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="API key"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <Border Grid.Column="1"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusSm}"
+                        Background="{DynamicResource SurfaceLow}"
+                        Padding="10,0">
+                    <PasswordBox x:Name="ApiKeyBox"
+                                 VerticalAlignment="Center"
+                                 FontFamily="{DynamicResource MonoFont}"
+                                 FontSize="{DynamicResource FontSm}"
+                                 Foreground="{DynamicResource TextPrimary}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 PasswordChar="•"
+                                 PasswordChanged="OnApiKeyChanged"/>
+                </Border>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── Results count ──────────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Results to show"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <Border Grid.Column="1"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusButton}"
+                        Background="{DynamicResource SurfaceLow}"
+                        Padding="3">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="5"
+                                     IsChecked="{Binding Results5}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                        <RadioButton Content="8"
+                                     IsChecked="{Binding Results8}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                        <RadioButton Content="10"
+                                     IsChecked="{Binding Results10}"
+                                     Style="{StaticResource SegmentedRadio}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── File search toggle ─────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="File search"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <local:ToggleSwitch Grid.Column="1"
+                                    xmlns:local="clr-namespace:Volt.Views"
+                                    IsOn="{Binding FileSearchEnabled, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── Clipboard toggle ───────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Clipboard history"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <local:ToggleSwitch Grid.Column="1"
+                                    xmlns:local="clr-namespace:Volt.Views"
+                                    IsOn="{Binding ClipboardEnabled, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- ── Divider ────────────────────────────────────── -->
+            <Border Height="1" Background="{DynamicResource BorderStrong}" Margin="0,12"/>
+
+            <!-- ── AI Provider (advanced) ───────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="AI provider"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding Providers}"
+                          SelectedItem="{Binding AiProvider}"
+                          Width="160"
+                          VerticalAlignment="Center"
+                          FontFamily="{DynamicResource UIFont}"
+                          FontSize="{DynamicResource FontSm}"
+                          Foreground="{DynamicResource TextPrimary}"
+                          Background="{DynamicResource SurfaceLow}"
+                          BorderBrush="{DynamicResource BorderBrush}"/>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- ── AI Model ───────────────────────────────────── -->
+            <Grid Height="48">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="AI model"
+                           VerticalAlignment="Center"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding CurrentModels}"
+                          SelectedItem="{Binding AiModel}"
+                          Width="260"
+                          VerticalAlignment="Center"
+                          FontFamily="{DynamicResource UIFont}"
+                          FontSize="{DynamicResource FontSm}"
+                          Foreground="{DynamicResource TextPrimary}"
+                          Background="{DynamicResource SurfaceLow}"
+                          BorderBrush="{DynamicResource BorderBrush}"/>
+            </Grid>
+
+            <!-- ── Divider ────────────────────────────────────── -->
+            <Border Height="1" Background="{DynamicResource BorderStrong}" Margin="0,12"/>
+
+            <!-- ── Keyboard shortcuts ────────────────────────── -->
+            <TextBlock Text="Shortcuts"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextMuted}"
+                       Margin="0,0,0,6"/>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="↑↓" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Navigate results" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Enter" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Open selected item" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Ctrl+Enter" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Open file location" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Ctrl+Shift+Enter" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Run as administrator" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Tab" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Cycle category filters" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Ctrl+P" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Pin / unpin clipboard item" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Ctrl+, (comma)" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Open / close settings" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Ctrl+1/2/3/4" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Jump to Apps/Files/Clipboard/Actions" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Esc" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Clear query / close window" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Right-click" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Context menu on results" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+
+            <!-- ── Built-in Actions ──────────────────────────── -->
+            <TextBlock Text="Actions"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextMuted}"
+                       Margin="0,12,0,6"/>
+            <TextBlock Text="Type these directly in the search bar. Press the ⚡ (Actions) filter button to see only actions."
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontSm}"
+                       Foreground="{DynamicResource TextMuted}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,8"/>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="ai your question" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="AI assistant (press Enter to ask)" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="2+2, 10*5%" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Calculator" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="#FF5733, #abc" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Color picker (HEX → RGB, HSL)" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="timer 10m, timer 30s" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Countdown timer (s/m/h)" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="ip" FontFamily="{DynamicResource MonoFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Show local + public IP address" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
+            </Grid>
+
+            <!-- ── Divider ────────────────────────────────────── -->
+            <Border Height="1" Background="{DynamicResource BorderStrong}" Margin="0,12"/>
+
+            <!-- ── Clear usage data ───────────────────────────── -->
+            <Grid Height="48">
+                <Button Content="Clear usage data"
+                        HorizontalAlignment="Left"
+                        Foreground="{DynamicResource Red}"
+                        Command="{Binding ClearUsageDataCommand}"/>
+            </Grid>
+
+            <!-- ── Version ────────────────────────────────────── -->
+            <TextBlock Text="{Binding Version}"
+                       HorizontalAlignment="Right"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       Foreground="{DynamicResource TextMuted}"
+                       Margin="0,8,0,0"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

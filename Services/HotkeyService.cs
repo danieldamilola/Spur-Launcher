@@ -1,57 +1,53 @@
 using System.Runtime.InteropServices;
-using System.Windows.Input;
+using System.Windows.Interop;
 
-namespace Flow.Services;
+namespace Volt.Services;
 
 /// <summary>
-/// Registers and handles a global hotkey via the Windows API.
+/// Registers a system-wide hotkey via Win32 RegisterHotKey and dispatches
+/// it to a callback. Cleans up automatically via IDisposable.
 /// </summary>
-public class HotkeyService : IDisposable
+public sealed class HotkeyService : IDisposable
 {
-    private const int WM_HOTKEY = 0x0312;
+    private const int WmHotkey = 0x0312;
+    private const uint ModAlt  = 0x0001;
+    private const uint ModCtrl = 0x0002;
+    private const uint ModShift = 0x0004;
+    private const uint ModWin  = 0x0008;
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
     private IntPtr _hwnd;
-    private int _hotkeyId;
+    private int _id;
     private Action? _callback;
+    private HwndSource? _source;
     private bool _disposed;
 
-    /// <summary>
-    /// Registers a global hotkey that invokes the callback when pressed.
-    /// </summary>
-    public void RegisterHotkey(ModifierKeys modifier, Key key, Action onPressed)
+    /// <summary>Registers the hotkey described by <paramref name="shortcutString"/> (e.g. "Alt+Space").</summary>
+    public bool Register(IntPtr hwnd, string shortcutString, Action callback)
     {
-        _callback = onPressed;
+        _hwnd = hwnd;
+        _callback = callback;
+        _id = GetHashCode();
 
-        // Get the handle from the main window once the application is running
-        var mainWindow = Application.Current?.MainWindow;
-        if (mainWindow == null)
-            return;
+        ParseShortcut(shortcutString, out var mod, out var vk);
 
-        _hwnd = new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle;
-        _hotkeyId = GetHashCode();
+        var ok = RegisterHotKey(hwnd, _id, mod, vk);
+        if (!ok)
+            Debug.WriteLine($"[Volt] RegisterHotKey failed for '{shortcutString}' (may already be registered).");
 
-        uint mod = (uint)ModifierKeysToWin32(modifier);
-        uint vk = (uint)KeyInterop.VirtualKeyFromKey(key);
-
-        RegisterHotKey(_hwnd, _hotkeyId, mod, vk);
-
-        // Hook into the main window's message loop
-        var source = System.Windows.Interop.HwndSource.FromHwnd(_hwnd);
-        if (source != null)
-        {
-            source.AddHook(HwndHook);
-        }
+        _source = HwndSource.FromHwnd(hwnd);
+        _source?.AddHook(Hook);
+        return ok;
     }
 
-    private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WM_HOTKEY && wParam.ToInt32() == _hotkeyId)
+        if (msg == WmHotkey && wParam.ToInt32() == _id)
         {
             _callback?.Invoke();
             handled = true;
@@ -59,26 +55,35 @@ public class HotkeyService : IDisposable
         return IntPtr.Zero;
     }
 
-    private static int ModifierKeysToWin32(ModifierKeys modifier)
+    private static void ParseShortcut(string s, out uint mod, out uint vk)
     {
-        int mod = 0;
-        if ((modifier & ModifierKeys.Alt) == ModifierKeys.Alt)
-            mod |= 0x0001; // MOD_ALT
-        if ((modifier & ModifierKeys.Control) == ModifierKeys.Control)
-            mod |= 0x0002; // MOD_CONTROL
-        if ((modifier & ModifierKeys.Shift) == ModifierKeys.Shift)
-            mod |= 0x0004; // MOD_SHIFT
-        if ((modifier & ModifierKeys.Windows) == ModifierKeys.Windows)
-            mod |= 0x0008; // MOD_WIN
-        return mod;
+        mod = 0;
+        vk  = 0;
+
+        foreach (var part in s.Split('+'))
+        {
+            var token = part.Trim().ToLowerInvariant();
+            switch (token)
+            {
+                case "alt":   mod |= ModAlt;   break;
+                case "ctrl":  mod |= ModCtrl;  break;
+                case "shift": mod |= ModShift; break;
+                case "win":   mod |= ModWin;   break;
+                default:
+                    var key = Enum.TryParse<Key>(part.Trim(), true, out var k) ? k : Key.None;
+                    if (key != Key.None)
+                        vk = (uint)KeyInterop.VirtualKeyFromKey(key);
+                    break;
+            }
+        }
     }
 
     public void Dispose()
     {
-        if (!_disposed && _hwnd != IntPtr.Zero)
-        {
-            UnregisterHotKey(_hwnd, _hotkeyId);
-            _disposed = true;
-        }
+        if (_disposed) return;
+        _source?.RemoveHook(Hook);
+        if (_hwnd != IntPtr.Zero)
+            UnregisterHotKey(_hwnd, _id);
+        _disposed = true;
     }
 }

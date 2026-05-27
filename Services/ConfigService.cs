@@ -1,54 +1,53 @@
-using System.Text.Json;
-using Flow.Models;
+namespace Volt.Services;
 
-namespace Flow.Services;
-
-public class ConfigService
+/// <summary>
+/// Reads and writes <see cref="VoltConfig"/> as JSON to
+/// <c>%LocalAppData%\Volt\volt.config.json</c>.
+/// </summary>
+public sealed class ConfigService
 {
-    private readonly string _configPath;
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    private readonly string _path;
 
     public ConfigService()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var dir = Path.Combine(appData, "Flow");
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Volt");
         Directory.CreateDirectory(dir);
-        _configPath = Path.Combine(dir, "flow.config.json");
+        _path = Path.Combine(dir, "volt.config.json");
     }
 
-    public FlowConfig Load()
+    public VoltConfig Load()
     {
         try
         {
-            if (File.Exists(_configPath))
+            if (File.Exists(_path))
             {
-                var json = File.ReadAllText(_configPath);
-                return JsonSerializer.Deserialize<FlowConfig>(json) ?? new FlowConfig();
+                var json = File.ReadAllText(_path);
+                return JsonSerializer.Deserialize<VoltConfig>(json) ?? new VoltConfig();
             }
         }
-        catch { }
+        catch { /* corrupt file — return defaults */ }
 
-        var defaults = new FlowConfig();
+        var defaults = new VoltConfig();
         Save(defaults);
         return defaults;
     }
 
-    public void Save(FlowConfig config)
+    public void Save(VoltConfig config)
     {
         try
         {
-            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_configPath, json);
+            File.WriteAllText(_path, JsonSerializer.Serialize(config, JsonOptions));
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Volt] Config save failed: {ex.Message}");
+        }
     }
 
-    public async Task<FlowConfig> LoadAsync()
-    {
-        return await Task.Run(Load);
-    }
-
-    public async Task SaveAsync(FlowConfig config)
-    {
-        await Task.Run(() => Save(config));
-    }
+    public Task<VoltConfig> LoadAsync() => Task.Run(Load);
+    public Task SaveAsync(VoltConfig config) => Task.Run(() => Save(config));
 }

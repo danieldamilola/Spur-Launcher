@@ -1,12 +1,20 @@
-using System.Windows;
-using System.Windows.Controls;
-using Flow.ViewModels;
+using System.Windows.Controls.Primitives;
+using Volt.ViewModels;
 
-namespace Flow.Views;
+namespace Volt.Views;
+
+/// <summary>DataTemplateSelector that routes SectionLabel vs SearchResult.</summary>
+public sealed class ResultTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate? SectionTemplate { get; set; }
+    public DataTemplate? ResultTemplate  { get; set; }
+
+    public override DataTemplate? SelectTemplate(object item, DependencyObject container)
+        => item is SectionLabel ? SectionTemplate : ResultTemplate;
+}
 
 public partial class ResultsList : UserControl
 {
-    private MainViewModel? _vm;
     private int _lastSelectedIndex = -1;
 
     public ResultsList()
@@ -17,81 +25,163 @@ public partial class ResultsList : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (_vm is not null)
-            _vm.PropertyChanged -= OnVmPropertyChanged;
-
-        _vm = e.NewValue as MainViewModel;
-
-        if (_vm is not null)
-            _vm.PropertyChanged += OnVmPropertyChanged;
+        if (e.OldValue is MainViewModel old)
+            old.PropertyChanged -= OnVmChanged;
+        if (e.NewValue is MainViewModel vm)
+            vm.PropertyChanged += OnVmChanged;
     }
 
-    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.SelectedIndex))
             Dispatcher.InvokeAsync(UpdateSelection);
-
-        if (e.PropertyName is nameof(MainViewModel.Results) or nameof(MainViewModel.Query))
-            Dispatcher.InvokeAsync(UpdateEmptyState);
     }
 
-    private void UpdateEmptyState()
-    {
-        if (_vm is null) return;
-
-        bool hasResults  = _vm.Results.Count > 0;
-        bool hasQuery    = !string.IsNullOrWhiteSpace(_vm.Query);
-
-        ResultsScroll.Visibility  = hasResults ? Visibility.Visible   : Visibility.Collapsed;
-        EmptyState.Visibility     = (!hasResults && !hasQuery) ? Visibility.Visible : Visibility.Collapsed;
-        NoResultsState.Visibility = (!hasResults && hasQuery)  ? Visibility.Visible : Visibility.Collapsed;
-
-        if (!hasResults && hasQuery)
-            NoResultsText.Text = $"No results for \"{_vm.Query}\"";
-    }
-
+    // ── Selection visual update ───────────────────────────────────
     private void UpdateSelection()
     {
-        if (_vm is null) return;
+        if (DataContext is not MainViewModel vm) return;
+        int newIdx = vm.SelectedIndex;
 
-        var panel = GetItemsPanel();
-        if (panel is null) return;
+        Deselect(_lastSelectedIndex);
+        Select(newIdx);
+        _lastSelectedIndex = newIdx;
+    }
 
-        int newIndex = _vm.SelectedIndex;
+    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // ListBox selection changed — sync visuals
+        if (ResultsBox.SelectedIndex >= 0)
+            UpdateSelection();
+    }
 
-        // Clear previous
-        if (_lastSelectedIndex >= 0 && _lastSelectedIndex < panel.Children.Count)
+    private void Select(int index)
+    {
+        var container = GetContainer(index);
+        if (container is null) return;
+
+        SetRowState(container, selected: true);
+        container.BringIntoView();
+    }
+
+    private void Deselect(int index)
+    {
+        var container = GetContainer(index);
+        if (container is not null)
+            SetRowState(container, selected: false);
+    }
+
+    private FrameworkElement? GetContainer(int index)
+    {
+        if (index < 0) return null;
+        return ResultsBox.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement;
+    }
+
+    private static void SetRowState(FrameworkElement container, bool selected)
+    {
+        // Walk down to find named elements in the DataTemplate
+        var rowBg      = FindChild<Border>(container,    "RowBg");
+        var accentRail = FindChild<Border>(container,    "AccentRail");
+        var enterHint  = FindChild<Border>(container,    "EnterHint");
+        var nameText   = FindChild<TextBlock>(container, "NameText");
+        var subtitle   = FindChild<TextBlock>(container, "SubtitleText");
+
+        if (rowBg is null) return;
+
+        var selectedBg   = Res("SelectedBg")      as Brush ?? Brushes.White;
+        var selectedText = Res("SelectedText")    as Brush ?? Brushes.Black;
+        var selectedMuted= Res("SelectedMuted")   as Brush ?? Brushes.Gray;
+        var primaryText  = Res("TextPrimary")     as Brush ?? Brushes.White;
+        var secondaryText= Res("TextSecondary")   as Brush ?? Brushes.Gray;
+        var accent       = Res("Accent")          as Brush ?? Brushes.Blue;
+
+        rowBg.Background = selected ? selectedBg : Brushes.Transparent;
+
+        if (nameText  is not null)
+            nameText.Foreground = selected ? selectedText : primaryText;
+
+        if (subtitle is not null)
         {
-            if (panel.Children[_lastSelectedIndex] is ResultItem old)
-                old.SetSelected(false);
+            subtitle.Foreground  = selected ? selectedMuted : secondaryText;
+            subtitle.Visibility  = selected ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // Apply new
-        if (newIndex >= 0 && newIndex < panel.Children.Count)
+        if (accentRail is not null)
+            accentRail.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+
+        if (enterHint is not null)
+            enterHint.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnRowMouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is not FrameworkElement row) return;
+        var rowBg    = FindChild<Border>(row, "RowBg");
+        var hint     = FindChild<Border>(row, "EnterHint");
+        var subtitle = FindChild<TextBlock>(row, "SubtitleText");
+
+        if (IsRowSelected(row)) return;
+
+        if (rowBg is not null)
+            rowBg.Background = Res("HoverBg") as Brush ?? Brushes.Transparent;
+        if (hint is not null)     hint.Visibility    = Visibility.Visible;
+        if (subtitle is not null) subtitle.Visibility = Visibility.Visible;
+    }
+
+    private void OnRowMouseLeave(object sender, MouseEventArgs e)
+    {
+        if (sender is not FrameworkElement row) return;
+        if (IsRowSelected(row)) return;
+
+        var rowBg    = FindChild<Border>(row, "RowBg");
+        var hint     = FindChild<Border>(row, "EnterHint");
+        var subtitle = FindChild<TextBlock>(row, "SubtitleText");
+
+        if (rowBg is not null)    rowBg.Background     = Brushes.Transparent;
+        if (hint is not null)     hint.Visibility       = Visibility.Collapsed;
+        if (subtitle is not null) subtitle.Visibility   = Visibility.Collapsed;
+    }
+
+    private void OnRowClick(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        if (sender is not FrameworkElement row) return;
+
+        // Find which index this row corresponds to
+        var item = (row as Grid)?.DataContext ?? row.DataContext;
+        for (int i = 0; i < vm.Results.Count; i++)
         {
-            if (panel.Children[newIndex] is ResultItem item)
+            if (ReferenceEquals(vm.Results[i], item))
             {
-                item.SetSelected(true);
-                item.BringIntoView();
+                vm.SelectedIndex = i;
+                vm.OpenSelectedCommand.Execute(null);
+                return;
             }
         }
-
-        _lastSelectedIndex = newIndex;
     }
 
-    private System.Windows.Controls.Panel? GetItemsPanel()
+    private bool IsRowSelected(FrameworkElement row)
     {
-        if (ResultsItems.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
-            return null;
+        if (DataContext is not MainViewModel vm) return false;
+        var item = (row as Grid)?.DataContext ?? row.DataContext;
+        return vm.SelectedIndex >= 0 &&
+               vm.SelectedIndex < vm.Results.Count &&
+               ReferenceEquals(vm.Results[vm.SelectedIndex], item);
+    }
 
-        // Try named template part first
-        if (ResultsItems.Template?.FindName("ItemsHost", ResultsItems) is System.Windows.Controls.Panel namedPanel)
-            return namedPanel;
-
-        // Fall back: walk up from first container
-        if (ResultsItems.ItemContainerGenerator.ContainerFromIndex(0) is FrameworkElement fe)
-            return System.Windows.Media.VisualTreeHelper.GetParent(fe) as System.Windows.Controls.Panel;
-
+    // ── Tree helpers ─────────────────────────────────────────────
+    private static T? FindChild<T>(DependencyObject parent, string name) where T : FrameworkElement
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T fe && fe.Name == name) return fe;
+            var found = FindChild<T>(child, name);
+            if (found is not null) return found;
+        }
         return null;
     }
+
+    private static object? Res(string key) =>
+        Application.Current.TryFindResource(key);
 }
