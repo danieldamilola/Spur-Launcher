@@ -4,8 +4,13 @@ using System.Runtime.InteropServices.ComTypes;
 namespace Volt.Services;
 
 /// <summary>
-/// Discovers installed applications from Windows Start Menu shortcuts.
-/// Resolves .lnk files using COM IShellLink to get the real executable path.
+/// Discovers user-facing installed applications exclusively from Windows Start Menu
+/// .lnk shortcuts. This is the canonical list of everything a user would ever click
+/// to launch — classic desktop apps, Windows system tools, and modern UWP apps.
+///
+/// No registry scanning, no PATH enumeration, no COM shell folder enumeration.
+/// Those sources add hundreds of system executables, CLI tools, background
+/// processes, and framework packages that users never need to see.
 /// </summary>
 public sealed class AppDiscoveryService
 {
@@ -15,7 +20,74 @@ public sealed class AppDiscoveryService
         Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
     ];
 
-    // COM GUIDs for IShellLink
+    /// <summary>Top-level Desktop .lnk shortcuts (non-recursive).</summary>
+    private static readonly string DesktopPath =
+        Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+    private static readonly string[] StartUpPaths =
+    [
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup),
+        Environment.GetFolderPath(Environment.SpecialFolder.Startup),
+    ];
+
+    // ── Uninstaller file names (exact match) ──────────────────────
+    private static readonly HashSet<string> UninstallerExes =
+        new(StringComparer.OrdinalIgnoreCase)
+    {
+        "uninst.exe", "unins000.exe", "uninst000.exe", "uninstall.exe",
+        "unwise.exe", "unwise32.exe",
+    };
+
+    // ── Shortcut names that are never real apps ───────────────────
+    private static readonly HashSet<string> JunkNames =
+        new(StringComparer.OrdinalIgnoreCase)
+    {
+        "uninstall", "help", "readme", "license", "licence",
+        "changelog", "what's new", "getting started", "user guide",
+        "documentation", "user manual", "quick start", "tutorial",
+        "website", "home page", "online support", "visit our website",
+        "support", "technical support", "customer support",
+        "diagnostics", "repair", "configure", "configuration",
+        "registration", "register", "activate",
+        "update", "check for updates", "upgrade",
+        "release notes", "known issues", "troubleshooting",
+        "order", "buy now", "purchase",
+        "send feedback", "rate this app", "survey",
+    };
+
+    // ── .lnk target executables that are never user apps ──────────
+    private static readonly HashSet<string> NonAppTargets =
+        new(StringComparer.OrdinalIgnoreCase)
+    {
+        "rundll32.exe", "control.exe", "mmc.exe", "regedit.exe",
+        "cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe",
+        "cscript.exe", "mshta.exe", "msiexec.exe", "taskmgr.exe",
+        "explorer.exe",
+        "dxdiag.exe", "winver.exe", "charmap.exe",
+        "cleanmgr.exe", "diskpart.exe", "diskmgmt.msc",
+        "services.msc", "devmgmt.msc", "eventvwr.msc",
+        "perfmon.msc", "taskschd.msc", "gpedit.msc",
+        "secpol.msc", "compmgmt.msc", "wf.msc",
+    };
+
+    // ── Well-known Windows apps to keep (others in System32/WindowsApps are blocked) ──
+    private static readonly HashSet<string> AllowedWindowsApps =
+        new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Snipping Tool", "Notepad", "Settings", "Windows Security", "Windows Defender",
+        "Calculator", "File Explorer", "Windows Terminal", "Terminal",
+        "PowerShell", "PowerShell 7", "Paint", "WordPad",
+        "Command Prompt", "Control Panel",
+    };
+
+    // ── Cache ─────────────────────────────────────────────────────
+    private static readonly string CachePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Volt", "volt.catalog.json");
+
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
+
+    // ── COM IShellLink ────────────────────────────────────────────
     [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
     private class ShellLink { }
 
@@ -57,71 +129,54 @@ public sealed class AppDiscoveryService
         void GetCurFile([Out, MarshalAs(UnmanagedType.LPWStr)] out string ppszFileName);
     }
 
-    /// <summary>Loads all Start Menu .lnk files and resolves their target executables.</summary>
+    // ══════════════════════════════════════════════════════════════
+    // Public
+    // ══════════════════════════════════════════════════════════════
+
     public Task<List<SearchResult>> DiscoverAsync()
     {
-        // COM interop needs STA — Task.Run uses MTA threads
         var tcs = new TaskCompletionSource<List<SearchResult>>();
         var thread = new Thread(() =>
         {
-            try { tcs.SetResult(Discover()); }
+            try
+            {
+                var cached = LoadCache();
+                if (cached is { Count: > 0 })
+                {
+                    tcs.SetResult(cached);
+                    ThreadPool.QueueUserWorkItem(_ =>
+                    {
+                        try { SaveCache(DiscoverAll()); }
+                        catch { }
+                    });
+                }
+                else
+                {
+                    var fresh = DiscoverAll();
+                    SaveCache(fresh);
+                    tcs.SetResult(fresh);
+                }
+            }
             catch (Exception ex) { tcs.SetException(ex); }
         })
-        {
-            IsBackground = true,
-        };
+        { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         return tcs.Task;
     }
 
-    private List<SearchResult> Discover()
+    // ── .lnk resolve result ───────────────────────────────────────
+    private sealed record LnkInfo(string TargetPath, bool IsUwp);
+
+    // ══════════════════════════════════════════════════════════════
+    // Discovery
+    // ══════════════════════════════════════════════════════════════
+
+    private static List<SearchResult> DiscoverAll()
     {
         var results = new List<SearchResult>();
-        // Track UWP AUMIDs to avoid adding the same UWP app twice
-        var seenUwp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        // Track names so we can replace UWP entries with richer .lnk entries when both exist
-        var byName  = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // 1. Discover UWP and modern apps via shell:AppsFolder
-        try
-        {
-            Type? shellType = Type.GetTypeFromProgID("Shell.Application");
-            if (shellType is not null)
-            {
-                dynamic shell = Activator.CreateInstance(shellType)!;
-                dynamic folder = shell.NameSpace("shell:::{4234d49b-0245-4df3-b780-3893943456e1}");
-                if (folder is not null)
-                {
-                    foreach (dynamic item in folder.Items())
-                    {
-                        string name = item.Name;
-                        string path = item.Path; // This is the AppUserModelId
-                        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(path)) continue;
-                        if (!seenUwp.Add(path)) continue;
-
-                        var result = new SearchResult
-                        {
-                            Id       = $"app:{path}",
-                            Type     = ResultType.App,
-                            Name     = name,
-                            Subtitle = "App",
-                            IconPath = null,
-                            ExePath  = @"shell:AppsFolder\" + path,
-                        };
-
-                        results.Add(result);
-                        byName[name] = results.Count - 1;
-                    }
-                }
-            }
-        }
-        catch (InvalidCastException) { /* COM interface not registered — skip UWP */ }
-        catch (COMException)          { /* COM error — skip UWP */           }
-        catch { /* ignore other errors in COM shell extraction */ }
-
-        // 2. Discover classic Start Menu shortcuts
-        var seenLnk = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var root in StartMenuPaths)
         {
             if (!Directory.Exists(root)) continue;
@@ -130,47 +185,242 @@ public sealed class AppDiscoveryService
             {
                 try
                 {
-                    var exePath = ResolveLnk(lnk);
+                    var info = ResolveLnk(lnk);
+                    var exePath = info.TargetPath;
                     if (string.IsNullOrEmpty(exePath)) continue;
 
                     var name = Path.GetFileNameWithoutExtension(lnk);
-                    if (name.Contains("Uninstall", StringComparison.OrdinalIgnoreCase)) continue;
-                    if (name.StartsWith("—", StringComparison.Ordinal)) continue;
+                    var folder = Path.GetFileName(Path.GetDirectoryName(lnk)) ?? "";
 
-                    // Deduplicate .lnk shortcuts by exe path
-                    if (!seenLnk.Add(exePath)) continue;
+                    // ── Aggressive filtering ──────────────────────
 
-                    var result = new SearchResult
+                    // Skip junk shortcut names
+                    if (JunkNames.Contains(name)) continue;
+
+                    // Skip uninstallers by exe filename
+                    var exeFile = Path.GetFileName(exePath);
+                    if (UninstallerExes.Contains(exeFile)) continue;
+
+                    // Skip uninstaller prefixes (multi-language)
+                    if (IsUninstallerByName(name)) continue;
+
+                    // Skip startup entries
+                    if (IsStartupEntry(lnk)) continue;
+
+                    // Skip shortcuts that resolve to non-user-app launchers.
+                    // UWP apps launch via explorer.exe — allow those through.
+                    if (!info.IsUwp && NonAppTargets.Contains(exeFile)) continue;
+
+                    // Skip anything in a Documentation, Help, or Manuals folder
+                    if (folder.Contains("ocument", StringComparison.OrdinalIgnoreCase) ||
+                        folder.Contains("help", StringComparison.OrdinalIgnoreCase) ||
+                        folder.Contains("manual", StringComparison.OrdinalIgnoreCase) ||
+                        folder.StartsWith("—", StringComparison.Ordinal)) continue;
+
+                    var ext = Path.GetExtension(exePath);
+                    if (!string.IsNullOrEmpty(ext))
+                    {
+                        var extLower = ext.ToLowerInvariant();
+                        if (extLower is not (".exe" or ".lnk" or ".msc" or ".bat" or ".cmd" or ".com"))
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Filter Windows/System clutter.
+                    // UWP apps live under WindowsApps — allow those through.
+                    // Allow well-known Windows apps.
+                    if (!info.IsUwp)
+                    {
+                        bool isSystemApp = exePath.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase) ||
+                                           exePath.Contains("System32", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("Windows Administrative Tools", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("Windows System", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("Windows Accessories", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("Windows PowerShell", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("System Tools", StringComparison.OrdinalIgnoreCase) ||
+                                           lnk.Contains("Accessibility", StringComparison.OrdinalIgnoreCase);
+
+                        if (isSystemApp && !AllowedWindowsApps.Contains(name))
+                            continue;
+                    }
+
+                    // Deduplicate by Name instead of exe path to prevent duplicate entries
+                    var key = name.ToLowerInvariant();
+                    if (!seen.Add(key)) continue;
+
+                    // For UWP apps the .lnk is the canonical source for icons
+                    // (resolves through the AppUserModelId). For Win32 apps the .exe
+                    // target gives the real icon without shortcut overlay.
+                    var iconPath = info.IsUwp ? lnk : exePath;
+
+                    results.Add(new SearchResult
                     {
                         Id       = $"app:{exePath}",
                         Type     = ResultType.App,
                         Name     = name,
                         Subtitle = exePath,
-                        IconPath = exePath,
+                        IconPath = iconPath,
                         ExePath  = exePath,
                         LnkPath  = lnk,
-                    };
-
-                    // If a UWP entry with the same name exists, replace it (lnk has richer metadata + icon)
-                    if (byName.TryGetValue(name, out var idx))
-                    {
-                        results[idx] = result;
-                        byName[name] = idx;
-                    }
-                    else
-                    {
-                        results.Add(result);
-                        byName[name] = results.Count - 1;
-                    }
+                    });
                 }
-                catch { /* skip invalid shortcuts */ }
+                catch { }
             }
         }
 
+        // ── Desktop shortcuts (top-level only) ─────────────────
+        if (Directory.Exists(DesktopPath))
+        {
+            foreach (var lnk in Directory.EnumerateFiles(DesktopPath, "*.lnk", SearchOption.TopDirectoryOnly))
+            {
+                try
+                {
+                    var info = ResolveLnk(lnk);
+                    var exePath = info.TargetPath;
+                    if (string.IsNullOrEmpty(exePath)) continue;
+
+                    var name = Path.GetFileNameWithoutExtension(lnk);
+
+                    if (JunkNames.Contains(name)) continue;
+
+                    var exeFile = Path.GetFileName(exePath);
+                    if (UninstallerExes.Contains(exeFile)) continue;
+                    if (IsUninstallerByName(name)) continue;
+                    if (!info.IsUwp && NonAppTargets.Contains(exeFile)) continue;
+
+                    var ext = Path.GetExtension(exePath);
+                    if (!string.IsNullOrEmpty(ext))
+                    {
+                        var extLower = ext.ToLowerInvariant();
+                        if (extLower is not (".exe" or ".lnk" or ".msc" or ".bat" or ".cmd" or ".com"))
+                            continue;
+                    }
+
+                    // Deduplicate
+                    var key = name.ToLowerInvariant();
+                    if (!seen.Add(key)) continue;
+
+                    var iconPath = info.IsUwp ? lnk : exePath;
+
+                    results.Add(new SearchResult
+                    {
+                        Id       = $"app:{exePath}",
+                        Type     = ResultType.App,
+                        Name     = name,
+                        Subtitle = exePath,
+                        IconPath = iconPath,
+                        ExePath  = exePath,
+                        LnkPath  = lnk,
+                    });
+                }
+                catch { }
+            }
+        }
+
+        // ── %LocalAppData%\Programs scan (apps without Start Menu shortcuts) ──
+        DiscoverLocalPrograms(results, seen);
+
+        // Sort alphabetically by name
+        results.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         return results;
     }
 
-    private static string ResolveLnk(string lnkPath)
+    // ── LocalAppData\Programs scan ──────────────────────────────
+
+    private static readonly string _localAppsPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Programs");
+
+    private static void DiscoverLocalPrograms(List<SearchResult> results, HashSet<string> seen)
+    {
+        if (!Directory.Exists(_localAppsPath)) return;
+
+        foreach (var appDir in Directory.EnumerateDirectories(_localAppsPath))
+        {
+            try
+            {
+                var dirName = Path.GetFileName(appDir);
+
+                // Find best .exe: prefer one matching the directory name
+                var exes = Directory.EnumerateFiles(appDir, "*.exe", SearchOption.TopDirectoryOnly)
+                    .Where(e => !UninstallerExes.Contains(Path.GetFileName(e)))
+                    .ToList();
+
+                if (exes.Count == 0) continue;
+
+                var bestExe = exes.FirstOrDefault(e =>
+                    Path.GetFileNameWithoutExtension(e).Equals(dirName, StringComparison.OrdinalIgnoreCase))
+                    ?? exes[0];
+
+                var appName = Path.GetFileNameWithoutExtension(bestExe);
+
+                if (JunkNames.Contains(appName)) continue;
+                if (IsUninstallerByName(appName)) continue;
+                if (NonAppTargets.Contains(Path.GetFileName(bestExe))) continue;
+
+                var key = appName.ToLowerInvariant();
+                if (!seen.Add(key)) continue;
+
+                results.Add(new SearchResult
+                {
+                    Id       = $"app:{bestExe}",
+                    Type     = ResultType.App,
+                    Name     = appName,
+                    Subtitle = bestExe,
+                    IconPath = bestExe,
+                    ExePath  = bestExe,
+                });
+            }
+            catch { }
+        }
+    }
+
+    // ── Filters ───────────────────────────────────────────────────
+
+    private static bool IsUninstallerByName(string name)
+    {
+        // English + common patterns
+        if (name.StartsWith("Uninstall", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Multi-language uninstaller prefixes
+        string[] prefixes =
+        [
+            "卸载", "卸載", "видалити", "удалить", "désinstaller",
+            "アンインストール", "deïnstalleren", "odinstaluj",
+            "afinstallere", "deinstallieren", "삭제", "деинсталирај",
+            "desinstalar", "disinstallare", "avinstallere",
+            "odinštalovať", "kaldır", "odinstalovat",
+            "إلغاء التثبيت", "gỡ bỏ", "הסרה",
+        ];
+
+        foreach (var p in prefixes)
+            if (name.StartsWith(p, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+        return false;
+    }
+
+    private static bool IsStartupEntry(string lnkPath)
+    {
+        foreach (var dir in StartUpPaths)
+        {
+            if (!Directory.Exists(dir)) continue;
+            if (lnkPath.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolves a .lnk shortcut to its target path and detects whether
+    /// it is a UWP / Microsoft Store app (launched via explorer.exe
+    /// shell:AppsFolder or living under WindowsApps).
+    /// </summary>
+    private static LnkInfo ResolveLnk(string lnkPath)
     {
         try
         {
@@ -180,13 +430,69 @@ public sealed class AppDiscoveryService
 
             var sb = new StringBuilder(260);
             link.GetPath(sb, sb.Capacity, IntPtr.Zero, 0);
-            var path = sb.ToString();
+            var target = sb.ToString();
 
-            return string.IsNullOrWhiteSpace(path) ? lnkPath : path;
+            if (string.IsNullOrWhiteSpace(target))
+                target = lnkPath;
+
+            // Detect UWP / Store apps:
+            //   - Target is explorer.exe with shell:AppsFolder arguments
+            //   - Target lives inside C:\Program Files\WindowsApps
+            bool isUwp = false;
+            var targetFile = Path.GetFileName(target);
+            if (targetFile.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                var argsSb = new StringBuilder(260);
+                link.GetArguments(argsSb, argsSb.Capacity);
+                if (argsSb.ToString().Contains("shell:AppsFolder", StringComparison.OrdinalIgnoreCase))
+                    isUwp = true;
+            }
+            else if (target.Contains("WindowsApps", StringComparison.OrdinalIgnoreCase))
+            {
+                isUwp = true;
+            }
+
+            return new LnkInfo(target, isUwp);
         }
         catch
         {
-            return lnkPath;
+            return new LnkInfo(lnkPath, false);
         }
+    }
+
+    // ── Cache ─────────────────────────────────────────────────────
+
+    private static List<SearchResult>? LoadCache()
+    {
+        try
+        {
+            if (!File.Exists(CachePath)) return null;
+            // Invalidate stale cache so newly installed apps are picked up
+            if ((DateTime.Now - File.GetLastWriteTime(CachePath)).TotalHours > 1)
+                return null;
+            return JsonSerializer.Deserialize<List<SearchResult>>(
+                File.ReadAllText(CachePath));
+        }
+        catch { return null; }
+    }
+
+    private static void SaveCache(List<SearchResult> catalog)
+    {
+        try
+        {
+            File.WriteAllText(CachePath,
+                JsonSerializer.Serialize(catalog, JsonOpts));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Volt] Cache save failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>Deletes the on-disk catalog so the next <see cref="DiscoverAsync"/> call runs a full scan.</summary>
+    public static void ClearCache()
+    {
+        try { if (File.Exists(CachePath)) File.Delete(CachePath); }
+        catch { }
     }
 }

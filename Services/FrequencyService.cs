@@ -6,7 +6,7 @@ namespace Volt.Services;
 /// </summary>
 public sealed class FrequencyService
 {
-    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 
     private readonly string _path;
     private readonly Dictionary<string, int> _counts = new(StringComparer.OrdinalIgnoreCase);

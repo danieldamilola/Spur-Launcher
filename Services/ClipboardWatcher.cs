@@ -21,6 +21,8 @@ public sealed class ClipboardWatcher : IDisposable
     private IntPtr _hwnd;
     private HwndSource? _source;
     private bool _disposed;
+    private string? _lastText;
+    private System.Windows.Media.Imaging.BitmapSource? _lastImage;
 
     public void Attach(IntPtr hwnd)
     {
@@ -34,9 +36,27 @@ public sealed class ClipboardWatcher : IDisposable
     {
         if (msg == WM_CLIPBOARDUPDATE)
         {
+            // Images take priority (checking text on an image clipboard gives a null)
+            var img = ClipboardService.ReadImageFromSystem();
+            if (img is not null)
+            {
+                // Deduplicate by comparing dimensions (simple but effective)
+                if (_lastImage is null || _lastImage.PixelWidth != img.PixelWidth || _lastImage.PixelHeight != img.PixelHeight)
+                {
+                    _lastImage = img;
+                    _lastText = null;
+                    ClipboardService.AddImage(img);
+                }
+                return IntPtr.Zero;
+            }
+
             var text = ClipboardService.ReadFromSystem();
-            if (text is not null)
+            if (text is not null && text != _lastText)
+            {
+                _lastText = text;
+                _lastImage = null;
                 ClipboardService.Add(text);
+            }
         }
         return IntPtr.Zero;
     }

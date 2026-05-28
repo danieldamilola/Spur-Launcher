@@ -37,9 +37,18 @@ public class SearchResult
     public string? FilePath { get; set; }
     public string? FileExtension { get; set; }
 
+    /// <summary>True when this is a directory result (for folder-first ranking).</summary>
+    public bool IsDirectory { get; set; }
+
     // ── Clipboard-specific ────────────────────────────
     public string? ClipContent { get; set; }
     public DateTime ClipTimestamp { get; set; }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public System.Windows.Media.Imaging.BitmapSource? ClipImage { get; set; }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsClipImage => ClipImage is not null;
 
     // ── Action-specific ───────────────────────────────
     public string? ActionId { get; set; }

@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using Volt.ViewModels;
@@ -7,18 +6,6 @@ namespace Volt;
 
 public partial class MainWindow : Window
 {
-    // ── Win32 imports ─────────────────────────────────────────────
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr,
-        ref int attrValue, int attrSize);
-
-    private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-    private const int DWMWCP_ROUND  = 2;
-
-    private const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
-    private const int DWMSBT_TRANSIENTWINDOW    = 3;
-
-    // ── State ─────────────────────────────────────────────────────
     private bool _isVisible;
     private MainViewModel? _vm;
     private bool _isHovering;
@@ -36,23 +23,13 @@ public partial class MainWindow : Window
         vm.PropertyChanged += OnVmChanged;
         vm.RequestHide     += HideWindow;
 
-        // Initialize category circles visually
         UpdateCategoryVisuals();
-        UpdateCategoryVisibility();
     }
 
     // ── Loaded ───────────────────────────────────────────────────
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var hwnd = new WindowInteropHelper(this).Handle;
-        TryApplyDwmEffects(hwnd);
-    }
-
-    private static void TryApplyDwmEffects(IntPtr hwnd)
-    {
-        // No DWM effects needed. The RootBorder handles rounding and shadow.
-        // Applying DWMWCP_ROUND to an AllowsTransparency=True window causes
-        // a faint rectangular grey line bug on Windows 11.
+        // DWM effects disabled — glass handled via XAML brushes.
     }
 
     // ── Show / Hide with animation ────────────────────────────────
@@ -61,7 +38,6 @@ public partial class MainWindow : Window
         if (_isVisible) { Activate(); return; }
         _isVisible = true;
 
-        // Center on primary screen
         var screen = System.Windows.SystemParameters.WorkArea;
         Left = (screen.Width  - Width)  / 2 + screen.Left;
         Top  = screen.Height  * 0.30    + screen.Top;
@@ -77,7 +53,6 @@ public partial class MainWindow : Window
     {
         if (!_isVisible) return;
         _isHovering = false;
-        UpdateCategoryVisibility();
         AnimateOut(() =>
         {
             Hide();
@@ -93,7 +68,6 @@ public partial class MainWindow : Window
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-
         var scaleIn = new DoubleAnimation(0.96, 1,
             new Duration(TimeSpan.FromMilliseconds(160)))
         {
@@ -112,7 +86,6 @@ public partial class MainWindow : Window
         {
             EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
         };
-
         var scaleOut = new DoubleAnimation(1, 0.96,
             new Duration(TimeSpan.FromMilliseconds(100)))
         {
@@ -120,22 +93,23 @@ public partial class MainWindow : Window
         };
 
         fadeOut.Completed += (_, _) => onComplete();
-
         BeginAnimation(OpacityProperty, fadeOut);
         WindowScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleOut);
         WindowScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleOut);
     }
 
-    // ── ViewModel property change → update window shape ──────────
+    // ── ViewModel changes → update window shape ──────────────────
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.HasResults)
                            or nameof(MainViewModel.IsSettingsOpen)
-                           or nameof(MainViewModel.IsPreviewVisible))
+                           or nameof(MainViewModel.IsPreviewVisible)
+                           or nameof(MainViewModel.IsBrowsePanelVisible))
         {
             Dispatcher.InvokeAsync(UpdateWindowState);
         }
-        if (e.PropertyName == nameof(MainViewModel.ActiveCategory))
+        if (e.PropertyName is nameof(MainViewModel.ActiveCategory)
+                            or nameof(MainViewModel.Query))
         {
             Dispatcher.InvokeAsync(UpdateCategoryVisuals);
             Dispatcher.InvokeAsync(UpdateCategoryVisibility);
@@ -146,31 +120,29 @@ public partial class MainWindow : Window
     {
         if (_vm is null) return;
 
-        bool hasContent = _vm.HasResults || _vm.IsSettingsOpen;
+        bool isBrowse   = _vm.IsBrowsePanelVisible;
+        bool hasContent = _vm.HasResults || _vm.IsSettingsOpen || isBrowse;
 
-        // Show/hide content area
         ContentArea.Visibility = hasContent ? Visibility.Visible : Visibility.Collapsed;
 
-        // Switch corner radius: pill when idle, rounded rect when expanded (applied to SearchCardBorder instead of RootBorder)
         SearchCardBorder.CornerRadius = hasContent
             ? (CornerRadius)TryFindResource("RadiusWindow")
             : (CornerRadius)TryFindResource("RadiusPill");
 
-        // Show/hide preview panel column
         var previewWidth = _vm.IsPreviewVisible && !_vm.IsSettingsOpen ? 300.0 : 0.0;
         PreviewColumn.Width = new GridLength(previewWidth);
         PreviewPanelControl.Visibility = previewWidth > 0
             ? Visibility.Visible : Visibility.Collapsed;
 
-        // Show/hide settings overlay
         SettingsViewControl.Visibility = _vm.IsSettingsOpen
             ? Visibility.Visible : Visibility.Collapsed;
-        ResultsListControl.Visibility  = _vm.IsSettingsOpen
-            ? Visibility.Collapsed : Visibility.Visible;
+
+        bool showBrowse = isBrowse && !_vm.IsSettingsOpen;
+        BrowsePanelControl.Visibility = showBrowse ? Visibility.Visible : Visibility.Collapsed;
+        ResultsListControl.Visibility = (!showBrowse && !_vm.IsSettingsOpen) ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    // ── Keyboard handling ─────────────────────────────────────────
-    /// <summary>Intercept nav keys before the TextBox swallows them.</summary>
+    // ── Keyboard ─────────────────────────────────────────────────
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
@@ -178,20 +150,9 @@ public partial class MainWindow : Window
 
         switch (e.Key)
         {
-            case Key.Down:
-                _vm.MoveSelection(+1);
-                e.Handled = true;
-                break;
-
-            case Key.Up:
-                _vm.MoveSelection(-1);
-                e.Handled = true;
-                break;
-
-            case Key.Tab:
-                _vm.CycleCategory();
-                e.Handled = true;
-                break;
+            case Key.Down: _vm.MoveSelection(+1); e.Handled = true; break;
+            case Key.Up:   _vm.MoveSelection(-1); e.Handled = true; break;
+            case Key.Tab:  _vm.CycleCategory();    e.Handled = true; break;
         }
     }
 
@@ -204,7 +165,11 @@ public partial class MainWindow : Window
         {
             case Key.Escape:
                 if (_vm.IsSettingsOpen)
+                {
                     _vm.IsSettingsOpen = false;
+                    if (string.Equals(_vm.Query, "settings", StringComparison.OrdinalIgnoreCase))
+                        _vm.Query = string.Empty;
+                }
                 else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
                 else
@@ -229,28 +194,16 @@ public partial class MainWindow : Window
 
             case Key.D1 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActiveCategory = _vm.ActiveCategory == "apps" ? null : "apps";
-                e.Handled = true;
-                break;
-
+                e.Handled = true; break;
             case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActiveCategory = _vm.ActiveCategory == "files" ? null : "files";
-                e.Handled = true;
-                break;
-
+                e.Handled = true; break;
             case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActivateClipboardCategory();
-                e.Handled = true;
-                break;
-
+                e.Handled = true; break;
             case Key.D4 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActiveCategory = _vm.ActiveCategory == "actions" ? null : "actions";
-                e.Handled = true;
-                break;
-
-            case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.OpenSettingsCommand.Execute(null);
-                e.Handled = true;
-                break;
+                e.Handled = true; break;
         }
     }
 
@@ -261,15 +214,7 @@ public partial class MainWindow : Window
         HideWindow();
     }
 
-    // ── Drag to reposition ────────────────────────────────────────
-    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
-    {
-        base.OnMouseLeftButtonDown(e);
-        if (e.Source is TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
-        try { DragMove(); } catch { }
-    }
-
-    // ── Separate Category Circles Hover & Visual Sync ──────────────
+    // ── Floating category buttons ────────────────────────────────
     private void OnMainGridMouseEnter(object sender, MouseEventArgs e)
     {
         _isHovering = true;
@@ -282,16 +227,17 @@ public partial class MainWindow : Window
         UpdateCategoryVisibility();
     }
 
-    /// <summary>Show separate category circles on cursor hover or active category filter.</summary>
     private void UpdateCategoryVisibility()
     {
-        bool visible = _isHovering || (_vm is not null && _vm.ActiveCategory is not null);
-        double targetWidth = visible ? 180.0 : 0.0;
+        bool visible = _isHovering
+            && (_vm is null || _vm.ActiveCategory is null)
+            && (_vm is null || string.IsNullOrEmpty(_vm.Query));
+        double targetWidth = visible ? 212.0 : 0.0;
 
         if (Math.Abs(CategoryPanelContainer.Width - targetWidth) < 0.5) return;
 
         var slide = new DoubleAnimation(targetWidth,
-            new Duration(TimeSpan.FromMilliseconds(200)))
+            new Duration(TimeSpan.FromMilliseconds(180)))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
@@ -304,13 +250,9 @@ public partial class MainWindow : Window
         var category = btn.Tag as string;
 
         if (category == "clipboard")
-        {
             _vm.ActivateClipboardCategory();
-        }
         else
-        {
             _vm.ActiveCategory = _vm.ActiveCategory == category ? null : category;
-        }
 
         SearchBarControl.FocusInput();
     }
@@ -318,22 +260,28 @@ public partial class MainWindow : Window
     private void UpdateCategoryVisuals()
     {
         if (_vm is null) return;
-        SetActive(BtnApps,      IconApps,      _vm.ActiveCategory == "apps");
-        SetActive(BtnFiles,     IconFiles,     _vm.ActiveCategory == "files");
-        SetActive(BtnClipboard, IconClipboard, _vm.ActiveCategory == "clipboard");
-        SetActive(BtnActions,   IconActions,   _vm.ActiveCategory == "actions");
+        SetCatActive(BtnApps,      IconApps,      _vm.ActiveCategory == "apps");
+        SetCatActive(BtnFiles,     IconFiles,     _vm.ActiveCategory == "files");
+        SetCatActive(BtnClipboard, IconClipboard, _vm.ActiveCategory == "clipboard");
+        SetCatActive(BtnActions,   IconActions,   _vm.ActiveCategory == "actions");
     }
 
-    private static void SetActive(Button btn, System.Windows.Shapes.Path icon, bool active)
+    private void SetCatActive(Button btn, System.Windows.Shapes.Path icon, bool active)
     {
-        var accent     = TryBrush("Accent")     ?? Brushes.DodgerBlue;
-        var accentWash = TryBrush("AccentWash") ?? Brushes.Transparent;
-        var muted      = TryBrush("TextMuted")  ?? Brushes.Gray;
+        var surface = TryFindResource("Surface")     as Brush ?? Brushes.DimGray;
+        var primary = TryFindResource("TextPrimary") as Brush ?? Brushes.White;
+        var muted   = TryFindResource("TextMuted")   as Brush ?? Brushes.Gray;
 
-        btn.Background = active ? accentWash : Brushes.Transparent;
-        icon.Stroke    = active ? accent      : muted;
+        btn.Background = active ? surface : Brushes.Transparent;
+        icon.Stroke    = active ? primary : muted;
     }
 
-    private static Brush? TryBrush(string key) =>
-        Application.Current.TryFindResource(key) as Brush;
+    // ── Drag to reposition ────────────────────────────────────────
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+        if (e.Source is TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
+        try { DragMove(); } catch { }
+    }
+
 }

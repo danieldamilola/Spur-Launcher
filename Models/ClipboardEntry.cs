@@ -1,22 +1,38 @@
+using System.Windows.Media.Imaging;
+
 namespace Volt.Models;
 
-/// <summary>A single clipboard history entry.</summary>
+/// <summary>A single clipboard history entry — either text or an image.</summary>
 public sealed class ClipboardEntry
 {
+    /// <summary>Text constructor.</summary>
     public ClipboardEntry(string content)
     {
         Content   = content;
         Timestamp = DateTime.Now;
+        IsImage   = false;
         Preview   = content.Length > 60
             ? content[..60].Replace('\n', ' ').Replace('\r', ' ') + "…"
             : content.Replace('\n', ' ').Replace('\r', ' ');
     }
 
-    public string Content   { get; }
-    public DateTime Timestamp { get; }
+    /// <summary>Image constructor. The BitmapSource must already be frozen.</summary>
+    public ClipboardEntry(BitmapSource image)
+    {
+        Content   = string.Empty;
+        Timestamp = DateTime.Now;
+        IsImage   = true;
+        Image     = image;
+        Preview   = $"Image  {image.PixelWidth} × {image.PixelHeight}";
+    }
+
+    public string      Content   { get; }
+    public DateTime    Timestamp { get; }
+    public bool        IsImage   { get; }
+    public BitmapSource? Image   { get; }
 
     /// <summary>Truncated single-line preview for display in results list.</summary>
-    public string Preview   { get; }
+    public string Preview { get; }
 
     public string TimeAgo
     {

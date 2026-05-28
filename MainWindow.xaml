@@ -2,10 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:Volt.Views"
-        xmlns:vm="clr-namespace:Volt.ViewModels"
         Title="Volt"
         Width="680"
-        MinHeight="136"
+        MinHeight="56"
         SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -16,13 +15,7 @@
         Opacity="0"
         Loaded="OnLoaded">
 
-    <Window.Resources>
-    </Window.Resources>
-
-    <!-- Root glass border -->
-    <!-- Margin is required so the DropShadow is not clipped by Window bounds -->
-    <!-- Root layout border (fully transparent structural container) -->
-    <!-- Margin is required so the DropShadow is not clipped by Window bounds -->
+    <!-- Root layout -->
     <Border x:Name="RootBorder"
             Margin="40"
             CornerRadius="28"
@@ -35,194 +28,146 @@
         </Border.RenderTransform>
         <Border.RenderTransformOrigin>0.5,0.1</Border.RenderTransformOrigin>
 
-        <!-- Parent transparent grid mapping Column 0 (Search) and Column 1 (Categories) -->
+        <!-- Mouse-tracking grid: card | floating buttons -->
         <Grid MouseEnter="OnMainGridMouseEnter"
-              MouseLeave="OnMainGridMouseLeave">
+              MouseLeave="OnMainGridMouseLeave"
+              Background="#01000000">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>                                 <!-- Left: Search Card -->
-                <ColumnDefinition x:Name="CategoryColumn" Width="Auto"/>       <!-- Right: Category Buttons -->
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ── Left: Search & Results Card (Frosted Glass) ────────────── -->
-            <Border x:Name="SearchCardBorder"
-                    Grid.Column="0"
-                    CornerRadius="{DynamicResource RadiusPill}"
-                    Background="{DynamicResource GlassBg}"
-                    BorderBrush="{DynamicResource GlassBorder}"
-                    BorderThickness="1">
-                <Border.Effect>
-                    <!-- Main dropdown card drop shadow -->
-                    <DropShadowEffect BlurRadius="48"
-                                      ShadowDepth="12"
-                                      Direction="270"
-                                      Opacity="0.25"
-                                      Color="#000000"/>
-                </Border.Effect>
+        <!-- Search card (glass pill) -->
+        <Border x:Name="SearchCardBorder"
+                Grid.Column="0"
+                CornerRadius="{DynamicResource RadiusPill}"
+                Background="{DynamicResource GlassBg}"
+                BorderBrush="{DynamicResource GlassBorder}"
+                BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="64"
+                                  ShadowDepth="16"
+                                  Direction="270"
+                                  Opacity="0.35"
+                                  Color="#000000"/>
+            </Border.Effect>
 
-                <Grid>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="56"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <views:SearchBar x:Name="SearchBarControl"
+                                 Grid.Row="0"
+                                 DataContext="{Binding}"/>
+
+                <Grid Grid.Row="1"
+                      x:Name="ContentArea"
+                      Visibility="Collapsed"
+                      MaxHeight="464">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="56"/>        <!-- Search bar -->
-                        <RowDefinition Height="Auto"/>      <!-- Content area -->
+                        <RowDefinition Height="1"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Search input & icon -->
-                    <views:SearchBar x:Name="SearchBarControl"
-                                     Grid.Row="0"
-                                     DataContext="{Binding}"/>
-
-                    <!-- Expandable results area -->
-                    <Grid Grid.Row="1"
-                          x:Name="ContentArea"
-                          Visibility="Collapsed"
-                          MaxHeight="464">
-
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="1"/>     <!-- Hairline divider -->
-                            <RowDefinition Height="Auto"/>  <!-- Results / Settings -->
-                        </Grid.RowDefinitions>
-
-                        <!-- Hairline divider -->
-                        <Border Grid.Row="0"
-                                Background="{DynamicResource BorderBrush}"/>
-
-                        <!-- Results + Preview / Settings -->
-                        <Grid Grid.Row="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="200"/>
-                                <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Results list -->
-                            <views:ResultsList x:Name="ResultsListControl"
-                                               Grid.Column="0"
-                                               DataContext="{Binding}"
-                                               MaxHeight="463"/>
-
-                            <!-- Preview panel -->
-                            <views:PreviewPanel x:Name="PreviewPanelControl"
-                                                Grid.Column="1"
-                                                DataContext="{Binding}"
-                                                Width="300"/>
-
-                            <!-- Settings overlay -->
-                            <views:SettingsView x:Name="SettingsViewControl"
-                                                Grid.Column="0"
-                                                Grid.ColumnSpan="2"
-                                                DataContext="{Binding Settings}"
-                                                Visibility="Collapsed"
-                                                MaxHeight="463"/>
-                        </Grid>
+                    <Border Grid.Row="0" Background="{DynamicResource BorderBrush}"/>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="200"/>
+                            <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
+                        </Grid.ColumnDefinitions>
+                        <views:ResultsList x:Name="ResultsListControl" Grid.Column="0" DataContext="{Binding}" MaxHeight="463"/>
+                        <views:BrowsePanel x:Name="BrowsePanelControl" Grid.Column="0" DataContext="{Binding}" Visibility="Collapsed" MaxHeight="463"/>
+                        <views:PreviewPanel x:Name="PreviewPanelControl" Grid.Column="1" DataContext="{Binding}" Width="300"/>
+                        <views:SettingsView x:Name="SettingsViewControl" Grid.Column="0" Grid.ColumnSpan="2" DataContext="{Binding Settings}" Visibility="Collapsed" MaxHeight="463"/>
                     </Grid>
                 </Grid>
-            </Border>
+            </Grid>
+        </Border>
 
-            <!-- ── Right: Category Buttons (Separate Frosted Glass Circles) ──── -->
-            <Border x:Name="CategoryPanelContainer"
-                    Grid.Column="1"
-                    Width="0"
-                    ClipToBounds="True"
-                    VerticalAlignment="Top"
-                    Height="56">
-                
-                <StackPanel Orientation="Horizontal"
-                            Margin="12,0,0,0"
-                            VerticalAlignment="Center">
+        <!-- Floating category buttons — appear on hover, right of card -->
+        <Border x:Name="CategoryPanelContainer"
+                Grid.Column="1"
+                Width="0"
+                ClipToBounds="True"
+                VerticalAlignment="Top"
+                Height="56">
+            <StackPanel Orientation="Horizontal"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center">
 
-                    <!-- Apps Circle -->
-                    <Border Width="36" Height="36"
-                            CornerRadius="18"
-                            Margin="0,0,8,0"
-                            Background="{DynamicResource GlassBg}"
-                            BorderBrush="{DynamicResource GlassBorder}"
-                            BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
-                        </Border.Effect>
-                        <Button x:Name="BtnApps"
-                                Tag="apps"
-                                Click="OnCategoryClick"
-                                ToolTip="Apps (Ctrl+1)"
-                                Style="{StaticResource CategoryButtonStyle}">
-                            <Path Data="M3 3h7v7H3V3zm11 0h7v7h-7V3zm0 11h7v7h-7v-7zM3 14h7v7H3v-7z"
-                                  Width="16" Height="16" Stretch="Uniform"
-                                  x:Name="IconApps"
-                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                  StrokeLineJoin="Round" Fill="Transparent"/>
-                        </Button>
-                    </Border>
+                <!-- Apps -->
+                <Border Width="44" Height="44" CornerRadius="22" Margin="0,0,8,0"
+                        Background="{DynamicResource GlassBg}"
+                        BorderBrush="{DynamicResource GlassBorder}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                    </Border.Effect>
+                    <Button x:Name="BtnApps" Tag="apps" Click="OnCategoryClick" ToolTip="Apps (Ctrl+1)"
+                            Style="{StaticResource CategoryButtonStyle}">
+                        <Path x:Name="IconApps"
+                              Data="M3 3h7v7H3V3zm11 0h7v7h-7V3zm0 11h7v7h-7v-7zM3 14h7v7H3v-7z"
+                              Width="18" Height="18" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round" Fill="Transparent"/>
+                    </Button>
+                </Border>
 
-                    <!-- Files Circle -->
-                    <Border Width="36" Height="36"
-                            CornerRadius="18"
-                            Margin="0,0,8,0"
-                            Background="{DynamicResource GlassBg}"
-                            BorderBrush="{DynamicResource GlassBorder}"
-                            BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
-                        </Border.Effect>
-                        <Button x:Name="BtnFiles"
-                                Tag="files"
-                                Click="OnCategoryClick"
-                                ToolTip="Files (Ctrl+2)"
-                                Style="{StaticResource CategoryButtonStyle}">
-                            <Path Data="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
-                                  Width="16" Height="16" Stretch="Uniform"
-                                  x:Name="IconFiles"
-                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                  StrokeLineJoin="Round" Fill="Transparent"/>
-                        </Button>
-                    </Border>
+                <!-- Files -->
+                <Border Width="44" Height="44" CornerRadius="22" Margin="0,0,8,0"
+                        Background="{DynamicResource GlassBg}"
+                        BorderBrush="{DynamicResource GlassBorder}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                    </Border.Effect>
+                    <Button x:Name="BtnFiles" Tag="files" Click="OnCategoryClick" ToolTip="Files (Ctrl+2)"
+                            Style="{StaticResource CategoryButtonStyle}">
+                        <Path x:Name="IconFiles"
+                              Data="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+                              Width="18" Height="18" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round" Fill="Transparent"/>
+                    </Button>
+                </Border>
 
-                    <!-- Clipboard Circle -->
-                    <Border Width="36" Height="36"
-                            CornerRadius="18"
-                            Margin="0,0,8,0"
-                            Background="{DynamicResource GlassBg}"
-                            BorderBrush="{DynamicResource GlassBorder}"
-                            BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
-                        </Border.Effect>
-                        <Button x:Name="BtnClipboard"
-                                Tag="clipboard"
-                                Click="OnCategoryClick"
-                                ToolTip="Clipboard (Ctrl+3)"
-                                Style="{StaticResource CategoryButtonStyle}">
-                            <Path Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
-                                  Width="16" Height="16" Stretch="Uniform"
-                                  x:Name="IconClipboard"
-                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                  StrokeLineJoin="Round" Fill="Transparent"/>
-                        </Button>
-                    </Border>
+                <!-- Clipboard -->
+                <Border Width="44" Height="44" CornerRadius="22" Margin="0,0,8,0"
+                        Background="{DynamicResource GlassBg}"
+                        BorderBrush="{DynamicResource GlassBorder}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                    </Border.Effect>
+                    <Button x:Name="BtnClipboard" Tag="clipboard" Click="OnCategoryClick" ToolTip="Clipboard (Ctrl+3)"
+                            Style="{StaticResource CategoryButtonStyle}">
+                        <Path x:Name="IconClipboard"
+                              Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
+                              Width="18" Height="18" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round" Fill="Transparent"/>
+                    </Button>
+                </Border>
 
-                    <!-- Actions Circle -->
-                    <Border Width="36" Height="36"
-                            CornerRadius="18"
-                            Background="{DynamicResource GlassBg}"
-                            BorderBrush="{DynamicResource GlassBorder}"
-                            BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
-                        </Border.Effect>
-                        <Button x:Name="BtnActions"
-                                Tag="actions"
-                                Click="OnCategoryClick"
-                                ToolTip="Actions (Ctrl+4)"
-                                Style="{StaticResource CategoryButtonStyle}">
-                            <Path Data="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                                  Width="16" Height="16" Stretch="Uniform"
-                                  x:Name="IconActions"
-                                  Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                  StrokeLineJoin="Round"
-                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                  Fill="Transparent"/>
-                        </Button>
-                    </Border>
+                <!-- Actions -->
+                <Border Width="44" Height="44" CornerRadius="22"
+                        Background="{DynamicResource GlassBg}"
+                        BorderBrush="{DynamicResource GlassBorder}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.15" Color="#000000"/>
+                    </Border.Effect>
+                    <Button x:Name="BtnActions" Tag="actions" Click="OnCategoryClick" ToolTip="Actions (Ctrl+4)"
+                            Style="{StaticResource CategoryButtonStyle}">
+                        <Path x:Name="IconActions"
+                              Data="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                              Width="18" Height="18" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Fill="Transparent"/>
+                    </Button>
+                </Border>
+            </StackPanel>
+        </Border>
 
-                </StackPanel>
-            </Border>
-        </Grid>
+        </Grid><!-- end mouse-tracking grid -->
     </Border>
 </Window>

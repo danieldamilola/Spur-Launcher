@@ -5,29 +5,45 @@
 
     <Grid Height="56">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>  <!-- search icon -->
-            <ColumnDefinition Width="*"/>     <!-- text input -->
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Search icon -->
-        <Path Grid.Column="0"
-              Margin="18,0,0,0"
-              VerticalAlignment="Center"
-              Data="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19ZM21 21L16.65 16.65"
-              Stroke="{DynamicResource TextMuted}"
-              StrokeThickness="1.8"
-              StrokeStartLineCap="Round"
-              StrokeEndLineCap="Round"
-              Width="18" Height="18"
-              Stretch="Uniform"/>
+        <!-- Mode/Search icon button (left) -->
+        <Button x:Name="ModeIconBtn"
+                Grid.Column="0"
+                Margin="18,0,12,0"
+                VerticalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Cursor="Hand"
+                Click="OnModeIconClick"
+                MouseEnter="OnModeIconMouseEnter"
+                MouseLeave="OnModeIconMouseLeave">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}">
+                        <Path x:Name="IconPath"
+                              Data="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19ZM21 21L16.65 16.65"
+                              Stroke="{DynamicResource TextMuted}"
+                              StrokeThickness="1.8"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Fill="Transparent"
+                              Width="18" Height="18"
+                              Stretch="Uniform"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
 
         <!-- Text input -->
         <TextBox x:Name="SearchInput"
                  Grid.Column="1"
-                 Margin="12,0,16,0"
                  VerticalAlignment="Center"
                  FontFamily="{DynamicResource UIFont}"
-                 FontSize="17"
+                 FontSize="{DynamicResource FontLg}"
                  Foreground="{DynamicResource TextPrimary}"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                  TextChanged="OnTextChanged"/>
@@ -35,12 +51,12 @@
         <!-- Placeholder text -->
         <TextBlock x:Name="Placeholder"
                    Grid.Column="1"
-                   Margin="12,0,16,0"
                    VerticalAlignment="Center"
                    IsHitTestVisible="False"
                    FontFamily="{DynamicResource UIFont}"
-                   FontSize="17"
+                   FontSize="{DynamicResource FontLg}"
                    Foreground="{DynamicResource TextMuted}"
                    Text="Search apps, files, clipboard…"/>
+
     </Grid>
 </UserControl>

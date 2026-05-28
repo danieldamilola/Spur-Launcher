@@ -45,14 +45,21 @@ public partial class App : Application
         // Create main window (hidden until hotkey)
         _window = new MainWindow();
         _window.SetViewModel(_vm);
+
+        // Apply visual config to window before showing
+        _window.Opacity = config.WindowOpacity;
+        _window.Width   = config.LauncherWidth;
         _window.Show();   // Show once to get HWND
         _window.Hide();
 
         // Register global hotkey after HWND is ready
         var hwnd = new WindowInteropHelper(_window).Handle;
 
-        _hotkey = new HotkeyService();
-        _hotkey.Register(hwnd, config.Shortcut, ToggleWindow);
+        if (config.HotkeyEnabled)
+        {
+            _hotkey = new HotkeyService();
+            _hotkey.Register(hwnd, config.Shortcut, ToggleWindow);
+        }
 
         // Clipboard watcher
         if (config.ClipboardEnabled)
@@ -61,9 +68,103 @@ public partial class App : Application
             _clipboard.Attach(hwnd);
         }
 
+        // Force reindex if configured
+        if (config.ReIndexOnStartup)
+        {
+            try
+            {
+                var cachePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Volt", "volt.catalog.json");
+                if (File.Exists(cachePath)) File.Delete(cachePath);
+            }
+            catch { /* cache may be in use — next launch will refresh */ }
+        }
+
+        // Wire settings changes to live behaviour
+        WireSettings(_vm.Settings);
+
         // System tray icon
         BuildTrayIcon();
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Settings → behaviour bridge
+    // ═══════════════════════════════════════════════════════════════
+
+    private void WireSettings(SettingsViewModel settings)
+    {
+        settings.PropertyChanged += (_, e) =>
+        {
+            switch (e.PropertyName)
+            {
+                // Full reset (ResetToDefaults sends string.Empty)
+                case "":
+                case null:
+                    if (_window is not null)
+                    {
+                        _window.Opacity = settings.WindowOpacity;
+                        _window.Width   = settings.LauncherWidth;
+                    }
+                    ClipboardService.MaxItems  = settings.ClipboardHistorySize;
+                    FileSearchService.MaxDepth = settings.MaxFileDepth;
+                    break;
+
+                case nameof(SettingsViewModel.WindowOpacity):
+                    if (_window is not null)
+                        _window.Opacity = settings.WindowOpacity;
+                    break;
+
+                case nameof(SettingsViewModel.LauncherWidth):
+                    if (_window is not null)
+                        _window.Width = settings.LauncherWidth;
+                    break;
+
+                case nameof(SettingsViewModel.HotkeyEnabled):
+                    if (_window is null) break;
+                    var hwnd = new WindowInteropHelper(_window).Handle;
+                    if (settings.HotkeyEnabled)
+                    {
+                        _hotkey?.Dispose();
+                        _hotkey = new HotkeyService();
+                        _hotkey.Register(hwnd, settings.Shortcut, ToggleWindow);
+                    }
+                    else
+                    {
+                        _hotkey?.Dispose();
+                        _hotkey = null;
+                    }
+                    break;
+
+                case nameof(SettingsViewModel.Shortcut):
+                    // Re-register with new shortcut if hotkey is enabled
+                    if (_window is not null && settings.HotkeyEnabled && _hotkey is not null)
+                    {
+                        _hotkey.Dispose();
+                        _hotkey = new HotkeyService();
+                        var h = new WindowInteropHelper(_window).Handle;
+                        _hotkey.Register(h, settings.Shortcut, ToggleWindow);
+                    }
+                    break;
+
+                case nameof(SettingsViewModel.ClipboardHistorySize):
+                    ClipboardService.MaxItems = settings.ClipboardHistorySize;
+                    break;
+
+                case nameof(SettingsViewModel.MaxFileDepth):
+                    FileSearchService.MaxDepth = settings.MaxFileDepth;
+                    break;
+
+                case nameof(SettingsViewModel.ReIndexOnStartup):
+                    // No runtime action — read on next launch
+                    break;
+            }
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Hotkey toggle
+    // ═══════════════════════════════════════════════════════════════
 
     private void ToggleWindow()
     {
@@ -77,15 +178,18 @@ public partial class App : Application
         });
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Tray icon
+    // ═══════════════════════════════════════════════════════════════
+
     private void BuildTrayIcon()
     {
         _trayIcon = new TaskbarIcon
         {
-            ToolTipText   = "Volt",
-            ContextMenu   = BuildTrayMenu(),
+            ToolTipText = "Volt",
+            ContextMenu = BuildTrayMenu(),
         };
 
-        // Create a simple in-memory icon instead of loading from file
         try
         {
             using var stream = System.Reflection.Assembly.GetExecutingAssembly()
@@ -107,10 +211,10 @@ public partial class App : Application
 
     private ContextMenu BuildTrayMenu()
     {
-        var menu   = new ContextMenu();
-        var open   = new MenuItem { Header = "Open Volt" };
+        var menu     = new ContextMenu();
+        var open     = new MenuItem { Header = "Open Volt" };
         var settings = new MenuItem { Header = "Settings" };
-        var quit   = new MenuItem { Header = "Quit" };
+        var quit     = new MenuItem { Header = "Quit" };
 
         open.Click     += (_, _) => { _window?.ShowWindow(); };
         settings.Click += (_, _) => { _window?.ShowWindow(); _vm?.OpenSettingsCommand.Execute(null); };
@@ -123,8 +227,16 @@ public partial class App : Application
         return menu;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Shutdown
+    // ═══════════════════════════════════════════════════════════════
+
     protected override void OnExit(ExitEventArgs e)
     {
+        // Clear clipboard history if configured
+        if (_vm?.Config.ClearClipboardOnExit == true)
+            ClipboardService.Clear();
+
         _trayIcon?.Dispose();
         _hotkey?.Dispose();
         _clipboard?.Dispose();

@@ -25,14 +25,24 @@ public static class AiService
     public static string[] SupportedProviders => [.. Providers.Keys];
 
     /// <summary>
+    /// Streams an AI response for a single question (convenience wrapper).
+    /// </summary>
+    public static Task StreamAsync(
+        string provider, string model, string apiKey, string question,
+        Action<string> onToken, CancellationToken ct = default)
+        => StreamAsync(provider, model, apiKey,
+            new[] { ("user", question) }, onToken, ct);
+
+    /// <summary>
     /// Streams an AI response using the given provider, model, and API key.
-    /// All providers use the same OpenAI-compatible SSE format.
+    /// <paramref name="messages"/> is the full conversation: each item is (role, content)
+    /// where role is "user" or "assistant". A system prompt is prepended automatically.
     /// </summary>
     public static async Task StreamAsync(
         string provider,
         string model,
         string apiKey,
-        string question,
+        IEnumerable<(string Role, string Content)> messages,
         Action<string> onToken,
         CancellationToken ct = default)
     {
@@ -41,15 +51,18 @@ public static class AiService
 
         var (endpoint, _) = p;
 
+        var msgList = new List<object>
+        {
+            new { role = "system", content = "You are a helpful assistant. Be concise and use plain text — no markdown symbols." },
+        };
+        foreach (var (role, content) in messages)
+            msgList.Add(new { role, content });
+
         var body = new
         {
             model,
             stream = true,
-            messages = new[]
-            {
-                new { role = "system", content = "You are a helpful assistant. Be concise." },
-                new { role = "user",   content = question },
-            }
+            messages = msgList,
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)

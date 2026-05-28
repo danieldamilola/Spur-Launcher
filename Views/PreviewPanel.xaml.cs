@@ -14,13 +14,28 @@ public partial class PreviewPanel : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (_vm is not null) _vm.PropertyChanged -= OnVmChanged;
+        if (_vm is not null)
+        {
+            _vm.PropertyChanged -= OnVmChanged;
+            _vm.ConversationChanged -= OnConversationChanged;
+        }
         _vm = e.NewValue as MainViewModel;
         if (_vm is not null)
         {
             _vm.PropertyChanged += OnVmChanged;
+            _vm.ConversationChanged += OnConversationChanged;
             Refresh();
         }
+    }
+
+    private void OnConversationChanged(object? sender, EventArgs e)
+    {
+        if (_vm is null) return;
+        Dispatcher.InvokeAsync(() =>
+        {
+            ChatMessages.ItemsSource = _vm.AiConversation;
+            AiScroll.ScrollToEnd();
+        });
     }
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -84,15 +99,8 @@ public partial class PreviewPanel : UserControl
                 break;
 
             case "ai":
-                AiPanel.Visibility      = Visibility.Visible;
-                AiLoadingText.Visibility = _vm.AiLoading && string.IsNullOrEmpty(_vm.AiText)
-                    ? Visibility.Visible : Visibility.Collapsed;
-                AiResponseText.Text     = _vm.AiText;
-                AiErrorText.Text        = _vm.AiError;
-                AiErrorText.Visibility  = string.IsNullOrEmpty(_vm.AiError)
-                    ? Visibility.Collapsed : Visibility.Visible;
-                AiFooter.Visibility     = !_vm.AiLoading && !string.IsNullOrEmpty(_vm.AiText)
-                    ? Visibility.Visible : Visibility.Collapsed;
+                AiPanel.Visibility = Visibility.Visible;
+                ChatMessages.ItemsSource = _vm.AiConversation;
                 AiScroll.ScrollToEnd();
                 break;
 
@@ -123,5 +131,14 @@ public partial class PreviewPanel : UserControl
     private void OnCancelTimer(object sender, RoutedEventArgs e)
     {
         _vm?.CancelTimerCommand.Execute(null);
+    }
+
+    private void OnAiFollowUpSend(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null) return;
+        var text = AiFollowUp.Text;
+        if (string.IsNullOrWhiteSpace(text) || text == "Follow up…") return;
+        _vm.AiFollowUpCommand.Execute(text);
+        AiFollowUp.Text = string.Empty;
     }
 }

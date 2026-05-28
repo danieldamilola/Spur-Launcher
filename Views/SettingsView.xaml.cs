@@ -5,50 +5,82 @@ namespace Volt.Views;
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _vm;
-    private bool _suppressApiKeyChange;
+    private bool _recordingShortcut;
 
     public SettingsView()
     {
         InitializeComponent();
-        DataContextChanged += OnDataContextChanged;
+        DataContextChanged += (_, e) => _vm = e.NewValue as SettingsViewModel;
     }
 
-    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private void OnCloseClick(object sender, RoutedEventArgs e) => _vm?.CloseSettings();
+
+    private void OnBrowseFolderClick(object sender, RoutedEventArgs e)
     {
-        if (_vm is not null) _vm.PropertyChanged -= OnVmPropertyChanged;
-        _vm = e.NewValue as SettingsViewModel;
-        if (_vm is not null)
+        if (_vm is null) return;
+        var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            _vm.PropertyChanged += OnVmPropertyChanged;
-            RefreshApiKeyBox();
+            Title = "Select a folder to include in search"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            var path = dlg.FolderName;
+            if (!_vm.IndexedFoldersList.Contains(path, StringComparer.OrdinalIgnoreCase))
+                _vm.IndexedFoldersList.Add(path);
+            _vm.NewFolderPath = string.Empty;
         }
     }
 
-    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnEditShortcutClick(object sender, RoutedEventArgs e)
     {
-        if (e.PropertyName == nameof(SettingsViewModel.AiProvider))
-            Dispatcher.InvokeAsync(RefreshApiKeyBox);
+        if (_recordingShortcut) return;
+        _recordingShortcut = true;
+        EditShortcutBtn.Content = "Recording…";
+        if (TryFindResource("TextPrimary") is System.Windows.Media.Brush b)
+            EditShortcutBtn.Foreground = b;
+        Keyboard.Focus(EditShortcutBtn);
+        EditShortcutBtn.PreviewKeyDown += OnShortcutKeyDown;
+        EditShortcutBtn.LostFocus      += OnShortcutLostFocus;
     }
 
-    private void RefreshApiKeyBox()
+    private void OnShortcutKeyDown(object sender, KeyEventArgs e)
     {
-        if (_vm is null) return;
-        _suppressApiKeyChange = true;
-        ApiKeyBox.Password = string.IsNullOrEmpty(_vm.ApiKey) ? "" : "••••••••••••";
-        _suppressApiKeyChange = false;
+        e.Handled = true;
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
+                 or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin)
+            return;
+
+        var mods = Keyboard.Modifiers;
+        var parts = new System.Collections.Generic.List<string>();
+        if ((mods & ModifierKeys.Control) != 0) parts.Add("Ctrl");
+        if ((mods & ModifierKeys.Alt)     != 0) parts.Add("Alt");
+        if ((mods & ModifierKeys.Shift)   != 0) parts.Add("Shift");
+        parts.Add(key.ToString());
+
+        if (_vm is not null) _vm.Shortcut = string.Join("+", parts);
+        StopRecording();
     }
 
-    private void OnApiKeyChanged(object sender, RoutedEventArgs e)
+    private void OnShortcutLostFocus(object sender, RoutedEventArgs e) => StopRecording();
+
+    private void StopRecording()
     {
-        if (_suppressApiKeyChange || _vm is null) return;
-        var pw = ApiKeyBox.Password;
-        if (pw != "••••••••••••")
-            _vm.ApiKey = pw;
+        if (!_recordingShortcut) return;
+        _recordingShortcut = false;
+        EditShortcutBtn.Content = "Edit";
+        EditShortcutBtn.PreviewKeyDown -= OnShortcutKeyDown;
+        EditShortcutBtn.LostFocus      -= OnShortcutLostFocus;
+        if (TryFindResource("TextSecondary") is System.Windows.Media.Brush b)
+            EditShortcutBtn.Foreground = b;
     }
 }
 
-// ── ToggleSwitch control ────────────────────────────────────────────
-public sealed class ToggleSwitch : System.Windows.Controls.Control
+// ── ToggleSwitch control ─────────────────────────────────────────────
+// Inherits FrameworkElement (not Control) so the visual tree is built
+// directly in the constructor — no WPF template-lookup required.
+public sealed class ToggleSwitch : FrameworkElement
 {
     public static readonly DependencyProperty IsOnProperty =
         DependencyProperty.Register(nameof(IsOn), typeof(bool), typeof(ToggleSwitch),
@@ -65,28 +97,39 @@ public sealed class ToggleSwitch : System.Windows.Controls.Control
     private static void OnIsOnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         => ((ToggleSwitch)d).UpdateVisuals();
 
-    private Border? _track;
-    private Border? _knob;
+    private readonly Border _track;
+    private readonly Border _knob;
 
-    static ToggleSwitch()
+    public ToggleSwitch()
     {
-        DefaultStyleKeyProperty.OverrideMetadata(typeof(ToggleSwitch),
-            new FrameworkPropertyMetadata(typeof(ToggleSwitch)));
-    }
+        Width  = 40;
+        Height = 22;
+        Cursor = Cursors.Hand;
 
-    public override void OnApplyTemplate()
-    {
-        base.OnApplyTemplate();
-        _track = GetTemplateChild("Track") as Border;
-        _knob  = GetTemplateChild("Knob")  as Border;
-
-        if (Template is null) BuildInlineTemplate();
-        UpdateVisuals();
-
-        MouseLeftButtonDown += (_, _) =>
+        _knob = new Border
         {
-            IsOn = !IsOn;
+            Width               = 16,
+            Height              = 16,
+            CornerRadius        = new CornerRadius(8),
+            Background          = Brushes.White,
+            Margin              = new Thickness(3, 0, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment   = VerticalAlignment.Center,
         };
+
+        _track = new Border
+        {
+            Width        = 40,
+            Height       = 22,
+            CornerRadius = new CornerRadius(11),
+            Background   = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+            Child        = _knob,
+        };
+
+        AddVisualChild(_track);
+        AddLogicalChild(_track);
+
+        Loaded += (_, _) => UpdateVisuals();
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -96,71 +139,32 @@ public sealed class ToggleSwitch : System.Windows.Controls.Control
         e.Handled = true;
     }
 
-    // Build the toggle inline since we have no generic.xaml
-    private void BuildInlineTemplate()
+    protected override int VisualChildrenCount => 1;
+    protected override Visual GetVisualChild(int index) => _track;
+
+    protected override Size MeasureOverride(Size availableSize)
     {
-        Width  = 40;
-        Height = 22;
-        Cursor = Cursors.Hand;
-
-        var track = new Border
-        {
-            Width        = 40,
-            Height       = 22,
-            CornerRadius = new CornerRadius(11),
-        };
-
-        var knob = new Border
-        {
-            Width        = 16,
-            Height       = 16,
-            CornerRadius = new CornerRadius(8),
-            Background   = Brushes.White,
-            Margin       = new Thickness(3, 0, 0, 0),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment   = VerticalAlignment.Center,
-        };
-
-        track.Child = knob;
-        AddVisualChild(track);
-        AddLogicalChild(track);
-        _track = track;
-        _knob  = knob;
-
-        // Measure/arrange manually
-        SizeChanged += (_, _) => UpdateVisuals();
-    }
-
-    protected override int VisualChildrenCount =>
-        _track is not null ? 1 : base.VisualChildrenCount;
-
-    protected override Visual GetVisualChild(int index) =>
-        _track is not null ? _track : base.GetVisualChild(index);
-
-    protected override Size MeasureOverride(Size constraint)
-    {
-        _track?.Measure(constraint);
+        _track.Measure(new Size(40, 22));
         return new Size(40, 22);
     }
 
-    protected override Size ArrangeOverride(Size arrangeBounds)
+    protected override Size ArrangeOverride(Size finalSize)
     {
-        _track?.Arrange(new Rect(0, 0, 40, 22));
-        return arrangeBounds;
+        _track.Arrange(new Rect(0, 0, 40, 22));
+        return new Size(40, 22);
     }
 
     private void UpdateVisuals()
     {
-        if (_track is null || _knob is null) return;
+        var accent  = TryFindResource("Accent")      as Brush
+                      ?? new SolidColorBrush(Color.FromRgb(0x5B, 0x7E, 0xFF));
+        var offBg   = TryFindResource("SurfaceLow")  as Brush
+                      ?? new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A));
+        var knobClr = TryFindResource("TextPrimary") as Brush ?? Brushes.White;
 
-        var accent  = Application.Current.TryFindResource("Accent")      as Brush;
-        var border  = Application.Current.TryFindResource("BorderStrong") as Brush;
-
-        _track.Background = IsOn
-            ? (accent  ?? new SolidColorBrush(Color.FromRgb(0x5B, 0x7E, 0xFF)))
-            : (border  ?? new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55)));
-
-        _knob.Margin = IsOn
+        _track.Background = IsOn ? accent : offBg;
+        _knob.Background  = knobClr;
+        _knob.Margin      = IsOn
             ? new Thickness(21, 0, 0, 0)
             : new Thickness(3, 0, 0, 0);
     }

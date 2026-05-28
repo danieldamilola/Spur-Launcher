@@ -6,7 +6,7 @@ namespace Volt.Services;
 /// </summary>
 public sealed class ConfigService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
 
     private readonly string _path;
 
@@ -38,16 +38,18 @@ public sealed class ConfigService
 
     public void Save(VoltConfig config)
     {
-        try
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        Task.Run(() =>
         {
-            File.WriteAllText(_path, JsonSerializer.Serialize(config, JsonOptions));
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[Volt] Config save failed: {ex.Message}");
-        }
+            try { File.WriteAllText(_path, json); }
+            catch (Exception ex) { Debug.WriteLine($"[Volt] Config save failed: {ex.Message}"); }
+        });
     }
 
     public Task<VoltConfig> LoadAsync() => Task.Run(Load);
-    public Task SaveAsync(VoltConfig config) => Task.Run(() => Save(config));
+    public Task SaveAsync(VoltConfig config) => Task.Run(() =>
+    {
+        try { File.WriteAllText(_path, JsonSerializer.Serialize(config, JsonOptions)); }
+        catch (Exception ex) { Debug.WriteLine($"[Volt] Config save failed: {ex.Message}"); }
+    });
 }

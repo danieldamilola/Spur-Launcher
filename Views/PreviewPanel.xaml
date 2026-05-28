@@ -4,7 +4,8 @@
              xmlns:vm="clr-namespace:Volt.ViewModels"
              Width="300">
 
-    <Border BorderBrush="{DynamicResource BorderStrong}"
+    <Border Background="{DynamicResource PreviewBg}"
+            BorderBrush="{DynamicResource BorderStrong}"
             BorderThickness="1,0,0,0"
             Padding="20">
 
@@ -22,7 +23,7 @@
             <TextBlock Grid.Row="0"
                        x:Name="CalcExprText"
                        FontFamily="{DynamicResource MonoFont}"
-                       FontSize="13"
+                       FontSize="{DynamicResource FontMono13}"
                        Foreground="{DynamicResource TextMuted}"
                        TextWrapping="Wrap"/>
 
@@ -148,7 +149,7 @@
             <TextBlock Grid.Row="1"
                        x:Name="IpLocalText"
                        FontFamily="{DynamicResource MonoFont}"
-                       FontSize="16"
+                       FontSize="{DynamicResource FontIp}"
                        Foreground="{DynamicResource TextPrimary}"
                        Margin="0,4,0,0"/>
 
@@ -161,7 +162,7 @@
             <TextBlock Grid.Row="4"
                        x:Name="IpPublicText"
                        FontFamily="{DynamicResource MonoFont}"
-                       FontSize="16"
+                       FontSize="{DynamicResource FontIp}"
                        Foreground="{DynamicResource TextPrimary}"
                        Margin="0,4,0,0"/>
         </Grid>
@@ -169,44 +170,112 @@
         <!-- AI -->
         <Grid x:Name="AiPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <ScrollViewer Grid.Row="0"
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="AI Study Assistant"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="13"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimary}"/>
+            </Grid>
+
+            <!-- Chat messages -->
+            <ScrollViewer Grid.Row="1"
                           x:Name="AiScroll"
-                          VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <TextBlock x:Name="AiLoadingText"
-                               Text="Thinking…"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontBase}"
-                               Foreground="{DynamicResource TextMuted}"
-                               Visibility="Collapsed"/>
-                    <TextBlock x:Name="AiResponseText"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontBase}"
-                               Foreground="{DynamicResource TextPrimary}"
-                               TextWrapping="Wrap"
-                               LineHeight="22"/>
-                    <TextBlock x:Name="AiErrorText"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontBase}"
-                               Foreground="{DynamicResource Red}"
-                               TextWrapping="Wrap"
-                               Visibility="Collapsed"/>
-                </StackPanel>
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="0,0,0,8">
+                <ItemsControl x:Name="ChatMessages">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,12">
+                                <!-- Role label -->
+                                <TextBlock FontFamily="{DynamicResource UIFont}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           Margin="0,0,0,2">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Role}" Value="user">
+                                                    <Setter Property="Text" Value="You"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Role}" Value="assistant">
+                                                    <Setter Property="Text" Value="AI"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <!-- Message content -->
+                                <TextBlock Text="{Binding Content}"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           TextWrapping="Wrap"
+                                           LineHeight="18"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </ScrollViewer>
 
-            <TextBlock Grid.Row="1"
-                       x:Name="AiFooter"
-                       Text="Powered by Groq"
-                       FontFamily="{DynamicResource UIFont}"
-                       FontSize="10"
-                       Foreground="{DynamicResource TextMuted}"
-                       HorizontalAlignment="Right"
-                       Margin="0,8,0,0"
-                       Visibility="Collapsed"/>
+            <!-- Input area -->
+            <Grid Grid.Row="2" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="AiFollowUp"
+                         Grid.Column="0"
+                         FontFamily="{DynamicResource UIFont}"
+                         FontSize="13"
+                         Background="{DynamicResource SurfaceLow}"
+                         BorderThickness="0"
+                         Padding="10,8"
+                         VerticalAlignment="Center"
+                         Text="Type a message…"
+                         Foreground="{DynamicResource TextMuted}">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TextBox">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="6"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ScrollViewer x:Name="PART_ContentHost"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <Button Grid.Column="1"
+                        Width="32" Height="32"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Margin="8,0,0,0"
+                        Click="OnAiFollowUpSend">
+                    <Path Data="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"
+                          Width="16" Height="16" Stretch="Uniform"
+                          Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5"
+                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          Fill="Transparent"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
+            </Grid>
         </Grid>
 
         <!-- Empty state -->

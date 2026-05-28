@@ -1,0 +1,556 @@
+<UserControl x:Class="Volt.Views.BrowsePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Volt.Models"
+             xmlns:conv="clr-namespace:Volt.Converters">
+
+    <UserControl.Resources>
+
+        <!-- ── Filter chip style ──────────────────────────────────── -->
+        <Style x:Key="FilterChip" TargetType="Button">
+            <Setter Property="FontFamily"     Value="{DynamicResource UIFont}"/>
+            <Setter Property="FontSize"       Value="{DynamicResource FontXs}"/>
+            <Setter Property="Foreground"     Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Background"     Value="{DynamicResource SurfaceLow}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"        Value="10,4"/>
+            <Setter Property="Margin"         Value="0,0,6,0"/>
+            <Setter Property="Cursor"         Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chip"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FilterChipActive" TargetType="Button" BasedOn="{StaticResource FilterChip}">
+            <Setter Property="Background" Value="{DynamicResource HoverBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+
+        <!-- ── "⋯" overflow menu button style ─────────────────────── -->
+        <Style x:Key="OverflowButton" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6">
+                            <Path Data="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+                                  Fill="{DynamicResource TextMuted}"
+                                  Width="16" Height="16" Stretch="Uniform"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SurfaceLow}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Section header style ────────────────────────────────── -->
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+            <Setter Property="FontSize" Value="{DynamicResource FontXs}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+            <Setter Property="Padding" Value="12,8,12,4"/>
+        </Style>
+
+        <!-- ── App tile (grid view) ────────────────────────────────── -->
+        <DataTemplate x:Key="AppTile" DataType="{x:Type models:SearchResult}">
+            <Border x:Name="TileBg"
+                    Width="96" Height="72" Margin="4"
+                    CornerRadius="8" Background="Transparent"
+                    Cursor="Hand"
+                    MouseEnter="OnTileMouseEnter"
+                    MouseLeave="OnTileMouseLeave"
+                    MouseLeftButtonDown="OnItemClick">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Width="36" Height="36"
+                            CornerRadius="8" Background="{DynamicResource SurfaceLow}"
+                            HorizontalAlignment="Center">
+                        <Image Width="24" Height="24"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Source>
+                                <Binding Path="IconPath">
+                                    <Binding.Converter>
+                                        <conv:PathToIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Image.Source>
+                        </Image>
+                    </Border>
+                    <TextBlock Text="{Binding Name}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="88"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- ── App row (list view) ─────────────────────────────────── -->
+        <DataTemplate x:Key="AppRow" DataType="{x:Type models:SearchResult}">
+            <Grid x:Name="RowRoot" Height="46" Margin="6,1"
+                  Background="Transparent" Cursor="Hand"
+                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
+                  MouseLeftButtonDown="OnItemClick">
+                <Border x:Name="RowBg" CornerRadius="9" Background="Transparent"/>
+                <Grid Margin="10,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="11"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="30" Height="30"
+                            CornerRadius="7" Background="{DynamicResource SurfaceLow}"
+                            VerticalAlignment="Center">
+                        <Image Width="20" Height="20"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Source>
+                                <Binding Path="IconPath">
+                                    <Binding.Converter>
+                                        <conv:PathToIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Image.Source>
+                        </Image>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Subtitle}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Opacity="0.8"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ── File row template ──────────────────────────────────── -->
+        <DataTemplate x:Key="FileRow" DataType="{x:Type models:SearchResult}">
+            <Grid x:Name="RowRoot" Height="52" Margin="4,0"
+                  Background="Transparent" Cursor="Hand"
+                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
+                  MouseLeftButtonDown="OnItemClick">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="RowBg" Grid.ColumnSpan="3"
+                        CornerRadius="{DynamicResource RadiusRow}"
+                        Background="Transparent"/>
+                <Image Grid.Column="0" Width="20" Height="20"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality">
+                    <Image.Source>
+                        <Binding Path="IconPath">
+                            <Binding.Converter>
+                                <conv:PathToIconConverter/>
+                            </Binding.Converter>
+                        </Binding>
+                    </Image.Source>
+                </Image>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <TextBlock Text="{Binding Name}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontBase}"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Subtitle}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontSm}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ── Clipboard row template ──────────────────────────────── -->
+        <DataTemplate x:Key="ClipRow" DataType="{x:Type models:SearchResult}">
+            <Grid x:Name="RowRoot" Height="46" Margin="6,1"
+                  Background="Transparent" Cursor="Hand"
+                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
+                  MouseLeftButtonDown="OnItemClick">
+                <Border x:Name="RowBg" CornerRadius="9" Background="Transparent"/>
+                <Grid Margin="10,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="11"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Image thumbnail -->
+                    <Border x:Name="ImgBox"
+                            Grid.Column="0"
+                            Width="30" Height="30"
+                            CornerRadius="7"
+                            Background="{DynamicResource SurfaceLow}"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed">
+                        <Image x:Name="ClipImg"
+                               Width="30" Height="30"
+                               Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Source="{Binding ClipImage}"/>
+                    </Border>
+
+                    <!-- Text icon (when no image) -->
+                    <Border x:Name="TextIconBox"
+                            Grid.Column="0"
+                            Width="30" Height="30"
+                            CornerRadius="7"
+                            Background="{DynamicResource SurfaceLow}"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed">
+                        <Path Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
+                              Width="14" Height="14" Stretch="Uniform"
+                              Stroke="{DynamicResource Orange}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Fill="Transparent"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Name + time -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Subtitle}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Opacity="0.8"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsClipImage}" Value="True">
+                    <Setter TargetName="ImgBox"       Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="TextIconBox" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsClipImage}" Value="False">
+                    <Setter TargetName="ImgBox"       Property="Visibility" Value="Collapsed"/>
+                    <Setter TargetName="TextIconBox" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- ── Action card template ────────────────────────────────── -->
+        <DataTemplate x:Key="ActionRow" DataType="{x:Type models:SearchResult}">
+            <Grid x:Name="RowRoot" Height="52" Margin="4,0"
+                  Background="Transparent" Cursor="Hand"
+                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
+                  MouseLeftButtonDown="OnItemClick">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="52"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="RowBg" Grid.ColumnSpan="3"
+                        CornerRadius="{DynamicResource RadiusRow}"
+                        Background="Transparent"/>
+                <!-- Icon container — neutral, no blue -->
+                <Border Grid.Column="0" Width="32" Height="32"
+                        CornerRadius="8"
+                        Background="{DynamicResource SurfaceLow}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path Width="16" Height="16" Stretch="Uniform"
+                          Stroke="{DynamicResource TextSecondary}"
+                          StrokeThickness="1.5"
+                          StrokeLineJoin="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Fill="Transparent"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                        <Path.Data>
+                            <Binding Path="LucideIcon">
+                                <Binding.Converter>
+                                    <conv:LucideIconConverter/>
+                                </Binding.Converter>
+                            </Binding>
+                        </Path.Data>
+                    </Path>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,8,0">
+                    <TextBlock Text="{Binding Name}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontBase}"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Subtitle}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontSm}"
+                               Foreground="{DynamicResource TextMuted}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+    </UserControl.Resources>
+
+    <Grid>
+
+        <!-- ══ LOADING INDICATOR ══════════════════════════════════════ -->
+        <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Loading apps…"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontBase}"
+                           Foreground="{DynamicResource TextMuted}"
+                           HorizontalAlignment="Center"
+                           Margin="0,20,0,0"/>
+                <Border Width="100" Height="4" CornerRadius="2"
+                        Background="{DynamicResource SurfaceLow}"
+                        Margin="0,12,0,0" HorizontalAlignment="Center">
+                    <Border x:Name="LoadingBar"
+                            Width="30"
+                            CornerRadius="2"
+                            Background="{DynamicResource TextMuted}"
+                            HorizontalAlignment="Left">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="LoadingBarTranslate" X="0"/>
+                        </Border.RenderTransform>
+                        <Border.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever" Duration="0:0:1.2">
+                                        <DoubleAnimation Storyboard.TargetName="LoadingBarTranslate"
+                                                         Storyboard.TargetProperty="X"
+                                                         From="0" To="70" Duration="0:0:0.6"
+                                                         AutoReverse="True"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Border.Triggers>
+                    </Border>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ APPS: suggested row + grid/list ═════════════════════════ -->
+        <ScrollViewer x:Name="AppsSection"
+                      Visibility="Collapsed"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Top bar: "⋯" overflow menu (right-aligned) -->
+                <Grid Grid.Row="0" Height="36" Margin="8,4,12,0">
+                    <Button x:Name="OverflowBtn"
+                            Style="{StaticResource OverflowButton}"
+                            HorizontalAlignment="Right"
+                            Click="OnOverflowClick">
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="OverflowMenu">
+                                <MenuItem x:Name="MenuViewGrid" Header="Grid View" IsCheckable="True" IsChecked="True"
+                                          Click="OnViewModeClick"/>
+                                <MenuItem x:Name="MenuViewList" Header="List View" IsCheckable="True"
+                                          Click="OnViewModeClick"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </Grid>
+
+                <!-- Suggested apps row (only if there are frequent apps) -->
+                <StackPanel x:Name="SuggestedSection" Grid.Row="1" Visibility="Collapsed">
+                    <TextBlock Text="SUGGESTED"
+                               Style="{StaticResource SectionHeader}"/>
+                    <ItemsControl x:Name="SuggestedGrid" Padding="8,0,8,4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <StaticResource ResourceKey="AppTile"/>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- All apps section header + grid/list -->
+                <StackPanel Grid.Row="2">
+                    <Grid Margin="12,4,12,4">
+                        <TextBlock x:Name="AppsHeader"
+                                   Text="ALL APPS"
+                                   Style="{StaticResource SectionHeader}"
+                                   Padding="0,4,0,4"
+                                   HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="AppsCount"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="{DynamicResource FontXs}"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Grid view -->
+                    <ItemsControl x:Name="AppsGrid" Padding="8,0,8,12">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <StaticResource ResourceKey="AppTile"/>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- List view (hidden by default) -->
+                    <ListBox x:Name="AppsList"
+                             Padding="0,4,0,8"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.CanContentScroll="False"
+                             ItemTemplate="{StaticResource AppRow}"
+                             Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ══ FILES: filter chips + list ═══════════════════════════════ -->
+        <Grid x:Name="FilesSection" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <ScrollViewer Grid.Row="0"
+                          HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Disabled"
+                          Padding="0">
+                <StackPanel Orientation="Horizontal" Margin="8,8,8,6">
+                    <Button x:Name="FilterAll"       Tag="All"       Content="All"       Click="OnFilterClick" Style="{StaticResource FilterChipActive}"/>
+                    <Button x:Name="FilterDocuments" Tag="Documents" Content="Documents" Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterImages"    Tag="Images"    Content="Images"    Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterPDFs"      Tag="PDFs"      Content="PDFs"      Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterVideos"    Tag="Videos"    Content="Videos"    Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterMusic"     Tag="Music"     Content="Music"     Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterCode"      Tag="Code"      Content="Code"      Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                    <Button x:Name="FilterFolders"   Tag="Folders"   Content="Folders"   Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ListBox x:Name="FilesList"
+                     Grid.Row="1"
+                     Padding="0,4,0,8"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="False"
+                     ItemTemplate="{StaticResource FileRow}"/>
+        </Grid>
+
+        <!-- ══ CLIPBOARD: history list ══════════════════════════════════ -->
+        <Grid x:Name="ClipSection" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header: title + count + clear button -->
+            <Grid Grid.Row="0" Margin="12,8,12,4">
+                <TextBlock Text="CLIPBOARD"
+                           Style="{StaticResource SectionHeader}"
+                           HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock x:Name="ClipCount"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="{DynamicResource FontXs}"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"/>
+                    <Button Content="Clear"
+                            FontFamily="{DynamicResource UIFont}"
+                            FontSize="{DynamicResource FontXs}"
+                            Foreground="{DynamicResource TextSecondary}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Cursor="Hand"
+                            Click="OnClearClipboard">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <TextBlock Text="{TemplateBinding Content}"
+                                                       FontFamily="{DynamicResource UIFont}"
+                                                       FontSize="{DynamicResource FontXs}"
+                                                       Foreground="{DynamicResource TextSecondary}"/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- List -->
+            <ListBox x:Name="ClipList"
+                     Grid.Row="1"
+                     Padding="0,4,0,8"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="False"
+                     ItemTemplate="{StaticResource ClipRow}"/>
+        </Grid>
+
+        <!-- ══ ACTIONS: action cards ════════════════════════════════════ -->
+        <ListBox x:Name="ActionsSection"
+                 Visibility="Collapsed"
+                 Padding="0,4,0,8"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.CanContentScroll="False"
+                 ItemTemplate="{StaticResource ActionRow}"/>
+
+    </Grid>
+</UserControl>
