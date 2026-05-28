@@ -12,11 +12,11 @@ public sealed class VoltConfig
     /// <summary>"dark" | "light" | "system"</summary>
     public string Theme { get; set; } = "dark";
 
-    /// <summary>Whether acrylic/blur backdrop is enabled on the launcher window.</summary>
+    /// <summary>Whether blur effect is enabled on the search bar.</summary>
     public bool EnableBlur { get; set; } = true;
 
-    /// <summary>Whether Windows Acrylic material is used (more expensive but nicer).</summary>
-    public bool EnableAcrylic { get; set; } = true;
+    /// <summary>Background color in hex (#RRGGBB).</summary>
+    public string BackgroundColor { get; set; } = "#141416";
 
     /// <summary>Window opacity as a fraction (0.0–1.0).</summary>
     public double WindowOpacity { get; set; } = 0.95;
@@ -37,7 +37,7 @@ public sealed class VoltConfig
     public double LauncherWidth { get; set; } = 680;
 
     /// <summary>How many results to display before scrolling (5, 8, or 10).</summary>
-    public int ResultsCount { get; set; } = 8;
+    public int ResultsCount { get; set; } = 5;
 
     /// <summary>Show category labels in the browse panel.</summary>
     public bool ShowCategoryLabels { get; set; } = true;
@@ -119,6 +119,9 @@ public sealed class VoltConfig
     /// <summary>Minimize to system tray instead of closing.</summary>
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Show system tray icon.</summary>
+    public bool ShowTrayIcon { get; set; } = true;
+
     /// <summary>Re-discover apps on every startup.</summary>
     public bool ReIndexOnStartup { get; set; } = false;
 
@@ -192,7 +195,7 @@ public sealed class VoltConfig
         // Appearance
         Theme                = Theme,
         EnableBlur           = EnableBlur,
-        EnableAcrylic        = EnableAcrylic,
+        BackgroundColor      = BackgroundColor,
         WindowOpacity        = WindowOpacity,
         AccentColor          = AccentColor,
         UseWindowsAccentColor = UseWindowsAccentColor,
@@ -222,6 +225,7 @@ public sealed class VoltConfig
         // Startup & Performance
         LaunchOnStartup      = LaunchOnStartup,
         MinimizeToTray       = MinimizeToTray,
+        ShowTrayIcon         = ShowTrayIcon,
         ReIndexOnStartup     = ReIndexOnStartup,
         ReIndexIntervalHours = ReIndexIntervalHours,
         BackgroundIndexing   = BackgroundIndexing,

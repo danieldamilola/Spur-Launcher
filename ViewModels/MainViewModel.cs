@@ -217,7 +217,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            var delay = Task.Delay(60, ct);
+            var delay = Task.Delay(150, ct);
             delay.ContinueWith(_ =>
             {
                 if (!ct.IsCancellationRequested)

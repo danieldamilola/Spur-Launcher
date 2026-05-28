@@ -131,9 +131,9 @@
                             <TextBlock Grid.Column="0" Text="Theme" Style="{StaticResource RL}"/>
                             <Border Grid.Column="1" Style="{StaticResource Seg}" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal">
-                                    <RadioButton Content="Dark"   IsChecked="{Binding ThemeDark}"   Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
-                                    <RadioButton Content="Light"  IsChecked="{Binding ThemeLight}"  Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
-                                    <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
+                                    <RadioButton Content="Dark"   IsChecked="{Binding ThemeDark}"   Style="{StaticResource SegmentedRadio}" GroupName="Theme" Background="{Binding BackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                    <RadioButton Content="Light"  IsChecked="{Binding ThemeLight}"  Style="{StaticResource SegmentedRadio}" GroupName="Theme" Background="{Binding BackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                    <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme" Background="{Binding BackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -142,14 +142,45 @@
 
                         <!-- Blur effect -->
                         <Grid Height="48" Margin="14,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Blur effect" Style="{StaticResource RL}"/>
                             <local:ToggleSwitch Grid.Column="1" IsOn="{Binding EnableBlur, Mode=TwoWay}" VerticalAlignment="Center"/>
                         </Grid>
+                        <Border Style="{StaticResource Div}" Margin="14,0"/>
 
+                        <!-- Window opacity -->
+                        <Grid MinHeight="52" Margin="14,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="Window opacity" Style="{StaticResource RL}"/>
+                                <TextBlock Text="Adjust transparency of the search bar"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="{DynamicResource FontXs}"
+                                           Foreground="{DynamicResource TextMuted}"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Style="{StaticResource Seg}" VerticalAlignment="Center">
+                                <Slider Width="120" Minimum="0.5" Maximum="1.0" Value="{Binding WindowOpacity, Mode=TwoWay}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                            </Border>
+                        </Grid>
+                        <Border Style="{StaticResource Div}" Margin="14,0"/>
+
+                        <!-- Background color -->
+                        <Grid MinHeight="52" Margin="14,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="Background color" Style="{StaticResource RL}"/>
+                                <TextBlock Text="Set the base color of the search bar"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="{DynamicResource FontXs}"
+                                           Foreground="{DynamicResource TextMuted}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="32" Height="32" CornerRadius="6" Margin="0,0,8,0" Background="{Binding BackgroundColor, Converter={StaticResource HexToColorConverter}}"/>
+                                <Border Style="{StaticResource Seg}">
+                                    <TextBox Width="100" Text="{Binding BackgroundColor, Mode=TwoWay}" FontFamily="{DynamicResource UIFont}" FontSize="{DynamicResource FontSm}" Padding="8,4"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
                         <Border Style="{StaticResource Div}" Margin="14,0"/>
 
                         <!-- Accent color -->
@@ -452,8 +483,14 @@
                         <Border Style="{StaticResource Div}" Margin="14,0"/>
                         <Grid Height="48" Margin="14,0">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Close to tray" Style="{StaticResource RL}"/>
+                            <TextBlock Grid.Column="0" Text="Hide to tray" Style="{StaticResource RL}"/>
                             <local:ToggleSwitch Grid.Column="1" IsOn="{Binding MinimizeToTray, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Style="{StaticResource Div}" Margin="14,0"/>
+                        <Grid Height="48" Margin="14,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Show tray icon" Style="{StaticResource RL}"/>
+                            <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
                         </Grid>
                         <Border Style="{StaticResource Div}" Margin="14,0"/>
                         <Grid MinHeight="52" Margin="14,4">

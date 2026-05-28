@@ -7,7 +7,7 @@ namespace Volt.Services;
 /// </summary>
 public static class ClipboardService
 {
-    private static int _maxItems = 20;
+    private static int _maxItems = 10;
 
     /// <summary>Maximum number of items kept in history. Clamped to 5–200.</summary>
     public static int MaxItems

@@ -29,7 +29,6 @@ public partial class MainWindow : Window
     // ── Loaded ───────────────────────────────────────────────────
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // DWM effects disabled — glass handled via XAML brushes.
     }
 
     // ── Show / Hide with animation ────────────────────────────────

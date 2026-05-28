@@ -39,6 +39,16 @@ public partial class App : Application
         var config = new ConfigService().Load();
         ThemeManager.Apply(config.Theme);
 
+        // Initialize surface colors from config (safe call)
+        try
+        {
+            UpdateSurfaceColors(config.BackgroundColor);
+        }
+        catch
+        {
+            // If this fails, continue anyway - app will use default colors
+        }
+
         // Create ViewModel
         _vm = new MainViewModel();
 
@@ -84,8 +94,9 @@ public partial class App : Application
         // Wire settings changes to live behaviour
         WireSettings(_vm.Settings);
 
-        // System tray icon
-        BuildTrayIcon();
+        // System tray icon (only if enabled)
+        if (config.ShowTrayIcon)
+            BuildTrayIcon();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -158,8 +169,45 @@ public partial class App : Application
                 case nameof(SettingsViewModel.ReIndexOnStartup):
                     // No runtime action — read on next launch
                     break;
+
+                case nameof(SettingsViewModel.ShowTrayIcon):
+                    if (settings.ShowTrayIcon)
+                    {
+                        if (_trayIcon is null) BuildTrayIcon();
+                    }
+                    else
+                    {
+                        _trayIcon?.Dispose();
+                        _trayIcon = null;
+                    }
+                    break;
+
+                case nameof(SettingsViewModel.BackgroundColor):
+                    UpdateSurfaceColors(settings.BackgroundColor);
+                    break;
             }
         };
+    }
+
+    private void UpdateSurfaceColors(string hexColor)
+    {
+        var color = (Color)ColorConverter.ConvertFromString(hexColor);
+        var lightColor = Color.FromRgb(
+            (byte)Math.Min(255, color.R + 80),
+            (byte)Math.Min(255, color.G + 80),
+            (byte)Math.Min(255, color.B + 80)
+        );
+
+        if (Resources["Surface"] is SolidColorBrush surfaceBrush)
+            surfaceBrush.Color = color;
+        if (Resources["SurfaceLow"] is SolidColorBrush surfaceLowBrush)
+            surfaceLowBrush.Color = lightColor;
+        if (Resources["DynamicSurface"] is SolidColorBrush dynamicSurfaceBrush)
+            dynamicSurfaceBrush.Color = color;
+        if (Resources["DynamicSurfaceLow"] is SolidColorBrush dynamicSurfaceLowBrush)
+            dynamicSurfaceLowBrush.Color = lightColor;
+        if (Resources["HoverBg"] is SolidColorBrush hoverBrush)
+            hoverBrush.Color = Color.FromArgb(26, 255, 255, 255); // Keep white overlay for hover
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -467,8 +467,8 @@ public sealed class AppDiscoveryService
         try
         {
             if (!File.Exists(CachePath)) return null;
-            // Invalidate stale cache so newly installed apps are picked up
-            if ((DateTime.Now - File.GetLastWriteTime(CachePath)).TotalHours > 1)
+            // Invalidate stale cache so newly installed apps are picked up (24 hours)
+            if ((DateTime.Now - File.GetLastWriteTime(CachePath)).TotalHours > 24)
                 return null;
             return JsonSerializer.Deserialize<List<SearchResult>>(
                 File.ReadAllText(CachePath));

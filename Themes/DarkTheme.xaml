@@ -19,8 +19,8 @@
     <!-- Preview panel bg: rgba(18,18,20,0.85) → alpha=217=#D9 -->
     <SolidColorBrush x:Key="PreviewBg"       Color="#D9121214"/>
 
-    <!-- Surfaces -->
-    <SolidColorBrush x:Key="Surface"         Color="#1A1A1C"/>
+    <!-- Surfaces - will be updated dynamically -->
+    <SolidColorBrush x:Key="Surface"         Color="#141416"/>
     <SolidColorBrush x:Key="SurfaceLow"      Color="#242426"/>
 
     <!-- Text -->

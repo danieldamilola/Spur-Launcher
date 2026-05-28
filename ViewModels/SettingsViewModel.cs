@@ -76,22 +76,23 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(ThemeSystem));
     }
 
-    public bool EnableBlur
-    {
-        get => _config.EnableBlur;
-        set { _config.EnableBlur = value; Save(); OnPropertyChanged(); }
-    }
-
-    public bool EnableAcrylic
-    {
-        get => _config.EnableAcrylic;
-        set { _config.EnableAcrylic = value; Save(); OnPropertyChanged(); }
-    }
 
     public double WindowOpacity
     {
         get => _config.WindowOpacity;
-        set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); Save(); OnPropertyChanged(); }
+        set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    public string BackgroundColor
+    {
+        get => _config.BackgroundColor;
+        set { _config.BackgroundColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    public bool EnableBlur
+    {
+        get => _config.EnableBlur;
+        set { _config.EnableBlur = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public bool UseWindowsAccentColor
@@ -109,55 +110,55 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string AccentColor
     {
         get => _config.AccentColor;
-        set { _config.AccentColor = value; Save(); OnPropertyChanged(); }
+        set { _config.AccentColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public string FontFamilySetting
     {
         get => _config.FontFamily;
-        set { if (!string.IsNullOrWhiteSpace(value)) { _config.FontFamily = value; Save(); OnPropertyChanged(); } }
+        set { if (!string.IsNullOrWhiteSpace(value)) { _config.FontFamily = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); } }
     }
 
     public double FontSize
     {
         get => _config.FontSize;
-        set { _config.FontSize = Math.Clamp(value, 10, 24); Save(); OnPropertyChanged(); }
+        set { _config.FontSize = Math.Clamp(value, 10, 24); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public double LauncherWidth
     {
         get => _config.LauncherWidth;
-        set { _config.LauncherWidth = Math.Clamp(value, 400, 1200); Save(); OnPropertyChanged(); }
+        set { _config.LauncherWidth = Math.Clamp(value, 400, 1200); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public bool ShowCategoryLabels
     {
         get => _config.ShowCategoryLabels;
-        set { _config.ShowCategoryLabels = value; Save(); OnPropertyChanged(); }
+        set { _config.ShowCategoryLabels = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public double CornerRadius
     {
         get => _config.CornerRadius;
-        set { _config.CornerRadius = Math.Clamp(value, 0, 20); Save(); OnPropertyChanged(); }
+        set { _config.CornerRadius = Math.Clamp(value, 0, 20); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public string AnimationSpeed
     {
         get => _config.AnimationSpeed;
-        set { _config.AnimationSpeed = value; Save(); OnPropertyChanged(); }
+        set { _config.AnimationSpeed = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public bool ShowAppIcons
     {
         get => _config.ShowAppIcons;
-        set { _config.ShowAppIcons = value; Save(); OnPropertyChanged(); }
+        set { _config.ShowAppIcons = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public bool CompactMode
     {
         get => _config.CompactMode;
-        set { _config.CompactMode = value; Save(); OnPropertyChanged(); }
+        set { _config.CompactMode = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -358,6 +359,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.MinimizeToTray;
         set { _config.MinimizeToTray = value; Save(); OnPropertyChanged(); }
+    }
+
+    public bool ShowTrayIcon
+    {
+        get => _config.ShowTrayIcon;
+        set { _config.ShowTrayIcon = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     public bool ReIndexOnStartup
