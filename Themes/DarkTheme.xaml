@@ -8,7 +8,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         DARK THEME — Volt Design System
+         DARK THEME — Arc Design System
          All rgba() values converted to WPF #AARRGGBB
          ═══════════════════════════════════════════════════════════ -->
 
@@ -96,3 +96,4 @@
 
 
 </ResourceDictionary>
+

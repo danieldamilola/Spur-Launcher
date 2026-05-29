@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
 /// Registers a system-wide hotkey via Win32 RegisterHotKey and dispatches
@@ -26,6 +26,12 @@ public sealed class HotkeyService : IDisposable
     private Action? _callback;
     private HwndSource? _source;
     private bool _disposed;
+    private readonly ILogger _log;
+
+    public HotkeyService(ILogger? log = null)
+    {
+        _log = log ?? NullLogger.Instance;
+    }
 
     /// <summary>Registers the hotkey described by <paramref name="shortcutString"/> (e.g. "Alt+Space").</summary>
     public bool Register(IntPtr hwnd, string shortcutString, Action callback)
@@ -38,7 +44,7 @@ public sealed class HotkeyService : IDisposable
 
         var ok = RegisterHotKey(hwnd, _id, mod, vk);
         if (!ok)
-            Debug.WriteLine($"[Volt] RegisterHotKey failed for '{shortcutString}' (may already be registered).");
+            _log.Warning($"RegisterHotKey failed for '{shortcutString}' (may already be registered).");
 
         _source = HwndSource.FromHwnd(hwnd);
         _source?.AddHook(Hook);

@@ -1,8 +1,8 @@
 using System.Windows.Interop;
 using Hardcodet.Wpf.TaskbarNotification;
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt;
+namespace Arc;
 
 public partial class App : Application
 {
@@ -11,92 +11,99 @@ public partial class App : Application
     private HotkeyService?      _hotkey;
     private ClipboardWatcher?   _clipboard;
     private TaskbarIcon?        _trayIcon;
+    private ILogger?            _fileLogger;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // Global exception handlers — prevent silent crashes, log to console
+        // ── Logging ──────────────────────────────────────────────────
+        _fileLogger = new FileLogger();
+
+        // ── Global exception handlers ─────────────────────────────────
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             var ex = args.ExceptionObject as Exception;
-            Console.WriteLine($"[Volt] FATAL: {ex?.GetType().Name}: {ex?.Message}");
-            Console.WriteLine(ex?.StackTrace);
+            _fileLogger.Fatal($"Unhandled: {ex?.GetType().Name}: {ex?.Message}", ex);
         };
         DispatcherUnhandledException += (_, args) =>
         {
-            Console.WriteLine($"[Volt] UI ERROR: {args.Exception.GetType().Name}: {args.Exception.Message}");
-            Console.WriteLine(args.Exception.StackTrace);
-            args.Handled = true; // keep app alive
+            _fileLogger.Error($"UI: {args.Exception.GetType().Name}: {args.Exception.Message}", args.Exception);
+            args.Handled = true;
         };
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
-            Console.WriteLine($"[Volt] TASK ERROR: {args.Exception.GetType().Name}: {args.Exception.Message}");
+            _fileLogger.Warning($"Unobserved task: {args.Exception.GetType().Name}: {args.Exception.Message}", args.Exception);
             args.SetObserved();
         };
 
-        // Apply configured theme
-        var config = new ConfigService().Load();
+        // ── Initialize service facades with logger ────────────────────
+        ClipboardService.Initialize(new ClipboardServiceImpl(_fileLogger), _fileLogger);
+        ThemeManager.Initialize(new ThemeManagerImpl(_fileLogger), _fileLogger);
+        StartupService.Initialize(new StartupServiceImpl(_fileLogger), _fileLogger);
+        IconService.Initialize(new IconServiceImpl(_fileLogger), _fileLogger);
+        NotificationService.Initialize(new NotificationServiceImpl(_fileLogger), _fileLogger);
+
+        // ── Load and validate config ──────────────────────────────────
+        var configSvc = new ConfigService(_fileLogger);
+        var config = configSvc.Load();
+        config.Validate();
+        configSvc.Save(config);
         ThemeManager.Apply(config.Theme);
 
-        // Initialize surface colors from config (safe call)
-        try
-        {
-            UpdateSurfaceColors(config.BackgroundColor);
-        }
-        catch
-        {
-            // If this fails, continue anyway - app will use default colors
-        }
+        // ── Surface colors ────────────────────────────────────────────
+        try { UpdateSurfaceColors(config.BackgroundColor); }
+        catch (Exception ex) { _fileLogger.Warning("UpdateSurfaceColors failed", ex); }
 
-        // Create ViewModel
-        _vm = new MainViewModel();
+        // ── Create ViewModel ──────────────────────────────────────────
+        _vm = new MainViewModel(config, _fileLogger);
 
-        // Create main window (hidden until hotkey)
+        // ── Create main window (hidden until hotkey) ───────────────────
         _window = new MainWindow();
         _window.SetViewModel(_vm);
 
-        // Apply visual config to window before showing
         _window.Opacity = config.WindowOpacity;
         _window.Width   = config.LauncherWidth;
         _window.Show();   // Show once to get HWND
         _window.Hide();
 
-        // Register global hotkey after HWND is ready
+        // ── Register global hotkey ────────────────────────────────────
         var hwnd = new WindowInteropHelper(_window).Handle;
 
         if (config.HotkeyEnabled)
         {
-            _hotkey = new HotkeyService();
+            _hotkey = new HotkeyService(_fileLogger);
             _hotkey.Register(hwnd, config.Shortcut, ToggleWindow);
         }
 
-        // Clipboard watcher
+        // ── Clipboard watcher ─────────────────────────────────────────
         if (config.ClipboardEnabled)
         {
-            _clipboard = new ClipboardWatcher();
+            _clipboard = new ClipboardWatcher(_fileLogger);
             _clipboard.Attach(hwnd);
         }
 
-        // Force reindex if configured
+        // ── Force reindex if configured ───────────────────────────────
         if (config.ReIndexOnStartup)
         {
             try
             {
                 var cachePath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Volt", "volt.catalog.json");
+                    "Arc", "arc.catalog.json");
                 if (File.Exists(cachePath)) File.Delete(cachePath);
             }
-            catch { /* cache may be in use — next launch will refresh */ }
+            catch (Exception ex) { _fileLogger.Warning("Cache delete failed", ex); }
         }
 
-        // Wire settings changes to live behaviour
+        // ── Settings → behaviour bridge ───────────────────────────────
         WireSettings(_vm.Settings);
 
-        // System tray icon (only if enabled)
+        // ── System tray icon ──────────────────────────────────────────
         if (config.ShowTrayIcon)
             BuildTrayIcon();
+
+        _fileLogger.Info("Arc started successfully.");
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -137,7 +144,7 @@ public partial class App : Application
                     if (settings.HotkeyEnabled)
                     {
                         _hotkey?.Dispose();
-                        _hotkey = new HotkeyService();
+                        _hotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
                         _hotkey.Register(hwnd, settings.Shortcut, ToggleWindow);
                     }
                     else
@@ -148,11 +155,10 @@ public partial class App : Application
                     break;
 
                 case nameof(SettingsViewModel.Shortcut):
-                    // Re-register with new shortcut if hotkey is enabled
                     if (_window is not null && settings.HotkeyEnabled && _hotkey is not null)
                     {
                         _hotkey.Dispose();
-                        _hotkey = new HotkeyService();
+                        _hotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
                         var h = new WindowInteropHelper(_window).Handle;
                         _hotkey.Register(h, settings.Shortcut, ToggleWindow);
                     }
@@ -207,7 +213,7 @@ public partial class App : Application
         if (Resources["DynamicSurfaceLow"] is SolidColorBrush dynamicSurfaceLowBrush)
             dynamicSurfaceLowBrush.Color = lightColor;
         if (Resources["HoverBg"] is SolidColorBrush hoverBrush)
-            hoverBrush.Color = Color.FromArgb(26, 255, 255, 255); // Keep white overlay for hover
+            hoverBrush.Color = Color.FromArgb(26, 255, 255, 255);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -234,14 +240,14 @@ public partial class App : Application
     {
         _trayIcon = new TaskbarIcon
         {
-            ToolTipText = "Volt",
+            ToolTipText = "Arc",
             ContextMenu = BuildTrayMenu(),
         };
 
         try
         {
             using var stream = System.Reflection.Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("Volt.Assets.volt.ico");
+                .GetManifestResourceStream("Arc.Assets.arc.ico");
             if (stream is not null)
             {
                 var bmp = new System.Windows.Media.Imaging.BitmapImage();
@@ -252,7 +258,7 @@ public partial class App : Application
                 _trayIcon.IconSource = bmp;
             }
         }
-        catch { /* no icon — tray shows default */ }
+        catch (Exception ex) { _fileLogger?.Warning("Tray icon load failed", ex); }
 
         _trayIcon.TrayLeftMouseDown += (_, _) => ToggleWindow();
     }
@@ -260,7 +266,7 @@ public partial class App : Application
     private ContextMenu BuildTrayMenu()
     {
         var menu     = new ContextMenu();
-        var open     = new MenuItem { Header = "Open Volt" };
+        var open     = new MenuItem { Header = "Open Arc" };
         var settings = new MenuItem { Header = "Settings" };
         var quit     = new MenuItem { Header = "Quit" };
 
@@ -281,13 +287,15 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // Clear clipboard history if configured
         if (_vm?.Config.ClearClipboardOnExit == true)
             ClipboardService.Clear();
 
+        _vm?.Shutdown();
         _trayIcon?.Dispose();
         _hotkey?.Dispose();
         _clipboard?.Dispose();
+        _fileLogger?.Info("Arc shutting down.");
+        if (_fileLogger is IDisposable d) d.Dispose();
         base.OnExit(e);
     }
 }

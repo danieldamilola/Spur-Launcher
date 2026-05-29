@@ -1,9 +1,9 @@
-<UserControl x:Class="Volt.Views.ResultsList"
+<UserControl x:Class="Arc.Views.ResultsList"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Volt.Views"
-             xmlns:models="clr-namespace:Volt.Models"
-             xmlns:conv="clr-namespace:Volt.Converters">
+             xmlns:local="clr-namespace:Arc.Views"
+             xmlns:models="clr-namespace:Arc.Models"
+             xmlns:conv="clr-namespace:Arc.Converters">
 
     <UserControl.Resources>
 
@@ -25,6 +25,7 @@
                   Height="46"
                   Margin="6,1"
                   Background="Transparent"
+                  ToolTip="{Binding DetailText}"
                   MouseLeftButtonDown="OnRowClick"
                   Cursor="Hand">
 
@@ -119,11 +120,7 @@
                                    Opacity="0.8"
                                    TextTrimming="CharacterEllipsis">
                             <TextBlock.Text>
-                                <Binding Path="Subtitle">
-                                    <Binding.Converter>
-                                        <conv:PathTrimConverter/>
-                                    </Binding.Converter>
-                                </Binding>
+                                <Binding Path="DisplaySubtitle"/>
                             </TextBlock.Text>
                         </TextBlock>
                     </StackPanel>
@@ -190,3 +187,4 @@
              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
              ScrollViewer.CanContentScroll="False"/>
 </UserControl>
+

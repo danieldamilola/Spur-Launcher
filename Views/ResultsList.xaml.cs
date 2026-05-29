@@ -1,7 +1,7 @@
 using System.Windows.Controls.Primitives;
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt.Views;
+namespace Arc.Views;
 
 /// <summary>DataTemplateSelector that routes SectionLabel vs SearchResult.</summary>
 public sealed class ResultTemplateSelector : DataTemplateSelector
@@ -62,3 +62,4 @@ public partial class ResultsList : UserControl
         }
     }
 }
+

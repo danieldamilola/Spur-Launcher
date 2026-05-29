@@ -1,4 +1,4 @@
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
 /// Lightweight in-order fuzzy scorer. Characters must appear in the target
@@ -61,3 +61,4 @@ public static class FuzzySearch
     public static double Score(string query, string target)
         => string.IsNullOrEmpty(query) ? 0 : Score(query.AsSpan(), target.AsSpan());
 }
+

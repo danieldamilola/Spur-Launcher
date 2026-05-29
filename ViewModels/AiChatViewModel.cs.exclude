@@ -1,0 +1,201 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Arc.Services;
+using Arc.Models;
+using Arc.Extensions;
+
+namespace Arc.ViewModels;
+
+public sealed partial class AiChatViewModel : ObservableObject
+{
+    private readonly IAiService _aiService;
+    private readonly ArcConfig _config;
+
+    [ObservableProperty] private string _aiText = string.Empty;
+    [ObservableProperty] private bool _aiLoading = false;
+    [ObservableProperty] private string _aiError = string.Empty;
+
+    private CancellationTokenSource? _aiCts;
+    private readonly List<(string Role, string Content)> _aiConversation = [];
+    private const int MaxAiMessages = 24;
+
+    public AiChatViewModel(IAiService aiService, ArcConfig config)
+    {
+        _aiService = aiService;
+        _config = config;
+        AiFollowUpCommand = new AsyncRelayCommand<string>(OnAiFollowUpAsync);
+    }
+
+    public IAsyncRelayCommand<string> AiFollowUpCommand { get; }
+
+    /// <summary>Raised when the AI conversation changes (messages added).</summary>
+    public event EventHandler? ConversationChanged;
+
+    /// <summary>Public view of the AI conversation for binding.</summary>
+    public IReadOnlyList<(string Role, string Content)> AiConversation => _aiConversation;
+
+    public void CancelPending()
+    {
+        if (_aiCts != null)
+        {
+            _aiCts.Cancel();
+            _aiCts.Dispose();
+            _aiCts = null;
+        }
+    }
+
+    public async Task StartAiAsync(string query)
+    {
+        CancelPending();
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+
+        var question = AiAction.ExtractQuestion(query);
+        _aiConversation.Clear();
+        _aiConversation.Add(("user", question));
+        _aiConversation.Add(("assistant", string.Empty));
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+
+        AiText = string.Empty;
+        AiError = string.Empty;
+        AiLoading = true;
+
+        try
+        {
+            var (key, model) = GetAiConfig();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                AiError = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+                AiLoading = false;
+                return;
+            }
+
+            // Create context for just this query since it's a new conversation
+            var requestMessages = new[] { ("user", question) };
+
+            await _aiService.StreamAsync(_config.AiProvider, model, key, requestMessages, token =>
+            {
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    AiText += token;
+                    AiLoading = AiText.Length == 0;
+                    _aiConversation[^1] = ("assistant", AiText);
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
+                });
+            }, ct);
+
+            TrimAiConversation();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected if the user types a new query or clears
+        }
+        catch (TimeoutException)
+        {
+            AiError = "Request timed out. Please try again.";
+        }
+        catch (Exception ex) when (ex.Message.Contains("401"))
+        {
+            AiError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            AiError = $"Unexpected error: {ex.Message}";
+            Debug.WriteLine($"[Arc] StartAiAsync error: {ex}");
+        }
+        finally
+        {
+            AiLoading = false;
+        }
+    }
+
+    private async Task OnAiFollowUpAsync(string? followUp)
+    {
+        if (string.IsNullOrWhiteSpace(followUp)) return;
+
+        CancelPending();
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+
+        _aiConversation.Add(("user", followUp));
+        _aiConversation.Add(("assistant", string.Empty));
+        TrimAiConversation();
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+
+        AiError = string.Empty;
+        AiLoading = true;
+        AiText = string.Empty;
+
+        var (key, model) = GetAiConfig();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            AiError = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+            AiLoading = false;
+            return;
+        }
+
+        try
+        {
+            // Pass the entire trimmed conversation history
+            var requestMessages = _aiConversation.Take(_aiConversation.Count - 1).ToArray();
+
+            await _aiService.StreamAsync(_config.AiProvider, model, key, requestMessages, token =>
+            {
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    var newResponse = _aiConversation[^1].Content + token;
+                    _aiConversation[^1] = ("assistant", newResponse);
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
+                    AiText = newResponse;
+                });
+            }, ct);
+
+            AiLoading = false;
+            TrimAiConversation();
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancel
+        }
+        catch (TimeoutException)
+        {
+            AiError = "Request timed out. Please try again.";
+        }
+        catch (Exception ex) when (ex.Message.Contains("401"))
+        {
+            AiError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            AiError = $"Unexpected error: {ex.Message}";
+            Debug.WriteLine($"[Arc] OnAiFollowUpAsync error: {ex}");
+        }
+        finally
+        {
+            AiLoading = false;
+        }
+    }
+
+    private void TrimAiConversation()
+    {
+        while (_aiConversation.Count > MaxAiMessages)
+        {
+            _aiConversation.RemoveAt(0);
+        }
+    }
+
+    private (string Key, string Model) GetAiConfig() => _config.AiProvider switch
+    {
+        "gemini"     => (_config.GeminiApiKey,     _config.GeminiModel),
+        "openrouter" => (_config.OpenRouterApiKey, _config.OpenRouterModel),
+        "deepseek"   => (_config.DeepSeekApiKey,   _config.DeepSeekModel),
+        _            => (_config.GroqApiKey,        _config.GroqModel),
+    };
+}

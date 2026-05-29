@@ -1,12 +1,12 @@
-# FEATURES.md — Volt
+# FEATURES.md — Arc
 
-Volt is a keyboard-first app launcher for Windows. Press `Alt+Space`, type anything, get results instantly. It replaces the Windows Start Menu search for people who want something faster, cleaner, and smarter.
+Arc is a keyboard-first app launcher for Windows. Press `Alt+Space`, type anything, get results instantly. It replaces the Windows Start Menu search for people who want something faster, cleaner, and smarter.
 
 ---
 
 ## How Search Works
 
-Volt has two states:
+Arc has two states:
 
 **Idle (empty query):**
 The window shows only the search bar and a row of 4 category icon buttons. Nothing else. Clean.
@@ -83,20 +83,20 @@ These activate automatically when you type specific patterns. No need to select 
 
 | Shortcut | Action |
 |----------|--------|
-| `Alt+Space` | Open / close Volt (global, works anywhere) |
-| `Escape` | Close Volt (or clear query first if typing) |
+| `Alt+Space` | Open / close Arc (global, works anywhere) |
+| `Escape` | Close Arc (or clear query first if typing) |
 | `↓` / `↑` | Move through results |
 | `Enter` | Open / run selected result |
 | `Ctrl+Enter` | Secondary action (open folder, copy value) |
 | `Tab` | Cycle through the 4 category buttons |
-| `Ctrl+,` | Open Settings (from anywhere inside Volt) |
+| `Ctrl+,` | Open Settings (from anywhere inside Arc) |
 | `Backspace` | Clear last character (normal typing behavior) |
 
 ---
 
 ## Settings
 
-Settings are accessed by pressing `Ctrl+,` inside Volt, or by typing `settings` in the search bar.
+Settings are accessed by pressing `Ctrl+,` inside Arc, or by typing `settings` in the search bar.
 
 | Setting | Options |
 |---------|---------|
@@ -111,7 +111,7 @@ Settings are saved instantly. No save button. No restart required.
 
 ---
 
-## What Volt Does NOT Do
+## What Arc Does NOT Do
 
 - No browser history search
 - No web search (AI can answer questions instead)
@@ -122,3 +122,4 @@ Settings are saved instantly. No save button. No restart required.
 - No window management commands
 - No snippet manager
 - No calculator history
+

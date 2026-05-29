@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 /// <summary>
 /// Returns true when the bound int value equals the converter parameter.
@@ -26,3 +26,4 @@ public sealed class IntEqConverter : IValueConverter
         return Binding.DoNothing;
     }
 }
+

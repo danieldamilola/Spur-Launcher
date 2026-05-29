@@ -1,6 +1,6 @@
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt.Views;
+namespace Arc.Views;
 
 public partial class PreviewPanel : UserControl
 {
@@ -134,11 +134,35 @@ public partial class PreviewPanel : UserControl
     }
 
     private void OnAiFollowUpSend(object sender, RoutedEventArgs e)
+        => SendAiFollowUp();
+
+    private void OnAiFollowUpKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || Keyboard.Modifiers == ModifierKeys.Shift) return;
+        SendAiFollowUp();
+        e.Handled = true;
+    }
+
+    private void OnAiFollowUpFocus(object sender, RoutedEventArgs e)
+    {
+        if (AiFollowUp.Text is "Type a message..." or "Type a message…")
+            AiFollowUp.Text = string.Empty;
+    }
+
+    private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (AiPanel.Visibility != Visibility.Visible) return;
+        AiScroll.ScrollToVerticalOffset(AiScroll.VerticalOffset - e.Delta);
+        e.Handled = true;
+    }
+
+    private void SendAiFollowUp()
     {
         if (_vm is null) return;
         var text = AiFollowUp.Text;
-        if (string.IsNullOrWhiteSpace(text) || text == "Follow up…") return;
+        if (string.IsNullOrWhiteSpace(text) || text is "Type a message..." or "Type a message…") return;
         _vm.AiFollowUpCommand.Execute(text);
         AiFollowUp.Text = string.Empty;
     }
 }
+

@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 
-namespace Volt.ViewModels;
+namespace Arc.ViewModels;
 
 /// <summary>
 /// Sidebar-based settings view model with instant-save semantics.
@@ -11,9 +11,9 @@ public sealed partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigService  _configService;
     private readonly MainViewModel  _main;
-    private          VoltConfig     _config;
+    private          ArcConfig     _config;
 
-    public SettingsViewModel(VoltConfig config, ConfigService configService, MainViewModel main)
+    public SettingsViewModel(ArcConfig config, ConfigService configService, MainViewModel main)
     {
         _config        = config;
         _configService = configService;
@@ -29,7 +29,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             new("Result Behavior", "cursor",   "\ue753"),
             new("Privacy",         "shield",   "\ue72e"),
             new("AI Assistant",    "sparkles", "\ue7f3"),
-            new("About Volt",      "info",     "\ue946"),
+            new("About Arc",      "info",     "\ue946"),
         };
         SelectedSection = Sections[0];
 
@@ -201,6 +201,68 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.FuzzySearch = value; Save(); OnPropertyChanged(); }
     }
 
+    public string[] QuerySearchPrecisionOptions { get; } = ["Low", "Regular", "Strict"];
+
+    public string QuerySearchPrecision
+    {
+        get => ToTitle(_config.QuerySearchPrecision);
+        set { _config.QuerySearchPrecision = ToKey(value); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public string[] LastQueryStyleOptions { get; } = ["Clear", "Select last Query", "Keep last Query"];
+
+    public string LastQueryStyle
+    {
+        get => _config.LastQueryStyle switch
+        {
+            "select" => "Select last Query",
+            "keep" => "Keep last Query",
+            _ => "Clear",
+        };
+        set
+        {
+            _config.LastQueryStyle = value switch
+            {
+                "Select last Query" => "select",
+                "Keep last Query" => "keep",
+                _ => "clear",
+            };
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IndexShell
+    {
+        get => _config.IndexShell;
+        set { _config.IndexShell = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool IndexSystemCommands
+    {
+        get => _config.IndexSystemCommands;
+        set { _config.IndexSystemCommands = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool IndexUrls
+    {
+        get => _config.IndexUrls;
+        set { _config.IndexUrls = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool IndexWebSearches
+    {
+        get => _config.IndexWebSearches;
+        set { _config.IndexWebSearches = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool IndexWindowsSettings
+    {
+        get => _config.IndexWindowsSettings;
+        set { _config.IndexWindowsSettings = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
     public int MaxFileDepth
     {
         get => _config.MaxFileDepth;
@@ -226,6 +288,26 @@ public sealed partial class SettingsViewModel : ObservableObject
         set
         {
             if (_config.ClipboardEnabled == value) return;
+
+            // Privacy warning when enabling clipboard monitoring
+            if (value)
+            {
+                var result = System.Windows.MessageBox.Show(
+                    "Arc will monitor and store everything you copy, including passwords, " +
+                    "2FA codes, and other sensitive data.\n\n" +
+                    "Clipboard history is stored locally and never sent anywhere.\n\n" +
+                    "Enable clipboard history?",
+                    "Clipboard Privacy",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Warning);
+
+                if (result != System.Windows.MessageBoxResult.Yes)
+                {
+                    OnPropertyChanged();
+                    return;
+                }
+            }
+
             _config.ClipboardEnabled = value;
             _main.Config = _config.Clone();
             Save();
@@ -450,6 +532,72 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.ShowRecentFirst = value; Save(); OnPropertyChanged(); }
     }
 
+    public bool ShowPlaceholder
+    {
+        get => _config.ShowPlaceholder;
+        set { _config.ShowPlaceholder = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public string PlaceholderText
+    {
+        get => _config.PlaceholderText;
+        set { _config.PlaceholderText = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool AnimationEnabled
+    {
+        get => _config.AnimationEnabled;
+        set { _config.AnimationEnabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool SoundEffectEnabled
+    {
+        get => _config.SoundEffectEnabled;
+        set { _config.SoundEffectEnabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public string[] SearchWindowLocations { get; } = ["Primary Monitor"];
+
+    public string SearchWindowLocation
+    {
+        get => "Primary Monitor";
+        set { _config.SearchWindowLocation = "primary"; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public string[] SearchWindowPositions { get; } = ["Center", "Center Top", "Left Top", "Right Top", "Custom Position"];
+
+    public string SearchWindowPosition
+    {
+        get => _config.SearchWindowPosition switch
+        {
+            "centerTop" => "Center Top",
+            "leftTop" => "Left Top",
+            "rightTop" => "Right Top",
+            "custom" => "Custom Position",
+            _ => "Center",
+        };
+        set
+        {
+            _config.SearchWindowPosition = value switch
+            {
+                "Center Top" => "centerTop",
+                "Left Top" => "leftTop",
+                "Right Top" => "rightTop",
+                "Custom Position" => "custom",
+                _ => "center",
+            };
+            _main.Config = _config.Clone();
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public bool AlwaysPreview
+    {
+        get => _config.AlwaysPreview;
+        set { _config.AlwaysPreview = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // AI Assistant
     // ═══════════════════════════════════════════════════════════════
@@ -550,7 +698,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void ResetToDefaults()
     {
-        _config = new VoltConfig();
+        _config = new ArcConfig();
         _configService.Save(_config);
         _main.Config = _config.Clone();
         LoadStartupState();
@@ -563,7 +711,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     // About
     // ═══════════════════════════════════════════════════════════════
 
-    public string Version => "Volt v0.2.0";
+    public string Version => "Arc v0.2.0";
     public string Credits => "Built with .NET 9 + WPF";
     public string License => "MIT License";
 
@@ -578,6 +726,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     private void Save() => _configService.Save(_config);
+
+    private static string ToTitle(string value)
+        => string.IsNullOrWhiteSpace(value) ? "Regular" : char.ToUpperInvariant(value[0]) + value[1..].ToLowerInvariant();
+
+    private static string ToKey(string value)
+        => string.IsNullOrWhiteSpace(value) ? "regular" : value.Replace(" ", string.Empty).ToLowerInvariant();
 }
 
 /// <summary>A single sidebar section in the settings UI.</summary>

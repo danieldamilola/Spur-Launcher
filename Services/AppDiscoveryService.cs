@@ -1,7 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
+using Arc.Services;
 
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
 /// Discovers user-facing installed applications exclusively from Windows Start Menu
@@ -12,8 +13,20 @@ namespace Volt.Services;
 /// Those sources add hundreds of system executables, CLI tools, background
 /// processes, and framework packages that users never need to see.
 /// </summary>
-public sealed class AppDiscoveryService
+public interface IAppDiscoveryService
 {
+    Task<List<SearchResult>> DiscoverAsync(CancellationToken ct = default);
+    void ClearCache();
+}
+
+public sealed class AppDiscoveryService : IAppDiscoveryService
+{
+    private readonly ILogger _logger;
+
+    public AppDiscoveryService(ILogger logger)
+    {
+        _logger = logger;
+    }
     private static readonly string[] StartMenuPaths =
     [
         Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu),
@@ -83,7 +96,7 @@ public sealed class AppDiscoveryService
     // ── Cache ─────────────────────────────────────────────────────
     private static readonly string CachePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Volt", "volt.catalog.json");
+        "Arc", "Arc.catalog.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 
@@ -133,13 +146,18 @@ public sealed class AppDiscoveryService
     // Public
     // ══════════════════════════════════════════════════════════════
 
-    public Task<List<SearchResult>> DiscoverAsync()
+    public Task<List<SearchResult>> DiscoverAsync(CancellationToken ct = default)
     {
         var tcs = new TaskCompletionSource<List<SearchResult>>();
         var thread = new Thread(() =>
         {
             try
             {
+                if (ct.IsCancellationRequested)
+                {
+                    tcs.SetCanceled();
+                    return;
+                }
                 var cached = LoadCache();
                 if (cached is { Count: > 0 })
                 {
@@ -172,7 +190,7 @@ public sealed class AppDiscoveryService
     // Discovery
     // ══════════════════════════════════════════════════════════════
 
-    private static List<SearchResult> DiscoverAll()
+    private List<SearchResult> DiscoverAll()
     {
         var results = new List<SearchResult>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -320,6 +338,9 @@ public sealed class AppDiscoveryService
 
         // ── %LocalAppData%\Programs scan (apps without Start Menu shortcuts) ──
         DiscoverLocalPrograms(results, seen);
+        DiscoverKnownApps(results, seen);
+        DiscoverAppPaths(results, seen);
+        DiscoverUninstallEntries(results, seen);
 
         // Sort alphabetically by name
         results.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
@@ -332,7 +353,7 @@ public sealed class AppDiscoveryService
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Programs");
 
-    private static void DiscoverLocalPrograms(List<SearchResult> results, HashSet<string> seen)
+    private void DiscoverLocalPrograms(List<SearchResult> results, HashSet<string> seen)
     {
         if (!Directory.Exists(_localAppsPath)) return;
 
@@ -346,6 +367,18 @@ public sealed class AppDiscoveryService
                 var exes = Directory.EnumerateFiles(appDir, "*.exe", SearchOption.TopDirectoryOnly)
                     .Where(e => !UninstallerExes.Contains(Path.GetFileName(e)))
                     .ToList();
+                if (exes.Count == 0)
+                {
+                    exes = Directory.EnumerateDirectories(appDir)
+                        .Take(8)
+                        .SelectMany(d =>
+                        {
+                            try { return Directory.EnumerateFiles(d, "*.exe", SearchOption.TopDirectoryOnly); }
+                            catch { return []; }
+                        })
+                        .Where(e => !UninstallerExes.Contains(Path.GetFileName(e)))
+                        .ToList();
+                }
 
                 if (exes.Count == 0) continue;
 
@@ -376,9 +409,100 @@ public sealed class AppDiscoveryService
         }
     }
 
+    private void DiscoverKnownApps(List<SearchResult> results, HashSet<string> seen)
+    {
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+        (string Name, string Path)[] candidates =
+        [
+            ("Claude", Path.Combine(local, "Programs", "Claude", "Claude.exe")),
+            ("Claude", Path.Combine(local, "AnthropicClaude", "Claude.exe")),
+            ("Firefox", Path.Combine(pf, "Mozilla Firefox", "firefox.exe")),
+            ("Firefox", Path.Combine(pf86, "Mozilla Firefox", "firefox.exe")),
+            ("Notepad", Path.Combine(windows, "notepad.exe")),
+        ];
+
+        foreach (var (name, path) in candidates)
+            AddExeResult(results, seen, name, path);
+    }
+
+    private void DiscoverAppPaths(List<SearchResult> results, HashSet<string> seen)
+    {
+        const string subkey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
+        foreach (var hive in new[] { Microsoft.Win32.Registry.CurrentUser, Microsoft.Win32.Registry.LocalMachine })
+        {
+            try
+            {
+                using var root = hive.OpenSubKey(subkey);
+                if (root is null) continue;
+                foreach (var name in root.GetSubKeyNames())
+                {
+                    using var key = root.OpenSubKey(name);
+                    var path = key?.GetValue(null) as string;
+                    if (string.IsNullOrWhiteSpace(path)) continue;
+                    AddExeResult(results, seen, Path.GetFileNameWithoutExtension(name), Environment.ExpandEnvironmentVariables(path.Trim('"')));
+                }
+            }
+            catch { }
+        }
+    }
+
+    private void DiscoverUninstallEntries(List<SearchResult> results, HashSet<string> seen)
+    {
+        string[] roots =
+        [
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        ];
+
+        foreach (var hive in new[] { Microsoft.Win32.Registry.CurrentUser, Microsoft.Win32.Registry.LocalMachine })
+        foreach (var rootName in roots)
+        {
+            try
+            {
+                using var root = hive.OpenSubKey(rootName);
+                if (root is null) continue;
+                foreach (var sub in root.GetSubKeyNames())
+                {
+                    using var key = root.OpenSubKey(sub);
+                    var display = key?.GetValue("DisplayName") as string;
+                    var install = key?.GetValue("InstallLocation") as string;
+                    if (string.IsNullOrWhiteSpace(display) || string.IsNullOrWhiteSpace(install) || !Directory.Exists(install)) continue;
+                    var exe = Directory.EnumerateFiles(install, "*.exe", SearchOption.TopDirectoryOnly)
+                        .FirstOrDefault(e => !UninstallerExes.Contains(Path.GetFileName(e)) && !NonAppTargets.Contains(Path.GetFileName(e)));
+                    if (!string.IsNullOrWhiteSpace(exe))
+                        AddExeResult(results, seen, display, exe);
+                }
+            }
+            catch { }
+        }
+    }
+
+    private static void AddExeResult(List<SearchResult> results, HashSet<string> seen, string name, string path)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+        var cleanName = name.Trim();
+        if (cleanName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            cleanName = Path.GetFileNameWithoutExtension(cleanName);
+        if (!seen.Add(cleanName.ToLowerInvariant())) return;
+
+        results.Add(new SearchResult
+        {
+            Id       = $"app:{path}",
+            Type     = ResultType.App,
+            Name     = cleanName,
+            Subtitle = path,
+            IconPath = path,
+            ExePath  = path,
+        });
+    }
+
     // ── Filters ───────────────────────────────────────────────────
 
-    private static bool IsUninstallerByName(string name)
+    private bool IsUninstallerByName(string name)
     {
         // English + common patterns
         if (name.StartsWith("Uninstall", StringComparison.OrdinalIgnoreCase))
@@ -402,7 +526,7 @@ public sealed class AppDiscoveryService
         return false;
     }
 
-    private static bool IsStartupEntry(string lnkPath)
+    private bool IsStartupEntry(string lnkPath)
     {
         foreach (var dir in StartUpPaths)
         {
@@ -420,7 +544,7 @@ public sealed class AppDiscoveryService
     /// it is a UWP / Microsoft Store app (launched via explorer.exe
     /// shell:AppsFolder or living under WindowsApps).
     /// </summary>
-    private static LnkInfo ResolveLnk(string lnkPath)
+    private LnkInfo ResolveLnk(string lnkPath)
     {
         try
         {
@@ -462,7 +586,7 @@ public sealed class AppDiscoveryService
 
     // ── Cache ─────────────────────────────────────────────────────
 
-    private static List<SearchResult>? LoadCache()
+    private List<SearchResult>? LoadCache()
     {
         try
         {
@@ -470,27 +594,29 @@ public sealed class AppDiscoveryService
             // Invalidate stale cache so newly installed apps are picked up (24 hours)
             if ((DateTime.Now - File.GetLastWriteTime(CachePath)).TotalHours > 24)
                 return null;
-            return JsonSerializer.Deserialize<List<SearchResult>>(
+            var dtos = JsonSerializer.Deserialize<List<PersistedSearchResult>>(
                 File.ReadAllText(CachePath));
+            return dtos?.ConvertAll(d => d.ToResult());
         }
         catch { return null; }
     }
 
-    private static void SaveCache(List<SearchResult> catalog)
+    private void SaveCache(List<SearchResult> catalog)
     {
         try
         {
+            var dtos = catalog.ConvertAll(PersistedSearchResult.FromResult);
             File.WriteAllText(CachePath,
-                JsonSerializer.Serialize(catalog, JsonOpts));
+                JsonSerializer.Serialize(dtos, JsonOpts));
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] Cache save failed: {ex.Message}");
+            _logger.Warning("Cache save failed", ex);
         }
     }
 
     /// <summary>Deletes the on-disk catalog so the next <see cref="DiscoverAsync"/> call runs a full scan.</summary>
-    public static void ClearCache()
+    public void ClearCache()
     {
         try { if (File.Exists(CachePath)) File.Delete(CachePath); }
         catch { }

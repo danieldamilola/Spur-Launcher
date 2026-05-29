@@ -1,55 +1,57 @@
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
-/// Reads and writes <see cref="VoltConfig"/> as JSON to
-/// <c>%LocalAppData%\Volt\volt.config.json</c>.
+/// Reads and writes <see cref="ArcConfig"/> as JSON to
+/// <c>%LocalAppData%\Arc\Arc.config.json</c>.
 /// </summary>
 public sealed class ConfigService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
+    private static readonly SemaphoreSlim SaveGate = new(1, 1);
 
     private readonly string _path;
+    private readonly ILogger _log;
 
-    public ConfigService()
+    public ConfigService(ILogger? log = null)
     {
+        _log = log ?? NullLogger.Instance;
+
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Volt");
+            "Arc");
         Directory.CreateDirectory(dir);
-        _path = Path.Combine(dir, "volt.config.json");
+        _path = Path.Combine(dir, "arc.config.json");
     }
 
-    public VoltConfig Load()
+    public ArcConfig Load()
     {
         try
         {
             if (File.Exists(_path))
             {
                 var json = File.ReadAllText(_path);
-                return JsonSerializer.Deserialize<VoltConfig>(json) ?? new VoltConfig();
+                return JsonSerializer.Deserialize<ArcConfig>(json) ?? new ArcConfig();
             }
         }
-        catch { /* corrupt file — return defaults */ }
+        catch (Exception ex) { _log.Warning("Config load failed — using defaults", ex); }
 
-        var defaults = new VoltConfig();
+        var defaults = new ArcConfig();
         Save(defaults);
         return defaults;
     }
 
-    public void Save(VoltConfig config)
+    public void Save(ArcConfig config)
     {
-        var json = JsonSerializer.Serialize(config, JsonOptions);
-        Task.Run(() =>
-        {
-            try { File.WriteAllText(_path, json); }
-            catch (Exception ex) { Debug.WriteLine($"[Volt] Config save failed: {ex.Message}"); }
-        });
+        _ = SaveAsync(config);
     }
 
-    public Task<VoltConfig> LoadAsync() => Task.Run(Load);
-    public Task SaveAsync(VoltConfig config) => Task.Run(() =>
+    public Task<ArcConfig> LoadAsync() => Task.Run(Load);
+    public async Task SaveAsync(ArcConfig config)
     {
-        try { File.WriteAllText(_path, JsonSerializer.Serialize(config, JsonOptions)); }
-        catch (Exception ex) { Debug.WriteLine($"[Volt] Config save failed: {ex.Message}"); }
-    });
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        await SaveGate.WaitAsync();
+        try { await File.WriteAllTextAsync(_path, json); }
+        catch (Exception ex) { _log.Warning("Config save failed", ex); }
+        finally { SaveGate.Release(); }
+    }
 }

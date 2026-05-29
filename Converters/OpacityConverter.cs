@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 public class OpacityConverter : IMultiValueConverter
 {
@@ -25,3 +25,4 @@ public class OpacityConverter : IMultiValueConverter
         throw new NotImplementedException();
     }
 }
+

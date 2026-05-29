@@ -1,7 +1,7 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>IP action. Triggered by typing exactly "ip".</summary>
 public sealed class IpAction : IAction
@@ -50,3 +50,4 @@ public sealed class IpAction : IAction
         catch { return null; }
     }
 }
+

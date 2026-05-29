@@ -1,4 +1,4 @@
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>AI action. Triggered by "ai " followed by any non-empty question.</summary>
 public sealed class AiAction : IAction
@@ -31,3 +31,4 @@ public sealed class AiAction : IAction
     public static string ExtractQuestion(string query) =>
         Regex.Replace(query.Trim(), @"^ai\s+", "", RegexOptions.IgnoreCase);
 }
+

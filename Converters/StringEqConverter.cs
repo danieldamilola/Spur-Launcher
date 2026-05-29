@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 /// <summary>Converts a string to bool for RadioButton comparison (value == parameter).</summary>
 [ValueConversion(typeof(string), typeof(bool))]
@@ -23,3 +23,4 @@ public sealed class StringEqConverter : IValueConverter
         return Binding.DoNothing;
     }
 }
+

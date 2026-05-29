@@ -1,16 +1,34 @@
-namespace Volt.Services;
+namespace Arc.Services;
+
+/// <summary>Interface for in-memory clipboard history management.</summary>
+public interface IClipboardService
+{
+    int MaxItems { get; set; }
+    IReadOnlyList<ClipboardEntry> GetHistory();
+    void Add(string text);
+    void AddImage(System.Windows.Media.Imaging.BitmapSource image);
+    void CopyToSystem(string text);
+    string? ReadFromSystem();
+    System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem();
+    void Clear();
+}
 
 /// <summary>
 /// In-memory clipboard text history. Thread-safe. Never persisted.
 /// Deduplicates consecutive identical entries.  Max items is configurable
 /// via <see cref="MaxItems"/> (default 20, settable from settings).
 /// </summary>
-public static class ClipboardService
+public sealed class ClipboardServiceImpl : IClipboardService
 {
-    private static int _maxItems = 10;
+    private int _maxItems = 10;
+    private const int MaxImageEntries = 5;
+    private readonly List<ClipboardEntry> _history = [];
+    private readonly object _lock = new();
+    private readonly ILogger _log;
 
-    /// <summary>Maximum number of items kept in history. Clamped to 5–200.</summary>
-    public static int MaxItems
+    public ClipboardServiceImpl(ILogger log) => _log = log;
+
+    public int MaxItems
     {
         get => _maxItems;
         set
@@ -24,23 +42,23 @@ public static class ClipboardService
         }
     }
 
-    private static readonly List<ClipboardEntry> _history = [];
-    private static readonly object _lock = new();
-
-    public static IReadOnlyList<ClipboardEntry> GetHistory()
+    public IReadOnlyList<ClipboardEntry> GetHistory()
     {
         lock (_lock) return _history.ToArray();
     }
 
-    /// <summary>Adds a new text entry to the top, deduplicating consecutive identical items.</summary>
-    public static void Add(string text)
+    public void Add(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return;
 
         lock (_lock)
         {
+            var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
+                ? text[..ClipboardEntry.MaxStoredTextChars]
+                : text;
+
             if (_history.Count > 0 &&
-                string.Equals(_history[0].Content, text, StringComparison.Ordinal))
+                string.Equals(_history[0].Content, storedText, StringComparison.Ordinal))
                 return;
 
             _history.Insert(0, new ClipboardEntry(text));
@@ -49,8 +67,7 @@ public static class ClipboardService
         }
     }
 
-    /// <summary>Adds a clipboard image entry. The BitmapSource is frozen for cross-thread safety.</summary>
-    public static void AddImage(System.Windows.Media.Imaging.BitmapSource image)
+    public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
     {
         if (image is null) return;
         if (!image.IsFrozen) image.Freeze();
@@ -58,34 +75,83 @@ public static class ClipboardService
         lock (_lock)
         {
             _history.Insert(0, new ClipboardEntry(image));
+            TrimImages();
             while (_history.Count > _maxItems)
                 _history.RemoveAt(_history.Count - 1);
         }
     }
 
-    /// <summary>Writes text to the system clipboard. Must be called on the UI thread.</summary>
-    public static void CopyToSystem(string text)
+    private void TrimImages()
     {
-        try { Clipboard.SetText(text); }
-        catch (Exception ex) { Debug.WriteLine($"[Volt] Clipboard copy failed: {ex.Message}"); }
+        var imageCount = 0;
+        for (var i = 0; i < _history.Count; i++)
+        {
+            if (!_history[i].IsImage) continue;
+            imageCount++;
+            if (imageCount > MaxImageEntries)
+            {
+                _history.RemoveAt(i);
+                i--;
+            }
+        }
     }
 
-    /// <summary>Reads current text from system clipboard. Returns null if no text.</summary>
-    public static string? ReadFromSystem()
+    public void CopyToSystem(string text)
+    {
+        try { Clipboard.SetText(text); }
+        catch (Exception ex) { _log.Warning("Clipboard copy failed", ex); }
+    }
+
+    public string? ReadFromSystem()
     {
         try { return Clipboard.ContainsText() ? Clipboard.GetText() : null; }
         catch { return null; }
     }
 
-    /// <summary>Reads an image from the system clipboard. Must be called on UI thread.</summary>
-    public static System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem()
+    public System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem()
     {
         try { return Clipboard.ContainsImage() ? Clipboard.GetImage() : null; }
         catch { return null; }
     }
 
-    public static void Clear()
+    public void Clear()
     {
         lock (_lock) _history.Clear();
+    }
+}
+
+/// <summary>Static facade — delegates to the configured IClipboardService instance.</summary>
+public static class ClipboardService
+{
+    private static IClipboardService? _instance;
+    private static ILogger _log = NullLogger.Instance;
+
+    /// <summary>Sets the underlying instance and logger. Call once at startup.</summary>
+    public static void Initialize(IClipboardService instance, ILogger logger)
+    {
+        _instance = instance;
+        _log = logger;
+    }
+
+    public static int MaxItems { get => Instance.MaxItems; set => Instance.MaxItems = value; }
+    public static IReadOnlyList<ClipboardEntry> GetHistory() => Instance.GetHistory();
+    public static void Add(string text) => Instance.Add(text);
+    public static void AddImage(System.Windows.Media.Imaging.BitmapSource image) => Instance.AddImage(image);
+    public static void CopyToSystem(string text) => Instance.CopyToSystem(text);
+    public static string? ReadFromSystem() => Instance.ReadFromSystem();
+    public static System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem() => Instance.ReadImageFromSystem();
+    public static void Clear() => Instance.Clear();
+
+    private static IClipboardService Instance
+    {
+        get
+        {
+            if (_instance is not null) return _instance;
+            // Auto-initialize with defaults if never configured (backward compat)
+            var impl = new ClipboardServiceImpl(_log);
+            _instance = impl;
+            _log.Info("ClipboardService auto-initialized with defaults.");
+            return impl;
+        }
     }
 }

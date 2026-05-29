@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
 /// Listens for system clipboard changes using Win32 AddClipboardFormatListener.
@@ -23,6 +23,12 @@ public sealed class ClipboardWatcher : IDisposable
     private bool _disposed;
     private string? _lastText;
     private System.Windows.Media.Imaging.BitmapSource? _lastImage;
+    private readonly ILogger _log;
+
+    public ClipboardWatcher(ILogger? log = null)
+    {
+        _log = log ?? NullLogger.Instance;
+    }
 
     public void Attach(IntPtr hwnd)
     {

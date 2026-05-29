@@ -1,4 +1,4 @@
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// Color action. Triggered when the query is a hex color like #FF5733 or #abc.
@@ -69,3 +69,4 @@ public sealed class ColorAction : IAction
         if (h < 0) h += 360;
     }
 }
+

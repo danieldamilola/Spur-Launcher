@@ -1,4 +1,4 @@
-namespace Volt.Models;
+namespace Arc.Models;
 
 /// <summary>Result type discriminator.</summary>
 public enum ResultType { App, File, Clipboard, Action }
@@ -16,6 +16,24 @@ public class SearchResult
 
     /// <summary>Secondary line — path, description, or preview.</summary>
     public string Subtitle { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DisplaySubtitle => Type switch
+    {
+        ResultType.App => string.IsNullOrWhiteSpace(LnkPath) ? "Application" : "Application shortcut",
+        ResultType.File when IsDirectory => "Folder",
+        ResultType.File => string.IsNullOrWhiteSpace(FileExtension) ? "File" : FileExtension.TrimStart('.').ToUpperInvariant(),
+        _ => Subtitle,
+    };
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DetailText => Type switch
+    {
+        ResultType.App => ExePath ?? LnkPath ?? Subtitle,
+        ResultType.File => FilePath ?? Subtitle,
+        ResultType.Clipboard => ClipContent ?? Subtitle,
+        _ => Subtitle,
+    };
 
     /// <summary>Path used by PathToIconConverter. May be null for non-file results.</summary>
     public string? IconPath { get; set; }
@@ -56,3 +74,53 @@ public class SearchResult
 
 /// <summary>Section header shown between groups of results (e.g. "APPLICATIONS", "FILES").</summary>
 public record SectionLabel(string Title);
+
+/// <summary>
+/// JSON-safe subset of SearchResult — no WPF types, no computed properties.
+/// Used as the serialization boundary for cache files.
+/// </summary>
+public record PersistedSearchResult(
+    string Id,
+    ResultType Type,
+    string Name,
+    string Subtitle,
+    string? IconPath,
+    string? LucideIcon,
+    double Score,
+    double FrequencyScore,
+    bool IsPinned,
+    string? ExePath,
+    string? LnkPath,
+    string? FilePath,
+    string? FileExtension,
+    bool IsDirectory,
+    string? ClipContent,
+    DateTime ClipTimestamp,
+    string? ActionId
+)
+{
+    public SearchResult ToResult() => new()
+    {
+        Id = Id, Type = Type, Name = Name, Subtitle = Subtitle,
+        IconPath = IconPath, LucideIcon = LucideIcon,
+        Score = Score, FrequencyScore = FrequencyScore,
+        IsPinned = IsPinned,
+        ExePath = ExePath, LnkPath = LnkPath,
+        FilePath = FilePath, FileExtension = FileExtension,
+        IsDirectory = IsDirectory,
+        ClipContent = ClipContent, ClipTimestamp = ClipTimestamp,
+        ActionId = ActionId,
+    };
+
+    public static PersistedSearchResult FromResult(SearchResult r) => new(
+        r.Id, r.Type, r.Name, r.Subtitle,
+        r.IconPath, r.LucideIcon,
+        r.Score, r.FrequencyScore,
+        r.IsPinned,
+        r.ExePath, r.LnkPath,
+        r.FilePath, r.FileExtension,
+        r.IsDirectory,
+        r.ClipContent, r.ClipTimestamp,
+        r.ActionId
+    );
+}

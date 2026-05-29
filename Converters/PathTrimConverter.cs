@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 /// <summary>
 /// Shortens file-system paths for display by replacing the user profile root with ~
@@ -34,3 +34,4 @@ public sealed class PathTrimConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+

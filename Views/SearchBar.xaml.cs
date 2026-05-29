@@ -2,9 +2,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 using System.Windows.Media;
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt.Views;
+namespace Arc.Views;
 
 public partial class SearchBar : UserControl
 {
@@ -29,21 +29,34 @@ public partial class SearchBar : UserControl
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.ActiveCategory)
-                           or nameof(MainViewModel.IsSettingsOpen))
+                           or nameof(MainViewModel.IsSettingsOpen)
+                           or nameof(MainViewModel.Config))
         {
-            Dispatcher.InvokeAsync(UpdateModeIcon);
+            Dispatcher.InvokeAsync(() =>
+            {
+                UpdateModeIcon();
+                UpdatePlaceholder();
+            });
         }
     }
 
     public void FocusInput()
     {
         SearchInput.Focus();
-        SearchInput.CaretIndex = SearchInput.Text.Length;
+        if (_vm?.Config.LastQueryStyle == "select")
+            SearchInput.SelectAll();
+        else
+            SearchInput.CaretIndex = SearchInput.Text.Length;
     }
 
     private void OnTextChanged(object sender, TextChangedEventArgs e)
     {
-        Placeholder.Visibility = SearchInput.Text.Length == 0
+        UpdatePlaceholder();
+    }
+
+    private void UpdatePlaceholder()
+    {
+        Placeholder.Visibility = SearchInput.Text.Length == 0 && _vm?.Config.ShowPlaceholder != false
             ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -127,3 +140,4 @@ public partial class SearchBar : UserControl
         }
     }
 }
+

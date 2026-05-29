@@ -1,8 +1,8 @@
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt;
+namespace Arc;
 
 public partial class MainWindow : Window
 {
@@ -37,21 +37,33 @@ public partial class MainWindow : Window
         if (_isVisible) { Activate(); return; }
         _isVisible = true;
 
-        var screen = System.Windows.SystemParameters.WorkArea;
-        Left = (screen.Width  - Width)  / 2 + screen.Left;
-        Top  = screen.Height  * 0.30    + screen.Top;
+        PositionWindow();
 
         Show();
         Activate();
         SearchBarControl.FocusInput();
 
-        AnimateIn();
+        if (_vm?.Config.SoundEffectEnabled == true)
+            System.Media.SystemSounds.Asterisk.Play();
+
+        if (_vm?.Config.AnimationEnabled == false)
+            Opacity = 1;
+        else
+            AnimateIn();
     }
 
     public void HideWindow()
     {
         if (!_isVisible) return;
         _isHovering = false;
+        if (_vm?.Config.AnimationEnabled == false)
+        {
+            Hide();
+            _isVisible = false;
+            _vm?.Reset();
+            return;
+        }
+
         AnimateOut(() =>
         {
             Hide();
@@ -76,6 +88,33 @@ public partial class MainWindow : Window
         BeginAnimation(OpacityProperty, fadeIn);
         WindowScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
         WindowScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn);
+    }
+
+    private void PositionWindow()
+    {
+        var screen = System.Windows.SystemParameters.WorkArea;
+        var left = (screen.Width - Width) / 2 + screen.Left;
+        var top = (screen.Height - Height) / 2 + screen.Top;
+
+        switch (_vm?.Config.SearchWindowPosition)
+        {
+            case "centerTop":
+                top = screen.Height * 0.15 + screen.Top;
+                break;
+            case "leftTop":
+                left = screen.Left + 32;
+                top = screen.Top + 32;
+                break;
+            case "rightTop":
+                left = screen.Right - Width - 32;
+                top = screen.Top + 32;
+                break;
+            case "custom":
+                return;
+        }
+
+        Left = left;
+        Top = top;
     }
 
     private void AnimateOut(Action onComplete)
@@ -103,7 +142,8 @@ public partial class MainWindow : Window
         if (e.PropertyName is nameof(MainViewModel.HasResults)
                            or nameof(MainViewModel.IsSettingsOpen)
                            or nameof(MainViewModel.IsPreviewVisible)
-                           or nameof(MainViewModel.IsBrowsePanelVisible))
+                           or nameof(MainViewModel.IsBrowsePanelVisible)
+                           or nameof(MainViewModel.ActiveActionId))
         {
             Dispatcher.InvokeAsync(UpdateWindowState);
         }
@@ -128,17 +168,23 @@ public partial class MainWindow : Window
             ? (CornerRadius)TryFindResource("RadiusWindow")
             : (CornerRadius)TryFindResource("RadiusPill");
 
-        var previewWidth = _vm.IsPreviewVisible && !_vm.IsSettingsOpen ? 300.0 : 0.0;
+        var isAiMode = string.Equals(_vm.ActiveActionId, "ai", StringComparison.OrdinalIgnoreCase);
+        var previewWidth = _vm.IsPreviewVisible && !_vm.IsSettingsOpen
+            ? (isAiMode ? ActualWidth - 80 : 300.0)
+            : 0.0;
         PreviewColumn.Width = new GridLength(previewWidth);
         PreviewPanelControl.Visibility = previewWidth > 0
             ? Visibility.Visible : Visibility.Collapsed;
+        PreviewPanelControl.Width = isAiMode ? double.NaN : 300.0;
+        Grid.SetColumn(PreviewPanelControl, isAiMode ? 0 : 1);
+        Grid.SetColumnSpan(PreviewPanelControl, isAiMode ? 2 : 1);
 
         SettingsViewControl.Visibility = _vm.IsSettingsOpen
             ? Visibility.Visible : Visibility.Collapsed;
 
-        bool showBrowse = isBrowse && !_vm.IsSettingsOpen;
+        bool showBrowse = isBrowse && !_vm.IsSettingsOpen && !isAiMode;
         BrowsePanelControl.Visibility = showBrowse ? Visibility.Visible : Visibility.Collapsed;
-        ResultsListControl.Visibility = (!showBrowse && !_vm.IsSettingsOpen) ? Visibility.Visible : Visibility.Collapsed;
+        ResultsListControl.Visibility = (!showBrowse && !_vm.IsSettingsOpen && !isAiMode) ? Visibility.Visible : Visibility.Collapsed;
     }
 
     // ── Keyboard ─────────────────────────────────────────────────
@@ -171,6 +217,8 @@ public partial class MainWindow : Window
                 }
                 else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
+                else if (_vm.ActiveActionId is not null)
+                    _vm.ClearActiveMode();
                 else
                     HideWindow();
                 e.Handled = true;
@@ -230,6 +278,7 @@ public partial class MainWindow : Window
     {
         bool visible = _isHovering
             && (_vm is null || _vm.ActiveCategory is null)
+            && (_vm is null || _vm.ActiveActionId is null)
             && (_vm is null || string.IsNullOrEmpty(_vm.Query));
         double targetWidth = visible ? 212.0 : 0.0;
 
@@ -284,3 +333,4 @@ public partial class MainWindow : Window
     }
 
 }
+

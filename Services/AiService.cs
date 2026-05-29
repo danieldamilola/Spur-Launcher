@@ -1,13 +1,21 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Volt.Services;
+namespace Arc.Services;
+
+/// <summary>Interface for AI streaming service.</summary>
+public interface IAiService
+{
+    string[] SupportedProviders { get; }
+    Task StreamAsync(string provider, string model, string apiKey, string question, Action<string> onToken, CancellationToken ct = default);
+    Task StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct = default);
+}
 
 /// <summary>
 /// Streams completions from Groq, Gemini, OpenRouter, or DeepSeek.
 /// All providers use OpenAI-compatible chat completions endpoints.
 /// </summary>
-public static class AiService
+public sealed class AiService : IAiService
 {
     private static readonly HttpClient _http = new()
     {
@@ -22,15 +30,43 @@ public static class AiService
         ["deepseek"]   = ("https://api.deepseek.com/v1/chat/completions",                      "deepseek-chat"),
     };
 
-    public static string[] SupportedProviders => [.. Providers.Keys];
+    public string[] SupportedProviders => [.. Providers.Keys];
+
+    private static readonly AiService _default = new();
 
     /// <summary>
-    /// Streams an AI response for a single question (convenience wrapper).
+    /// Static helper for backward compatibility.
     /// </summary>
     public static Task StreamAsync(
         string provider, string model, string apiKey, string question,
         Action<string> onToken, CancellationToken ct = default)
-        => StreamAsync(provider, model, apiKey,
+        => _default.StreamAsyncInternal(provider, model, apiKey, question, onToken, ct);
+
+    /// <summary>
+    /// Static helper for backward compatibility.
+    /// </summary>
+    public static Task StreamAsync(
+        string provider, string model, string apiKey,
+        IEnumerable<(string Role, string Content)> messages,
+        Action<string> onToken, CancellationToken ct = default)
+        => _default.StreamAsyncInternal(provider, model, apiKey, messages, onToken, ct);
+
+    /// <summary>
+    /// Instance method for single question (convenience wrapper).
+    /// </summary>
+    Task IAiService.StreamAsync(string provider, string model, string apiKey, string question, Action<string> onToken, CancellationToken ct)
+        => StreamAsyncInternal(provider, model, apiKey, question, onToken, ct);
+
+    /// <summary>
+    /// Instance method for full conversation.
+    /// </summary>
+    Task IAiService.StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct)
+        => StreamAsyncInternal(provider, model, apiKey, messages, onToken, ct);
+
+    private Task StreamAsyncInternal(
+        string provider, string model, string apiKey, string question,
+        Action<string> onToken, CancellationToken ct)
+        => StreamAsyncInternal(provider, model, apiKey,
             new[] { ("user", question) }, onToken, ct);
 
     /// <summary>
@@ -38,7 +74,7 @@ public static class AiService
     /// <paramref name="messages"/> is the full conversation: each item is (role, content)
     /// where role is "user" or "assistant". A system prompt is prepended automatically.
     /// </summary>
-    public static async Task StreamAsync(
+    private async Task StreamAsyncInternal(
         string provider,
         string model,
         string apiKey,
@@ -124,3 +160,4 @@ public static class AiService
         }
     }
 }
+

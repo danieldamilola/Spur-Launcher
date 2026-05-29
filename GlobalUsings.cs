@@ -18,5 +18,6 @@ global using System.Windows.Media;
 global using System.Windows.Threading;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
-global using Volt.Models;
-global using Volt.Services;
+global using Arc.Models;
+global using Arc.Services;
+

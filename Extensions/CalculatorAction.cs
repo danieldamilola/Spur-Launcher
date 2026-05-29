@@ -1,7 +1,7 @@
 using System.Data;
-using Volt.Extensions;
+using Arc.Extensions;
 
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// Evaluates math expressions. Triggered when the entire query looks like a math expression.
@@ -63,3 +63,4 @@ public sealed class CalculatorAction : IAction
         catch { return "Invalid expression"; }
     }
 }
+

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 [ValueConversion(typeof(string), typeof(BitmapSource))]
 public sealed class PathToIconConverter : IValueConverter
@@ -18,3 +18,4 @@ public sealed class PathToIconConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+

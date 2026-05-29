@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Arc</AssemblyName>
+    <RootNamespace>Arc</RootNamespace>
+    <ApplicationIcon>Assets\arc.ico</ApplicationIcon>
+    <Optimize>true</Optimize>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Polly" Version="8.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Arc.Tests\**" />
+    <Compile Remove="RefactorApp\**" />
+    <Page Remove="Arc.Tests\**" />
+    <Page Remove="RefactorApp\**" />
+    <!-- Font files bundled as resources -->
+    <Resource Include="Themes\Fonts\*.ttf" />
+    <!-- Tray icon (add Assets\arc.ico to enable) -->
+  </ItemGroup>
+
+</Project>

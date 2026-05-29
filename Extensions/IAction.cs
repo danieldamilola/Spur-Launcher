@@ -1,4 +1,4 @@
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// A built-in action that activates automatically when the query matches a pattern.
@@ -15,3 +15,4 @@ public interface IAction
     /// <summary>Builds the result row shown in the results list.</summary>
     SearchResult BuildResult(string query);
 }
+

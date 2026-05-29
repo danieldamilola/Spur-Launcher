@@ -1,21 +1,23 @@
 using System.Collections.ObjectModel;
-using Volt.Extensions;
-using Volt.ViewModels;
+using Arc.Extensions;
+using Arc.Services;
+using Arc.ViewModels;
 
-namespace Volt.ViewModels;
+namespace Arc.ViewModels;
 
 /// <summary>
-/// Central orchestrator for the Volt launcher.
+/// Central orchestrator for the Arc launcher.
 /// Owns the search query, result list, selection, category filter,
 /// and all action state (AI streaming, timer countdown, color/IP data).
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject
 {
     // ── Services ──────────────────────────────────────────────────────
-    private readonly AppDiscoveryService  _apps      = new();
+    private readonly ILogger _log;
+    private readonly AppDiscoveryService  _apps;
     private readonly FileSearchService    _files     = new();
-    private readonly FrequencyService     _freq      = new();
-    private readonly ConfigService        _configSvc = new();
+    private readonly FrequencyService     _freq;
+    private readonly ConfigService        _configSvc;
 
     private static readonly IAction[] Actions =
     [
@@ -89,10 +91,14 @@ public sealed partial class MainViewModel : ObservableObject
     private CancellationTokenSource? _searchCts;
 
     // ── Constructor ──────────────────────────────────────────────────
-    public MainViewModel()
-    {
-        Config   = _configSvc.Load();
-        Settings = new SettingsViewModel(Config, _configSvc, this);
+    public MainViewModel(ArcConfig config, ILogger? log = null)
+{
+    _log        = log ?? NullLogger.Instance;
+    _apps       = new AppDiscoveryService(_log);
+    _freq       = new FrequencyService(_log);
+    _configSvc  = new ConfigService(_log);
+    Config      = config;
+    Settings = new SettingsViewModel(Config, _configSvc, this);
 
         // Push initial config to services
         FileSearchService.MaxDepth = Config.MaxFileDepth;
@@ -105,7 +111,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Pushes config values to services whenever the config object is replaced.</summary>
-    partial void OnConfigChanged(VoltConfig value)
+    partial void OnConfigChanged(ArcConfig value)
     {
         FileSearchService.MaxDepth = value.MaxFileDepth;
         ClipboardService.MaxItems  = value.ClipboardHistorySize;
@@ -121,7 +127,7 @@ public sealed partial class MainViewModel : ObservableObject
     private string _query = string.Empty;
 
     [ObservableProperty]
-    private VoltConfig _config;
+    private ArcConfig _config;
 
     [ObservableProperty]
     private SettingsViewModel _settings;
@@ -226,8 +232,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] OnQueryChanged error: {ex.Message}");
-            Console.WriteLine($"[Volt] OnQueryChanged error: {ex.Message}");
+            _log.Warning("OnQueryChanged error", ex);
         }
     }
 
@@ -255,7 +260,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (ct.IsCancellationRequested) return;
 
             // 1. Check built-in actions first (calculator, color, timer, ip, ai, settings)
-            var action = Actions.FirstOrDefault(a => a.CanHandle(query));
+            var action = Actions.FirstOrDefault(a => IsActionEnabled(a.Id) && a.CanHandle(query));
             if (action is not null)
             {
                 ActivateAction(action, query);
@@ -270,8 +275,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] RunSearch error: {ex.Message}");
-            Console.WriteLine($"[Volt] RunSearch error: {ex.Message}");
+            _log.Warning("RunSearch error", ex);
         }
     }
 
@@ -283,13 +287,13 @@ public sealed partial class MainViewModel : ObservableObject
             bool isBrowseMode = ActiveCategory is not null;
 
             // ── Apps ──────────────────────────────────────────────────
-            bool showApps = ActiveCategory is null or "apps";
+            bool showApps = Config.IndexApps && (ActiveCategory is null or "apps");
             if (showApps && _appCatalog is not null)
             {
                 var appMatches = _appCatalog
                     .Select(a =>
                     {
-                        var score = string.IsNullOrEmpty(query) ? 0 : FuzzySearch.Score(query, a.Name);
+                        var score = MatchScore(query, a.Name);
                         if (score < 0) return null;
                         var clone = Clone(a);
                         clone.Score = score + a.FrequencyScore * 0.3;
@@ -332,7 +336,7 @@ public sealed partial class MainViewModel : ObservableObject
                 }
                 else
                 {
-                    fileMatches = await _files.SearchAsync(query, fileLimit);
+                    fileMatches = await _files.SearchAsync(query, fileLimit, ct);
                 }
 
                 if (ct.IsCancellationRequested) return;
@@ -344,12 +348,12 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             // ── Clipboard ─────────────────────────────────────────────
-            bool showClip = Config.ClipboardEnabled && (ActiveCategory is null or "clipboard");
+            bool showClip = Config.ClipboardEnabled && Config.IndexClipboard && (ActiveCategory is null or "clipboard");
             if (showClip)
             {
                 int limit = isBrowseMode ? 50 : Config.ResultsCount;
                 var clips = ClipboardService.GetHistory()
-                    .Where(c => string.IsNullOrEmpty(query) || FuzzySearch.Score(query, c.Preview) >= 0)
+                    .Where(c => MatchScore(query, c.Preview) >= 0)
                     .Take(limit)
                     .Select(c => new SearchResult
                     {
@@ -385,13 +389,20 @@ public sealed partial class MainViewModel : ObservableObject
             bool showActions = ActiveCategory is null or "actions";
             if (showActions)
             {
-                var availableActions = _staticActions;
+                var availableActions = _staticActions.Where(a => IsActionEnabled(a.ActionId));
 
                 var actionMatches = availableActions
-                    .Where(a => string.IsNullOrEmpty(query) || FuzzySearch.Score(query, a.Name) >= 0)
-                    .Select(a => { a.Score = string.IsNullOrEmpty(query) ? 0 : FuzzySearch.Score(query, a.Name); return a; })
+                    .Where(a => MatchScore(query, a.Name) >= 0)
+                    .Select(a => { a.Score = MatchScore(query, a.Name); return a; })
                     .OrderByDescending(a => a.Score)
                     .ToList();
+
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    AddDynamicAction(actionMatches, BuildUrlAction(query));
+                    AddDynamicAction(actionMatches, BuildWebSearchAction(query));
+                    AddDynamicAction(actionMatches, BuildShellAction(query));
+                }
 
                 if (actionMatches.Count > 0)
                 {
@@ -401,12 +412,12 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             // ── Windows Settings (only when there is a query) ───────────
-            if (!string.IsNullOrEmpty(query) && (ActiveCategory is null or "apps"))
+            if (Config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (ActiveCategory is null or "apps"))
             {
                 var settingsMatches = _windowsSettings
                     .Select(s =>
                     {
-                        var sc = FuzzySearch.Score(query, s.Name);
+                        var sc = MatchScore(query, s.Name);
                         if (sc < 0) return null;
                         var c = Clone(s); c.Score = sc; return c;
                     })
@@ -435,9 +446,100 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] SearchAsync error: {ex.Message}");
-            Console.WriteLine($"[Volt] SearchAsync error: {ex.Message}");
+            _log.Warning("SearchAsync error", ex);
         }
+    }
+
+    private double MatchScore(string query, string target)
+    {
+        if (string.IsNullOrEmpty(query)) return 0;
+        var score = Config.FuzzySearch
+            ? FuzzySearch.Score(query, target)
+            : (target.Contains(query, StringComparison.OrdinalIgnoreCase) ? 1 : -1);
+        return score >= MinMatchScore() ? score : -1;
+    }
+
+    private double MinMatchScore() => Config.QuerySearchPrecision switch
+    {
+        "low" => 0,
+        "strict" => 1.2,
+        _ => 0.35,
+    };
+
+    private bool IsActionEnabled(string? id) => id switch
+    {
+        "calc" => Config.IndexCalculator,
+        "system" => Config.IndexSystemCommands,
+        "settings" => Config.IndexWindowsSettings,
+        "url" => Config.IndexUrls,
+        "web" => Config.IndexWebSearches,
+        "shell" => Config.IndexShell,
+        _ => true,
+    };
+
+    private static void AddDynamicAction(List<SearchResult> actions, SearchResult? action)
+    {
+        if (action is not null)
+            actions.Insert(0, action);
+    }
+
+    private SearchResult? BuildUrlAction(string query)
+    {
+        if (!Config.IndexUrls || !LooksLikeUrl(query)) return null;
+        return new SearchResult
+        {
+            Id = $"url:{query}",
+            Type = ResultType.Action,
+            Name = $"Open {query}",
+            Subtitle = "Open URL",
+            LucideIcon = "globe",
+            ActionId = "url",
+            Score = 500,
+        };
+    }
+
+    private SearchResult? BuildWebSearchAction(string query)
+    {
+        if (!Config.IndexWebSearches || string.IsNullOrWhiteSpace(query)) return null;
+        return new SearchResult
+        {
+            Id = $"web:{query}",
+            Type = ResultType.Action,
+            Name = $"Search web for {query}",
+            Subtitle = "Web search",
+            LucideIcon = "search",
+            ActionId = "web",
+            Score = 100,
+        };
+    }
+
+    private SearchResult? BuildShellAction(string query)
+    {
+        if (!Config.IndexShell || !query.StartsWith(">", StringComparison.Ordinal)) return null;
+        var command = query[1..].Trim();
+        if (command.Length == 0) return null;
+        return new SearchResult
+        {
+            Id = $"shell:{command}",
+            Type = ResultType.Action,
+            Name = $"Run {command}",
+            Subtitle = "Shell command",
+            LucideIcon = "terminal",
+            ActionId = "shell",
+            Score = 600,
+        };
+    }
+
+    private static bool LooksLikeUrl(string query)
+        => Uri.TryCreate(NormalizeUrl(query), UriKind.Absolute, out var uri)
+           && uri.Scheme is "http" or "https";
+
+    private static string NormalizeUrl(string value)
+    {
+        var trimmed = value.Trim();
+        return trimmed.Contains("://", StringComparison.Ordinal)
+            ? trimmed
+            : $"https://{trimmed}";
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -517,6 +619,7 @@ public sealed partial class MainViewModel : ObservableObject
         // Start fresh conversation for new "ai " queries
         _aiConversation.Clear();
         _aiConversation.Add(("user", question));
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         var (key, model) = GetAiConfig();
         if (string.IsNullOrWhiteSpace(key))
@@ -534,12 +637,13 @@ public sealed partial class MainViewModel : ObservableObject
                 {
                     AiText    += token;
                     AiLoading  = AiText.Length == 0;
+                    if (_aiConversation.Count == 1)
+                        _aiConversation.Add(("assistant", AiText));
+                    else
+                        _aiConversation[^1] = ("assistant", AiText);
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
                 });
             }, ct);
-
-            // Add assistant response to conversation
-            if (!string.IsNullOrEmpty(AiText))
-                _aiConversation.Add(("assistant", AiText));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -571,6 +675,7 @@ public sealed partial class MainViewModel : ObservableObject
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
         AiLoading = true;
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         var (key, model) = GetAiConfig();
         if (string.IsNullOrWhiteSpace(key))
@@ -592,21 +697,18 @@ public sealed partial class MainViewModel : ObservableObject
                         // First token: append to existing response
                         newResponse = token;
                         AiText += "\n\n" + token;
+                        _aiConversation.Add(("assistant", newResponse));
                     }
                     else
                     {
                         newResponse += token;
                         AiText += token;
+                        _aiConversation[^1] = ("assistant", newResponse);
                     }
                     AiLoading = false;
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
                 });
             }, ct);
-
-            if (!string.IsNullOrEmpty(newResponse))
-            {
-                _aiConversation.Add(("assistant", newResponse));
-                ConversationChanged?.Invoke(this, EventArgs.Empty);
-            }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -659,7 +761,7 @@ public sealed partial class MainViewModel : ObservableObject
             _timerRemaining = TimeSpan.Zero;
             _timerTick?.Stop();
             TimerRunning = false;
-            NotificationService.Show("Volt Timer", "Your timer has finished!");
+            NotificationService.Show("Arc Timer", "Your timer has finished!");
         }
         UpdateTimerDisplay();
     }
@@ -709,19 +811,19 @@ public sealed partial class MainViewModel : ObservableObject
                     string.Equals(a.ExePath, appKey, StringComparison.OrdinalIgnoreCase));
                 if (catalogEntry is not null)
                     catalogEntry.FrequencyScore = newScore;
-                RequestHide?.Invoke();
+                HideAfterLaunch();
                 break;
 
             case ResultType.File:
                 if (result.FilePath is not null)
                     Launch(result.FilePath);
-                RequestHide?.Invoke();
+                HideAfterLaunch();
                 break;
 
             case ResultType.Clipboard:
                 if (result.ClipContent is not null)
                     ClipboardService.CopyToSystem(result.ClipContent);
-                RequestHide?.Invoke();
+                HideAfterLaunch();
                 break;
 
             case ResultType.Action:
@@ -738,7 +840,7 @@ public sealed partial class MainViewModel : ObservableObject
                 else if (result.ActionId == "ai")
                 {
                     try { _ = StartAiAsync(Query); }
-                    catch (Exception ex) { Debug.WriteLine($"[Volt] StartAiAsync error: {ex.Message}"); Console.WriteLine($"[Volt] StartAiAsync error: {ex.Message}"); }
+                    catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
                 }
                 // Calc/Color/IP: Enter copies result to clipboard
                 else if (result.ActionId == "calc")
@@ -752,6 +854,23 @@ public sealed partial class MainViewModel : ObservableObject
                 {
                     IsSettingsOpen = true;
                     return; // Don't break the switch, just return so we don't hide window
+                }
+                else if (result.ActionId == "url")
+                {
+                    Launch(NormalizeUrl(Query));
+                    HideAfterLaunch();
+                }
+                else if (result.ActionId == "web")
+                {
+                    Launch($"https://www.google.com/search?q={Uri.EscapeDataString(Query)}");
+                    HideAfterLaunch();
+                }
+                else if (result.ActionId == "shell")
+                {
+                    var command = Query.StartsWith(">", StringComparison.Ordinal) ? Query[1..].Trim() : Query.Trim();
+                    if (!string.IsNullOrWhiteSpace(command))
+                        Process.Start(new ProcessStartInfo("cmd.exe", $"/c {command}") { UseShellExecute = false, CreateNoWindow = true });
+                    HideAfterLaunch();
                 }
                 break;
         }
@@ -817,7 +936,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] RunAsAdmin failed: {ex.Message}");
+            _log.Warning("RunAsAdmin failed", ex);
         }
     }
 
@@ -853,10 +972,10 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private static void Launch(string path)
+    private void Launch(string path)
     {
         try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
-        catch (Exception ex) { Debug.WriteLine($"[Volt] Launch failed: {ex.Message}"); }
+        catch (Exception ex) { _log.Warning("Launch failed", ex); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -905,6 +1024,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Raised when the VM wants the window to hide itself.</summary>
     public event Action? RequestHide;
 
+    public void Shutdown()
+    {
+        _freq.Flush();
+        _freq.Dispose();
+        _searchCts?.Dispose();
+        _aiCts?.Dispose();
+        _timerTick?.Stop();
+    }
+
     public void OnWindowShown()
     {
         // Refresh clipboard category when window opens
@@ -912,10 +1040,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void Reset()
     {
-        Query          = string.Empty;
+        if (Config.LastQueryStyle == "clear")
+            Query = string.Empty;
         ActiveCategory = null;
         IsSettingsOpen = false;
-        CancelActionWork();
+
+        // Preserve the active action preview if AlwaysPreview is enabled
+        if (!Config.AlwaysPreview)
+            CancelActionWork();
+    }
+
+    private void HideAfterLaunch()
+    {
+        if (Config.CloseAfterLaunch)
+            RequestHide?.Invoke();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -938,7 +1076,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Volt] App catalog load failed: {ex.Message}");
+            _log.Warning("App catalog load failed", ex);
             _appCatalog = [];
         }
         finally
@@ -953,11 +1091,19 @@ public sealed partial class MainViewModel : ObservableObject
     /// </summary>
     public async Task RefreshAppCatalogAsync()
     {
-        AppDiscoveryService.ClearCache();
+        _apps.ClearCache();
         await LoadAppsAsync();
         // Re-run the current query so results update instantly
         if (!string.IsNullOrEmpty(Query))
             OnPropertyChanged(nameof(Query));
+    }
+
+    public void ClearActiveMode()
+    {
+        ActiveActionId = null;
+        ActiveCategory = null;
+        SelectedIndex = -1;
+        AiError = string.Empty;
     }
 
     /// <summary>Toggles the Apps browse view between grid and list.</summary>
@@ -971,8 +1117,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Results.Clear();
         SelectedIndex  = -1;
-        CancelActionWork();
-        ActiveActionId = null;
+        if (!Config.AlwaysPreview)
+            CancelActionWork();
     }
 
     private void CancelActionWork()

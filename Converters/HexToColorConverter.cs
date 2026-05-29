@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Volt.Converters;
+namespace Arc.Converters;
 
 public class HexToColorConverter : IValueConverter
 {
@@ -38,3 +38,4 @@ public class HexToColorConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+

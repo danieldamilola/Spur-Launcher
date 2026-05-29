@@ -1,13 +1,13 @@
-<UserControl x:Class="Volt.Views.PreviewPanel"
+<UserControl x:Class="Arc.Views.PreviewPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Volt.ViewModels"
-             Width="300">
+             xmlns:vm="clr-namespace:Arc.ViewModels">
 
     <Border Background="{DynamicResource PreviewBg}"
             BorderBrush="{DynamicResource BorderStrong}"
-            BorderThickness="1,0,0,0"
-            Padding="20">
+            BorderThickness="0"
+            Padding="20"
+            PreviewMouseWheel="OnPreviewMouseWheel">
 
         <!-- Grid wrapping all panels so Border only has one child -->
         <Grid>
@@ -177,11 +177,18 @@
 
             <!-- Header -->
             <Grid Grid.Row="0" Margin="0,0,0,8">
-                <TextBlock Text="AI Study Assistant"
+                <StackPanel>
+                <TextBlock Text="Ask AI"
                            FontFamily="{DynamicResource UIFont}"
-                           FontSize="13"
-                           FontWeight="Medium"
+                           FontSize="14"
+                           FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock Text="Concise answers, follow-ups stay in this thread"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextMuted}"
+                           Margin="0,2,0,0"/>
+                </StackPanel>
             </Grid>
 
             <!-- Chat messages -->
@@ -212,12 +219,18 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                                 <!-- Message content -->
-                                <TextBlock Text="{Binding Content}"
-                                           FontFamily="{DynamicResource UIFont}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextPrimary}"
-                                           TextWrapping="Wrap"
-                                           LineHeight="18"/>
+                                <Border CornerRadius="9"
+                                        Padding="12,10"
+                                        Background="{DynamicResource SurfaceLow}"
+                                        MaxWidth="520"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Content}"
+                                               FontFamily="{DynamicResource UIFont}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextPrimary}"
+                                               TextWrapping="Wrap"
+                                               LineHeight="19"/>
+                                </Border>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -236,8 +249,14 @@
                          FontSize="13"
                          Background="{DynamicResource SurfaceLow}"
                          BorderThickness="0"
-                         Padding="10,8"
+                         Padding="14,10"
                          VerticalAlignment="Center"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="46"
+                         MaxHeight="110"
+                         KeyDown="OnAiFollowUpKeyDown"
+                         GotFocus="OnAiFollowUpFocus"
                          Text="Type a message…"
                          Foreground="{DynamicResource TextMuted}">
                     <TextBox.Style>
@@ -290,3 +309,4 @@
         </Grid><!-- end outer Grid -->
     </Border>
 </UserControl>
+

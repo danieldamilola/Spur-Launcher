@@ -1,7 +1,7 @@
 using System.Windows.Controls.Primitives;
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt.Views;
+namespace Arc.Views;
 
 public partial class BrowsePanel : UserControl
 {
@@ -258,7 +258,8 @@ public partial class BrowsePanel : UserControl
 
     private void OnClearClipboard(object sender, RoutedEventArgs e)
     {
-        Volt.Services.ClipboardService.Clear();
+        Arc.Services.ClipboardService.Clear();
         Dispatcher.InvokeAsync(RefreshData);
     }
 }
+

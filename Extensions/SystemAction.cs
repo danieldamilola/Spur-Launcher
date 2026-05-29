@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// Handles system power/session commands: shutdown, restart, sleep, hibernate, lock, sign out.
@@ -84,3 +84,4 @@ public sealed class SystemAction : IAction
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
 }
+

@@ -1,4 +1,4 @@
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// Timer action. Triggered by "timer 10m", "timer 30s", "timer 1h".
@@ -57,3 +57,4 @@ public sealed class TimerAction : IAction
         return $"{(int)ts.TotalSeconds}s";
     }
 }
+

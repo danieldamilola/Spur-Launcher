@@ -1,19 +1,21 @@
 using System.Windows.Media.Imaging;
 
-namespace Volt.Models;
+namespace Arc.Models;
 
 /// <summary>A single clipboard history entry — either text or an image.</summary>
 public sealed class ClipboardEntry
 {
+    public const int MaxStoredTextChars = 20_000;
+
     /// <summary>Text constructor.</summary>
     public ClipboardEntry(string content)
     {
-        Content   = content;
+        IsTruncated = content.Length > MaxStoredTextChars;
+        Content   = IsTruncated ? content[..MaxStoredTextChars] : content;
         Timestamp = DateTime.Now;
         IsImage   = false;
-        Preview   = content.Length > 60
-            ? content[..60].Replace('\n', ' ').Replace('\r', ' ') + "…"
-            : content.Replace('\n', ' ').Replace('\r', ' ');
+        var display = Content.Replace('\n', ' ').Replace('\r', ' ');
+        Preview   = display.Length > 80 ? display[..80] + "..." : display;
     }
 
     /// <summary>Image constructor. The BitmapSource must already be frozen.</summary>
@@ -29,6 +31,7 @@ public sealed class ClipboardEntry
     public string      Content   { get; }
     public DateTime    Timestamp { get; }
     public bool        IsImage   { get; }
+    public bool        IsTruncated { get; }
     public BitmapSource? Image   { get; }
 
     /// <summary>Truncated single-line preview for display in results list.</summary>
@@ -45,3 +48,4 @@ public sealed class ClipboardEntry
         }
     }
 }
+

@@ -1,7 +1,7 @@
-<UserControl x:Class="Volt.Views.SearchBar"
+<UserControl x:Class="Arc.Views.SearchBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Volt.ViewModels">
+             xmlns:vm="clr-namespace:Arc.ViewModels">
 
     <Grid Height="56">
         <Grid.ColumnDefinitions>
@@ -56,7 +56,8 @@
                    FontFamily="{DynamicResource UIFont}"
                    FontSize="{DynamicResource FontLg}"
                    Foreground="{DynamicResource TextMuted}"
-                   Text="Search apps, files, clipboard…"/>
+                   Text="{Binding Config.PlaceholderText}"/>
 
     </Grid>
 </UserControl>
+

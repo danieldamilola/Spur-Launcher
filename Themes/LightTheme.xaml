@@ -8,7 +8,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         LIGHT THEME — Volt Design System
+         LIGHT THEME — Arc Design System
          ═══════════════════════════════════════════════════════════ -->
 
     <!-- Glass background: rgba(255,255,255,0.72) → alpha=184=#B8 -->
@@ -94,3 +94,4 @@
 
 
 </ResourceDictionary>
+

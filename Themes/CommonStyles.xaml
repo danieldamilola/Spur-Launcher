@@ -3,7 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════
-         COMMON CONTROL STYLES — Volt Design System
+         COMMON CONTROL STYLES — Arc Design System
          All colour/font/geometry references use DynamicResource so
          they are resolved from whichever theme file is active.
          ═══════════════════════════════════════════════════════════ -->
@@ -231,7 +231,7 @@
         </Setter>
     </Style>
 
-    <!-- ComboBox: flat Volt style -->
+    <!-- ComboBox: flat Arc style -->
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily"       Value="{DynamicResource UIFont}"/>
         <Setter Property="FontSize"         Value="{DynamicResource FontSm}"/>
@@ -421,7 +421,7 @@
         </Setter>
     </Style>
 
-    <!-- Slider: flat Volt style -->
+    <!-- Slider: flat Arc style -->
     <Style TargetType="Slider">
         <Setter Property="Background"       Value="Transparent"/>
         <Setter Property="Height"           Value="22"/>
@@ -449,3 +449,4 @@
     </Style>
 
 </ResourceDictionary>
+

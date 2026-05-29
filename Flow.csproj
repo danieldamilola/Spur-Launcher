@@ -6,10 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>Volt</AssemblyName>
-    <RootNamespace>Volt</RootNamespace>
-    <ApplicationIcon>Assets\volt.ico</ApplicationIcon>
+    <AssemblyName>Arc</AssemblyName>
+    <RootNamespace>Arc</RootNamespace>
+    <ApplicationIcon>Assets\arc.ico</ApplicationIcon>
     <Optimize>true</Optimize>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Arc.Tests\**" />
+    <Compile Remove="RefactorApp\**" />
+    <Compile Remove="obj\**" />
+    <Page Remove="Arc.Tests\**" />
+    <Page Remove="RefactorApp\**" />
+    <Page Remove="obj\**" />
     <!-- Font files bundled as resources -->
     <Resource Include="Themes\Fonts\*.ttf" />
-    <!-- Tray icon (add Assets\volt.ico to enable) -->
+    <!-- Tray icon (add Assets\arc.ico to enable) -->
   </ItemGroup>
 
 </Project>
+

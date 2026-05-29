@@ -1,4 +1,4 @@
-namespace Volt.Extensions;
+namespace Arc.Extensions;
 
 /// <summary>
 /// Settings action. Triggered by "settings".
@@ -24,3 +24,4 @@ public sealed class SettingsAction : IAction
         };
     }
 }
+

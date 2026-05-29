@@ -1,4 +1,4 @@
-namespace Volt.Services;
+namespace Arc.Services;
 
 /// <summary>
 /// Searches user-facing files and folders in Documents, Desktop, Downloads,
@@ -86,11 +86,11 @@ public sealed class FileSearchService
         set => _maxDepth = Math.Clamp(value, 1, 5);
     }
 
-    private const int MaxResults = 200;
+    private const int MaxResults = 100;
 
     /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
-    public Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20)
-        => Task.Run(() => Search(query, maxReturn));
+    public Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default)
+        => Task.Run(() => Search(query, maxReturn, ct), ct);
 
     /// <summary>Returns recently modified user files (for browse mode).</summary>
     public Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50)
@@ -190,7 +190,7 @@ public sealed class FileSearchService
     // Search (with query — fuzzy match + ranking bonuses)
     // ═══════════════════════════════════════════════════════════════
 
-    private List<SearchResult> Search(string query, int maxReturn)
+    private List<SearchResult> Search(string query, int maxReturn, CancellationToken ct)
     {
         var results = new List<SearchResult>(MaxResults);
         if (string.IsNullOrWhiteSpace(query)) return results;
@@ -198,7 +198,8 @@ public sealed class FileSearchService
         foreach (var root in SearchRoots)
         {
             if (!Directory.Exists(root)) continue;
-            Recurse(root, query, 0, results);
+            if (ct.IsCancellationRequested) break;
+            Recurse(root, query, 0, results, ct);
             if (results.Count >= MaxResults) break;
         }
 
@@ -208,15 +209,16 @@ public sealed class FileSearchService
             .ToList();
     }
 
-    private static void Recurse(string dir, string query, int depth, List<SearchResult> results)
+    private static void Recurse(string dir, string query, int depth, List<SearchResult> results, CancellationToken ct)
     {
-        if (depth > _maxDepth || results.Count >= MaxResults) return;
+        if (ct.IsCancellationRequested || depth > _maxDepth || results.Count >= MaxResults) return;
 
         try
         {
             // ── Files ──────────────────────────────────────────
             foreach (var file in Directory.EnumerateFiles(dir))
             {
+                if (ct.IsCancellationRequested) return;
                 var name = Path.GetFileName(file);
                 var nameNoExt = Path.GetFileNameWithoutExtension(name);
 
@@ -249,6 +251,7 @@ public sealed class FileSearchService
             // ── Directories ────────────────────────────────────
             foreach (var sub in Directory.EnumerateDirectories(dir))
             {
+                if (ct.IsCancellationRequested) return;
                 var dirName = Path.GetFileName(sub);
                 if (SkipDirs.Contains(dirName)) continue;
 
@@ -274,7 +277,7 @@ public sealed class FileSearchService
                     if (results.Count >= MaxResults) return;
                 }
 
-                Recurse(sub, query, depth + 1, results);
+                Recurse(sub, query, depth + 1, results, ct);
                 if (results.Count >= MaxResults) return;
             }
         }
@@ -343,3 +346,4 @@ public sealed class FileSearchService
         return true;
     }
 }
+

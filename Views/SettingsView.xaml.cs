@@ -1,6 +1,6 @@
-using Volt.ViewModels;
+using Arc.ViewModels;
 
-namespace Volt.Views;
+namespace Arc.Views;
 
 public partial class SettingsView : UserControl
 {
@@ -10,7 +10,28 @@ public partial class SettingsView : UserControl
     public SettingsView()
     {
         InitializeComponent();
-        DataContextChanged += (_, e) => _vm = e.NewValue as SettingsViewModel;
+        DataContextChanged += (_, e) =>
+        {
+            if (_vm is not null) _vm.PropertyChanged -= OnVmChanged;
+            _vm = e.NewValue as SettingsViewModel;
+            if (_vm is not null)
+            {
+                _vm.PropertyChanged += OnVmChanged;
+                AiApiKeyBox.Password = _vm.ApiKey;
+            }
+        };
+    }
+
+    private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(SettingsViewModel.ApiKey) or nameof(SettingsViewModel.AiProvider))
+            AiApiKeyBox.Password = _vm?.ApiKey ?? string.Empty;
+    }
+
+    private void OnAiApiKeyChanged(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null || AiApiKeyBox.Password == _vm.ApiKey) return;
+        _vm.ApiKey = AiApiKeyBox.Password;
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => _vm?.CloseSettings();
@@ -169,3 +190,4 @@ public sealed class ToggleSwitch : FrameworkElement
             : new Thickness(3, 0, 0, 0);
     }
 }
+
