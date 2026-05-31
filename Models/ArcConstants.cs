@@ -38,5 +38,10 @@ public static class ArcConstants
         new() { Id = "act:ip",       Type = ResultType.Action, Name = "IP Address",    Subtitle = "Type 'ip' to show your public and local IP",     LucideIcon = "globe",      ActionId = "ip"       },
         new() { Id = "act:ai",       Type = ResultType.Action, Name = "Ask AI",        Subtitle = "Type 'ai what is the capital of France?'",       LucideIcon = "sparkles",   ActionId = "ai"       },
         new() { Id = "act:settings", Type = ResultType.Action, Name = "Settings",      Subtitle = "Open application settings",                     LucideIcon = "settings",   ActionId = "settings" },
+        new() { Id = "act:currency", Type = ResultType.Action, Name = "Currency",      Subtitle = "Type '100 usd to eur' to convert",               LucideIcon = "dollar-sign",ActionId = "currency" },
+        new() { Id = "act:pw",       Type = ResultType.Action, Name = "Password Gen",  Subtitle = "Type 'pw 16' to generate a password",            LucideIcon = "key",        ActionId = "pw"       },
+        new() { Id = "act:note",    Type = ResultType.Action, Name = "Quick Note",    Subtitle = "Type 'note your text' to save a note",           LucideIcon = "file-text",  ActionId = "note"     },
+        new() { Id = "act:kill",    Type = ResultType.Action, Name = "Kill Process",  Subtitle = "Type 'kill notepad' to force-close",             LucideIcon = "x-octagon",  ActionId = "kill"     },
+        new() { Id = "act:screenshot",Type = ResultType.Action,Name = "Screenshot",   Subtitle = "Type 'screenshot' to capture the screen",         LucideIcon = "camera",     ActionId = "screenshot"},
     ];
 }

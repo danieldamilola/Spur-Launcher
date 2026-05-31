@@ -58,8 +58,74 @@ public sealed class IconServiceImpl : IIconService
     {
         if (string.IsNullOrEmpty(path)) return null;
         if (_cache.TryGetValue(path, out var cached)) return cached;
-        if (_cache.Count >= MaxCacheEntries) return TryExtract(path);
+
+        // If cache is full, evict oldest entry (first key in dictionary)
+        if (_cache.Count >= MaxCacheEntries)
+        {
+            // Evict one entry to keep cache bounded
+            var toEvict = _cache.Keys.FirstOrDefault();
+            if (toEvict is not null) _cache.TryRemove(toEvict, out _);
+        }
+
         return _cache.GetOrAdd(path, p => TryExtract(p));
+    }
+
+    /// <summary>
+    /// Resolves a UWP app icon path to a real file path that can be used for icon extraction.
+    /// UWP apps use shell:AppsFolder\AppUserModelId paths.
+    /// </summary>
+    private static string? ResolveUwpIconPath(string shellPath)
+    {
+        // Handle shell:AppsFolder\AppUserModelId format
+        if (shellPath.StartsWith("shell:AppsFolder\\", StringComparison.OrdinalIgnoreCase))
+        {
+            var appUserModelId = shellPath["shell:AppsFolder\\".Length..];
+            return ResolveUwpAppToExe(appUserModelId);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves a UWP AppUserModelId to the actual .exe path for icon extraction.
+    /// </summary>
+    private static string? ResolveUwpAppToExe(string appUserModelId)
+    {
+        try
+        {
+            // Parse AppUserModelId: "PackageFamilyName!AppId"
+            // e.g., "Microsoft.Windows.Photos_8wekyb3d8bbwe!App"
+            var parts = appUserModelId.Split('!');
+            if (parts.Length < 2) return null;
+
+            var packageFamilyName = parts[0];
+
+            // Find the actual install location in WindowsApps
+            var windowsAppsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                "WindowsApps");
+
+            // Look for the package directory
+            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*")
+                .FirstOrDefault();
+
+            if (packageDir == null) return null;
+
+            // Find the main .exe in the package
+            var exeName = parts[1];
+            if (exeName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                exeName = exeName[..^4];
+
+            var exePath = Path.Combine(packageDir, $"{exeName}.exe");
+            if (File.Exists(exePath)) return exePath;
+
+            // Try to find any .exe in the package
+            var exes = Directory.EnumerateFiles(packageDir, "*.exe", SearchOption.TopDirectoryOnly)
+                .Where(e => !e.Contains("Background") && !e.Contains("Service"))
+                .ToList();
+
+            return exes.FirstOrDefault();
+        }
+        catch { return null; }
     }
 
     private static BitmapSource? TryExtract(string p)
@@ -70,13 +136,22 @@ public sealed class IconServiceImpl : IIconService
 
     private static BitmapSource? ExtractInternal(string path)
     {
-        if (!File.Exists(path) && !Directory.Exists(path))
+        // Handle UWP shell: paths by resolving to real file path
+        var realPath = path;
+        if (path.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
+        {
+            var resolved = ResolveUwpIconPath(path);
+            realPath = resolved ?? path;
+        }
+
+        if (!File.Exists(realPath) && !Directory.Exists(realPath) && !realPath.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
             return null;
 
+        IShellItemImageFactory? factory = null;
         try
         {
             var riid = _shellItemImageFactoryGuid;
-            SHCreateItemFromParsingName(path, IntPtr.Zero, ref riid, out var factory);
+            SHCreateItemFromParsingName(realPath, IntPtr.Zero, ref riid, out factory);
 
             var size = new SIZE { cx = DefaultIconSize * 2, cy = DefaultIconSize * 2 };
             int hr = factory.GetImage(size, SIIGBF_ICONONLY | SIIGBF_BIGGERSIZEOK, out var hBitmap);
@@ -100,6 +175,12 @@ public sealed class IconServiceImpl : IIconService
         catch
         {
             return null;
+        }
+        finally
+        {
+            // Release COM reference to prevent native memory leak
+            if (factory is not null)
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(factory);
         }
     }
 }

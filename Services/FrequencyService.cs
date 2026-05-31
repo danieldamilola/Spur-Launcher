@@ -1,11 +1,19 @@
 namespace Arc.Services;
 
+public interface IFrequencyService : IDisposable
+{
+    int Get(string path);
+    void Increment(string path);
+    void ClearAll();
+    void Flush();
+}
+
 /// <summary>
 /// Persists per-path launch frequency counts to disk with debounced writes.
 /// Stored as a JSON dictionary at %LocalAppData%\Arc\Arc.freq.json.
 /// Writes are batched — at most one disk write per 30 seconds.
 /// </summary>
-public sealed class FrequencyService : IDisposable
+public sealed class FrequencyService : IFrequencyService, IDisposable
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 

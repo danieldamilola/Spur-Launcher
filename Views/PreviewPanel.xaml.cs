@@ -33,7 +33,10 @@ public partial class PreviewPanel : UserControl
         if (_vm is null) return;
         Dispatcher.InvokeAsync(() =>
         {
+            // Force redraw by setting to null first, since the underlying list instance hasn't changed
+            ChatMessages.ItemsSource = null;
             ChatMessages.ItemsSource = _vm.AiConversation;
+            UpdateAiConversationState();
             AiScroll.ScrollToEnd();
         });
     }
@@ -101,6 +104,7 @@ public partial class PreviewPanel : UserControl
             case "ai":
                 AiPanel.Visibility = Visibility.Visible;
                 ChatMessages.ItemsSource = _vm.AiConversation;
+                UpdateAiConversationState();
                 AiScroll.ScrollToEnd();
                 break;
 
@@ -128,6 +132,13 @@ public partial class PreviewPanel : UserControl
         EmptyState.Visibility = Visibility.Collapsed;
     }
 
+    private void UpdateAiConversationState()
+    {
+        var hasConversation = _vm?.AiConversation.Count > 0;
+        AiEmptyPrompt.Visibility = hasConversation ? Visibility.Collapsed : Visibility.Visible;
+        AiActions.Visibility = hasConversation ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void OnCancelTimer(object sender, RoutedEventArgs e)
     {
         _vm?.CancelTimerCommand.Execute(null);
@@ -136,11 +147,21 @@ public partial class PreviewPanel : UserControl
     private void OnAiFollowUpSend(object sender, RoutedEventArgs e)
         => SendAiFollowUp();
 
-    private void OnAiFollowUpKeyDown(object sender, KeyEventArgs e)
+    private void OnAiFollowUpPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || Keyboard.Modifiers == ModifierKeys.Shift) return;
-        SendAiFollowUp();
-        e.Handled = true;
+        if (e.Key == Key.Enter)
+        {
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                // Allow TextBox to process it as a new line since AcceptsReturn="True"
+                return;
+            }
+            else
+            {
+                e.Handled = true;
+                SendAiFollowUp();
+            }
+        }
     }
 
     private void OnAiFollowUpFocus(object sender, RoutedEventArgs e)
@@ -164,5 +185,23 @@ public partial class PreviewPanel : UserControl
         _vm.AiFollowUpCommand.Execute(text);
         AiFollowUp.Text = string.Empty;
     }
-}
 
+    private void OnAiBack(object sender, RoutedEventArgs e)
+    {
+        _vm?.BackFromAiChat();
+    }
+
+    private void OnAiCopy(object sender, RoutedEventArgs e)
+    {
+        var text = _vm?.GetAiConversationText();
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        try { Clipboard.SetText(text); }
+        catch { /* Clipboard can be temporarily locked by another process. */ }
+    }
+
+    private void OnAiStop(object sender, RoutedEventArgs e)
+    {
+        _vm?.CancelAiGeneration();
+    }
+}

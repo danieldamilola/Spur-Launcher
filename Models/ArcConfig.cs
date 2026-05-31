@@ -57,6 +57,9 @@ public sealed class ArcConfig
     /// <summary>Compact mode with tighter rows.</summary>
     public bool CompactMode { get; set; } = false;
 
+    /// <summary>True after the user completes the first-launch onboarding.</summary>
+    public bool OnboardingComplete { get; set; } = false;
+
     // ═══════════════════════════════════════════════════════════════
     // Search
     // ═══════════════════════════════════════════════════════════════
@@ -66,6 +69,12 @@ public sealed class ArcConfig
     public bool IndexFolders   { get; set; } = true;
     public bool IndexClipboard { get; set; } = true;
     public bool IndexCalculator { get; set; } = true;
+
+    // Per-source app indexing (like Flow Launcher's Program plugin)
+    public bool IndexUwpApps     { get; set; } = true;   // UWP/Store apps
+    public bool IndexStartMenu   { get; set; } = true;   // Start Menu shortcuts
+    public bool IndexRegistry    { get; set; } = true;   // Registry (App Paths + Uninstall)
+    public bool IndexPath        { get; set; } = true;   // PATH environment variable
 
     /// <summary>Whether file search is enabled. Convenience alias for IndexFiles.</summary>
     [JsonIgnore]
@@ -111,6 +120,17 @@ public sealed class ArcConfig
 
     /// <summary>Enable Windows Settings search results.</summary>
     public bool IndexWindowsSettings { get; set; } = true;
+
+    // Per-action toggles — each action can be individually disabled in Settings → Actions
+    public bool ActionColor      { get; set; } = true;
+    public bool ActionTimer      { get; set; } = true;
+    public bool ActionIp         { get; set; } = true;
+    public bool ActionAi         { get; set; } = true;
+    public bool ActionCurrency   { get; set; } = true;
+    public bool ActionPasswordGen { get; set; } = true;
+    public bool ActionQuickNote  { get; set; } = true;
+    public bool ActionKillProcess { get; set; } = true;
+    public bool ActionScreenshot { get; set; } = true;
 
     /// <summary>Maximum directory depth for recursive file search (1–5).</summary>
     public int MaxFileDepth { get; set; } = 3;
@@ -192,6 +212,7 @@ public sealed class ArcConfig
 
     /// <summary>Launcher placement on the selected monitor.</summary>
     public string SearchWindowPosition { get; set; } = "center";
+    public bool IgnoreHotkeysInFullscreen { get; set; } = true;
 
     /// <summary>Keep the preview panel open when the launcher activates.</summary>
     public bool AlwaysPreview { get; set; } = false;

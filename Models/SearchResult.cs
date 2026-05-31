@@ -20,7 +20,7 @@ public class SearchResult
     [System.Text.Json.Serialization.JsonIgnore]
     public string DisplaySubtitle => Type switch
     {
-        ResultType.App => string.IsNullOrWhiteSpace(LnkPath) ? "Application" : "Application shortcut",
+        ResultType.App => "", // No subtitle — icon + name is sufficient
         ResultType.File when IsDirectory => "Folder",
         ResultType.File => string.IsNullOrWhiteSpace(FileExtension) ? "File" : FileExtension.TrimStart('.').ToUpperInvariant(),
         _ => Subtitle,

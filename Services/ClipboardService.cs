@@ -1,3 +1,5 @@
+using Arc.Models;
+
 namespace Arc.Services;
 
 /// <summary>Interface for in-memory clipboard history management.</summary>
@@ -11,6 +13,8 @@ public interface IClipboardService
     string? ReadFromSystem();
     System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem();
     void Clear();
+    /// <summary>Removes all entries that don't match any of the given content strings (preserves pinned).</summary>
+    void KeepOnly(ISet<string> contentToKeep);
 }
 
 /// <summary>
@@ -118,6 +122,11 @@ public sealed class ClipboardServiceImpl : IClipboardService
     {
         lock (_lock) _history.Clear();
     }
+
+    public void KeepOnly(ISet<string> contentToKeep)
+    {
+        lock (_lock) _history.RemoveAll(e => !contentToKeep.Contains(e.Content));
+    }
 }
 
 /// <summary>Static facade — delegates to the configured IClipboardService instance.</summary>
@@ -147,7 +156,6 @@ public static class ClipboardService
         get
         {
             if (_instance is not null) return _instance;
-            // Auto-initialize with defaults if never configured (backward compat)
             var impl = new ClipboardServiceImpl(_log);
             _instance = impl;
             _log.Info("ClipboardService auto-initialized with defaults.");

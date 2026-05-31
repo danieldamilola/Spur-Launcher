@@ -12,7 +12,7 @@
         <!-- Mode/Search icon button (left) -->
         <Button x:Name="ModeIconBtn"
                 Grid.Column="0"
-                Margin="18,0,12,0"
+                Margin="16,0,12,0"
                 VerticalAlignment="Center"
                 Background="Transparent"
                 BorderThickness="0"
@@ -25,8 +25,8 @@
                     <Border Background="{TemplateBinding Background}">
                         <Path x:Name="IconPath"
                               Data="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19ZM21 21L16.65 16.65"
-                              Stroke="{DynamicResource TextMuted}"
-                              StrokeThickness="1.8"
+                              Stroke="{DynamicResource TextTertiary}"
+                              StrokeThickness="1.6"
                               StrokeStartLineCap="Round"
                               StrokeEndLineCap="Round"
                               StrokeLineJoin="Round"
@@ -43,7 +43,7 @@
                  Grid.Column="1"
                  VerticalAlignment="Center"
                  FontFamily="{DynamicResource UIFont}"
-                 FontSize="{DynamicResource FontLg}"
+                 FontSize="{DynamicResource FontIp}"
                  Foreground="{DynamicResource TextPrimary}"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                  TextChanged="OnTextChanged"/>
@@ -54,8 +54,8 @@
                    VerticalAlignment="Center"
                    IsHitTestVisible="False"
                    FontFamily="{DynamicResource UIFont}"
-                   FontSize="{DynamicResource FontLg}"
-                   Foreground="{DynamicResource TextMuted}"
+                   FontSize="{DynamicResource FontIp}"
+                   Foreground="{DynamicResource TextTertiary}"
                    Text="{Binding Config.PlaceholderText}"/>
 
     </Grid>

@@ -9,10 +9,60 @@ public partial class MainWindow : Window
     private bool _isVisible;
     private MainViewModel? _vm;
     private bool _isHovering;
+    private bool _previewWasVisible;
+    private System.Windows.Threading.DispatcherTimer? _cornerRadiusTimer;
 
     public MainWindow()
     {
         InitializeComponent();
+        PreviewPanelControl.RenderTransform = new TranslateTransform(0, 0);
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        var hwnd = new WindowInteropHelper(this).Handle;
+        HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int WM_NCHITTEST = 0x0084;
+        if (msg != WM_NCHITTEST) return IntPtr.Zero;
+
+        // Let child elements handle their own hit tests (scrollbars, buttons, etc.)
+        var result = NativeMethods.DefWindowProc(hwnd, msg, wParam, lParam);
+        int ht = result.ToInt32() & 0xFFFF;
+        if (ht is 1 or 6 or 7) // HTCLIENT, HTHSCROLL, HTVSCROLL
+            return result;
+
+        var point = new Point(
+            (short)(lParam.ToInt32() & 0xFFFF),
+            (short)(lParam.ToInt32() >> 16));
+        point = PointFromScreen(point);
+
+        const int border = 6;
+        bool left   = point.X <= border;
+        bool right  = point.X >= ActualWidth - border;
+        bool bottom = point.Y >= ActualHeight - border;
+        bool top    = point.Y <= border;
+
+        if (left && bottom)      { handled = true; return (IntPtr)16; }
+        if (right && bottom)     { handled = true; return (IntPtr)17; }
+        if (left && top)         { handled = true; return (IntPtr)13; }
+        if (right && top)        { handled = true; return (IntPtr)14; }
+        if (left)                { handled = true; return (IntPtr)10; }
+        if (right)               { handled = true; return (IntPtr)11; }
+        if (bottom)              { handled = true; return (IntPtr)15; }
+        if (top)                 { handled = true; return (IntPtr)12; }
+
+        return IntPtr.Zero;
+    }
+
+    private static class NativeMethods
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern IntPtr DefWindowProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
     }
 
     public void SetViewModel(MainViewModel vm)
@@ -136,6 +186,51 @@ public partial class MainWindow : Window
         WindowScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleOut);
     }
 
+    // ── Preview panel slide-in/out ───────────────────────────────
+
+    private void AnimatePreviewIn()
+    {
+        var slide = (TranslateTransform)PreviewPanelControl.RenderTransform;
+        PreviewPanelControl.Visibility = Visibility.Visible;
+        PreviewPanelControl.Opacity = 0;
+        slide.X = 8;
+
+        var slideAnim = new DoubleAnimation(0, new Duration(TimeSpan.FromMilliseconds(180)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var fadeAnim = new DoubleAnimation(1, new Duration(TimeSpan.FromMilliseconds(180)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        slide.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        PreviewPanelControl.BeginAnimation(OpacityProperty, fadeAnim);
+    }
+
+    private void AnimatePreviewOut()
+    {
+        var slide = (TranslateTransform)PreviewPanelControl.RenderTransform;
+
+        var slideAnim = new DoubleAnimation(8, new Duration(TimeSpan.FromMilliseconds(180)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+        var fadeAnim = new DoubleAnimation(0, new Duration(TimeSpan.FromMilliseconds(180)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+
+        fadeAnim.Completed += (_, _) =>
+        {
+            if (!_previewWasVisible) return;
+            PreviewPanelControl.Visibility = Visibility.Collapsed;
+        };
+
+        slide.BeginAnimation(TranslateTransform.XProperty, slideAnim);
+        PreviewPanelControl.BeginAnimation(OpacityProperty, fadeAnim);
+    }
+
     // ── ViewModel changes → update window shape ──────────────────
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -143,7 +238,9 @@ public partial class MainWindow : Window
                            or nameof(MainViewModel.IsSettingsOpen)
                            or nameof(MainViewModel.IsPreviewVisible)
                            or nameof(MainViewModel.IsBrowsePanelVisible)
-                           or nameof(MainViewModel.ActiveActionId))
+                           or nameof(MainViewModel.IsHubVisible)
+                           or nameof(MainViewModel.ActiveActionId)
+                           or nameof(MainViewModel.EmptyStateMessage))
         {
             Dispatcher.InvokeAsync(UpdateWindowState);
         }
@@ -160,31 +257,60 @@ public partial class MainWindow : Window
         if (_vm is null) return;
 
         bool isBrowse   = _vm.IsBrowsePanelVisible;
-        bool hasContent = _vm.HasResults || _vm.IsSettingsOpen || isBrowse;
+        bool hasContent = _vm.HasResults || isBrowse || _vm.IsHubVisible;
+        bool isAction   = _vm.ActiveActionId is not null;
 
-        ContentArea.Visibility = hasContent ? Visibility.Visible : Visibility.Collapsed;
+        ContentArea.Visibility = (hasContent || isAction) ? Visibility.Visible : Visibility.Collapsed;
 
-        SearchCardBorder.CornerRadius = hasContent
+        var targetRadius = (hasContent || isAction)
             ? (CornerRadius)TryFindResource("RadiusWindow")
             : (CornerRadius)TryFindResource("RadiusPill");
+        AnimateCornerRadius(targetRadius);
 
-        var isAiMode = string.Equals(_vm.ActiveActionId, "ai", StringComparison.OrdinalIgnoreCase);
-        var previewWidth = _vm.IsPreviewVisible && !_vm.IsSettingsOpen
-            ? (isAiMode ? ActualWidth - 80 : 300.0)
-            : 0.0;
-        PreviewColumn.Width = new GridLength(previewWidth);
-        PreviewPanelControl.Visibility = previewWidth > 0
-            ? Visibility.Visible : Visibility.Collapsed;
-        PreviewPanelControl.Width = isAiMode ? double.NaN : 300.0;
-        Grid.SetColumn(PreviewPanelControl, isAiMode ? 0 : 1);
-        Grid.SetColumnSpan(PreviewPanelControl, isAiMode ? 2 : 1);
+        if (isAction)
+        {
+            // Action active – full-width preview, hide results list
+            ResultsListControl.Visibility  = Visibility.Collapsed;
+            BrowsePanelControl.Visibility  = Visibility.Collapsed;
+            PreviewColumn.Width            = new GridLength(1, GridUnitType.Star);
+            PreviewPanelControl.Visibility = Visibility.Visible;
+            PreviewPanelControl.Opacity    = 1;
+            PreviewPanelControl.Width      = double.NaN;
+            Grid.SetColumn(PreviewPanelControl, 0);
+            Grid.SetColumnSpan(PreviewPanelControl, 2);
+            _previewWasVisible = true;
+        }
+        else
+        {
+            // Normal mode: side-by-side results + optional preview
+            Grid.SetColumn(PreviewPanelControl, 1);
+            Grid.SetColumnSpan(PreviewPanelControl, 1);
 
-        SettingsViewControl.Visibility = _vm.IsSettingsOpen
-            ? Visibility.Visible : Visibility.Collapsed;
+            var previewWidth = _vm.IsPreviewVisible
+                ? Math.Max(260, ActualWidth * 0.35)
+                : 0.0;
+            PreviewColumn.Width = new GridLength(previewWidth);
+            PreviewPanelControl.Width = double.NaN;
 
-        bool showBrowse = isBrowse && !_vm.IsSettingsOpen && !isAiMode;
-        BrowsePanelControl.Visibility = showBrowse ? Visibility.Visible : Visibility.Collapsed;
-        ResultsListControl.Visibility = (!showBrowse && !_vm.IsSettingsOpen && !isAiMode) ? Visibility.Visible : Visibility.Collapsed;
+            var previewVisible = previewWidth > 0;
+            if (previewVisible && !_previewWasVisible)
+                AnimatePreviewIn();
+            else if (!previewVisible && _previewWasVisible)
+                AnimatePreviewOut();
+            _previewWasVisible = previewVisible;
+
+            bool showBrowse = isBrowse;
+            BrowsePanelControl.Visibility = showBrowse ? Visibility.Visible : Visibility.Collapsed;
+            ResultsListControl.Visibility = !showBrowse ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        // Hub empty state — shown when idle with no recent items
+        var isHubEmpty = _vm.IsHubVisible && !_vm.HasResults && !string.IsNullOrEmpty(_vm.EmptyStateMessage);
+        EmptyStateText.Visibility = isHubEmpty ? Visibility.Visible : Visibility.Collapsed;
+
+        // Settings footer — shown in Hub or search states (not in browse/settings/AI)
+        var showFooter = !_vm.IsBrowsePanelVisible && _vm.ActiveActionId is null;
+        SettingsFooter.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
     }
 
     // ── Keyboard ─────────────────────────────────────────────────
@@ -209,16 +335,19 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (_vm.IsSettingsOpen)
+                if (string.Equals(_vm.ActiveActionId, "ai", StringComparison.OrdinalIgnoreCase))
                 {
-                    _vm.IsSettingsOpen = false;
-                    if (string.Equals(_vm.Query, "settings", StringComparison.OrdinalIgnoreCase))
-                        _vm.Query = string.Empty;
+                    _vm.BackFromAiChat();
                 }
+                // Clear query (most common undo)
                 else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
+                // Exit action preview
                 else if (_vm.ActiveActionId is not null)
                     _vm.ClearActiveMode();
+                // Exit browse mode
+                else if (_vm.ActiveCategory is not null)
+                    _vm.ActiveCategory = null;
                 else
                     HideWindow();
                 e.Handled = true;
@@ -240,16 +369,17 @@ public partial class MainWindow : Window
                 break;
 
             case Key.D1 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActiveCategory = _vm.ActiveCategory == "apps" ? null : "apps";
-                e.Handled = true; break;
-            case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActiveCategory = _vm.ActiveCategory == "files" ? null : "files";
                 e.Handled = true; break;
-            case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
+            case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActivateClipboardCategory();
                 e.Handled = true; break;
-            case Key.D4 when Keyboard.Modifiers == ModifierKeys.Control:
+            case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.ActiveCategory = _vm.ActiveCategory == "actions" ? null : "actions";
+                e.Handled = true; break;
+
+            case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:
+                _vm.OpenSettingsCommand.Execute(null);
                 e.Handled = true; break;
         }
     }
@@ -280,15 +410,16 @@ public partial class MainWindow : Window
             && (_vm is null || _vm.ActiveCategory is null)
             && (_vm is null || _vm.ActiveActionId is null)
             && (_vm is null || string.IsNullOrEmpty(_vm.Query));
-        double targetWidth = visible ? 212.0 : 0.0;
+        double targetWidth = visible ? 160.0 : 0.0;
 
         if (Math.Abs(CategoryPanelContainer.Width - targetWidth) < 0.5) return;
 
+        // Animate category panel. Grid layout handles card resize naturally.
         var slide = new DoubleAnimation(targetWidth,
-            new Duration(TimeSpan.FromMilliseconds(180)))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
+                new Duration(TimeSpan.FromMilliseconds(180)))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
         CategoryPanelContainer.BeginAnimation(Border.WidthProperty, slide);
     }
 
@@ -308,7 +439,6 @@ public partial class MainWindow : Window
     private void UpdateCategoryVisuals()
     {
         if (_vm is null) return;
-        SetCatActive(BtnApps,      IconApps,      _vm.ActiveCategory == "apps");
         SetCatActive(BtnFiles,     IconFiles,     _vm.ActiveCategory == "files");
         SetCatActive(BtnClipboard, IconClipboard, _vm.ActiveCategory == "clipboard");
         SetCatActive(BtnActions,   IconActions,   _vm.ActiveCategory == "actions");
@@ -324,6 +454,57 @@ public partial class MainWindow : Window
         icon.Stroke    = active ? primary : muted;
     }
 
+    private void OnSettingsFooterClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.OpenSettingsCommand.Execute(null);
+    }
+
+    // ── Corner radius animation ───────────────────────────────────
+    /// <summary>Animates SearchCardBorder.CornerRadius from current to target over 180ms with cubic ease-out.</summary>
+    private void AnimateCornerRadius(CornerRadius target)
+    {
+        _cornerRadiusTimer?.Stop();
+
+        var current = SearchCardBorder.CornerRadius;
+        if (NearlyEqual(current, target))
+        {
+            SearchCardBorder.CornerRadius = target;
+            return;
+        }
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        const double durationMs = 180.0;
+
+        _cornerRadiusTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(16),
+            System.Windows.Threading.DispatcherPriority.Render,
+            (s, _) =>
+            {
+                var t = Math.Min(1.0, sw.Elapsed.TotalMilliseconds / durationMs);
+                var eased = 1.0 - Math.Pow(1.0 - t, 3); // cubic ease-out
+
+                SearchCardBorder.CornerRadius = new CornerRadius(
+                    current.TopLeft     + (target.TopLeft     - current.TopLeft)     * eased,
+                    current.TopRight    + (target.TopRight    - current.TopRight)    * eased,
+                    current.BottomRight + (target.BottomRight - current.BottomRight) * eased,
+                    current.BottomLeft  + (target.BottomLeft  - current.BottomLeft)  * eased);
+
+                if (t >= 1.0)
+                {
+                    _cornerRadiusTimer?.Stop();
+                    _cornerRadiusTimer = null;
+                }
+            },
+            Dispatcher);
+        _cornerRadiusTimer.Start();
+    }
+
+    private static bool NearlyEqual(CornerRadius a, CornerRadius b, double epsilon = 0.1)
+        => Math.Abs(a.TopLeft     - b.TopLeft)     < epsilon
+        && Math.Abs(a.TopRight    - b.TopRight)    < epsilon
+        && Math.Abs(a.BottomRight - b.BottomRight) < epsilon
+        && Math.Abs(a.BottomLeft  - b.BottomLeft)  < epsilon;
+
     // ── Drag to reposition ────────────────────────────────────────
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
@@ -333,4 +514,3 @@ public partial class MainWindow : Window
     }
 
 }
-

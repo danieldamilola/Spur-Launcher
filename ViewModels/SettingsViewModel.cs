@@ -9,27 +9,23 @@ namespace Arc.ViewModels;
 /// </summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
-    private readonly ConfigService  _configService;
+    private readonly IConfigService _configService;
     private readonly MainViewModel  _main;
     private          ArcConfig     _config;
 
-    public SettingsViewModel(ArcConfig config, ConfigService configService, MainViewModel main)
+    public SettingsViewModel(ArcConfig config, IConfigService configService, MainViewModel main)
     {
         _config        = config;
         _configService = configService;
         _main          = main;
 
-        // Init sidebar sections
+        // Init sidebar sections — 4 consolidated groups
         Sections = new ObservableCollection<SettingsSection>
         {
-            new("Appearance",      "palette",  "\ue3ae"),
-            new("Search & Index",  "search",   "\ue721"),
-            new("Hotkey",          "command",  "\ue72d"),
-            new("Startup & Perf",  "zap",      "\ue945"),
-            new("Result Behavior", "cursor",   "\ue753"),
-            new("Privacy",         "shield",   "\ue72e"),
-            new("AI Assistant",    "sparkles", "\ue7f3"),
-            new("About Arc",      "info",     "\ue946"),
+            new("General",  "settings", "\ue721"),
+            new("Search",   "search",   "\ue721"),
+            new("Actions",  "zap",      "\ue945"),
+            new("Advanced", "info",     "\ue946"),
         };
         SelectedSection = Sections[0];
 
@@ -589,13 +585,104 @@ public sealed partial class SettingsViewModel : ObservableObject
             _main.Config = _config.Clone();
             Save();
             OnPropertyChanged();
+            OnPropertyChanged(nameof(PositionCenter));
+            OnPropertyChanged(nameof(PositionTop));
+            OnPropertyChanged(nameof(PositionLeft));
+            OnPropertyChanged(nameof(PositionRight));
         }
+    }
+
+    public bool PositionCenter
+    {
+        get => SearchWindowPosition == "Center";
+        set { if (value) SearchWindowPosition = "Center"; }
+    }
+    public bool PositionTop
+    {
+        get => SearchWindowPosition == "Center Top";
+        set { if (value) SearchWindowPosition = "Center Top"; }
+    }
+    public bool PositionLeft
+    {
+        get => SearchWindowPosition == "Left Top";
+        set { if (value) SearchWindowPosition = "Left Top"; }
+    }
+    public bool PositionRight
+    {
+        get => SearchWindowPosition == "Right Top";
+        set { if (value) SearchWindowPosition = "Right Top"; }
     }
 
     public bool AlwaysPreview
     {
         get => _config.AlwaysPreview;
         set { _config.AlwaysPreview = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public bool IgnoreHotkeysInFullscreen
+    {
+        get => _config.IgnoreHotkeysInFullscreen;
+        set { _config.IgnoreHotkeysInFullscreen = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Actions — enable/disable each action independently
+    // ═══════════════════════════════════════════════════════════════
+
+    public bool ActionCalc
+    {
+        get => _config.IndexCalculator;
+        set { _config.IndexCalculator = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionColor
+    {
+        get => _config.ActionColor;
+        set { _config.ActionColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionCurrency
+    {
+        get => _config.ActionCurrency;
+        set { _config.ActionCurrency = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionTimer
+    {
+        get => _config.ActionTimer;
+        set { _config.ActionTimer = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionIp
+    {
+        get => _config.ActionIp;
+        set { _config.ActionIp = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionAi
+    {
+        get => _config.ActionAi;
+        set { _config.ActionAi = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionPasswordGen
+    {
+        get => _config.ActionPasswordGen;
+        set { _config.ActionPasswordGen = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionQuickNote
+    {
+        get => _config.ActionQuickNote;
+        set { _config.ActionQuickNote = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionKillProcess
+    {
+        get => _config.ActionKillProcess;
+        set { _config.ActionKillProcess = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionScreenshot
+    {
+        get => _config.ActionScreenshot;
+        set { _config.ActionScreenshot = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ActionSystem
+    {
+        get => _config.IndexSystemCommands;
+        set { _config.IndexSystemCommands = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -711,7 +798,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     // About
     // ═══════════════════════════════════════════════════════════════
 
-    public string Version => "Arc v0.2.0";
+    public string Version => "Arc v1.2.0";
     public string Credits => "Built with .NET 9 + WPF";
     public string License => "MIT License";
 

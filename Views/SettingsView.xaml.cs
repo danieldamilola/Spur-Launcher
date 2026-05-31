@@ -1,6 +1,28 @@
 using Arc.ViewModels;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Arc.Views;
+
+public sealed class InvertBoolConverter : IValueConverter
+{
+    public static readonly InvertBoolConverter Instance = new();
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => value is true ? false : true;
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public sealed class BoolToVisibilityConverter : IValueConverter
+{
+    public static readonly BoolToVisibilityConverter Instance = new();
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => value is true ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => throw new NotSupportedException();
+}
 
 public partial class SettingsView : UserControl
 {
@@ -36,6 +58,13 @@ public partial class SettingsView : UserControl
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => _vm?.CloseSettings();
 
+    private void OnSectionClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null || sender is not Button btn || btn.Content is not string name) return;
+        var section = _vm.Sections.FirstOrDefault(s => s.Name == name);
+        if (section is not null) _vm.SelectedSection = section;
+    }
+
     private void OnBrowseFolderClick(object sender, RoutedEventArgs e)
     {
         if (_vm is null) return;
@@ -56,12 +85,15 @@ public partial class SettingsView : UserControl
     {
         if (_recordingShortcut) return;
         _recordingShortcut = true;
-        EditShortcutBtn.Content = "Recording…";
-        if (TryFindResource("TextPrimary") is System.Windows.Media.Brush b)
-            EditShortcutBtn.Foreground = b;
-        Keyboard.Focus(EditShortcutBtn);
-        EditShortcutBtn.PreviewKeyDown += OnShortcutKeyDown;
-        EditShortcutBtn.LostFocus      += OnShortcutLostFocus;
+        if (sender is Button btn)
+        {
+            btn.Content = "Recording…";
+            if (TryFindResource("TextPrimary") is System.Windows.Media.Brush b)
+                btn.Foreground = b;
+            Keyboard.Focus(btn);
+            btn.PreviewKeyDown += OnShortcutKeyDown;
+            btn.LostFocus      += OnShortcutLostFocus;
+        }
     }
 
     private void OnShortcutKeyDown(object sender, KeyEventArgs e)
@@ -90,12 +122,33 @@ public partial class SettingsView : UserControl
     {
         if (!_recordingShortcut) return;
         _recordingShortcut = false;
-        EditShortcutBtn.Content = "Edit";
-        EditShortcutBtn.PreviewKeyDown -= OnShortcutKeyDown;
-        EditShortcutBtn.LostFocus      -= OnShortcutLostFocus;
-        if (TryFindResource("TextSecondary") is System.Windows.Media.Brush b)
-            EditShortcutBtn.Foreground = b;
+        // Find the button in the visual tree
+        if (this.FindName("EditShortcutBtn") is Button btn)
+        {
+            btn.Content = "Edit";
+            btn.PreviewKeyDown -= OnShortcutKeyDown;
+            btn.LostFocus      -= OnShortcutLostFocus;
+            if (TryFindResource("TextSecondary") is System.Windows.Media.Brush b)
+                btn.Foreground = b;
+        }
     }
+}
+
+// ── Section visibility converter ────────────────────────────────────
+public sealed class SectionVisibilityConverter : System.Windows.Data.IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter,
+        System.Globalization.CultureInfo culture)
+    {
+        var sectionName = (value as Arc.ViewModels.SettingsSection)?.Name ?? "";
+        var target = parameter as string ?? "";
+        return sectionName == target
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter,
+        System.Globalization.CultureInfo culture) => throw new NotSupportedException();
 }
 
 // ── ToggleSwitch control ─────────────────────────────────────────────
@@ -178,9 +231,9 @@ public sealed class ToggleSwitch : FrameworkElement
     private void UpdateVisuals()
     {
         var accent  = TryFindResource("Accent")      as Brush
-                      ?? new SolidColorBrush(Color.FromRgb(0x5B, 0x7E, 0xFF));
-        var offBg   = TryFindResource("SurfaceLow")  as Brush
-                      ?? new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x3A));
+                      ?? new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
+        var offBg   = TryFindResource("Depth4")      as Brush
+                      ?? new SolidColorBrush(Color.FromRgb(0x27, 0x27, 0x2A));
         var knobClr = TryFindResource("TextPrimary") as Brush ?? Brushes.White;
 
         _track.Background = IsOn ? accent : offBg;
@@ -190,4 +243,3 @@ public sealed class ToggleSwitch : FrameworkElement
             : new Thickness(3, 0, 0, 0);
     }
 }
-

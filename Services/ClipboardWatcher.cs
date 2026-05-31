@@ -5,7 +5,7 @@ namespace Arc.Services;
 
 /// <summary>
 /// Listens for system clipboard changes using Win32 AddClipboardFormatListener.
-/// Hooks into the MainWindow HWND via HwndSource and calls ClipboardService.Add
+/// Hooks into the MainWindow HWND via HwndSource and calls IClipboardService.Add
 /// whenever new text lands on the clipboard.
 /// </summary>
 public sealed class ClipboardWatcher : IDisposable
@@ -23,10 +23,12 @@ public sealed class ClipboardWatcher : IDisposable
     private bool _disposed;
     private string? _lastText;
     private System.Windows.Media.Imaging.BitmapSource? _lastImage;
+    private readonly IClipboardService _clipboard;
     private readonly ILogger _log;
 
-    public ClipboardWatcher(ILogger? log = null)
+    public ClipboardWatcher(IClipboardService clipboard, ILogger? log = null)
     {
+        _clipboard = clipboard;
         _log = log ?? NullLogger.Instance;
     }
 
@@ -43,7 +45,7 @@ public sealed class ClipboardWatcher : IDisposable
         if (msg == WM_CLIPBOARDUPDATE)
         {
             // Images take priority (checking text on an image clipboard gives a null)
-            var img = ClipboardService.ReadImageFromSystem();
+            var img = _clipboard.ReadImageFromSystem();
             if (img is not null)
             {
                 // Deduplicate by comparing dimensions (simple but effective)
@@ -51,17 +53,17 @@ public sealed class ClipboardWatcher : IDisposable
                 {
                     _lastImage = img;
                     _lastText = null;
-                    ClipboardService.AddImage(img);
+                    _clipboard.AddImage(img);
                 }
                 return IntPtr.Zero;
             }
 
-            var text = ClipboardService.ReadFromSystem();
+            var text = _clipboard.ReadFromSystem();
             if (text is not null && text != _lastText)
             {
                 _lastText = text;
                 _lastImage = null;
-                ClipboardService.Add(text);
+                _clipboard.Add(text);
             }
         }
         return IntPtr.Zero;
@@ -71,8 +73,10 @@ public sealed class ClipboardWatcher : IDisposable
     {
         if (_disposed) return;
         _source?.RemoveHook(Hook);
+        _source?.Dispose();
         if (_hwnd != IntPtr.Zero)
             RemoveClipboardFormatListener(_hwnd);
+        _lastImage = null; // release large bitmap reference
         _disposed = true;
     }
 }

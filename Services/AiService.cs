@@ -32,25 +32,6 @@ public sealed class AiService : IAiService
 
     public string[] SupportedProviders => [.. Providers.Keys];
 
-    private static readonly AiService _default = new();
-
-    /// <summary>
-    /// Static helper for backward compatibility.
-    /// </summary>
-    public static Task StreamAsync(
-        string provider, string model, string apiKey, string question,
-        Action<string> onToken, CancellationToken ct = default)
-        => _default.StreamAsyncInternal(provider, model, apiKey, question, onToken, ct);
-
-    /// <summary>
-    /// Static helper for backward compatibility.
-    /// </summary>
-    public static Task StreamAsync(
-        string provider, string model, string apiKey,
-        IEnumerable<(string Role, string Content)> messages,
-        Action<string> onToken, CancellationToken ct = default)
-        => _default.StreamAsyncInternal(provider, model, apiKey, messages, onToken, ct);
-
     /// <summary>
     /// Instance method for single question (convenience wrapper).
     /// </summary>
@@ -160,4 +141,3 @@ public sealed class AiService : IAiService
         }
     }
 }
-

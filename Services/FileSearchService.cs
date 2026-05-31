@@ -1,5 +1,18 @@
 namespace Arc.Services;
 
+/// <summary>Interface for file/folder search.</summary>
+public interface IFileSearchService
+{
+    /// <summary>Maximum folder depth for recursive search (1–5). Default 3.</summary>
+    int MaxDepth { get; set; }
+
+    /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
+    Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default);
+
+    /// <summary>Returns recently modified user files (for browse mode).</summary>
+    Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50);
+}
+
 /// <summary>
 /// Searches user-facing files and folders in Documents, Desktop, Downloads,
 /// Pictures, Music, Videos, and OneDrive.
@@ -10,7 +23,7 @@ namespace Arc.Services;
 ///
 /// <see cref="MaxDepth"/> controls how deep the recursive search goes (1–5).
 /// </summary>
-public sealed class FileSearchService
+public sealed class FileSearchService : IFileSearchService
 {
     private static readonly string[] SearchRoots =
     [
@@ -79,8 +92,8 @@ public sealed class FileSearchService
     };
 
     /// <summary>Maximum folder depth for recursive search (1–5). Default 3.</summary>
-    private static int _maxDepth = 3;
-    public static int MaxDepth
+    private int _maxDepth = 3;
+    public int MaxDepth
     {
         get => _maxDepth;
         set => _maxDepth = Math.Clamp(value, 1, 5);
@@ -118,10 +131,10 @@ public sealed class FileSearchService
             .ToList();
     }
 
-    private static void CollectRecent(string dir, int depth,
+    private void CollectRecent(string dir, int depth,
         List<(double Score, SearchResult Result)> results)
     {
-        if (depth > _maxDepth || results.Count >= MaxResults) return;
+        if (depth > MaxDepth || results.Count >= MaxResults) return;
 
         try
         {
@@ -209,9 +222,9 @@ public sealed class FileSearchService
             .ToList();
     }
 
-    private static void Recurse(string dir, string query, int depth, List<SearchResult> results, CancellationToken ct)
+    private void Recurse(string dir, string query, int depth, List<SearchResult> results, CancellationToken ct)
     {
-        if (ct.IsCancellationRequested || depth > _maxDepth || results.Count >= MaxResults) return;
+        if (ct.IsCancellationRequested || depth > MaxDepth || results.Count >= MaxResults) return;
 
         try
         {
@@ -346,4 +359,3 @@ public sealed class FileSearchService
         return true;
     }
 }
-

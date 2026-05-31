@@ -8,92 +8,118 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         DARK THEME — Arc Design System
-         All rgba() values converted to WPF #AARRGGBB
+         DARK THEME — Arc Design System v2
+         Mineral depth palette. Restrained, premium, deliberate.
          ═══════════════════════════════════════════════════════════ -->
 
-    <!-- Glass background: rgba(20,20,22,0.78) → alpha=199=#C7 -->
-    <SolidColorBrush x:Key="GlassBg"         Color="#C7141416"/>
-    <!-- Glass border: rgba(255,255,255,0.08) → alpha=20=#14 -->
-    <SolidColorBrush x:Key="GlassBorder"     Color="#14FFFFFF"/>
-    <!-- Preview panel bg: rgba(18,18,20,0.85) → alpha=217=#D9 -->
-    <SolidColorBrush x:Key="PreviewBg"       Color="#D9121214"/>
+    <!-- ── Canvas & Surfaces — depth stack ──────────────────────── -->
+    <SolidColorBrush x:Key="Void"            Color="#0A0A0B"/>
+    <SolidColorBrush x:Key="Depth1"          Color="#111113"/>
+    <SolidColorBrush x:Key="Depth2"          Color="#18181B"/>
+    <SolidColorBrush x:Key="Depth3"          Color="#1F1F23"/>
+    <SolidColorBrush x:Key="Depth4"          Color="#27272A"/>
 
-    <!-- Surfaces - will be updated dynamically -->
-    <SolidColorBrush x:Key="Surface"         Color="#141416"/>
-    <SolidColorBrush x:Key="SurfaceLow"      Color="#242426"/>
+    <!-- ── Glass (translucent overlays) ─────────────────────────── -->
+    <!-- rgba(17,17,19,0.78) → alpha=199=#C7 -->
+    <SolidColorBrush x:Key="GlassBg"         Color="#C7111113"/>
+    <!-- rgba(255,255,255,0.06) → alpha=15=#0F -->
+    <SolidColorBrush x:Key="GlassBorder"     Color="#0FFFFFFF"/>
+    <!-- rgba(17,17,19,0.85) → alpha=217=#D9 -->
+    <SolidColorBrush x:Key="PreviewBg"       Color="#D9111113"/>
 
-    <!-- Text -->
-    <SolidColorBrush x:Key="TextPrimary"     Color="#F0F0F0"/>
-    <SolidColorBrush x:Key="TextSecondary"   Color="#8A8A8A"/>
-    <SolidColorBrush x:Key="TextMuted"       Color="#555555"/>
+    <!-- ── Surfaces (backward-compat aliases) ───────────────────── -->
+    <SolidColorBrush x:Key="Surface"         Color="#111113"/>
+    <SolidColorBrush x:Key="SurfaceLow"      Color="#18181B"/>
 
-    <!-- Borders -->
+    <!-- ── Text — restrained contrast ───────────────────────────── -->
+    <SolidColorBrush x:Key="TextPrimary"     Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="TextSecondary"   Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="TextMuted"       Color="#71717A"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="#52525B"/>
+    <SolidColorBrush x:Key="TextInverse"     Color="#18181B"/>
+
+    <!-- ── Borders — barely-there definition ────────────────────── -->
     <!-- rgba(255,255,255,0.06) → alpha=15=#0F -->
     <SolidColorBrush x:Key="BorderBrush"     Color="#0FFFFFFF"/>
-    <!-- rgba(255,255,255,0.10) → alpha=26=#1A -->
-    <SolidColorBrush x:Key="BorderStrong"    Color="#1AFFFFFF"/>
+    <!-- rgba(255,255,255,0.08) → alpha=20=#14 -->
+    <SolidColorBrush x:Key="BorderStrong"    Color="#14FFFFFF"/>
 
-    <!-- Selection -->
-    <SolidColorBrush x:Key="SelectedBg"      Color="#1c1c1d"/>
-    <SolidColorBrush x:Key="SelectedText"    Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SelectedMuted"   Color="#AAAAAA"/>
-    <SolidColorBrush x:Key="HoverBg"         Color="#1AFFFFFF"/>
+    <!-- ── Selection & hover — depth not glow ───────────────────── -->
+    <SolidColorBrush x:Key="SelectedBg"      Color="#1F1F23"/>
+    <SolidColorBrush x:Key="SelectedText"    Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="SelectedMuted"   Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="HoverBg"         Color="#18181B"/>
 
-    <!-- Accent -->
-    <SolidColorBrush x:Key="Accent"          Color="#5B7EFF"/>
-    <SolidColorBrush x:Key="AccentWash"      Color="#171F42"/>
+    <!-- ── Accent — mineral warm grey, barely there ─────────────── -->
+    <SolidColorBrush x:Key="Accent"          Color="#9CA3AF"/>
+    <SolidColorBrush x:Key="AccentWash"      Color="#1A1B1C"/>
+    <SolidColorBrush x:Key="AccentTime"      Color="#C4A4A8"/>
+    <SolidColorBrush x:Key="AccentAi"        Color="#C9B99A"/>
+    <SolidColorBrush x:Key="AccentMath"      Color="#84A98C"/>
+    <SolidColorBrush x:Key="AccentNetwork"   Color="#7B8FA8"/>
+    <SolidColorBrush x:Key="AccentFiles"     Color="#8B939C"/>
+    <SolidColorBrush x:Key="AccentClipboard" Color="#D4C4A8"/>
 
-    <!-- Semantic -->
-    <SolidColorBrush x:Key="Green"           Color="#5EE577"/>
-    <SolidColorBrush x:Key="Orange"          Color="#FFC779"/>
-    <SolidColorBrush x:Key="Red"             Color="#FF7B7B"/>
+    <!-- ── Semantic — muted, whispering not shouting ────────────── -->
+    <SolidColorBrush x:Key="Green"           Color="#6B8E6B"/>
+    <SolidColorBrush x:Key="Orange"          Color="#A8947A"/>
+    <SolidColorBrush x:Key="Red"             Color="#A67C7C"/>
 
-    <!-- ToggleSwitch -->
-    <SolidColorBrush x:Key="ToggleKnob"      Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="ToggleTrackOff"  Color="#555555"/>
+    <!-- ── ToggleSwitch ─────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="ToggleKnob"      Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="ToggleTrackOff"  Color="#52525B"/>
 
-    <!-- TextBox selection opacity (theme-specific) -->
-    <sys:Double x:Key="TextSelectionOpacity">0.35</sys:Double>
+    <!-- TextBox selection opacity -->
+    <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
 
-    <!-- ═══ Typography ═══════════════════════════════════════════ -->
+    <!-- ═══ Typography — 4px scale, negative tracking on display ══ -->
+    <!-- Fonts remain DM Sans / DM Mono until Inter + JetBrains Mono added -->
     <FontFamily x:Key="UIFont">pack://application:,,,/Themes/Fonts/#DM Sans</FontFamily>
     <FontFamily x:Key="MonoFont">pack://application:,,,/Themes/Fonts/#DM Mono</FontFamily>
 
-    <!-- Font sizes -->
-    <sys:Double x:Key="FontXxs">10</sys:Double>
-    <sys:Double x:Key="FontXs">11</sys:Double>
-    <sys:Double x:Key="FontSm">12</sys:Double>
-    <sys:Double x:Key="FontMono13">13</sys:Double>
-    <sys:Double x:Key="FontBase">14</sys:Double>
-    <sys:Double x:Key="FontMd">15</sys:Double>
-    <sys:Double x:Key="FontIp">16</sys:Double>
-    <sys:Double x:Key="FontLg">17</sys:Double>
-    <sys:Double x:Key="FontXl">20</sys:Double>
-    <sys:Double x:Key="FontXxl">32</sys:Double>
-    <sys:Double x:Key="FontDisplay">48</sys:Double>
+    <!-- Type scale: Nano(10) · Micro(11) · Caption(12) · Body(13) · Heading(16) · Title(24) · Hero(48) -->
+    <sys:Double x:Key="FontNano">10</sys:Double>
+    <sys:Double x:Key="FontXxs">10</sys:Double>     <!-- backward compat -->
+    <sys:Double x:Key="FontMicro">11</sys:Double>
+    <sys:Double x:Key="FontXs">11</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontCaption">12</sys:Double>
+    <sys:Double x:Key="FontSm">12</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontBody">13</sys:Double>
+    <sys:Double x:Key="FontMono13">13</sys:Double>  <!-- backward compat -->
+    <sys:Double x:Key="FontBase">14</sys:Double>    <!-- backward compat -->
+    <sys:Double x:Key="FontMd">15</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontHeading">16</sys:Double>
+    <sys:Double x:Key="FontIp">16</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontLg">17</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontTitle">24</sys:Double>
+    <sys:Double x:Key="FontXl">20</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontXxl">32</sys:Double>     <!-- backward compat -->
+    <sys:Double x:Key="FontHero">48</sys:Double>
+    <sys:Double x:Key="FontDisplay">48</sys:Double> <!-- backward compat -->
 
-    <!-- ═══ Geometry ══════════════════════════════════════════════ -->
-    <CornerRadius x:Key="RadiusPill">28</CornerRadius>
+    <!-- ═══ Geometry — controlled, deliberate corners ════════════ -->
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">12</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">16</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">28</CornerRadius>       <!-- half of 56px bar = perfect pill -->
     <CornerRadius x:Key="RadiusWindow">16</CornerRadius>
-    <CornerRadius x:Key="RadiusRow">8</CornerRadius>
-    <CornerRadius x:Key="RadiusSm">4</CornerRadius>
-    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
-    <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
+    <CornerRadius x:Key="RadiusRow">8</CornerRadius>        <!-- md -->
+    <CornerRadius x:Key="RadiusButton">6</CornerRadius>     <!-- sm -->
+    <CornerRadius x:Key="RadiusCircle">22</CornerRadius>    <!-- half of 44px category btn -->
 
+    <!-- ── Layout dimensions ────────────────────────────────────── -->
     <sys:Double x:Key="SearchBarHeight">56</sys:Double>
-    <sys:Double x:Key="RowHeight">52</sys:Double>
-    <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
+    <sys:Double x:Key="RowHeight">44</sys:Double>
+    <sys:Double x:Key="CategoryButtonSize">44</sys:Double>
     <sys:Double x:Key="WindowWidth">680</sys:Double>
 
-    <!-- ═══ Shadow ════════════════════════════════════════════════ -->
+    <!-- ── Shadow — elevation without drama ─────────────────────── -->
     <DropShadowEffect x:Key="WindowShadow"
                       BlurRadius="64"
                       ShadowDepth="16"
                       Direction="270"
-                      Opacity="0.5"
+                      Opacity="0.35"
                       Color="#000000"/>
 
-
 </ResourceDictionary>
-

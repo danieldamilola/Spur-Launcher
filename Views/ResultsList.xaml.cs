@@ -61,5 +61,16 @@ public partial class ResultsList : UserControl
             vm.OpenSelectedCommand.Execute(null);
         }
     }
+
+    private void OnClipDeleteClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        if (sender is not FrameworkElement el) return;
+        if (el.DataContext is not SearchResult result) return;
+
+        // Remove this single entry from clipboard history
+        vm.RemoveClipboardItem(result);
+        e.Handled = true; // Prevent the row click from firing
+    }
 }
 

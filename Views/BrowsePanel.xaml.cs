@@ -49,7 +49,6 @@ public partial class BrowsePanel : UserControl
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.ActiveCategory)
-                           or nameof(MainViewModel.AppsViewGrid)
                            or nameof(MainViewModel.CatalogLoading))
             Dispatcher.InvokeAsync(Refresh);
     }
@@ -66,38 +65,9 @@ public partial class BrowsePanel : UserControl
         var cat = _vm.ActiveCategory;
 
         // Section visibility
-        AppsSection.Visibility    = cat == "apps"      ? Visibility.Visible : Visibility.Collapsed;
         FilesSection.Visibility   = cat == "files"     ? Visibility.Visible : Visibility.Collapsed;
         ClipSection.Visibility    = cat == "clipboard" ? Visibility.Visible : Visibility.Collapsed;
         ActionsSection.Visibility = cat == "actions"   ? Visibility.Visible : Visibility.Collapsed;
-
-        // Loading overlay (only for apps while catalog is loading)
-        LoadingOverlay.Visibility = (cat == "apps" && _vm.CatalogLoading)
-            ? Visibility.Visible : Visibility.Collapsed;
-
-        if (cat == "apps")
-        {
-            // Grid vs list view
-            bool isGrid = _vm.AppsViewGrid;
-            AppsGrid.Visibility    = isGrid ? Visibility.Visible : Visibility.Collapsed;
-            AppsList.Visibility    = isGrid ? Visibility.Collapsed : Visibility.Visible;
-
-            // Update menu items
-            MenuViewGrid.IsChecked = isGrid;
-            MenuViewList.IsChecked = !isGrid;
-
-            // Suggested apps
-            var suggested = _vm.SuggestedApps;
-            if (suggested.Count > 0)
-            {
-                SuggestedSection.Visibility = Visibility.Visible;
-                SuggestedGrid.ItemsSource = suggested;
-            }
-            else
-            {
-                SuggestedSection.Visibility = Visibility.Collapsed;
-            }
-        }
 
         if (cat == "files")
         {
@@ -119,21 +89,6 @@ public partial class BrowsePanel : UserControl
 
         switch (cat)
         {
-            case "apps":
-                var appsQ = results.Where(r => r.Type == ResultType.App);
-                var sorted = (string.IsNullOrEmpty(_vm.Query)
-                    ? appsQ.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
-                    : (IEnumerable<SearchResult>)appsQ.OrderByDescending(r => r.Score))
-                    .ToList();
-
-                // Populate grid AND list (only one is visible)
-                AppsGrid.ItemsSource = sorted;
-                AppsList.ItemsSource = sorted;
-
-                // Update count
-                AppsCount.Text = $"{sorted.Count} apps";
-                break;
-
             case "files":
                 FilesList.ItemsSource = ApplyFileFilter(
                     results.Where(r => r.Type == ResultType.File).ToList());
@@ -148,7 +103,7 @@ public partial class BrowsePanel : UserControl
                 break;
 
             case "actions":
-                ActionsSection.ItemsSource = results
+                ActionsList.ItemsSource = results
                     .Where(r => r.Type == ResultType.Action)
                     .ToList();
                 break;
@@ -191,21 +146,7 @@ public partial class BrowsePanel : UserControl
         }
     }
 
-    // ── Overflow menu (grid/list toggle) ─────────────────────────────
-
-    private void OnOverflowClick(object sender, RoutedEventArgs e)
-    {
-        OverflowBtn.ContextMenu!.IsOpen = true;
-    }
-
-    private void OnViewModeClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not MenuItem item || _vm is null) return;
-        bool grid = item.Header?.ToString() == "Grid View";
-        _vm.AppsViewGrid = grid;
-    }
-
-    // ── Mouse hover effects ──────────────────────────────────────────
+    // Mouse hover effects
 
     private void OnTileMouseEnter(object sender, MouseEventArgs e)
     {
@@ -258,8 +199,7 @@ public partial class BrowsePanel : UserControl
 
     private void OnClearClipboard(object sender, RoutedEventArgs e)
     {
-        Arc.Services.ClipboardService.Clear();
+        _vm?.ClearClipboard();
         Dispatcher.InvokeAsync(RefreshData);
     }
 }
-

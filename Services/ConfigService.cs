@@ -1,10 +1,19 @@
 namespace Arc.Services;
 
+/// <summary>Interface for config persistence.</summary>
+public interface IConfigService
+{
+    ArcConfig Load();
+    void Save(ArcConfig config);
+    Task<ArcConfig> LoadAsync();
+    Task SaveAsync(ArcConfig config);
+}
+
 /// <summary>
 /// Reads and writes <see cref="ArcConfig"/> as JSON to
 /// <c>%LocalAppData%\Arc\Arc.config.json</c>.
 /// </summary>
-public sealed class ConfigService
+public sealed class ConfigService : IConfigService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
     private static readonly SemaphoreSlim SaveGate = new(1, 1);
@@ -40,9 +49,17 @@ public sealed class ConfigService
         return defaults;
     }
 
+    /// <summary>
+    /// Synchronously persists <paramref name="config"/> to disk.
+    /// Uses the same semaphore as <see cref="SaveAsync"/> to prevent concurrent writes.
+    /// </summary>
     public void Save(ArcConfig config)
     {
-        _ = SaveAsync(config);
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        SaveGate.Wait();
+        try { File.WriteAllText(_path, json); }
+        catch (Exception ex) { _log.Warning("Config save failed", ex); }
+        finally { SaveGate.Release(); }
     }
 
     public Task<ArcConfig> LoadAsync() => Task.Run(Load);

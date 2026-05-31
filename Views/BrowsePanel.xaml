@@ -117,11 +117,11 @@
 
         <!-- ── App row (list view) ─────────────────────────────────── -->
         <DataTemplate x:Key="AppRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="46" Margin="6,1"
+            <Grid x:Name="RowRoot" Height="44" Margin="6,1"
                   Background="Transparent" Cursor="Hand"
                   MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
                   MouseLeftButtonDown="OnItemClick">
-                <Border x:Name="RowBg" CornerRadius="9" Background="Transparent"/>
+                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}" Background="Transparent"/>
                 <Grid Margin="10,0,8,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30"/>
@@ -129,7 +129,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Width="30" Height="30"
-                            CornerRadius="7" Background="{DynamicResource SurfaceLow}"
+                            CornerRadius="{DynamicResource RadiusSm}" Background="{DynamicResource Depth2}"
                             VerticalAlignment="Center">
                         <Image Width="20" Height="20"
                                VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -153,8 +153,7 @@
                         <TextBlock Text="{Binding Subtitle}"
                                    FontFamily="{DynamicResource UIFont}"
                                    FontSize="11"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   Opacity="0.8"
+                                   Foreground="{DynamicResource TextSecondary}"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Grid>
@@ -204,28 +203,36 @@
 
         <!-- ── Clipboard row template ──────────────────────────────── -->
         <DataTemplate x:Key="ClipRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="46" Margin="6,1"
+            <Grid x:Name="RowRoot" Height="44" Margin="6,1"
                   Background="Transparent" Cursor="Hand"
                   MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
                   MouseLeftButtonDown="OnItemClick">
-                <Border x:Name="RowBg" CornerRadius="9" Background="Transparent"/>
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Pin / Unpin"
+                                  Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  CommandParameter="{Binding}"/>
+                    </ContextMenu>
+                </Grid.ContextMenu>
+                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}" Background="Transparent"/>
                 <Grid Margin="10,0,8,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30"/>
                         <ColumnDefinition Width="11"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Image thumbnail -->
                     <Border x:Name="ImgBox"
                             Grid.Column="0"
                             Width="30" Height="30"
-                            CornerRadius="7"
-                            Background="{DynamicResource SurfaceLow}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Background="{DynamicResource Depth2}"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
                         <Image x:Name="ClipImg"
-                               Width="30" Height="30"
+                               Width="28" Height="28"
                                Stretch="UniformToFill"
                                RenderOptions.BitmapScalingMode="HighQuality"
                                Source="{Binding ClipImage}"/>
@@ -235,13 +242,13 @@
                     <Border x:Name="TextIconBox"
                             Grid.Column="0"
                             Width="30" Height="30"
-                            CornerRadius="7"
-                            Background="{DynamicResource SurfaceLow}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Background="{DynamicResource Depth2}"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
                         <Path Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
                               Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{DynamicResource Orange}" StrokeThickness="1.5"
+                              Stroke="{DynamicResource Accent}" StrokeThickness="1.5"
                               StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               Fill="Transparent"
                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -262,6 +269,27 @@
                                    Opacity="0.8"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
+
+                    <!-- Pin indicator -->
+                    <Button x:Name="PinButton"
+                            Grid.Column="3"
+                            Width="22" Height="22"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            VerticalAlignment="Center"
+                            Margin="6,0,0,0"
+                            ClickMode="Press"
+                            ToolTip="Pin / Unpin">
+                        <Button.Command>
+                            <Binding Path="DataContext.TogglePinCommand"
+                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        </Button.Command>
+                        <Button.CommandParameter>
+                            <Binding/>
+                        </Button.CommandParameter>
+                        <TextBlock Text="📌" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
                 </Grid>
             </Grid>
             <DataTemplate.Triggers>
@@ -273,59 +301,67 @@
                     <Setter TargetName="ImgBox"       Property="Visibility" Value="Collapsed"/>
                     <Setter TargetName="TextIconBox" Property="Visibility" Value="Visible"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                    <Setter TargetName="PinButton" Property="Opacity" Value="1"/>
+                    <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource AccentWash}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPinned}" Value="False">
+                    <Setter TargetName="PinButton" Property="Opacity" Value="0.4"/>
+                    <Setter TargetName="PinButton" Property="Background" Value="Transparent"/>
+                </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 
-        <!-- ── Action card template ────────────────────────────────── -->
+        <!-- ── Action command template ──────────────────────────────── -->
         <DataTemplate x:Key="ActionRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="52" Margin="4,0"
+            <Grid x:Name="RowRoot" Height="44" Margin="12,2"
                   Background="Transparent" Cursor="Hand"
                   MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
                   MouseLeftButtonDown="OnItemClick">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="52"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                </Grid.ColumnDefinitions>
-                <Border x:Name="RowBg" Grid.ColumnSpan="3"
-                        CornerRadius="{DynamicResource RadiusRow}"
+                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}"
                         Background="Transparent"/>
-                <!-- Icon container — neutral, no blue -->
-                <Border Grid.Column="0" Width="32" Height="32"
-                        CornerRadius="8"
-                        Background="{DynamicResource SurfaceLow}"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Path Width="16" Height="16" Stretch="Uniform"
-                          Stroke="{DynamicResource TextSecondary}"
-                          StrokeThickness="1.5"
-                          StrokeLineJoin="Round"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Fill="Transparent"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
-                        <Path.Data>
-                            <Binding Path="LucideIcon">
-                                <Binding.Converter>
-                                    <conv:LucideIconConverter/>
-                                </Binding.Converter>
-                            </Binding>
-                        </Path.Data>
-                    </Path>
-                </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,8,0">
-                    <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontBase}"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource TextPrimary}"
-                               TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Text="{Binding Subtitle}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontSm}"
-                               Foreground="{DynamicResource TextMuted}"
-                               TextTrimming="CharacterEllipsis"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="32"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="32" Height="32"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Background="{DynamicResource Depth2}"
+                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Path Width="16" Height="16" Stretch="Uniform"
+                              Stroke="{DynamicResource Accent}"
+                              StrokeThickness="1.6"
+                              StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              Fill="Transparent"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                            <Path.Data>
+                                <Binding Path="LucideIcon">
+                                    <Binding.Converter>
+                                        <conv:LucideIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Path.Data>
+                        </Path>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Subtitle}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </DataTemplate>
 
@@ -369,89 +405,6 @@
                 </Border>
             </StackPanel>
         </Grid>
-
-        <!-- ══ APPS: suggested row + grid/list ═════════════════════════ -->
-        <ScrollViewer x:Name="AppsSection"
-                      Visibility="Collapsed"
-                      VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!-- Top bar: "⋯" overflow menu (right-aligned) -->
-                <Grid Grid.Row="0" Height="36" Margin="8,4,12,0">
-                    <Button x:Name="OverflowBtn"
-                            Style="{StaticResource OverflowButton}"
-                            HorizontalAlignment="Right"
-                            Click="OnOverflowClick">
-                        <Button.ContextMenu>
-                            <ContextMenu x:Name="OverflowMenu">
-                                <MenuItem x:Name="MenuViewGrid" Header="Grid View" IsCheckable="True" IsChecked="True"
-                                          Click="OnViewModeClick"/>
-                                <MenuItem x:Name="MenuViewList" Header="List View" IsCheckable="True"
-                                          Click="OnViewModeClick"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
-                </Grid>
-
-                <!-- Suggested apps row (only if there are frequent apps) -->
-                <StackPanel x:Name="SuggestedSection" Grid.Row="1" Visibility="Collapsed">
-                    <TextBlock Text="SUGGESTED"
-                               Style="{StaticResource SectionHeader}"/>
-                    <ItemsControl x:Name="SuggestedGrid" Padding="8,0,8,4">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <StaticResource ResourceKey="AppTile"/>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-
-                <!-- All apps section header + grid/list -->
-                <StackPanel Grid.Row="2">
-                    <Grid Margin="12,4,12,4">
-                        <TextBlock x:Name="AppsHeader"
-                                   Text="ALL APPS"
-                                   Style="{StaticResource SectionHeader}"
-                                   Padding="0,4,0,4"
-                                   HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="AppsCount"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="{DynamicResource FontXs}"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   HorizontalAlignment="Right"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-
-                    <!-- Grid view -->
-                    <ItemsControl x:Name="AppsGrid" Padding="8,0,8,12">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <StaticResource ResourceKey="AppTile"/>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <!-- List view (hidden by default) -->
-                    <ListBox x:Name="AppsList"
-                             Padding="0,4,0,8"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                             ScrollViewer.CanContentScroll="False"
-                             ItemTemplate="{StaticResource AppRow}"
-                             Visibility="Collapsed"/>
-                </StackPanel>
-            </Grid>
-        </ScrollViewer>
 
         <!-- ══ FILES: filter chips + list ═══════════════════════════════ -->
         <Grid x:Name="FilesSection" Visibility="Collapsed">
@@ -544,14 +497,35 @@
                      ItemTemplate="{StaticResource ClipRow}"/>
         </Grid>
 
-        <!-- ══ ACTIONS: action cards ════════════════════════════════════ -->
-        <ListBox x:Name="ActionsSection"
-                 Visibility="Collapsed"
-                 Padding="0,4,0,8"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 ScrollViewer.CanContentScroll="False"
-                 ItemTemplate="{StaticResource ActionRow}"/>
+        <!-- ══ ACTIONS: command drawer ══════════════════════════════════ -->
+        <Grid x:Name="ActionsSection" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="18,16,18,8">
+                <StackPanel>
+                    <TextBlock Text="Actions"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                    <TextBlock Text="Type a command or launch one directly"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <ListBox x:Name="ActionsList"
+                     Grid.Row="1"
+                     Padding="0,0,0,10"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="False"
+                     ItemTemplate="{StaticResource ActionRow}"/>
+        </Grid>
 
     </Grid>
 </UserControl>
-

@@ -1,9 +1,293 @@
 using System.Collections.ObjectModel;
 using Arc.Extensions;
 using Arc.Services;
-using Arc.ViewModels;
+using Arc.Models;
 
 namespace Arc.ViewModels;
+
+// ═══════════════════════════════════════════════════════════════════
+// AiChatViewModel — owns AI streaming state and conversation
+// ═══════════════════════════════════════════════════════════════════
+
+public sealed partial class AiChatViewModel : ObservableObject
+{
+    private readonly IAiService _aiService;
+    private readonly ArcConfig  _config;
+    private CancellationTokenSource? _aiCts;
+    private readonly List<(string Role, string Content)> _aiConversation = [];
+
+    public AiChatViewModel(IAiService aiService, ArcConfig config)
+    {
+        _aiService = aiService;
+        _config = config;
+        AiFollowUpCommand = new RelayCommand<string>(OnAiFollowUp);
+    }
+
+    [ObservableProperty] private string _aiText    = string.Empty;
+    [ObservableProperty] private bool   _aiLoading = false;
+    [ObservableProperty] private string _aiError   = string.Empty;
+
+    public IRelayCommand AiFollowUpCommand { get; }
+
+    /// <summary>Raised when the AI conversation changes (messages added).</summary>
+    public event EventHandler? ConversationChanged;
+
+    /// <summary>Public view of the AI conversation for binding.</summary>
+    public IReadOnlyList<(string Role, string Content)> AiConversation => _aiConversation;
+
+    public void CancelPending()
+    {
+        _aiCts?.Cancel();
+        _aiCts?.Dispose();
+        _aiCts = null;
+    }
+
+    /// <summary>Clears the conversation, cancels any in-flight request, and resets text/error state.</summary>
+    public void ClearConversation()
+    {
+        CancelPending();
+        _aiConversation.Clear();
+        AiText = string.Empty;
+        AiLoading = false;
+        AiError = string.Empty;
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Returns the full conversation formatted as a copyable text block.</summary>
+    public string GetConversationText()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (role, content) in _aiConversation)
+        {
+            sb.AppendLine(role == "user" ? "You:" : "AI:");
+            sb.AppendLine(content);
+            sb.AppendLine();
+        }
+        return sb.ToString().TrimEnd();
+    }
+
+    public async Task StartAiAsync(string query)
+    {
+        CancelPending();
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+
+        var question = AiAction.ExtractQuestion(query);
+        AiText    = string.Empty;
+        AiError   = string.Empty;
+        AiLoading = true;
+
+        // Start fresh conversation for new "ai " queries
+        _aiConversation.Clear();
+        _aiConversation.Add(("user", question));
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+
+        var (key, model) = GetAiConfig();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+            AiLoading = false;
+            return;
+        }
+
+        try
+        {
+            await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
+            {
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    AiText    += token;
+                    AiLoading  = AiText.Length == 0;
+                    if (_aiConversation.Count == 1)
+                        _aiConversation.Add(("assistant", AiText));
+                    else
+                        _aiConversation[^1] = ("assistant", AiText);
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
+                });
+            }, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // User cancelled — silent
+        }
+        catch (TaskCanceledException)
+        {
+            AiError = "Request timed out. Please try again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            AiError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            AiError = $"Unexpected error: {ex.Message}";
+        }
+        finally { AiLoading = false; }
+    }
+
+    private async void OnAiFollowUp(string? followUp)
+    {
+        if (string.IsNullOrWhiteSpace(followUp)) return;
+
+        CancelPending();
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+
+        _aiConversation.Add(("user", followUp));
+        AiError   = string.Empty;
+        AiLoading = true;
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+
+        var (key, model) = GetAiConfig();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+            AiLoading = false;
+            return;
+        }
+
+        try
+        {
+            string? newResponse = null;
+            await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
+            {
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    if (newResponse is null)
+                    {
+                        // First token: append to existing response
+                        newResponse = token;
+                        AiText += "\n\n" + token;
+                        _aiConversation.Add(("assistant", newResponse));
+                    }
+                    else
+                    {
+                        newResponse += token;
+                        AiText += token;
+                        _aiConversation[^1] = ("assistant", newResponse);
+                    }
+                    AiLoading = false;
+                    ConversationChanged?.Invoke(this, EventArgs.Empty);
+                });
+            }, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // User cancelled — silent
+        }
+        catch (TaskCanceledException)
+        {
+            AiError = "Request timed out. Please try again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            AiError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            AiError = $"Unexpected error: {ex.Message}";
+        }
+        finally { AiLoading = false; }
+    }
+
+    private (string Key, string Model) GetAiConfig() => _config.AiProvider switch
+    {
+        "gemini"     => (_config.GeminiApiKey,     _config.GeminiModel),
+        "openrouter" => (_config.OpenRouterApiKey, _config.OpenRouterModel),
+        "deepseek"   => (_config.DeepSeekApiKey,   _config.DeepSeekModel),
+        _            => (_config.GroqApiKey,        _config.GroqModel),
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TimerViewModel — owns countdown timer state and logic
+// ═══════════════════════════════════════════════════════════════════
+
+public sealed partial class TimerViewModel : ObservableObject
+{
+    private readonly INotificationService _notification;
+
+    [ObservableProperty] private string _timerDisplay = "00:00";
+    [ObservableProperty] private double _timerProgress = 100;
+    [ObservableProperty] private bool   _timerRunning = false;
+
+    private TimeSpan _timerRemaining;
+    private TimeSpan _timerTotal;
+    private DispatcherTimer? _timerTick;
+
+    public TimerViewModel(INotificationService notification)
+    {
+        _notification = notification;
+        StartCommand  = new RelayCommand(Start);
+        CancelCommand = new RelayCommand(Cancel);
+    }
+
+    public IRelayCommand StartCommand  { get; }
+    public IRelayCommand CancelCommand { get; }
+
+    public void StartTimerPreview(string query)
+    {
+        if (!TimerAction.TryParse(query, out var duration)) return;
+        _timerTotal     = duration;
+        _timerRemaining = duration;
+        UpdateTimerDisplay();
+        TimerRunning = false;
+    }
+
+    private void Start()
+    {
+        if (TimerRunning || _timerTotal == TimeSpan.Zero) return;
+        _timerRemaining = _timerTotal;
+        TimerRunning    = true;
+
+        _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _timerTick.Tick += OnTimerTick;
+        _timerTick.Start();
+    }
+
+    private void OnTimerTick(object? sender, EventArgs e)
+    {
+        _timerRemaining -= TimeSpan.FromMilliseconds(100);
+        if (_timerRemaining <= TimeSpan.Zero)
+        {
+            _timerRemaining = TimeSpan.Zero;
+            _timerTick?.Stop();
+            TimerRunning = false;
+            _notification.Show("Arc Timer", "Your timer has finished!");
+        }
+        UpdateTimerDisplay();
+    }
+
+    private void UpdateTimerDisplay()
+    {
+        TimerDisplay = _timerRemaining.TotalHours >= 1
+            ? _timerRemaining.ToString(@"hh\:mm\:ss")
+            : _timerRemaining.ToString(@"mm\:ss");
+
+        TimerProgress = _timerTotal > TimeSpan.Zero
+            ? _timerRemaining.TotalMilliseconds / _timerTotal.TotalMilliseconds * 100.0
+            : 0;
+    }
+
+    private void Cancel()
+    {
+        _timerTick?.Stop();
+        _timerTick  = null;
+        TimerRunning = false;
+    }
+
+    /// <summary>Stops the timer without resetting the display (for CancelActionWork).</summary>
+    public void Stop()
+    {
+        _timerTick?.Stop();
+        _timerTick  = null;
+        TimerRunning = false;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MainViewModel — central orchestrator for the Arc launcher
+// ═══════════════════════════════════════════════════════════════════
 
 /// <summary>
 /// Central orchestrator for the Arc launcher.
@@ -12,12 +296,19 @@ namespace Arc.ViewModels;
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject
 {
-    // ── Services ──────────────────────────────────────────────────────
-    private readonly ILogger _log;
-    private readonly AppDiscoveryService  _apps;
-    private readonly FileSearchService    _files     = new();
-    private readonly FrequencyService     _freq;
-    private readonly ConfigService        _configSvc;
+    // ── Injected services ────────────────────────────────────────────
+    private readonly ILogger              _log;
+    private readonly IAppDiscoveryService _apps;
+    private readonly IFileSearchService   _files;
+    private readonly IFrequencyService    _freq;
+    private readonly IConfigService       _configSvc;
+    private readonly IClipboardService    _clipboard;
+    private readonly INotificationService _notification;
+    private readonly IAiService           _aiService;
+
+    // ── Sub-ViewModels ───────────────────────────────────────────────
+    private readonly AiChatViewModel _ai;
+    private readonly TimerViewModel  _timer;
 
     private static readonly IAction[] Actions =
     [
@@ -28,83 +319,60 @@ public sealed partial class MainViewModel : ObservableObject
         new AiAction(),
         new SettingsAction(),
         new SystemAction(),
+        new CurrencyAction(),
+        new PasswordGenAction(),
+        new QuickNoteAction(),
+        new KillProcessAction(),
+        new ScreenshotAction(),
     ];
 
-    private static readonly SearchResult[] _windowsSettings =
-    [
-        new() { Id="ws:network",   Type=ResultType.App, Name="Network & Internet",        Subtitle="ms-settings:network",              LucideIcon="wifi",        ExePath="ms-settings:network" },
-        new() { Id="ws:wifi",      Type=ResultType.App, Name="Wi-Fi Settings",             Subtitle="ms-settings:network-wifi",         LucideIcon="wifi",        ExePath="ms-settings:network-wifi" },
-        new() { Id="ws:cellular",  Type=ResultType.App, Name="Cellular & Mobile Data",     Subtitle="ms-settings:network-cellular",     LucideIcon="signal",      ExePath="ms-settings:network-cellular" },
-        new() { Id="ws:airplane",  Type=ResultType.App, Name="Airplane Mode",              Subtitle="ms-settings:network-airplanemode",  LucideIcon="plane",       ExePath="ms-settings:network-airplanemode" },
-        new() { Id="ws:hotspot",  Type=ResultType.App, Name="Mobile Hotspot",             Subtitle="ms-settings:network-mobilehotspot", LucideIcon="share-2",     ExePath="ms-settings:network-mobilehotspot" },
-        new() { Id="ws:bt",        Type=ResultType.App, Name="Bluetooth & Devices",        Subtitle="ms-settings:bluetooth",            LucideIcon="bluetooth",   ExePath="ms-settings:bluetooth" },
-        new() { Id="ws:display",   Type=ResultType.App, Name="Display & Brightness",       Subtitle="ms-settings:display",              LucideIcon="monitor",     ExePath="ms-settings:display" },
-        new() { Id="ws:sound",     Type=ResultType.App, Name="Sound & Audio",              Subtitle="ms-settings:sound",                LucideIcon="volume-2",    ExePath="ms-settings:sound" },
-        new() { Id="ws:power",     Type=ResultType.App, Name="Power, Sleep & Lid",         Subtitle="ms-settings:powersleep",           LucideIcon="battery",     ExePath="ms-settings:powersleep" },
-        new() { Id="ws:battery",   Type=ResultType.App, Name="Battery Saver",              Subtitle="ms-settings:batterysaver",         LucideIcon="battery",     ExePath="ms-settings:batterysaver" },
-        new() { Id="ws:update",    Type=ResultType.App, Name="Windows Update",             Subtitle="ms-settings:windowsupdate",        LucideIcon="refresh-cw",  ExePath="ms-settings:windowsupdate" },
-        new() { Id="ws:privacy",   Type=ResultType.App, Name="Privacy & Security",         Subtitle="ms-settings:privacy",              LucideIcon="shield",      ExePath="ms-settings:privacy" },
-        new() { Id="ws:apps",      Type=ResultType.App, Name="Apps & Features",            Subtitle="ms-settings:appsfeatures",         LucideIcon="package",     ExePath="ms-settings:appsfeatures" },
-        new() { Id="ws:default",   Type=ResultType.App, Name="Default Apps",               Subtitle="ms-settings:defaultapps",          LucideIcon="layout-grid", ExePath="ms-settings:defaultapps" },
-        new() { Id="ws:notif",     Type=ResultType.App, Name="Notifications & Alerts",     Subtitle="ms-settings:notifications",        LucideIcon="bell",        ExePath="ms-settings:notifications" },
-        new() { Id="ws:themes",    Type=ResultType.App, Name="Personalization & Themes",   Subtitle="ms-settings:personalization",      LucideIcon="palette",     ExePath="ms-settings:personalization" },
-        new() { Id="ws:accounts",  Type=ResultType.App, Name="Accounts & Users",           Subtitle="ms-settings:accounts",             LucideIcon="user",        ExePath="ms-settings:accounts" },
-        new() { Id="ws:datetime",  Type=ResultType.App, Name="Date, Time & Clock",         Subtitle="ms-settings:dateandtime",          LucideIcon="clock",       ExePath="ms-settings:dateandtime" },
-        new() { Id="ws:region",    Type=ResultType.App, Name="Language & Region",          Subtitle="ms-settings:regionlanguage",       LucideIcon="globe",       ExePath="ms-settings:regionlanguage" },
-        new() { Id="ws:access",    Type=ResultType.App, Name="Ease of Access",             Subtitle="ms-settings:easeofaccess-display", LucideIcon="eye",         ExePath="ms-settings:easeofaccess-display" },
-        new() { Id="ws:storage",   Type=ResultType.App, Name="Storage & Disk Space",       Subtitle="ms-settings:storagesense",         LucideIcon="hard-drive",  ExePath="ms-settings:storagesense" },
-        new() { Id="ws:about",     Type=ResultType.App, Name="About This PC",              Subtitle="ms-settings:about",                LucideIcon="info",        ExePath="ms-settings:about" },
-        new() { Id="ws:taskmgr",   Type=ResultType.App, Name="Task Manager",               Subtitle="taskmgr.exe",                      LucideIcon="activity",    ExePath="taskmgr.exe" },
-        new() { Id="ws:devmgmt",   Type=ResultType.App, Name="Device Manager",             Subtitle="devmgmt.msc",                      LucideIcon="cpu",         ExePath="devmgmt.msc" },
-    ];
-
-    private static readonly SearchResult[] _staticActions =
-    [
-        new() { Id = "act:timer",    Type = ResultType.Action, Name = "Start Timer",   Subtitle = "Type 'timer 5m' to start a countdown",          LucideIcon = "timer",      ActionId = "timer"    },
-        new() { Id = "act:calc",     Type = ResultType.Action, Name = "Calculator",    Subtitle = "Type a math expression like '100 / 4'",          LucideIcon = "calculator", ActionId = "calc"     },
-        new() { Id = "act:color",    Type = ResultType.Action, Name = "Color Picker",  Subtitle = "Type a hex code like '#ff0055'",                 LucideIcon = "palette",    ActionId = "color"    },
-        new() { Id = "act:ip",       Type = ResultType.Action, Name = "IP Address",    Subtitle = "Type 'ip' to show your public and local IP",     LucideIcon = "globe",      ActionId = "ip"       },
-        new() { Id = "act:ai",       Type = ResultType.Action, Name = "Ask AI",        Subtitle = "Type 'ai what is the capital of France?'",       LucideIcon = "sparkles",   ActionId = "ai"       },
-        new() { Id = "act:settings", Type = ResultType.Action, Name = "Settings",      Subtitle = "Open application settings",                     LucideIcon = "settings",   ActionId = "settings" },
-    ];
-
-    // ── App catalog (loaded once on startup) ─────────────────────────
-    private List<SearchResult> _appCatalog = [];
+    // ── App catalog (loaded once on startup; volatile for safe cross-thread reads) ──
+    private volatile IReadOnlyList<SearchResult> _appCatalog = [];
 
     // ── Catalog loading state ────────────────────────────────────────
     /// <summary>True while the app catalog is being discovered.</summary>
     [ObservableProperty]
     private bool _catalogLoading;
 
-    /// <summary>Apps sorted by frequency for the "Suggested" row in browse mode.</summary>
-    public List<SearchResult> SuggestedApps => _appCatalog
-        .Where(a => a.FrequencyScore > 0)
-        .OrderByDescending(a => a.FrequencyScore)
-        .Take(8)
-        .ToList();
-
-    /// <summary>Grid (true) or list (false) view for Apps browse mode.</summary>
-    [ObservableProperty]
-    private bool _appsViewGrid = true;
-
     // ── Search debounce ──────────────────────────────────────────────
     private CancellationTokenSource? _searchCts;
 
     // ── Constructor ──────────────────────────────────────────────────
-    public MainViewModel(ArcConfig config, ILogger? log = null)
-{
-    _log        = log ?? NullLogger.Instance;
-    _apps       = new AppDiscoveryService(_log);
-    _freq       = new FrequencyService(_log);
-    _configSvc  = new ConfigService(_log);
-    Config      = config;
-    Settings = new SettingsViewModel(Config, _configSvc, this);
+    public MainViewModel(
+        ArcConfig             config,
+        ILogger               log,
+        IAppDiscoveryService  apps,
+        IFileSearchService    files,
+        IFrequencyService     freq,
+        IConfigService        configSvc,
+        IClipboardService     clipboard,
+        INotificationService  notification,
+        IAiService            aiService)
+    {
+        _log          = log;
+        _apps         = apps;
+        _files        = files;
+        _freq         = freq;
+        _configSvc    = configSvc;
+        _clipboard    = clipboard;
+        _notification = notification;
+        _aiService    = aiService;
+
+        Config   = config;
+        Settings = new SettingsViewModel(Config, _configSvc, this);
 
         // Push initial config to services
-        FileSearchService.MaxDepth = Config.MaxFileDepth;
-        ClipboardService.MaxItems  = Config.ClipboardHistorySize;
+        _files.MaxDepth     = Config.MaxFileDepth;
+        _clipboard.MaxItems = Config.ClipboardHistorySize;
 
-        AiFollowUpCommand = new RelayCommand<string>(OnAiFollowUp);
+        // Sub-ViewModels
+        _ai    = new AiChatViewModel(_aiService, Config);
+        _timer = new TimerViewModel(_notification);
+
+        // Forward sub-VM property changes for backward-compatible bindings
+        _ai.PropertyChanged    += (_, args) => OnPropertyChanged(args.PropertyName);
+        _timer.PropertyChanged += (_, args) => OnPropertyChanged(args.PropertyName);
+        _ai.ConversationChanged += (_, args) => ConversationChanged?.Invoke(this, args);
 
         _ = LoadAppsAsync();
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
@@ -113,8 +381,11 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Pushes config values to services whenever the config object is replaced.</summary>
     partial void OnConfigChanged(ArcConfig value)
     {
-        FileSearchService.MaxDepth = value.MaxFileDepth;
-        ClipboardService.MaxItems  = value.ClipboardHistorySize;
+        _files.MaxDepth     = value.MaxFileDepth;
+        _clipboard.MaxItems = value.ClipboardHistorySize;
+        if (value.CompactMode)
+            Application.Current?.Dispatcher.Invoke(() => Results.Clear());
+        OnPropertyChanged(nameof(IsHubVisible));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -162,29 +433,43 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string  _colorHsl     = string.Empty;
     [ObservableProperty] private Color   _colorSwatch  = Colors.Transparent;
 
-    [ObservableProperty] private string  _timerDisplay = "00:00";
-    [ObservableProperty] private double  _timerProgress = 100;
-    [ObservableProperty] private bool    _timerRunning = false;
-    private TimeSpan _timerRemaining;
-    private TimeSpan _timerTotal;
-    private DispatcherTimer? _timerTick;
+    // Timer pass-through properties — owned by TimerViewModel
+    public string TimerDisplay  => _timer.TimerDisplay;
+    public double TimerProgress => _timer.TimerProgress;
+    public bool   TimerRunning  { get => _timer.TimerRunning; set => _timer.TimerRunning = value; }
+    public IRelayCommand StartTimerCommand  => _timer.StartCommand;
+    public IRelayCommand CancelTimerCommand => _timer.CancelCommand;
 
     [ObservableProperty] private string  _ipLocal      = "Fetching…";
     [ObservableProperty] private string  _ipPublic     = "Fetching…";
 
-    [ObservableProperty] private string  _aiText       = string.Empty;
-    [ObservableProperty] private bool    _aiLoading    = false;
-    [ObservableProperty] private string  _aiError      = string.Empty;
-    private CancellationTokenSource? _aiCts;
-    private readonly List<(string Role, string Content)> _aiConversation = [];
-
-    public IRelayCommand AiFollowUpCommand { get; }
+    // AI pass-through properties — owned by AiChatViewModel
+    public string AiText    => _ai.AiText;
+    public bool   AiLoading => _ai.AiLoading;
+    public string AiError   { get => _ai.AiError; set => _ai.AiError = value; }
+    public IRelayCommand AiFollowUpCommand => _ai.AiFollowUpCommand;
 
     /// <summary>Raised when the AI conversation changes (messages added).</summary>
     public event EventHandler? ConversationChanged;
 
     /// <summary>Public view of the AI conversation for binding.</summary>
-    public IReadOnlyList<(string Role, string Content)> AiConversation => _aiConversation;
+    public IReadOnlyList<(string Role, string Content)> AiConversation => _ai.AiConversation;
+
+    /// <summary>Clears the AI conversation, cancels streaming, and returns to Hub.</summary>
+    public void BackFromAiChat()
+    {
+        _ai.ClearConversation();
+        CancelActionWork();
+        ActiveCategory = null;
+        Query = string.Empty;
+        ShowHub();
+    }
+
+    /// <summary>Returns the full AI conversation formatted as a copyable text block.</summary>
+    public string GetAiConversationText() => _ai.GetConversationText();
+
+    /// <summary>Cancels the in-flight AI generation without clearing the conversation.</summary>
+    public void CancelAiGeneration() => _ai.CancelPending();
 
     // ═══════════════════════════════════════════════════════════════
     // Computed properties
@@ -194,6 +479,13 @@ public sealed partial class MainViewModel : ObservableObject
     public bool HasResults         => Results.Count > 0;
     public bool IsPreviewVisible   => ActiveActionId is not null;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
+
+    /// <summary>True when the launcher is idle — empty query, no category, no settings, no action. False when Compact Mode is enabled.</summary>
+    public bool IsHubVisible => string.IsNullOrEmpty(Query) && ActiveCategory is null && ActiveActionId is null && !Config.CompactMode;
+
+    /// <summary>Message shown when Hub has no recent items (first launch).</summary>
+    [ObservableProperty]
+    private string _emptyStateMessage = string.Empty;
 
     public SearchResult? SelectedResult
     {
@@ -219,7 +511,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (string.IsNullOrEmpty(value) && ActiveCategory is null)
             {
-                ClearAll();
+                ShowHub();
                 return;
             }
 
@@ -239,14 +531,61 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnActiveCategoryChanged(string? value)
     {
         OnPropertyChanged(nameof(IsBrowsePanelVisible));
-        OnPropertyChanged(nameof(SuggestedApps));
         OnQueryChanged(Query ?? string.Empty);
     }
 
-    partial void OnAppsViewGridChanged(bool value)
+    // ═══════════
+    /// <summary>Shows the Hub — recent items when the launcher is idle.</summary>
+    private void ShowHub()
     {
-        // Re-trigger the browse panel to switch grid/list
-        OnQueryChanged(Query ?? string.Empty);
+        CancelActionWork();
+        _searchCts?.Cancel();
+        ActiveActionId = null;
+
+        if (Config.CompactMode)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                Results.Clear();
+                SelectedIndex = -1;
+                EmptyStateMessage = string.Empty;
+                OnPropertyChanged(nameof(IsHubVisible));
+            });
+            return;
+        }
+
+        var hubItems = new List<object>();
+
+        // Get top 3 recent items from app catalog by frequency
+        var recent = _appCatalog
+            .Where(a => a.FrequencyScore > 0)
+            .OrderByDescending(a => a.FrequencyScore)
+            .Take(3)
+            .Select(a =>
+            {
+                var clone = Clone(a);
+                clone.Score = a.FrequencyScore;
+                return clone;
+            })
+            .ToList();
+
+        if (recent.Count > 0)
+        {
+            hubItems.AddRange(recent);
+            EmptyStateMessage = string.Empty;
+        }
+        else
+        {
+            EmptyStateMessage = "Your recent items will appear here.";
+        }
+
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            Results.Clear();
+            foreach (var item in hubItems) Results.Add(item);
+            SelectedIndex = hubItems.Count > 0 ? 0 : -1;
+            OnPropertyChanged(nameof(IsHubVisible));
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -296,7 +635,8 @@ public sealed partial class MainViewModel : ObservableObject
                         var score = MatchScore(query, a.Name);
                         if (score < 0) return null;
                         var clone = Clone(a);
-                        clone.Score = score + a.FrequencyScore * 0.3;
+                        var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
+                        clone.Score = score + freqBoost;
                         if (Config.PinnedItems.Contains(a.Id))
                         {
                             clone.IsPinned = true;
@@ -348,11 +688,11 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             // ── Clipboard ─────────────────────────────────────────────
-            bool showClip = Config.ClipboardEnabled && Config.IndexClipboard && (ActiveCategory is null or "clipboard");
+            bool showClip = Config.ClipboardEnabled && Config.IndexClipboard && ActiveCategory == "clipboard";
             if (showClip)
             {
                 int limit = isBrowseMode ? 50 : Config.ResultsCount;
-                var clips = ClipboardService.GetHistory()
+                var clips = _clipboard.GetHistory()
                     .Where(c => MatchScore(query, c.Preview) >= 0)
                     .Take(limit)
                     .Select(c => new SearchResult
@@ -389,7 +729,7 @@ public sealed partial class MainViewModel : ObservableObject
             bool showActions = ActiveCategory is null or "actions";
             if (showActions)
             {
-                var availableActions = _staticActions.Where(a => IsActionEnabled(a.ActionId));
+                var availableActions = ArcConstants.StaticActions.Where(a => IsActionEnabled(a.ActionId));
 
                 var actionMatches = availableActions
                     .Where(a => MatchScore(query, a.Name) >= 0)
@@ -414,7 +754,7 @@ public sealed partial class MainViewModel : ObservableObject
             // ── Windows Settings (only when there is a query) ───────────
             if (Config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (ActiveCategory is null or "apps"))
             {
-                var settingsMatches = _windowsSettings
+                var settingsMatches = ArcConstants.WindowsSettings
                     .Select(s =>
                     {
                         var sc = MatchScore(query, s.Name);
@@ -468,13 +808,22 @@ public sealed partial class MainViewModel : ObservableObject
 
     private bool IsActionEnabled(string? id) => id switch
     {
-        "calc" => Config.IndexCalculator,
-        "system" => Config.IndexSystemCommands,
-        "settings" => Config.IndexWindowsSettings,
-        "url" => Config.IndexUrls,
-        "web" => Config.IndexWebSearches,
-        "shell" => Config.IndexShell,
-        _ => true,
+        "calc"       => Config.IndexCalculator,
+        "color"      => Config.ActionColor,
+        "timer"      => Config.ActionTimer,
+        "ip"         => Config.ActionIp,
+        "ai"         => Config.ActionAi,
+        "currency"   => Config.ActionCurrency,
+        "pw"         => Config.ActionPasswordGen,
+        "note"       => Config.ActionQuickNote,
+        "kill"       => Config.ActionKillProcess,
+        "screenshot" => Config.ActionScreenshot,
+        "system"     => Config.IndexSystemCommands,
+        "settings"   => Config.IndexWindowsSettings,
+        "url"        => Config.IndexUrls,
+        "web"        => Config.IndexWebSearches,
+        "shell"      => Config.IndexShell,
+        _            => true,
     };
 
     private static void AddDynamicAction(List<SearchResult> actions, SearchResult? action)
@@ -562,7 +911,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             case "calc":     StartCalc(query);           break;
             case "color":    StartColor(query);          break;
-            case "timer":    StartTimerPreview(query);   break;
+            case "timer":    _timer.StartTimerPreview(query); break;
             case "ip":       _ = StartIpAsync();         break;
             case "settings": break; // Settings panel shows immediately
             // AI does NOT auto-start — user must press Enter
@@ -588,15 +937,6 @@ public sealed partial class MainViewModel : ObservableObject
         ColorSwatch = Color.FromRgb(r, g, b);
     }
 
-    private void StartTimerPreview(string query)
-    {
-        if (!TimerAction.TryParse(query, out var duration)) return;
-        _timerTotal     = duration;
-        _timerRemaining = duration;
-        UpdateTimerDisplay();
-        TimerRunning = false;
-    }
-
     private async Task StartIpAsync()
     {
         IpLocal  = IpAction.GetLocalIp() ?? "Not connected";
@@ -605,192 +945,12 @@ public sealed partial class MainViewModel : ObservableObject
         IpPublic = pub ?? "Unavailable";
     }
 
-    private async Task StartAiAsync(string query)
-    {
-        _aiCts?.Cancel();
-        _aiCts = new CancellationTokenSource();
-        var ct = _aiCts.Token;
-
-        var question = AiAction.ExtractQuestion(query);
-        AiText    = string.Empty;
-        AiError   = string.Empty;
-        AiLoading = true;
-
-        // Start fresh conversation for new "ai " queries
-        _aiConversation.Clear();
-        _aiConversation.Add(("user", question));
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
-
-        var (key, model) = GetAiConfig();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            AiError   = $"Add your {Config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
-            AiLoading = false;
-            return;
-        }
-
-        try
-        {
-            await AiService.StreamAsync(Config.AiProvider, model, key, _aiConversation, token =>
-            {
-                Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    AiText    += token;
-                    AiLoading  = AiText.Length == 0;
-                    if (_aiConversation.Count == 1)
-                        _aiConversation.Add(("assistant", AiText));
-                    else
-                        _aiConversation[^1] = ("assistant", AiText);
-                    ConversationChanged?.Invoke(this, EventArgs.Empty);
-                });
-            }, ct);
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            // User cancelled — silent
-        }
-        catch (TaskCanceledException)
-        {
-            AiError = "Request timed out. Please try again.";
-        }
-        catch (HttpRequestException ex)
-        {
-            AiError = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            AiError = $"Unexpected error: {ex.Message}";
-        }
-        finally { AiLoading = false; }
-    }
-
-    private async void OnAiFollowUp(string? followUp)
-    {
-        if (string.IsNullOrWhiteSpace(followUp)) return;
-
-        _aiCts?.Cancel();
-        _aiCts = new CancellationTokenSource();
-        var ct = _aiCts.Token;
-
-        _aiConversation.Add(("user", followUp));
-        AiError   = string.Empty;
-        AiLoading = true;
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
-
-        var (key, model) = GetAiConfig();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            AiError   = $"Add your {Config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
-            AiLoading = false;
-            return;
-        }
-
-        try
-        {
-            string? newResponse = null;
-            await AiService.StreamAsync(Config.AiProvider, model, key, _aiConversation, token =>
-            {
-                Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    if (newResponse is null)
-                    {
-                        // First token: append to existing response
-                        newResponse = token;
-                        AiText += "\n\n" + token;
-                        _aiConversation.Add(("assistant", newResponse));
-                    }
-                    else
-                    {
-                        newResponse += token;
-                        AiText += token;
-                        _aiConversation[^1] = ("assistant", newResponse);
-                    }
-                    AiLoading = false;
-                    ConversationChanged?.Invoke(this, EventArgs.Empty);
-                });
-            }, ct);
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            // User cancelled — silent
-        }
-        catch (TaskCanceledException)
-        {
-            AiError = "Request timed out. Please try again.";
-        }
-        catch (HttpRequestException ex)
-        {
-            AiError = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            AiError = $"Unexpected error: {ex.Message}";
-        }
-        finally { AiLoading = false; }
-    }
-
-    private (string Key, string Model) GetAiConfig() => Config.AiProvider switch
-    {
-        "gemini"     => (Config.GeminiApiKey,     Config.GeminiModel),
-        "openrouter" => (Config.OpenRouterApiKey, Config.OpenRouterModel),
-        "deepseek"   => (Config.DeepSeekApiKey,   Config.DeepSeekModel),
-        _            => (Config.GroqApiKey,        Config.GroqModel),
-    };
-
-    // ═══════════════════════════════════════════════════════════════
-    // Timer commands
-    // ═══════════════════════════════════════════════════════════════
-
-    [RelayCommand]
-    private void StartTimer()
-    {
-        if (TimerRunning || _timerTotal == TimeSpan.Zero) return;
-        _timerRemaining = _timerTotal;
-        TimerRunning    = true;
-
-        _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-        _timerTick.Tick += OnTimerTick;
-        _timerTick.Start();
-    }
-
-    private void OnTimerTick(object? sender, EventArgs e)
-    {
-        _timerRemaining -= TimeSpan.FromMilliseconds(100);
-        if (_timerRemaining <= TimeSpan.Zero)
-        {
-            _timerRemaining = TimeSpan.Zero;
-            _timerTick?.Stop();
-            TimerRunning = false;
-            NotificationService.Show("Arc Timer", "Your timer has finished!");
-        }
-        UpdateTimerDisplay();
-    }
-
-    private void UpdateTimerDisplay()
-    {
-        TimerDisplay = _timerRemaining.TotalHours >= 1
-            ? _timerRemaining.ToString(@"hh\:mm\:ss")
-            : _timerRemaining.ToString(@"mm\:ss");
-
-        TimerProgress = _timerTotal > TimeSpan.Zero
-            ? _timerRemaining.TotalMilliseconds / _timerTotal.TotalMilliseconds * 100.0
-            : 0;
-    }
-
-    [RelayCommand]
-    private void CancelTimer()
-    {
-        _timerTick?.Stop();
-        _timerTick  = null;
-        TimerRunning = false;
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // Open / Execute
     // ═══════════════════════════════════════════════════════════════
 
     [RelayCommand]
-    public void OpenSelected()
+    public async Task OpenSelected()
     {
         var result = SelectedResult;
         if (result is null) return;
@@ -807,7 +967,7 @@ public sealed partial class MainViewModel : ObservableObject
                 // Update both the result and the catalog entry so SuggestedApps picks it up
                 var newScore = _freq.Get(appKey);
                 result.FrequencyScore = newScore;
-                var catalogEntry = _appCatalog.Find(a =>
+                var catalogEntry = _appCatalog.FirstOrDefault(a =>
                     string.Equals(a.ExePath, appKey, StringComparison.OrdinalIgnoreCase));
                 if (catalogEntry is not null)
                     catalogEntry.FrequencyScore = newScore;
@@ -822,7 +982,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             case ResultType.Clipboard:
                 if (result.ClipContent is not null)
-                    ClipboardService.CopyToSystem(result.ClipContent);
+                    _clipboard.CopyToSystem(result.ClipContent);
                 HideAfterLaunch();
                 break;
 
@@ -839,21 +999,21 @@ public sealed partial class MainViewModel : ObservableObject
                 // AI: start streaming on Enter
                 else if (result.ActionId == "ai")
                 {
-                    try { _ = StartAiAsync(Query); }
+                    try { _ = _ai.StartAiAsync(Query); }
                     catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
                 }
                 // Calc/Color/IP: Enter copies result to clipboard
                 else if (result.ActionId == "calc")
-                    ClipboardService.CopyToSystem(CalcResult.TrimStart('=', ' '));
+                    _clipboard.CopyToSystem(CalcResult.TrimStart('=', ' '));
                 else if (result.ActionId == "color")
-                    ClipboardService.CopyToSystem(ColorHex);
+                    _clipboard.CopyToSystem(ColorHex);
                 else if (result.ActionId == "ip")
-                    ClipboardService.CopyToSystem(IpLocal);
+                    _clipboard.CopyToSystem(IpLocal);
                 // Settings: open settings panel when clicked
                 else if (result.ActionId == "settings")
                 {
-                    IsSettingsOpen = true;
-                    return; // Don't break the switch, just return so we don't hide window
+                    OpenSettingsRequested?.Invoke();
+                    return;
                 }
                 else if (result.ActionId == "url")
                 {
@@ -872,6 +1032,49 @@ public sealed partial class MainViewModel : ObservableObject
                         Process.Start(new ProcessStartInfo("cmd.exe", $"/c {command}") { UseShellExecute = false, CreateNoWindow = true });
                     HideAfterLaunch();
                 }
+                // Screenshot: capture and save
+                else if (result.ActionId == "screenshot")
+                {
+                    ScreenshotAction.Execute();
+                    HideAfterLaunch();
+                }
+                // Kill Process: force-close by name
+                else if (result.ActionId == "kill")
+                {
+                    var killed = KillProcessAction.Execute(Query);
+                    _notification.Show($"Killed {killed} process(es)", "");
+                    HideAfterLaunch();
+                }
+                // Password Gen: generate and copy
+                else if (result.ActionId == "pw")
+                {
+                    var pw = PasswordGenAction.Generate(Query);
+                    _clipboard.CopyToSystem(pw);
+                    _notification.Show("Password copied", $"{pw.Length} characters");
+                    HideAfterLaunch();
+                }
+                // Quick Note: save and open
+                else if (result.ActionId == "note")
+                {
+                    QuickNoteAction.Execute(Query);
+                    _notification.Show("Note saved", "Documents\\Arc\\notes.txt");
+                    HideAfterLaunch();
+                }
+                // Currency: fetch conversion and copy
+                else if (result.ActionId == "currency")
+                {
+                    try
+                    {
+                        var result2 = await CurrencyAction.ConvertAsync(Query);
+                        if (result2 is not null)
+                        {
+                            _clipboard.CopyToSystem(result2);
+                            _notification.Show("Currency", result2);
+                        }
+                    }
+                    catch (Exception ex) { _log.Warning("Currency error", ex); }
+                    HideAfterLaunch();
+                }
                 break;
         }
     }
@@ -887,7 +1090,7 @@ public sealed partial class MainViewModel : ObservableObject
             case ResultType.Clipboard:
                 // Ctrl+Enter on clipboard: copy without hiding window
                 if (result.ClipContent is not null)
-                    ClipboardService.CopyToSystem(result.ClipContent);
+                    _clipboard.CopyToSystem(result.ClipContent);
                 return;
 
             case ResultType.App:
@@ -972,6 +1175,27 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Clears the clipboard history, preserving pinned items.</summary>
+    [RelayCommand]
+    public void ClearClipboard()
+    {
+        var pinned = Config.PinnedClipboard.Select(p => p.Content).ToHashSet();
+        _clipboard.KeepOnly(pinned);
+        OnQueryChanged(Query ?? string.Empty);
+    }
+
+    /// <summary>Removes a single clipboard item from history by its content.</summary>
+    public void RemoveClipboardItem(SearchResult result)
+    {
+        if (result.Type != ResultType.Clipboard || result.ClipContent is null) return;
+        var keep = _clipboard.GetHistory()
+            .Where(e => e.Content != result.ClipContent)
+            .Select(e => e.Content)
+            .ToHashSet();
+        _clipboard.KeepOnly(keep);
+        OnQueryChanged(Query ?? string.Empty);
+    }
+
     private void Launch(string path)
     {
         try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
@@ -999,8 +1223,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         ActiveCategory = ActiveCategory switch
         {
-            null        => "apps",
-            "apps"      => "files",
+            null        => "files",
             "files"     => "clipboard",
             "clipboard" => "actions",
             _           => null,
@@ -1014,7 +1237,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void OpenSettings()
     {
-        IsSettingsOpen = !IsSettingsOpen;
+        OpenSettingsRequested?.Invoke();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1024,18 +1247,21 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Raised when the VM wants the window to hide itself.</summary>
     public event Action? RequestHide;
 
+    /// <summary>Raised when the user requests the Settings window.</summary>
+    public event Action? OpenSettingsRequested;
+
     public void Shutdown()
     {
         _freq.Flush();
         _freq.Dispose();
         _searchCts?.Dispose();
-        _aiCts?.Dispose();
-        _timerTick?.Stop();
+        _ai.CancelPending();
+        _timer.Stop();
     }
 
     public void OnWindowShown()
     {
-        // Refresh clipboard category when window opens
+        if (IsHubVisible) ShowHub();
     }
 
     public void Reset()
@@ -1048,6 +1274,10 @@ public sealed partial class MainViewModel : ObservableObject
         // Preserve the active action preview if AlwaysPreview is enabled
         if (!Config.AlwaysPreview)
             CancelActionWork();
+
+        // Show Hub after reset if no query remains
+        if (string.IsNullOrEmpty(Query))
+            ShowHub();
     }
 
     private void HideAfterLaunch()
@@ -1082,6 +1312,7 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             CatalogLoading = false;
+            if (IsHubVisible) ShowHub();
         }
     }
 
@@ -1106,27 +1337,19 @@ public sealed partial class MainViewModel : ObservableObject
         AiError = string.Empty;
     }
 
-    /// <summary>Toggles the Apps browse view between grid and list.</summary>
-    [RelayCommand]
-    private void ToggleAppsView()
-    {
-        AppsViewGrid = !AppsViewGrid;
-    }
-
     private void ClearAll()
     {
         Results.Clear();
         SelectedIndex  = -1;
         if (!Config.AlwaysPreview)
             CancelActionWork();
+        EmptyStateMessage = string.Empty;
     }
 
     private void CancelActionWork()
     {
-        _aiCts?.Cancel();
-        _timerTick?.Stop();
-        _timerTick   = null;
-        TimerRunning = false;
+        _ai.CancelPending();
+        _timer.Stop();
         ActiveActionId = null;
     }
 

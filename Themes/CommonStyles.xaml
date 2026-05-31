@@ -160,22 +160,23 @@
         </Setter>
     </Style>
 
-    <!-- Category button: 36×36 circle, always visible inside search bar -->
+    <!-- Category button: 44x44 circle for floating mode controls -->
     <Style x:Key="CategoryButtonStyle" TargetType="Button">
         <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="0"/>
         <Setter Property="Cursor"          Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-        <Setter Property="Width"           Value="36"/>
-        <Setter Property="Height"          Value="36"/>
+        <Setter Property="Width"           Value="{DynamicResource CategoryButtonSize}"/>
+        <Setter Property="Height"          Value="{DynamicResource CategoryButtonSize}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="18"
-                            Width="36" Height="36">
+                            CornerRadius="{DynamicResource RadiusCircle}"
+                            Width="{DynamicResource CategoryButtonSize}"
+                            Height="{DynamicResource CategoryButtonSize}">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
                     </Border>

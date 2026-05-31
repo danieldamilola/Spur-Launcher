@@ -3,11 +3,16 @@ using System.Windows.Interop;
 
 namespace Arc.Services;
 
+public interface IHotkeyService : IDisposable
+{
+    bool Register(IntPtr hwnd, string shortcutString, Action callback);
+}
+
 /// <summary>
 /// Registers a system-wide hotkey via Win32 RegisterHotKey and dispatches
 /// it to a callback. Cleans up automatically via IDisposable.
 /// </summary>
-public sealed class HotkeyService : IDisposable
+public sealed class HotkeyService : IHotkeyService, IDisposable
 {
     private const int WmHotkey = 0x0312;
     private const uint ModAlt  = 0x0001;
