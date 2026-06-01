@@ -182,7 +182,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

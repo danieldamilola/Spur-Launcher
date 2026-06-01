@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>Arc</AssemblyName>
     <RootNamespace>Arc</RootNamespace>
-    <ApplicationIcon>Assets\arc.ico</ApplicationIcon>
+    <ApplicationIcon>Icons\arc-launcher-256x256.ico</ApplicationIcon>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 
@@ -53,11 +53,22 @@
   <ItemGroup>
     <Compile Remove="Arc.Tests\**" />
     <Compile Remove="RefactorApp\**" />
+    <Compile Remove="ViewModels\AiChatViewModel.cs" />
+    <Compile Remove="ViewModels\TimerViewModel.cs" />
     <Page Remove="Arc.Tests\**" />
     <Page Remove="RefactorApp\**" />
     <!-- Font files bundled as resources -->
     <Resource Include="Themes\Fonts\*.ttf" />
-    <!-- Tray icon (add Assets\arc.ico to enable) -->
+    <!-- Brand icons (tray + UI); exe icon from ApplicationIcon above -->
+    <Resource Include="Icons\arc-launcher-16x16.ico" />
+    <Resource Include="Icons\arc-launcher-32x32.ico" />
+    <Resource Include="Icons\arc-launcher-64x64.ico" />
+    <Resource Include="Icons\arc-launcher-128x128.ico" />
+    <Resource Include="Icons\arc-launcher-256x256.ico" />
+    <Resource Include="Icons\arc-launcher-512x512.ico" />
+    <Resource Include="Icons\arc-launcher-1024x1024.ico" />
+    <!-- Legacy copy for publish.ps1 / Velopack (synced from 256px source) -->
+    <Content Include="Assets\arc.ico" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>

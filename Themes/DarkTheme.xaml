@@ -4,6 +4,8 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/DesignTokens/Colors.xaml"/>
+        <ResourceDictionary Source="/Themes/DesignTokens/Typography.xaml"/>
         <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
@@ -50,15 +52,19 @@
     <SolidColorBrush x:Key="SelectedMuted"   Color="#A1A1AA"/>
     <SolidColorBrush x:Key="HoverBg"         Color="#18181B"/>
 
-    <!-- ── Accent — mineral warm grey, barely there ─────────────── -->
-    <SolidColorBrush x:Key="Accent"          Color="#9CA3AF"/>
-    <SolidColorBrush x:Key="AccentWash"      Color="#1A1B1C"/>
-    <SolidColorBrush x:Key="AccentTime"      Color="#C4A4A8"/>
-    <SolidColorBrush x:Key="AccentAi"        Color="#C9B99A"/>
-    <SolidColorBrush x:Key="AccentMath"      Color="#84A98C"/>
-    <SolidColorBrush x:Key="AccentNetwork"   Color="#7B8FA8"/>
-    <SolidColorBrush x:Key="AccentFiles"     Color="#8B939C"/>
-    <SolidColorBrush x:Key="AccentClipboard" Color="#D4C4A8"/>
+    <!-- ── Accent — system blue (selection rail, caret, focus) ───── -->
+    <SolidColorBrush x:Key="Accent"          Color="#0A84FF"/>
+    <SolidColorBrush x:Key="AccentWash"      Color="#1F0A84FF"/>
+    <SolidColorBrush x:Key="AccentGhost"     Color="#1F0A84FF"/>
+    <SolidColorBrush x:Key="SurfaceRaised"   Color="#27272A"/>
+    <SolidColorBrush x:Key="Separator"       Color="#0FFFFFFF"/>
+    <!-- backward compat — monochrome -->
+    <SolidColorBrush x:Key="AccentTime"      Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="AccentAi"        Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="AccentMath"      Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="AccentNetwork"   Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="AccentFiles"     Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="AccentClipboard" Color="#A1A1AA"/>
 
     <!-- ── Semantic — muted, whispering not shouting ────────────── -->
     <SolidColorBrush x:Key="Green"           Color="#6B8E6B"/>
@@ -91,6 +97,10 @@
     <sys:Double x:Key="FontHeading">16</sys:Double>
     <sys:Double x:Key="FontIp">16</sys:Double>      <!-- backward compat -->
     <sys:Double x:Key="FontLg">17</sys:Double>      <!-- backward compat -->
+    <sys:Double x:Key="FontSearch">17</sys:Double>
+    <sys:Double x:Key="FontResult">15</sys:Double>
+    <sys:Double x:Key="FontMeta">12</sys:Double>
+    <sys:Double x:Key="FontHint">11</sys:Double>
     <sys:Double x:Key="FontTitle">24</sys:Double>
     <sys:Double x:Key="FontXl">20</sys:Double>      <!-- backward compat -->
     <sys:Double x:Key="FontXxl">32</sys:Double>     <!-- backward compat -->
@@ -102,24 +112,27 @@
     <CornerRadius x:Key="RadiusMd">8</CornerRadius>
     <CornerRadius x:Key="RadiusLg">12</CornerRadius>
     <CornerRadius x:Key="RadiusXl">16</CornerRadius>
-    <CornerRadius x:Key="RadiusPill">28</CornerRadius>       <!-- half of 56px bar = perfect pill -->
-    <CornerRadius x:Key="RadiusWindow">16</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">18</CornerRadius>
+    <CornerRadius x:Key="RadiusWindow">18</CornerRadius>
     <CornerRadius x:Key="RadiusRow">8</CornerRadius>        <!-- md -->
     <CornerRadius x:Key="RadiusButton">6</CornerRadius>     <!-- sm -->
-    <CornerRadius x:Key="RadiusCircle">22</CornerRadius>    <!-- half of 44px category btn -->
+    <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
 
     <!-- ── Layout dimensions ────────────────────────────────────── -->
-    <sys:Double x:Key="SearchBarHeight">56</sys:Double>
-    <sys:Double x:Key="RowHeight">44</sys:Double>
-    <sys:Double x:Key="CategoryButtonSize">44</sys:Double>
-    <sys:Double x:Key="WindowWidth">680</sys:Double>
+    <sys:Double x:Key="SearchBarHeight">52</sys:Double>
+    <sys:Double x:Key="RowHeight">40</sys:Double>
+    <sys:Double x:Key="RowHeightTall">48</sys:Double>
+    <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
+    <sys:Double x:Key="WindowWidth">440</sys:Double>
+    <sys:Double x:Key="WindowWidthCompact">440</sys:Double>
+    <sys:Double x:Key="WindowWidthExpanded">560</sys:Double>
 
-    <!-- ── Shadow — elevation without drama ─────────────────────── -->
+    <!-- ── Shadow — single ambient layer (design.md) ────────────── -->
     <DropShadowEffect x:Key="WindowShadow"
-                      BlurRadius="64"
-                      ShadowDepth="16"
+                      BlurRadius="48"
+                      ShadowDepth="8"
                       Direction="270"
-                      Opacity="0.35"
+                      Opacity="0.22"
                       Color="#000000"/>
 
 </ResourceDictionary>
