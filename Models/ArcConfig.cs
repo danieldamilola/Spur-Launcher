@@ -37,7 +37,7 @@ public sealed class ArcConfig
     public double FontSize { get; set; } = 14;
 
     /// <summary>Launcher window width in px (300–1200).</summary>
-    public double LauncherWidth { get; set; } = 680;
+    public double LauncherWidth { get; set; } = 440;
 
     /// <summary>How many results to display before scrolling (5, 8, or 10).</summary>
     public int ResultsCount { get; set; } = 5;
@@ -199,7 +199,7 @@ public sealed class ArcConfig
     public bool ShowPlaceholder { get; set; } = true;
 
     /// <summary>Placeholder text shown when query is empty.</summary>
-    public string PlaceholderText { get; set; } = "Search apps, files, clipboard...";
+    public string PlaceholderText { get; set; } = "Search";
 
     /// <summary>Use launcher show/hide animations.</summary>
     public bool AnimationEnabled { get; set; } = true;

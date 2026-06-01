@@ -20,11 +20,10 @@
                 <TextBlock Grid.Column="0"
                            Text="{Binding Title}"
                            FontFamily="{DynamicResource UIFont}"
-                           FontSize="10"
-                           FontWeight="Medium"
+                           FontSize="{DynamicResource FontHint}"
+                           FontWeight="Normal"
                            Foreground="{DynamicResource TextTertiary}"
-                           Opacity="0.65"
-                           Padding="12,10,12,4"
+                           Padding="16,8,16,4"
                            TextOptions.TextFormattingMode="Display"/>
                 <!-- Clear all button — only shown on CLIPBOARD section label -->
                 <Button Grid.Column="1"
@@ -43,7 +42,7 @@
                         <Style TargetType="Button">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Title}" Value="CLIPBOARD">
+                                <DataTrigger Binding="{Binding Title}" Value="Clipboard">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -57,7 +56,6 @@
         <DataTemplate x:Key="ResultTemplate" DataType="{x:Type models:SearchResult}">
             <Grid x:Name="RowRoot"
                   Height="{DynamicResource RowHeight}"
-                  Margin="8,1"
                   Background="Transparent"
                   ToolTip="{Binding DetailText}"
                   MouseLeftButtonDown="OnRowClick"
@@ -67,34 +65,43 @@
                     <ContextMenu>
                         <MenuItem Header="Run as Administrator"
                                   Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                  InputGestureText="Ctrl+Shift+Enter"/>
+                                  InputGestureText="Ctrl+Return"/>
                         <MenuItem Header="Open file location"
                                   Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                  InputGestureText="Ctrl+Enter"/>
+                                  InputGestureText="Ctrl+Shift+R"/>
                     </ContextMenu>
                 </Grid.ContextMenu>
 
-                <!-- Full-width row background -->
-                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusRow}" Background="Transparent"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Content -->
-                <Grid Margin="12,0">
+                <Border x:Name="SelectionRail"
+                        Grid.Column="0"
+                        Background="Transparent"
+                        CornerRadius="0,2,2,0"/>
+
+                <Border x:Name="RowBg"
+                        Grid.Column="1"
+                        Background="Transparent"/>
+
+                <Grid Grid.Column="1" Margin="16,0,16,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="32"/>    <!-- icon -->
-                        <ColumnDefinition Width="8"/>     <!-- gap -->
-                        <ColumnDefinition Width="*"/>     <!-- text -->
-                        <ColumnDefinition Width="Auto"/>  <!-- hint -->
+                        <ColumnDefinition Width="28"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- App / file icon — transparent container, icon floats naturally -->
                     <Border x:Name="ImgBox"
                             Grid.Column="0"
-                            Width="32" Height="32"
-                            CornerRadius="{DynamicResource RadiusSm}"
+                            Width="28" Height="28"
+                            CornerRadius="6"
                             Background="Transparent"
                             VerticalAlignment="Center">
                         <Image x:Name="AppIcon"
-                               Width="20" Height="20"
+                               Width="28" Height="28"
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
@@ -112,9 +119,9 @@
                     <!-- Lucide icon — shown when no file icon is available -->
                     <Border x:Name="LucideBox"
                             Grid.Column="0"
-                            Width="32" Height="32"
-                            CornerRadius="{DynamicResource RadiusSm}"
-                            Background="{DynamicResource SurfaceLow}"
+                            Width="28" Height="28"
+                            CornerRadius="6"
+                            Background="{DynamicResource SurfaceRaised}"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
                         <Path x:Name="LucideIconPath"
@@ -143,15 +150,14 @@
                         <TextBlock x:Name="NameText"
                                    Text="{Binding Name}"
                                    FontFamily="{DynamicResource UIFont}"
-                                   FontSize="13"
-                                   FontWeight="Medium"
+                                   FontSize="{DynamicResource FontResult}"
+                                   FontWeight="Normal"
                                    Foreground="{DynamicResource TextPrimary}"
                                    TextTrimming="CharacterEllipsis"/>
                         <TextBlock x:Name="SubtitleText"
                                    FontFamily="{DynamicResource UIFont}"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource FontMeta}"
                                    Foreground="{DynamicResource TextSecondary}"
-                                   Opacity="0.8"
                                    TextTrimming="CharacterEllipsis">
                             <TextBlock.Text>
                                 <Binding Path="DisplaySubtitle"/>
@@ -247,61 +253,18 @@
 
             <DataTemplate.Triggers>
 
-                <!-- Hover: animate background to HoverBg over 80ms (only when not selected) -->
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                         <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
                     </MultiDataTrigger.Conditions>
-                    <MultiDataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetName="RowBg"
-                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                To="#18181B" Duration="0:0:0.08"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </MultiDataTrigger.EnterActions>
+                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
                 </MultiDataTrigger>
 
-                <!-- Selected: animate background over 100ms. Selection is its own signal — no text changes. -->
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetName="RowBg"
-                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                To="#1F1F23" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                    <DataTrigger.ExitActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetName="RowBg"
-                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                To="#00000000" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.ExitActions>
+                    <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
+                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
                 </DataTrigger>
-
-                <!-- Normal: not hovered, not selected — animate background to transparent over 100ms -->
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="False"/>
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
-                    </MultiDataTrigger.Conditions>
-                    <MultiDataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetName="RowBg"
-                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                To="#00000000" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </MultiDataTrigger.EnterActions>
-                </MultiDataTrigger>
 
                 <!-- No file icon → use Lucide fallback -->
                 <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
@@ -335,7 +298,8 @@
              SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
              SelectionChanged="OnSelectionChanged"
              HorizontalContentAlignment="Stretch"
-             Padding="0,4,0,8"
+             Padding="0,2,0,4"
+             MaxHeight="280"
              Focusable="False"
              ScrollViewer.VerticalScrollBarVisibility="Auto"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled"

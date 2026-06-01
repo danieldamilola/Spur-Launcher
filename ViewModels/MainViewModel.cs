@@ -385,7 +385,6 @@ public sealed partial class MainViewModel : ObservableObject
         _clipboard.MaxItems = value.ClipboardHistorySize;
         if (value.CompactMode)
             Application.Current?.Dispatcher.Invoke(() => Results.Clear());
-        OnPropertyChanged(nameof(IsHubVisible));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -410,7 +409,19 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedResult))]
+    [NotifyPropertyChangedFor(nameof(FooterHint))]
     private int _selectedIndex = -1;
+
+    [ObservableProperty]
+    private string _footerHint = string.Empty;
+
+    [ObservableProperty]
+    private string _activeScopeId = "all";
+
+    [ObservableProperty]
+    private ObservableCollection<ScopeFilterItem> _scopeFilters = [];
+
+    private List<object> _rawResults = [];
 
     /// <summary>Null = all categories. Values: "apps" | "files" | "clipboard" | "actions".</summary>
     [ObservableProperty]
@@ -462,7 +473,7 @@ public sealed partial class MainViewModel : ObservableObject
         CancelActionWork();
         ActiveCategory = null;
         Query = string.Empty;
-        ShowHub();
+        ClearIdleState();
     }
 
     /// <summary>Returns the full AI conversation formatted as a copyable text block.</summary>
@@ -477,15 +488,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasQuery          => !string.IsNullOrEmpty(Query);
     public bool HasResults         => Results.Count > 0;
-    public bool IsPreviewVisible   => ActiveActionId is not null;
+    public bool IsPreviewVisible => false;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
 
-    /// <summary>True when the launcher is idle — empty query, no category, no settings, no action. False when Compact Mode is enabled.</summary>
-    public bool IsHubVisible => string.IsNullOrEmpty(Query) && ActiveCategory is null && ActiveActionId is null && !Config.CompactMode;
+    /// <summary>Hub removed per ux.md — always false.</summary>
+    public bool IsHubVisible => false;
 
-    /// <summary>Message shown when Hub has no recent items (first launch).</summary>
-    [ObservableProperty]
-    private string _emptyStateMessage = string.Empty;
+    public bool IsScopeBarVisible => ScopeFilters.Count > 1 && !string.IsNullOrEmpty(Query) && ActiveCategory is null;
 
     public SearchResult? SelectedResult
     {
@@ -511,9 +520,11 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (string.IsNullOrEmpty(value) && ActiveCategory is null)
             {
-                ShowHub();
+                ClearIdleState();
                 return;
             }
+
+            ActiveScopeId = "all";
 
             var delay = Task.Delay(150, ct);
             delay.ContinueWith(_ =>
@@ -534,58 +545,187 @@ public sealed partial class MainViewModel : ObservableObject
         OnQueryChanged(Query ?? string.Empty);
     }
 
-    // ═══════════
-    /// <summary>Shows the Hub — recent items when the launcher is idle.</summary>
-    private void ShowHub()
+    /// <summary>Empty launcher — no hub grid (ux.md).</summary>
+    private void ClearIdleState()
     {
         CancelActionWork();
         _searchCts?.Cancel();
         ActiveActionId = null;
-
-        if (Config.CompactMode)
-        {
-            Application.Current?.Dispatcher.Invoke(() =>
-            {
-                Results.Clear();
-                SelectedIndex = -1;
-                EmptyStateMessage = string.Empty;
-                OnPropertyChanged(nameof(IsHubVisible));
-            });
-            return;
-        }
-
-        var hubItems = new List<object>();
-
-        // Get top 3 recent items from app catalog by frequency
-        var recent = _appCatalog
-            .Where(a => a.FrequencyScore > 0)
-            .OrderByDescending(a => a.FrequencyScore)
-            .Take(3)
-            .Select(a =>
-            {
-                var clone = Clone(a);
-                clone.Score = a.FrequencyScore;
-                return clone;
-            })
-            .ToList();
-
-        if (recent.Count > 0)
-        {
-            hubItems.AddRange(recent);
-            EmptyStateMessage = string.Empty;
-        }
-        else
-        {
-            EmptyStateMessage = "Your recent items will appear here.";
-        }
+        _rawResults.Clear();
+        ScopeFilters.Clear();
+        OnPropertyChanged(nameof(IsScopeBarVisible));
 
         Application.Current?.Dispatcher.Invoke(() =>
         {
             Results.Clear();
-            foreach (var item in hubItems) Results.Add(item);
-            SelectedIndex = hubItems.Count > 0 ? 0 : -1;
-            OnPropertyChanged(nameof(IsHubVisible));
+            SelectedIndex = -1;
+            FooterHint = string.Empty;
         });
+    }
+
+    partial void OnSelectedIndexChanged(int value) => UpdateFooterHint();
+
+    partial void OnActiveScopeIdChanged(string value)
+    {
+        ApplyScopeFilter();
+        OnPropertyChanged(nameof(IsScopeBarVisible));
+    }
+
+    public void SetActiveScope(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return;
+        ActiveScopeId = id;
+    }
+
+    public void CycleScope()
+    {
+        if (ScopeFilters.Count == 0) return;
+        var idx = ScopeFilters.ToList().FindIndex(s => s.Id == ActiveScopeId);
+        var next = ScopeFilters[(idx + 1) % ScopeFilters.Count];
+        ActiveScopeId = next.Id;
+    }
+
+    private void CommitResults(List<object> items)
+    {
+        _rawResults = items;
+        UpdateScopeFilters();
+        ApplyScopeFilter();
+    }
+
+    private void ApplyScopeFilter()
+    {
+        var display = ActiveScopeId == "all"
+            ? _rawResults
+            : FilterResultsByScope(_rawResults, ActiveScopeId);
+
+        Results.Clear();
+        foreach (var item in display)
+            Results.Add(item);
+
+        SelectedIndex = Results.Count > 0 ? FindFirstResultIndex() : -1;
+        OnPropertyChanged(nameof(HasResults));
+        OnPropertyChanged(nameof(IsScopeBarVisible));
+        UpdateFooterHint();
+    }
+
+    private static List<object> FilterResultsByScope(List<object> source, string scopeId)
+    {
+        var result = new List<object>();
+        string? currentSection = null;
+        var sectionItems = new List<object>();
+
+        void FlushSection()
+        {
+            if (currentSection is null || sectionItems.Count == 0) return;
+            if (SectionMatchesScope(currentSection, scopeId))
+            {
+                result.Add(new SectionLabel(currentSection));
+                result.AddRange(sectionItems);
+            }
+            sectionItems.Clear();
+        }
+
+        foreach (var item in source)
+        {
+            if (item is SectionLabel label)
+            {
+                FlushSection();
+                currentSection = label.Title;
+            }
+            else
+            {
+                sectionItems.Add(item);
+            }
+        }
+        FlushSection();
+        return result;
+    }
+
+    private static bool SectionMatchesScope(string sectionTitle, string scopeId) => scopeId switch
+    {
+        "apps"      => sectionTitle is "Applications" or "Settings",
+        "files"     => sectionTitle == "Files",
+        "clipboard" => sectionTitle == "Clipboard",
+        "commands"  => sectionTitle == "Commands",
+        _           => true,
+    };
+
+    private void UpdateScopeFilters()
+    {
+        var counts = new Dictionary<string, (string Label, int Count)>();
+        string? section = null;
+        int sectionCount = 0;
+
+        void AddSection()
+        {
+            if (section is null || sectionCount == 0) return;
+            var id = SectionToScopeId(section);
+            if (id is null) return;
+            if (counts.TryGetValue(id, out var existing))
+                counts[id] = (existing.Label, existing.Count + sectionCount);
+            else
+                counts[id] = (SectionToScopeLabel(section), sectionCount);
+        }
+
+        foreach (var item in _rawResults)
+        {
+            if (item is SectionLabel label)
+            {
+                AddSection();
+                section = label.Title;
+                sectionCount = 0;
+            }
+            else if (item is SearchResult)
+            {
+                sectionCount++;
+            }
+        }
+        AddSection();
+
+        ScopeFilters.Clear();
+        if (counts.Count < 2) return;
+
+        ScopeFilters.Add(new ScopeFilterItem { Id = "all", Label = "All", Count = _rawResults.OfType<SearchResult>().Count() });
+        foreach (var (id, (label, count)) in counts)
+            ScopeFilters.Add(new ScopeFilterItem { Id = id, Label = label, Count = count });
+
+        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId))
+            ActiveScopeId = "all";
+    }
+
+    private static string? SectionToScopeId(string title) => title switch
+    {
+        "Applications" or "Settings" => "apps",
+        "Files" => "files",
+        "Clipboard" => "clipboard",
+        "Commands" => "commands",
+        _ => null,
+    };
+
+    private static string SectionToScopeLabel(string title) => title switch
+    {
+        "Applications" or "Settings" => "Apps",
+        "Actions" => "Commands",
+        _ => title,
+    };
+
+    private void UpdateFooterHint()
+    {
+        if (!HasResults && !string.IsNullOrEmpty(Query))
+        {
+            FooterHint = "No results";
+            return;
+        }
+
+        var r = SelectedResult;
+        FooterHint = r?.Type switch
+        {
+            ResultType.App        => "Return to open  ·  Ctrl+Return admin  ·  Ctrl+Shift+R reveal",
+            ResultType.File       => "Return to open  ·  Ctrl+Shift+R reveal  ·  Ctrl+C copy path",
+            ResultType.Clipboard  => "Return to paste  ·  Ctrl+P pin  ·  Ctrl+D delete",
+            ResultType.Action     => "Return to run",
+            _                     => HasResults ? "Return to open" : string.Empty,
+        };
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -655,7 +795,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                 if (appList.Count > 0)
                 {
-                    newResults.Add(new SectionLabel("APPLICATIONS"));
+                    newResults.Add(new SectionLabel("Applications"));
                     newResults.AddRange(appList);
                 }
             }
@@ -682,7 +822,7 @@ public sealed partial class MainViewModel : ObservableObject
                 if (ct.IsCancellationRequested) return;
                 if (fileMatches.Count > 0)
                 {
-                    newResults.Add(new SectionLabel("FILES"));
+                    newResults.Add(new SectionLabel("Files"));
                     newResults.AddRange(fileMatches);
                 }
             }
@@ -720,7 +860,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                 if (clips.Count > 0)
                 {
-                    newResults.Add(new SectionLabel("CLIPBOARD"));
+                    newResults.Add(new SectionLabel("Clipboard"));
                     newResults.AddRange(clips);
                 }
             }
@@ -746,7 +886,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                 if (actionMatches.Count > 0)
                 {
-                    newResults.Add(new SectionLabel("ACTIONS"));
+                    newResults.Add(new SectionLabel("Commands"));
                     newResults.AddRange(actionMatches);
                 }
             }
@@ -769,7 +909,7 @@ public sealed partial class MainViewModel : ObservableObject
 
                 if (settingsMatches.Count > 0)
                 {
-                    newResults.Add(new SectionLabel("SETTINGS"));
+                    newResults.Add(new SectionLabel("Settings"));
                     newResults.AddRange(settingsMatches);
                 }
             }
@@ -777,12 +917,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (ct.IsCancellationRequested) return;
 
             // Commit results on UI thread
-            Application.Current?.Dispatcher.Invoke(() =>
-            {
-                Results.Clear();
-                foreach (var r in newResults) Results.Add(r);
-                SelectedIndex = Results.Count > 0 ? FindFirstResultIndex() : -1;
-            });
+            Application.Current?.Dispatcher.Invoke(() => CommitResults(newResults));
         }
         catch (Exception ex)
         {
@@ -900,12 +1035,8 @@ public sealed partial class MainViewModel : ObservableObject
         CancelActionWork();
 
         var result = action.BuildResult(query);
-        Results.Clear();
-        Results.Add(new SectionLabel("ACTIONS"));
-        Results.Add(result);
-        SelectedIndex = 1; // the result row (index 0 = section label)
-
         ActiveActionId = action.Id;
+        CommitResults([new SectionLabel("Commands"), result]);
 
         switch (action.Id)
         {
@@ -1259,25 +1390,19 @@ public sealed partial class MainViewModel : ObservableObject
         _timer.Stop();
     }
 
-    public void OnWindowShown()
-    {
-        if (IsHubVisible) ShowHub();
-    }
+    public void OnWindowShown() { }
 
     public void Reset()
     {
         if (Config.LastQueryStyle == "clear")
             Query = string.Empty;
         ActiveCategory = null;
+        ActiveScopeId = "all";
         IsSettingsOpen = false;
+        CancelActionWork();
 
-        // Preserve the active action preview if AlwaysPreview is enabled
-        if (!Config.AlwaysPreview)
-            CancelActionWork();
-
-        // Show Hub after reset if no query remains
         if (string.IsNullOrEmpty(Query))
-            ShowHub();
+            ClearIdleState();
     }
 
     private void HideAfterLaunch()
@@ -1312,7 +1437,6 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             CatalogLoading = false;
-            if (IsHubVisible) ShowHub();
         }
     }
 
@@ -1343,7 +1467,6 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedIndex  = -1;
         if (!Config.AlwaysPreview)
             CancelActionWork();
-        EmptyStateMessage = string.Empty;
     }
 
     private void CancelActionWork()
