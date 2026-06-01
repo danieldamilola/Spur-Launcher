@@ -4,6 +4,8 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/DesignTokens/Colors.xaml"/>
+        <ResourceDictionary Source="/Themes/DesignTokens/Typography.xaml"/>
         <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
@@ -40,8 +42,17 @@
     <SolidColorBrush x:Key="HoverBg"         Color="#0F000000"/>
 
     <!-- Accent -->
-    <SolidColorBrush x:Key="Accent"          Color="#3650D4"/>
-    <SolidColorBrush x:Key="AccentWash"      Color="#E8EDFB"/>
+    <SolidColorBrush x:Key="Accent"          Color="#0A84FF"/>
+    <SolidColorBrush x:Key="AccentWash"      Color="#1A0A84FF"/>
+    <SolidColorBrush x:Key="AccentGhost"     Color="#1A0A84FF"/>
+    <SolidColorBrush x:Key="SurfaceRaised"   Color="#F4F4F5"/>
+    <SolidColorBrush x:Key="Separator"       Color="#14000000"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="Depth1"          Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="Depth2"          Color="#EBEBEB"/>
+    <SolidColorBrush x:Key="Depth3"          Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="HoverBg"         Color="#0A000000"/>
+    <SolidColorBrush x:Key="SelectedBg"      Color="#F4F4F5"/>
 
     <!-- Semantic -->
     <SolidColorBrush x:Key="Green"           Color="#1A7A40"/>
@@ -72,24 +83,31 @@
     <sys:Double x:Key="FontDisplay">48</sys:Double>
 
     <!-- ═══ Geometry (same as dark) ══════════════════════════════ -->
-    <CornerRadius x:Key="RadiusPill">28</CornerRadius>
-    <CornerRadius x:Key="RadiusWindow">16</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">18</CornerRadius>
+    <CornerRadius x:Key="RadiusWindow">18</CornerRadius>
     <CornerRadius x:Key="RadiusRow">8</CornerRadius>
     <CornerRadius x:Key="RadiusSm">4</CornerRadius>
     <CornerRadius x:Key="RadiusButton">6</CornerRadius>
     <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
 
-    <sys:Double x:Key="SearchBarHeight">56</sys:Double>
-    <sys:Double x:Key="RowHeight">52</sys:Double>
-    <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
-    <sys:Double x:Key="WindowWidth">680</sys:Double>
+    <sys:Double x:Key="FontSearch">17</sys:Double>
+    <sys:Double x:Key="FontResult">15</sys:Double>
+    <sys:Double x:Key="FontMeta">12</sys:Double>
+    <sys:Double x:Key="FontHint">11</sys:Double>
 
-    <!-- ═══ Shadow (lighter for light mode) ══════════════════════ -->
+    <sys:Double x:Key="SearchBarHeight">52</sys:Double>
+    <sys:Double x:Key="RowHeight">40</sys:Double>
+    <sys:Double x:Key="RowHeightTall">48</sys:Double>
+    <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
+    <sys:Double x:Key="WindowWidth">440</sys:Double>
+    <sys:Double x:Key="WindowWidthCompact">440</sys:Double>
+    <sys:Double x:Key="WindowWidthExpanded">560</sys:Double>
+
     <DropShadowEffect x:Key="WindowShadow"
-                      BlurRadius="48"
-                      ShadowDepth="12"
+                      BlurRadius="80"
+                      ShadowDepth="24"
                       Direction="270"
-                      Opacity="0.25"
+                      Opacity="0.18"
                       Color="#000000"/>
 
 

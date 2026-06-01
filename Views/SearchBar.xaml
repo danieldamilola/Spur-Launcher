@@ -1,63 +1,24 @@
 <UserControl x:Class="Arc.Views.SearchBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Arc.ViewModels">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid Height="56">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- Mode/Search icon button (left) -->
-        <Button x:Name="ModeIconBtn"
-                Grid.Column="0"
-                Margin="16,0,12,0"
-                VerticalAlignment="Center"
-                Background="Transparent"
-                BorderThickness="0"
-                Cursor="Hand"
-                Click="OnModeIconClick"
-                MouseEnter="OnModeIconMouseEnter"
-                MouseLeave="OnModeIconMouseLeave">
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}">
-                        <Path x:Name="IconPath"
-                              Data="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19ZM21 21L16.65 16.65"
-                              Stroke="{DynamicResource TextTertiary}"
-                              StrokeThickness="1.6"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              StrokeLineJoin="Round"
-                              Fill="Transparent"
-                              Width="18" Height="18"
-                              Stretch="Uniform"/>
-                    </Border>
-                </ControlTemplate>
-            </Button.Template>
-        </Button>
-
-        <!-- Text input -->
+    <Grid Height="52" Margin="20,0,20,0">
         <TextBox x:Name="SearchInput"
-                 Grid.Column="1"
                  VerticalAlignment="Center"
                  FontFamily="{DynamicResource UIFont}"
-                 FontSize="{DynamicResource FontIp}"
+                 FontSize="{DynamicResource FontSearch}"
+                 FontWeight="Normal"
                  Foreground="{DynamicResource TextPrimary}"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                  TextChanged="OnTextChanged"/>
 
-        <!-- Placeholder text -->
         <TextBlock x:Name="Placeholder"
-                   Grid.Column="1"
                    VerticalAlignment="Center"
                    IsHitTestVisible="False"
                    FontFamily="{DynamicResource UIFont}"
-                   FontSize="{DynamicResource FontIp}"
+                   FontSize="{DynamicResource FontSearch}"
+                   FontWeight="Normal"
                    Foreground="{DynamicResource TextTertiary}"
-                   Text="{Binding Config.PlaceholderText}"/>
-
+                   Text="Search"/>
     </Grid>
 </UserControl>
-

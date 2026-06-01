@@ -5,6 +5,7 @@ using Arc.ViewModels;
 using Arc.Views;
 using Arc.Services;
 using Arc.Converters;
+using Arc.Models;
 
 namespace Arc;
 
@@ -27,6 +28,8 @@ public partial class App : Application
         // ── Logging ──────────────────────────────────────────────────
         _fileLogger = new FileLogger();
 
+        try
+        {
         // ── Global exception handlers ─────────────────────────────────
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
@@ -103,7 +106,7 @@ public partial class App : Application
         _window = new MainWindow();
         _window.SetViewModel(_vm);
         _window.Opacity = config.WindowOpacity;
-        _window.Width   = config.LauncherWidth;
+        _window.Width   = LauncherLayout.WidthCompact;
         _window.Show();
         _window.Hide();
 
@@ -171,6 +174,12 @@ public partial class App : Application
         _ = CheckForUpdatesAsync();
 
         _fileLogger.Info("Arc started successfully.");
+        }
+        catch (Exception ex)
+        {
+            _fileLogger.Fatal("Arc startup failed", ex);
+            throw;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -291,17 +300,10 @@ public partial class App : Application
         _trayIcon = new TaskbarIcon { ToolTipText = "Arc", ContextMenu = BuildTrayMenu() };
         try
         {
-            using var stream = System.Reflection.Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("Arc.Assets.arc.ico");
-            if (stream is not null)
-            {
-                var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                bmp.StreamSource = stream;
-                bmp.EndInit();
+            if (Helpers.IconLoader.LoadTrayIcon() is { } icon)
+                _trayIcon.Icon = icon;
+            else if (Helpers.IconLoader.LoadTrayBitmap() is { } bmp)
                 _trayIcon.IconSource = bmp;
-            }
         }
         catch (Exception ex) { _fileLogger?.Warning("Tray icon load failed", ex); }
         _trayIcon.TrayLeftMouseDown += (_, _) => ToggleWindow();

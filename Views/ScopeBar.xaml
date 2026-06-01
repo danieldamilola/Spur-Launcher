@@ -1,0 +1,51 @@
+<UserControl x:Class="Arc.Views.ScopeBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Arc.Models"
+             xmlns:conv="clr-namespace:Arc.Converters"
+             Height="32">
+
+    <UserControl.Resources>
+        <conv:ScopeEqualsConverter x:Key="ScopeEquals"/>
+    </UserControl.Resources>
+
+    <ItemsControl ItemsSource="{Binding ScopeFilters}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Margin="16,0,16,8"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type models:ScopeFilterItem}">
+                <TextBlock Margin="0,4,16,0"
+                           Cursor="Hand"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="{DynamicResource FontHint}"
+                           Tag="{Binding Id}"
+                           MouseLeftButtonDown="OnScopeClick">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource TextTertiary}"/>
+                            <Setter Property="FontWeight" Value="Normal"/>
+                            <Style.Triggers>
+                                <DataTrigger Value="True">
+                                    <DataTrigger.Binding>
+                                        <MultiBinding Converter="{StaticResource ScopeEquals}">
+                                            <Binding Path="DataContext.ActiveScopeId"
+                                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                            <Binding Path="Id"/>
+                                        </MultiBinding>
+                                    </DataTrigger.Binding>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                    <Setter Property="FontWeight" Value="Medium"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                    <Run Text="{Binding Label, Mode=OneWay}"/>
+                    <Run Text="{Binding Count, StringFormat=' {0}', Mode=OneWay}"/>
+                </TextBlock>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>
