@@ -75,13 +75,27 @@ public class MainViewModelTests
         public Task StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct = default) => Task.CompletedTask;
     }
 
+    private sealed class FakeTheme : IThemeManager
+    {
+        public string? LastApplied { get; private set; }
+        public void Apply(string theme) => LastApplied = theme;
+    }
+
+    private sealed class FakeStartup : IStartupService
+    {
+        public bool Enabled { get; private set; }
+        public void Enable() => Enabled = true;
+        public void Disable() => Enabled = false;
+        public bool IsEnabled() => Enabled;
+    }
+
     [Fact]
     public async Task QueryProducesAppResults()
     {
         var cfg = new ArcConfig { FuzzySearch = true };
         var vm = new MainViewModel(cfg, NullLogger.Instance,
             new FakeApps(), new FakeFiles(), new FakeFreq(), new FakeConfigSvc(cfg),
-            new FakeClip(), new FakeNotify(), new FakeAi());
+            new FakeClip(), new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup());
 
         // Set query and wait for debounce + async search
         vm.Query = "note";
