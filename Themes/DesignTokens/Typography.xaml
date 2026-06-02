@@ -2,19 +2,35 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
-  <!-- Inter when bundled in Themes/Fonts; Segoe fallbacks per design.md §3 -->
+  <!-- ═══════════════════════════════════════════════════════════════
+       TYPOGRAPHY — Arc v2 "Premium & Calm"
+       One typeface. Larger default size. Calm reading rhythm.
+       Inter primary, DM Mono for code.
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- ── Font families ── -->
   <FontFamily x:Key="Token.Font.Primary">pack://application:,,,/Themes/Fonts/#Inter, Segoe UI Variable, Segoe UI</FontFamily>
   <FontFamily x:Key="Token.Font.Mono">pack://application:,,,/Themes/Fonts/#DM Mono, Cascadia Mono, Consolas</FontFamily>
 
+  <!-- ── Type ramp (px) ── -->
+  <sys:Double x:Key="Token.Font.Xxs">10</sys:Double>
+  <sys:Double x:Key="Token.Font.Xs">11</sys:Double>
+  <sys:Double x:Key="Token.Font.Sm">12</sys:Double>
+  <sys:Double x:Key="Token.Font.Mono13">13</sys:Double>
+  <sys:Double x:Key="Token.Font.Base">14</sys:Double>
+  <sys:Double x:Key="Token.Font.Md">15</sys:Double>
+  <sys:Double x:Key="Token.Font.Ip">16</sys:Double>
+  <sys:Double x:Key="Token.Font.Lg">17</sys:Double>
+  <sys:Double x:Key="Token.Font.Xl">20</sys:Double>
+  <sys:Double x:Key="Token.Font.Xxl">32</sys:Double>
+  <sys:Double x:Key="Token.Font.Display">48</sys:Double>
+
+  <!-- ── Semantic font roles ── -->
   <sys:Double x:Key="Token.Font.Search">17</sys:Double>
   <sys:Double x:Key="Token.Font.Result">15</sys:Double>
   <sys:Double x:Key="Token.Font.Meta">12</sys:Double>
   <sys:Double x:Key="Token.Font.Caption">11</sys:Double>
   <sys:Double x:Key="Token.Font.Label">11</sys:Double>
-
-  <sys:Double x:Key="Token.Spacing.Base">8</sys:Double>
-  <sys:Double x:Key="Token.Spacing.Small">4</sys:Double>
-  <sys:Double x:Key="Token.Spacing.Md">16</sys:Double>
-  <sys:Double x:Key="Token.Spacing.Lg">24</sys:Double>
+  <sys:Double x:Key="Token.Font.Hint">11</sys:Double>
 
 </ResourceDictionary>
