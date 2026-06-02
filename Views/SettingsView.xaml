@@ -12,22 +12,43 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="64"/>
             <RowDefinition Height="1"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="1"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="22,0">
-            <StackPanel VerticalAlignment="Center">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                 <TextBlock Text="Settings"
                            FontFamily="{DynamicResource UIFont}"
                            FontSize="17"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Text="Keep Arc quiet, fast, and tuned to how you work."
+                <TextBlock Text="Keep Spur quiet, fast, and tuned to how you work."
                            FontFamily="{DynamicResource UIFont}"
                            FontSize="12"
                            Foreground="{DynamicResource TextMuted}"
                            Margin="0,3,0,0"/>
             </StackPanel>
+
+            <!-- Search box -->
+            <Border Style="{StaticResource SettingsInputFrame}"
+                    Width="200"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Margin="0,0,44,0">
+                <TextBox x:Name="SearchBox"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="{DynamicResource UIFont}"
+                         FontSize="12"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         VerticalContentAlignment="Center"
+                         Padding="8,4"
+                         Foreground="{DynamicResource TextPrimary}"
+                         CaretBrush="{DynamicResource Accent}"/>
+            </Border>
+
             <Button Click="OnCloseClick"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
@@ -64,32 +85,70 @@
 
         <Border Grid.Row="1" Background="{DynamicResource Separator}"/>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="184"/>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- Horizontal tab strip -->
+        <ListBox Grid.Row="2"
+                 x:Name="TabStrip"
+                 ItemsSource="{Binding FilteredSections}"
+                 SelectedItem="{Binding SelectedSection}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 Margin="22,0"
+                 VerticalAlignment="Stretch">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="12"
+                               Margin="0,0,20,0"
+                               Padding="0,10,0,4"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border x:Name="TabBorder"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        BorderThickness="0,0,0,2"
+                                        Padding="0">
+                                    <ContentPresenter/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
 
-            <StackPanel Grid.Column="0" Margin="14,18,12,18">
-                <ItemsControl ItemsSource="{Binding Sections}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Content="{Binding Name}"
-                                    Style="{StaticResource SettingsNavButton}"
-                                    Click="OnSectionClick"
-                                    Margin="0,0,0,4"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+        <!-- Tab-content separator -->
+        <Border Grid.Row="3" Background="{DynamicResource Separator}"/>
 
-            <Border Grid.Column="1" Background="{DynamicResource Separator}"/>
-
-            <ScrollViewer Grid.Column="2"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="24,20,28,28">
+        <ScrollViewer Grid.Row="4"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="24,20,28,28">
 
                     <StackPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}">
                         <TextBlock Text="Look and feel" Style="{StaticResource SettingsKicker}"/>
@@ -195,7 +254,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="Position" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Where Arc opens on screen." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Where Spur opens on screen." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <Border Grid.Column="2" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
@@ -248,7 +307,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="Launch with Windows" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Make Arc available as soon as you sign in." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Make Spur available as soon as you sign in." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <local:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
                                     </Grid>
@@ -262,7 +321,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="Tray icon" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Keep Arc reachable without cluttering the taskbar." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Keep Spur reachable without cluttering the taskbar." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
                                     </Grid>
@@ -272,7 +331,7 @@
                     </StackPanel>
 
                     <StackPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Search}">
-                        <TextBlock Text="What Arc can find" Style="{StaticResource SettingsKicker}"/>
+                        <TextBlock Text="What Spur can find" Style="{StaticResource SettingsKicker}"/>
                         <Border Style="{StaticResource Panel}">
                             <WrapPanel Margin="16,14,10,8">
                                 <CheckBox Content="Apps" IsChecked="{Binding IndexApps, Mode=TwoWay}" Margin="0,0,18,8"/>
@@ -408,7 +467,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="AI assistant" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Enable only if you want AI commands inside Arc." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Enable only if you want AI commands inside Spur." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ActionAi, Mode=TwoWay}" VerticalAlignment="Center"/>
                                     </Grid>
@@ -441,7 +500,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="Provider and model" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Stored locally. Arc only uses this when AI is enabled." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Stored locally. Spur only uses this when AI is enabled." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                             <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding AiProvider, Mode=TwoWay}" Width="120"/>
@@ -495,7 +554,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="Reset settings" Style="{StaticResource SettingsTitle}"/>
-                                            <TextBlock Text="Restore Arc to a fresh, simple default state." Style="{StaticResource SettingsHint}"/>
+                                            <TextBlock Text="Restore Spur to a fresh, simple default state." Style="{StaticResource SettingsHint}"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Content="Reset" Command="{Binding ResetToDefaultsCommand}" Style="{StaticResource SettingsSoftButton}" VerticalAlignment="Center"/>
                                     </Grid>
@@ -514,6 +573,5 @@
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
-        </Grid>
     </Grid>
 </UserControl>
