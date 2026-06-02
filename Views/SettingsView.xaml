@@ -48,7 +48,7 @@
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round">
                                 <Path.Data>
-                                    <Binding Source="x" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                    <Binding Source={StaticResource Icon.Settings.Close} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                 </Path.Data>
                             </Path>
                         </Border>
@@ -105,7 +105,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source="palette" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source={StaticResource Icon.Settings.Appearance} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -133,7 +133,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source="blend" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source={StaticResource Icon.Settings.Theme} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -164,7 +164,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source="keyboard" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source={StaticResource Icon.Settings.Hotkey} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -189,7 +189,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source="move" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source={StaticResource Icon.Settings.Behavior} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -218,7 +218,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source="sparkles" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source={StaticResource Icon.Settings.AI} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
