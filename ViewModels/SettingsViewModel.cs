@@ -36,10 +36,16 @@ public sealed partial class SettingsViewModel : ObservableObject
         SelectedSection = Sections[0];
 
         LoadStartupState();
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(SearchText))
+                OnPropertyChanged(nameof(FilteredSections));
+        };
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Sidebar
+    // Tabs + Search
     // ═══════════════════════════════════════════════════════════════
 
     [ObservableProperty]
@@ -47,6 +53,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private SettingsSection _selectedSection;
+
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
+    public ObservableCollection<SettingsSection> FilteredSections
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+                return Sections;
+            var term = SearchText.Trim();
+            return new ObservableCollection<SettingsSection>(
+                Sections.Where(s => s.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // Appearance

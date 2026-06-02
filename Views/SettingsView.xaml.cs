@@ -58,13 +58,6 @@ public partial class SettingsView : UserControl
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => _vm?.CloseSettings();
 
-    private void OnSectionClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm is null || sender is not Button btn || btn.Content is not string name) return;
-        var section = _vm.Sections.FirstOrDefault(s => s.Name == name);
-        if (section is not null) _vm.SelectedSection = section;
-    }
-
     private void OnBrowseFolderClick(object sender, RoutedEventArgs e)
     {
         if (_vm is null) return;
