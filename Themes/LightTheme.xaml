@@ -10,65 +10,54 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         LIGHT THEME — Arc Design System
+         LIGHT THEME — Arc v2 (design.md §2.2)
          ═══════════════════════════════════════════════════════════ -->
 
-    <!-- Glass background: rgba(255,255,255,0.72) → alpha=184=#B8 -->
+    <SolidColorBrush x:Key="Void"            Color="#F2F2F4"/>
+    <SolidColorBrush x:Key="Depth1"          Color="#F2F2F4"/>
+    <SolidColorBrush x:Key="Depth2"          Color="#F7F7F8"/>
+    <SolidColorBrush x:Key="Depth3"          Color="#EEEEF0"/>
+    <SolidColorBrush x:Key="Depth4"          Color="#E8E8EA"/>
+
     <SolidColorBrush x:Key="GlassBg"         Color="#B8FFFFFF"/>
-    <!-- Glass border: rgba(255,255,255,0.5) → alpha=128=#80 -->
-    <SolidColorBrush x:Key="GlassBorder"     Color="#80FFFFFF"/>
-    <!-- Preview panel bg: rgba(255,255,255,0.85) → alpha=217=#D9 -->
+    <SolidColorBrush x:Key="GlassBorder"     Color="#1A000000"/>
     <SolidColorBrush x:Key="PreviewBg"       Color="#D9FFFFFF"/>
 
-    <!-- Surfaces -->
     <SolidColorBrush x:Key="Surface"         Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SurfaceLow"      Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="SurfaceLow"      Color="#F2F2F4"/>
+    <SolidColorBrush x:Key="SurfaceRaised"   Color="#F7F7F8"/>
 
-    <!-- Text -->
-    <SolidColorBrush x:Key="TextPrimary"     Color="#0A0A0A"/>
-    <SolidColorBrush x:Key="TextSecondary"   Color="#6B6B6B"/>
-    <SolidColorBrush x:Key="TextMuted"       Color="#A0A0A0"/>
+    <SolidColorBrush x:Key="TextPrimary"     Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="TextSecondary"   Color="#6E6E73"/>
+    <SolidColorBrush x:Key="TextMuted"       Color="#6E6E73"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="#AEAEB2"/>
+    <SolidColorBrush x:Key="TextInverse"     Color="#FFFFFF"/>
 
-    <!-- Borders -->
-    <!-- rgba(0,0,0,0.08) → alpha=20=#14 -->
-    <SolidColorBrush x:Key="BorderBrush"     Color="#14000000"/>
-    <!-- rgba(0,0,0,0.14) → alpha=36=#24 -->
-    <SolidColorBrush x:Key="BorderStrong"    Color="#24000000"/>
+    <SolidColorBrush x:Key="BorderBrush"     Color="#0F000000"/>
+    <SolidColorBrush x:Key="BorderStrong"    Color="#1A000000"/>
+    <SolidColorBrush x:Key="Separator"       Color="#0F000000"/>
 
-    <!-- Selection -->
-    <SolidColorBrush x:Key="SelectedBg"      Color="#0A0A0A"/>
-    <SolidColorBrush x:Key="SelectedText"    Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SelectedMuted"   Color="#AAAAAA"/>
-    <SolidColorBrush x:Key="HoverBg"         Color="#0F000000"/>
+    <SolidColorBrush x:Key="SelectedBg"      Color="#EEEEF0"/>
+    <SolidColorBrush x:Key="SelectedText"    Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="SelectedMuted"   Color="#6E6E73"/>
+    <SolidColorBrush x:Key="HoverBg"         Color="#F7F7F8"/>
 
-    <!-- Accent -->
-    <SolidColorBrush x:Key="Accent"          Color="#0A84FF"/>
-    <SolidColorBrush x:Key="AccentWash"      Color="#1A0A84FF"/>
-    <SolidColorBrush x:Key="AccentGhost"     Color="#1A0A84FF"/>
-    <SolidColorBrush x:Key="SurfaceRaised"   Color="#F4F4F5"/>
-    <SolidColorBrush x:Key="Separator"       Color="#14000000"/>
-    <SolidColorBrush x:Key="TextTertiary"    Color="#A1A1AA"/>
-    <SolidColorBrush x:Key="Depth1"          Color="#F5F5F5"/>
-    <SolidColorBrush x:Key="Depth2"          Color="#EBEBEB"/>
-    <SolidColorBrush x:Key="Depth3"          Color="#E0E0E0"/>
-    <SolidColorBrush x:Key="HoverBg"         Color="#0A000000"/>
-    <SolidColorBrush x:Key="SelectedBg"      Color="#F4F4F5"/>
+    <SolidColorBrush x:Key="Accent"          Color="#3A3A3D"/>
+    <SolidColorBrush x:Key="BrandHighlight"  Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="AccentWash"      Color="#0F000000"/>
+    <SolidColorBrush x:Key="AccentGhost"     Color="#0A000000"/>
 
-    <!-- Semantic -->
-    <SolidColorBrush x:Key="Green"           Color="#1A7A40"/>
-    <SolidColorBrush x:Key="Orange"          Color="#A04F00"/>
-    <SolidColorBrush x:Key="Red"             Color="#C0180F"/>
+    <SolidColorBrush x:Key="Green"           Color="#6B8F71"/>
+    <SolidColorBrush x:Key="Orange"          Color="#A8947A"/>
+    <SolidColorBrush x:Key="Red"             Color="#C45C5C"/>
 
-    <!-- ToggleSwitch -->
     <SolidColorBrush x:Key="ToggleKnob"      Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="ToggleTrackOff"  Color="#A0A0A0"/>
+    <SolidColorBrush x:Key="ToggleTrackOff"  Color="#AEAEB2"/>
 
-    <!-- TextBox selection opacity (theme-specific) -->
     <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
 
-    <!-- ═══ Typography (same as dark) ════════════════════════════ -->
-    <FontFamily x:Key="UIFont">pack://application:,,,/Themes/Fonts/#DM Sans</FontFamily>
-    <FontFamily x:Key="MonoFont">pack://application:,,,/Themes/Fonts/#DM Mono</FontFamily>
+    <FontFamily x:Key="UIFont">pack://application:,,,/Themes/Fonts/#Inter, Segoe UI Variable, Segoe UI</FontFamily>
+    <FontFamily x:Key="MonoFont">pack://application:,,,/Themes/Fonts/#DM Mono, Cascadia Mono, Consolas</FontFamily>
 
     <sys:Double x:Key="FontXxs">10</sys:Double>
     <sys:Double x:Key="FontXs">11</sys:Double>
@@ -81,35 +70,27 @@
     <sys:Double x:Key="FontXl">20</sys:Double>
     <sys:Double x:Key="FontXxl">32</sys:Double>
     <sys:Double x:Key="FontDisplay">48</sys:Double>
-
-    <!-- ═══ Geometry (same as dark) ══════════════════════════════ -->
-    <CornerRadius x:Key="RadiusPill">18</CornerRadius>
-    <CornerRadius x:Key="RadiusWindow">18</CornerRadius>
-    <CornerRadius x:Key="RadiusRow">8</CornerRadius>
-    <CornerRadius x:Key="RadiusSm">4</CornerRadius>
-    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
-    <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
-
     <sys:Double x:Key="FontSearch">17</sys:Double>
     <sys:Double x:Key="FontResult">15</sys:Double>
     <sys:Double x:Key="FontMeta">12</sys:Double>
     <sys:Double x:Key="FontHint">11</sys:Double>
+    <sys:Double x:Key="FontLabel">11</sys:Double>
 
-    <sys:Double x:Key="SearchBarHeight">52</sys:Double>
-    <sys:Double x:Key="RowHeight">40</sys:Double>
-    <sys:Double x:Key="RowHeightTall">48</sys:Double>
+    <CornerRadius x:Key="RadiusPill">14</CornerRadius>
+    <CornerRadius x:Key="RadiusWindow">14</CornerRadius>
+    <CornerRadius x:Key="RadiusRow">8</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
+    <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
+
+    <sys:Double x:Key="SearchBarHeight">56</sys:Double>
+    <sys:Double x:Key="RowHeight">44</sys:Double>
+    <sys:Double x:Key="RowHeightTall">52</sys:Double>
     <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
-    <sys:Double x:Key="WindowWidth">440</sys:Double>
-    <sys:Double x:Key="WindowWidthCompact">440</sys:Double>
-    <sys:Double x:Key="WindowWidthExpanded">560</sys:Double>
-
-    <DropShadowEffect x:Key="WindowShadow"
-                      BlurRadius="80"
-                      ShadowDepth="24"
-                      Direction="270"
-                      Opacity="0.18"
-                      Color="#000000"/>
-
+    <sys:Double x:Key="AnchorHitSize">40</sys:Double>
+    <sys:Double x:Key="WindowWidth">640</sys:Double>
+    <sys:Double x:Key="WindowWidthCompact">640</sys:Double>
+    <sys:Double x:Key="WindowWidthExpanded">640</sys:Double>
 
 </ResourceDictionary>
-

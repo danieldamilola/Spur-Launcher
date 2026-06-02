@@ -57,30 +57,3 @@ public sealed class ThemeManagerImpl : IThemeManager
         catch { return "dark"; }
     }
 }
-
-/// <summary>Static facade — delegates to the configured IThemeManager instance.</summary>
-public static class ThemeManager
-{
-    private static IThemeManager? _instance;
-    private static ILogger _log = NullLogger.Instance;
-
-    public static void Initialize(IThemeManager instance, ILogger logger)
-    {
-        _instance = instance;
-        _log = logger;
-    }
-
-    public static void Apply(string theme) => Instance.Apply(theme);
-
-    private static IThemeManager Instance
-    {
-        get
-        {
-            if (_instance is not null) return _instance;
-            var impl = new ThemeManagerImpl(_log);
-            _instance = impl;
-            _log.Info("ThemeManager auto-initialized with defaults.");
-            return impl;
-        }
-    }
-}

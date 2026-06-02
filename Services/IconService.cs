@@ -184,30 +184,3 @@ public sealed class IconServiceImpl : IIconService
         }
     }
 }
-
-/// <summary>Static facade — delegates to the configured IIconService instance.</summary>
-public static class IconService
-{
-    private static IIconService? _instance;
-    private static ILogger _log = NullLogger.Instance;
-
-    public static void Initialize(IIconService instance, ILogger logger)
-    {
-        _instance = instance;
-        _log = logger;
-    }
-
-    public static BitmapSource? GetIcon(string path) => Instance.GetIcon(path);
-
-    private static IIconService Instance
-    {
-        get
-        {
-            if (_instance is not null) return _instance;
-            var impl = new IconServiceImpl(_log);
-            _instance = impl;
-            _log.Info("IconService auto-initialized with defaults.");
-            return impl;
-        }
-    }
-}

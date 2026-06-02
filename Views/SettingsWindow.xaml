@@ -4,14 +4,14 @@
         xmlns:views="clr-namespace:Arc.Views"
         Title="Settings"
         Icon="pack://application:,,,/Icons/arc-launcher-32x32.ico"
-        Width="780"
-        Height="560"
-        MinWidth="680"
-        MinHeight="480"
+        Width="820"
+        Height="600"
+        MinWidth="740"
+        MinHeight="520"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         Closing="OnClosing"
-        Background="{DynamicResource Void}">
+        Background="{DynamicResource SurfaceLow}">
 
     <views:SettingsView x:Name="SettingsViewControl"/>
 
