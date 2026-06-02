@@ -4,21 +4,28 @@
              xmlns:local="clr-namespace:Arc.Views"
              xmlns:conv="clr-namespace:Arc.Converters">
 
-        <UserControl.Resources>
+    <UserControl.Resources>
         <local:SectionVisibilityConverter x:Key="SectionVisibility"/>
     </UserControl.Resources>
 
     <Grid Background="{DynamicResource SurfaceLow}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="64"/>
-            <RowDefinition Height="1"/>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="1"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Margin="22,0">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+        <!-- ═══════ SIDEBAR ═══════ -->
+        <Grid Grid.Column="0" Background="{DynamicResource Depth2}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="16,20,16,6">
                 <TextBlock Text="Settings"
                            FontFamily="{DynamicResource UIFont}"
                            FontSize="17"
@@ -26,17 +33,15 @@
                            Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock Text="Keep Spur quiet, fast, and tuned to how you work."
                            FontFamily="{DynamicResource UIFont}"
-                           FontSize="12"
-                           Foreground="{DynamicResource TextMuted}"
-                           Margin="0,3,0,0"/>
+                           FontSize="11"
+                           Foreground="{DynamicResource TextTertiary}"
+                           Margin="0,2,0,0"
+                           TextWrapping="Wrap"/>
             </StackPanel>
 
-            <!-- Search box -->
-            <Border Style="{StaticResource SettingsInputFrame}"
-                    Width="200"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"
-                    Margin="0,0,44,0">
+            <!-- Search -->
+            <Border Grid.Row="1" Style="{StaticResource SettingsInputFrame}"
+                    Margin="12,2,12,12">
                 <TextBox x:Name="SearchBox"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          FontFamily="{DynamicResource UIFont}"
@@ -44,38 +49,134 @@
                          Background="Transparent"
                          BorderThickness="0"
                          VerticalContentAlignment="Center"
-                         Padding="8,4"
+                         Padding="8,6"
                          Foreground="{DynamicResource TextPrimary}"
                          CaretBrush="{DynamicResource Accent}"/>
             </Border>
 
-            <Button Click="OnCloseClick"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"
-                    Width="32"
-                    Height="32"
+            <!-- Nav -->
+            <ListBox Grid.Row="2"
+                     x:Name="NavList"
+                     ItemsSource="{Binding FilteredSections}"
+                     SelectedItem="{Binding SelectedSection}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="0"
+                     Margin="0,4,0,0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="NavBg"
+                                Background="Transparent"
+                                CornerRadius="6"
+                                Padding="0"
+                                Margin="8,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Accent bar -->
+                                <Border x:Name="AccentBar"
+                                        Grid.Column="0"
+                                        Width="3"
+                                        Background="Transparent"
+                                        CornerRadius="2"
+                                        Margin="0,4"/>
+
+                                <!-- Icon -->
+                                <Path x:Name="NavIcon"
+                                      Grid.Column="1"
+                                      Width="18" Height="18"
+                                      Stretch="Uniform"
+                                      StrokeThickness="1.5"
+                                      Fill="Transparent"
+                                      VerticalAlignment="Center"
+                                      Margin="11,0,10,0">
+                                    <Path.Data>
+                                        <Binding Path="LucideIcon"
+                                                 Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                    </Path.Data>
+                                </Path>
+
+                                <!-- Label -->
+                                <TextBlock x:Name="NavLabel"
+                                           Grid.Column="2"
+                                           Text="{Binding Name}"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"
+                                           Margin="0,10,12,10"/>
+                            </Grid>
+                        </Border>
+
+                        <DataTemplate.Triggers>
+                            <!-- Selected state -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                                         Value="True">
+                                <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="NavLabel"  Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                <Setter TargetName="NavIcon"   Property="Stroke"     Value="{DynamicResource Accent}"/>
+                            </DataTrigger>
+
+                            <!-- Unselected text color -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                                         Value="False">
+                                <Setter TargetName="NavLabel" Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                                <Setter TargetName="NavIcon"  Property="Stroke"     Value="{DynamicResource TextSecondary}"/>
+                            </DataTrigger>
+
+                            <!-- Hover (only when NOT selected) -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="NavBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                            </MultiDataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Close button -->
+            <Button Grid.Row="3"
+                    Click="OnCloseClick"
+                    Margin="12,12,12,16"
+                    Padding="10,8"
                     Background="Transparent"
                     BorderThickness="0"
                     Cursor="Hand"
-                    FocusVisualStyle="{x:Null}"
-                    ToolTip="Close">
+                    FocusVisualStyle="{x:Null}">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" CornerRadius="9" Background="Transparent">
-                            <Path Width="12" Height="12" Stretch="Uniform"
-                                  Stroke="{DynamicResource TextMuted}"
-                                  StrokeThickness="1.6"
-                                  StrokeLineJoin="Round"
-                                  StrokeStartLineCap="Round"
-                                  StrokeEndLineCap="Round">
-                                <Path.Data>
-                                    <Binding Source={StaticResource Icon.Settings.Close} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                        <Border x:Name="CloseBg" CornerRadius="6" Background="Transparent"
+                                Padding="10,8">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Width="14" Height="14" Stretch="Uniform"
+                                      Stroke="{DynamicResource TextMuted}"
+                                      StrokeThickness="1.6"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,8,0">
+                                    <Path.Data>
+                                        <Binding Source="{StaticResource Icon.Settings.Close}"
+                                                 Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                    </Path.Data>
+                                </Path>
+                                <TextBlock Text="Close"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                <Setter TargetName="CloseBg" Property="Background" Value="{DynamicResource HoverBg}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -83,74 +184,16 @@
             </Button>
         </Grid>
 
-        <Border Grid.Row="1" Background="{DynamicResource Separator}"/>
+        <!-- ═══════ SEPARATOR ═══════ -->
+        <Border Grid.Column="1" Background="{DynamicResource Separator}"/>
 
-        <!-- Horizontal tab strip -->
-        <ListBox Grid.Row="2"
-                 x:Name="TabStrip"
-                 ItemsSource="{Binding FilteredSections}"
-                 SelectedItem="{Binding SelectedSection}"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 Margin="22,0"
-                 VerticalAlignment="Stretch">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="12"
-                               Margin="0,0,20,0"
-                               Padding="0,10,0,4"/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Setter Property="Cursor" Value="Hand"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListBoxItem">
-                                <Border x:Name="TabBorder"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        BorderThickness="0,0,0,2"
-                                        Padding="0">
-                                    <ContentPresenter/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource Accent}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource HoverBg}"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="False">
-                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </ListBox.ItemContainerStyle>
-        </ListBox>
-
-        <!-- Tab-content separator -->
-        <Border Grid.Row="3" Background="{DynamicResource Separator}"/>
-
-        <ScrollViewer Grid.Row="4"
+        <!-- ═══════ CONTENT ═══════ -->
+        <ScrollViewer Grid.Column="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="24,20,28,28">
+            <StackPanel Margin="32,20,32,28">
 
-                    <StackPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}">
+<StackPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}">
                         <TextBlock Text="Look and feel" Style="{StaticResource SettingsKicker}"/>
                         <Border Style="{StaticResource Panel}">
                             <StackPanel>
@@ -164,7 +207,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source={StaticResource Icon.Settings.Appearance} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source="{StaticResource Icon.Settings.Appearance}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -192,7 +235,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source={StaticResource Icon.Settings.Theme} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source="{StaticResource Icon.Settings.Theme}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -223,7 +266,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source={StaticResource Icon.Settings.Hotkey} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source="{StaticResource Icon.Settings.Hotkey}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -248,7 +291,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source={StaticResource Icon.Settings.Behavior} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source="{StaticResource Icon.Settings.Behavior}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -277,7 +320,7 @@
                                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
                                                 <Path.Data>
-                                                    <Binding Source={StaticResource Icon.Settings.AI} Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                                    <Binding Source="{StaticResource Icon.Settings.AI}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
                                                 </Path.Data>
                                             </Path>
                                         </Border>
@@ -571,7 +614,8 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

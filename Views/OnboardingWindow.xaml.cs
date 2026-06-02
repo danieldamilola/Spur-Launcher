@@ -4,6 +4,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using Arc.Models;
+using Arc.Services;
 
 namespace Arc.Views;
 
@@ -12,15 +14,26 @@ public partial class OnboardingWindow : Window
     private int _slide;
     private readonly StackPanel[] _slides;
     private readonly Ellipse[] _dots;
+    private readonly ArcConfig _config;
+    private readonly IConfigService _configService;
+    private bool _recordingShortcut;
 
     public event Action? OnCompleted;
 
-    public OnboardingWindow()
+    public OnboardingWindow(ArcConfig config, IConfigService configService)
     {
+        _config = config;
+        _configService = configService;
+
         InitializeComponent();
-        _slides = [Slide1, Slide2, Slide3];
-        _dots = [Dot1, Dot2, Dot3];
+        _slides = [Slide1, Slide2, Slide3, Slide4];
+        _dots   = [Dot1, Dot2, Dot3, Dot4];
+
+        KeyCaptureText.Text = _config.Shortcut.Replace("+", " + ");
+        UpdateThemeCards();
     }
+
+    // ── Navigation ─────────────────────────────────────────────
 
     private void OnSkipClick(object sender, RoutedEventArgs e) => Finish();
 
@@ -30,6 +43,20 @@ public partial class OnboardingWindow : Window
         {
             Finish();
             return;
+        }
+
+        if (_slide == 2)
+        {
+            var themeName = _config.Theme switch
+            {
+                "light" => "Light",
+                "system" => "System",
+                _ => "Dark"
+            };
+            ReadySummary.Text =
+                $"Shortcut: {_config.Shortcut.Replace("+", " + ")}\n" +
+                $"Theme: {themeName}\n\n" +
+                "You can change both anytime in Settings.";
         }
 
         var current = _slides[_slide];
@@ -65,6 +92,7 @@ public partial class OnboardingWindow : Window
 
     private void Finish()
     {
+        _configService.Save(_config);
         OnCompleted?.Invoke();
         Close();
     }
@@ -73,5 +101,76 @@ public partial class OnboardingWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
             DragMove();
+    }
+
+    // ── Hotkey capture (Slide 2) ───────────────────────────────
+
+    private void OnKeyCaptureClick(object sender, MouseButtonEventArgs e) => StartRecording();
+    private void OnKeyCaptureGotFocus(object sender, RoutedEventArgs e) => StartRecording();
+
+    private void StartRecording()
+    {
+        if (_recordingShortcut) return;
+        _recordingShortcut = true;
+        KeyCaptureHint.Text = "Press any key combination…";
+        KeyCaptureBorder.BorderBrush = TryFindResource("Accent") as Brush ?? Brushes.DodgerBlue;
+        Keyboard.Focus(KeyCaptureBorder);
+    }
+
+    private void OnKeyCaptureDown(object sender, KeyEventArgs e)
+    {
+        e.Handled = true;
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key is Key.LeftCtrl or Key.RightCtrl
+                   or Key.LeftAlt or Key.RightAlt
+                   or Key.LeftShift or Key.RightShift
+                   or Key.LWin or Key.RWin)
+            return;
+
+        var mods = Keyboard.Modifiers;
+        var parts = new System.Collections.Generic.List<string>();
+        if ((mods & ModifierKeys.Control)  != 0) parts.Add("Ctrl");
+        if ((mods & ModifierKeys.Alt)      != 0) parts.Add("Alt");
+        if ((mods & ModifierKeys.Shift)    != 0) parts.Add("Shift");
+        if ((mods & ModifierKeys.Windows)  != 0) parts.Add("Win");
+        parts.Add(key.ToString());
+
+        var shortcut = string.Join("+", parts);
+        _config.Shortcut = shortcut;
+        KeyCaptureText.Text = shortcut.Replace("+", " + ");
+
+        StopRecording();
+    }
+
+    private void OnKeyCaptureLostFocus(object sender, RoutedEventArgs e) => StopRecording();
+
+    private void StopRecording()
+    {
+        if (!_recordingShortcut) return;
+        _recordingShortcut = false;
+        KeyCaptureHint.Text = "Click to change";
+        KeyCaptureBorder.BorderBrush = TryFindResource("BorderStrong") as Brush ?? Brushes.Gray;
+    }
+
+    // ── Theme selection (Slide 3) ──────────────────────────────
+
+    private void OnThemeDarkClick(object sender, MouseButtonEventArgs e)  => SelectTheme("dark");
+    private void OnThemeLightClick(object sender, MouseButtonEventArgs e)  => SelectTheme("light");
+    private void OnThemeSystemClick(object sender, MouseButtonEventArgs e) => SelectTheme("system");
+
+    private void SelectTheme(string theme)
+    {
+        _config.Theme = theme;
+        UpdateThemeCards();
+    }
+
+    private void UpdateThemeCards()
+    {
+        var accent = TryFindResource("Accent") as Brush ?? Brushes.DodgerBlue;
+
+        ThemeDarkCard.BorderBrush   = _config.Theme == "dark"   ? accent : Brushes.Transparent;
+        ThemeLightCard.BorderBrush  = _config.Theme == "light"  ? accent : Brushes.Transparent;
+        ThemeSystemCard.BorderBrush = _config.Theme == "system" ? accent : Brushes.Transparent;
     }
 }

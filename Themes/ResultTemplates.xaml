@@ -66,42 +66,43 @@
                         CornerRadius="8"
                         Background="{DynamicResource SurfaceLow}"
                         VerticalAlignment="Center">
+                    <Grid>
+                        <Image x:Name="AppIcon"
+                               Width="24" Height="24"
+                               Stretch="Uniform"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Source>
+                                <Binding Path="IconPath">
+                                    <Binding.Converter>
+                                        <conv:PathToIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Image.Source>
+                        </Image>
 
-                    <Image x:Name="AppIcon"
-                           Width="24" Height="24"
-                           Stretch="Uniform"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality">
-                        <Image.Source>
-                            <Binding Path="IconPath">
-                                <Binding.Converter>
-                                    <conv:PathToIconConverter/>
-                                </Binding.Converter>
-                            </Binding>
-                        </Image.Source>
-                    </Image>
-
-                    <Path x:Name="LucideIcon"
-                          Width="16" Height="16"
-                          Stretch="Uniform"
-                          Stroke="{DynamicResource TextSecondary}"
-                          StrokeThickness="1.5"
-                          StrokeLineJoin="Round"
-                          StrokeStartLineCap="Round"
-                          StrokeEndLineCap="Round"
-                          Fill="Transparent"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          Visibility="Collapsed">
-                        <Path.Data>
-                            <Binding Path="LucideIcon">
-                                <Binding.Converter>
-                                    <conv:LucideIconConverter/>
-                                </Binding.Converter>
-                            </Binding>
-                        </Path.Data>
-                    </Path>
+                        <Path x:Name="LucideIcon"
+                              Width="16" Height="16"
+                              Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondary}"
+                              StrokeThickness="1.5"
+                              StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              Fill="Transparent"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Visibility="Collapsed">
+                            <Path.Data>
+                                <Binding Path="LucideIcon">
+                                    <Binding.Converter>
+                                        <conv:LucideIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Path.Data>
+                        </Path>
+                    </Grid>
                 </Border>
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
@@ -451,7 +452,7 @@
                   Cursor="Hand"
                   ToolTip="{Binding Name}"
                   AutomationProperties.Name="{Binding Name}"
-                  MouseLeftButtonDown="OnRowClick">
+                  >
 
                 <Grid.ContextMenu>
                     <ContextMenu>
@@ -506,40 +507,42 @@
                             CornerRadius="8"
                             Background="{DynamicResource SurfaceLow}"
                             VerticalAlignment="Center">
-                        <Image x:Name="AppIcon"
-                               Width="26" Height="26"
-                               Stretch="Uniform"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Source>
-                                <Binding Path="IconPath">
-                                    <Binding.Converter>
-                                        <conv:PathToIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Image.Source>
-                        </Image>
-                        <Path x:Name="LucideIcon"
-                              Width="15" Height="15"
-                              Stretch="Uniform"
-                              Stroke="{DynamicResource TextSecondary}"
-                              StrokeThickness="1.5"
-                              StrokeLineJoin="Round"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              Visibility="Collapsed">
-                            <Path.Data>
-                                <Binding Path="LucideIcon">
-                                    <Binding.Converter>
-                                        <conv:LucideIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Path.Data>
-                        </Path>
+                        <Grid>
+                            <Image x:Name="AppIcon"
+                                   Width="26" Height="26"
+                                   Stretch="Uniform"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality">
+                                <Image.Source>
+                                    <Binding Path="IconPath">
+                                        <Binding.Converter>
+                                            <conv:PathToIconConverter/>
+                                        </Binding.Converter>
+                                    </Binding>
+                                </Image.Source>
+                            </Image>
+                            <Path x:Name="LucideIcon"
+                                  Width="15" Height="15"
+                                  Stretch="Uniform"
+                                  Stroke="{DynamicResource TextSecondary}"
+                                  StrokeThickness="1.5"
+                                  StrokeLineJoin="Round"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Fill="Transparent"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed">
+                                <Path.Data>
+                                    <Binding Path="LucideIcon">
+                                        <Binding.Converter>
+                                            <conv:LucideIconConverter/>
+                                        </Binding.Converter>
+                                    </Binding>
+                                </Path.Data>
+                            </Path>
+                        </Grid>
                     </Border>
 
                     <!-- Name + subtitle -->
@@ -616,7 +619,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Cursor="Hand" FocusVisualStyle="{x:Null}"
                                 ToolTip="Remove"
-                                Click="OnClipDeleteClick">
+                                Command="{Binding DataContext.RemoveClipboardItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="5">

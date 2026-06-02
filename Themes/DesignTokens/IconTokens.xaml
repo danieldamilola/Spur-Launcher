@@ -30,9 +30,9 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <sys:String x:Key="Icon.Settings.Close"      >x</sys:String>
     <sys:String x:Key="Icon.Settings.Appearance" >palette</sys:String>
-    <sys:String x:Key="Icon.Settings.Theme"      >blend</sys:String>
-    <sys:String x:Key="Icon.Settings.Hotkey"     >keyboard</sys:String>
-    <sys:String x:Key="Icon.Settings.Behavior"   >move</sys:String>
+    <sys:String x:Key="Icon.Settings.Theme"      >moon</sys:String>
+    <sys:String x:Key="Icon.Settings.Hotkey"     >zap</sys:String>
+    <sys:String x:Key="Icon.Settings.Behavior"   >cpu</sys:String>
     <sys:String x:Key="Icon.Settings.AI"         >sparkles</sys:String>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->

@@ -1,9 +1,9 @@
 <Window x:Class="Arc.Views.OnboardingWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Welcome to Arc"
+        Title="Welcome to Spur"
         Width="520"
-        Height="440"
+        Height="480"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -22,95 +22,208 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="48,40,48,16">
-                <!-- Step 1 -->
+                <!-- Slide 1: Welcome -->
                 <StackPanel x:Name="Slide1" VerticalAlignment="Center">
-                    <Image Width="56" Height="56"
+                    <Image Width="64" Height="64"
                            HorizontalAlignment="Center"
-                           Margin="0,0,0,20"
+                           Margin="0,0,0,24"
                            RenderOptions.BitmapScalingMode="HighQuality"
                            Source="pack://application:,,,/Icons/arc-launcher-64x64.ico"/>
-                    <TextBlock Text="Instant search for everything on your PC."
+                    <TextBlock Text="Spur"
                                FontFamily="{DynamicResource UIFont}"
-                               FontSize="22"
+                               FontSize="36"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center"
-                               Margin="0,0,0,12"/>
-                    <TextBlock Text="Press Alt+Space anywhere to open Arc."
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Spur your workflow."
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="15"
+                               Foreground="{DynamicResource Accent}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,20"/>
+                    <TextBlock Text="A fast, minimal launcher for Windows. Nothing leaves your device — no tracking, no upsells, no clutter."
                                FontFamily="{DynamicResource UIFont}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
-                               TextAlignment="Center"/>
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="360"/>
                 </StackPanel>
 
-                <!-- Step 2 -->
+                <!-- Slide 2: Hotkey Setup -->
                 <StackPanel x:Name="Slide2" VerticalAlignment="Center" Visibility="Collapsed">
-                    <TextBlock Text="Indexed locally on your device"
+                    <TextBlock Text="Choose your shortcut"
                                FontFamily="{DynamicResource UIFont}"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
-                               Margin="0,0,0,16"/>
-                    <Border Background="{DynamicResource Depth2}"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="How will you summon Spur?"
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondary}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,28"/>
+
+                    <Border x:Name="KeyCaptureBorder"
+                            Focusable="True"
+                            Cursor="Hand"
+                            Background="{DynamicResource Depth2}"
                             CornerRadius="12"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Padding="20,16"
-                            Margin="0,0,0,8">
+                            BorderBrush="{DynamicResource Accent}"
+                            BorderThickness="2"
+                            Padding="32,24"
+                            HorizontalAlignment="Center"
+                            MinWidth="220"
+                            PreviewKeyDown="OnKeyCaptureDown"
+                            LostFocus="OnKeyCaptureLostFocus"
+                            GotFocus="OnKeyCaptureGotFocus"
+                            MouseLeftButtonDown="OnKeyCaptureClick">
                         <StackPanel>
-                            <TextBlock Text="Apps installed on this PC"
-                                       FontFamily="{DynamicResource UIFont}"
-                                       FontSize="14"
+                            <TextBlock x:Name="KeyCaptureText"
+                                       Text="Alt + Space"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       FontSize="26"
+                                       FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimary}"
-                                       Margin="0,0,0,8"/>
-                            <TextBlock Text="Optional folders and clipboard history (Settings → Search)"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="KeyCaptureHint"
+                                       Text="Click here, then press a key combination"
                                        FontFamily="{DynamicResource UIFont}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       TextWrapping="Wrap"/>
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextTertiary}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Text="Nothing leaves your machine unless you choose web search."
+
+                    <TextBlock Text="Try Alt+Space, Ctrl+Shift+K, or whatever feels natural."
                                FontFamily="{DynamicResource UIFont}"
                                FontSize="12"
                                Foreground="{DynamicResource TextTertiary}"
                                HorizontalAlignment="Center"
-                               TextAlignment="Center"
-                               Margin="0,8,0,0"/>
+                               Margin="0,14,0,0"/>
                 </StackPanel>
 
-                <!-- Step 3 -->
+                <!-- Slide 3: Theme -->
                 <StackPanel x:Name="Slide3" VerticalAlignment="Center" Visibility="Collapsed">
-                    <TextBlock Text="Try it now"
+                    <TextBlock Text="Pick your look"
                                FontFamily="{DynamicResource UIFont}"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
-                               Margin="0,0,0,16"/>
-                    <Border Background="{DynamicResource Depth2}"
-                            CornerRadius="12"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Padding="24,20"
-                            HorizontalAlignment="Center">
-                        <TextBlock Text="Alt + Space"
-                                   FontFamily="{DynamicResource MonoFont}"
-                                   FontSize="28"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   HorizontalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="Type to search · Enter to launch · Escape to dismiss"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="You can change this anytime in Settings."
                                FontFamily="{DynamicResource UIFont}"
-                               FontSize="12"
+                               FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
-                               Margin="0,16,0,0"/>
+                               Margin="0,0,0,28"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <!-- Dark -->
+                        <Border x:Name="ThemeDarkCard"
+                                Width="120"
+                                CornerRadius="10"
+                                Background="{DynamicResource Depth2}"
+                                BorderBrush="{DynamicResource Accent}"
+                                BorderThickness="2"
+                                Padding="0"
+                                Margin="0,0,10,0"
+                                Cursor="Hand"
+                                MouseLeftButtonDown="OnThemeDarkClick">
+                            <StackPanel Margin="16">
+                                <Border Width="88" Height="48" CornerRadius="6"
+                                        Background="{DynamicResource OnboardingPreviewDark}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Dark"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Light -->
+                        <Border x:Name="ThemeLightCard"
+                                Width="120"
+                                CornerRadius="10"
+                                Background="{DynamicResource Depth2}"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                Padding="0"
+                                Margin="0,0,10,0"
+                                Cursor="Hand"
+                                MouseLeftButtonDown="OnThemeLightClick">
+                            <StackPanel Margin="16">
+                                <Border Width="88" Height="48" CornerRadius="6"
+                                        Background="{DynamicResource OnboardingPreviewLight}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Light"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- System -->
+                        <Border x:Name="ThemeSystemCard"
+                                Width="120"
+                                CornerRadius="10"
+                                Background="{DynamicResource Depth2}"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                Padding="0"
+                                Cursor="Hand"
+                                MouseLeftButtonDown="OnThemeSystemClick">
+                            <StackPanel Margin="16">
+                                <Border Width="88" Height="48" CornerRadius="6"
+                                        Background="{DynamicResource OnboardingPreviewDark}" Margin="0,0,0,8">
+                                    <Border Width="44" Height="48" CornerRadius="0,0,0,6"
+                                            Background="{DynamicResource OnboardingPreviewLight}" HorizontalAlignment="Right"/>
+                                </Border>
+                                <TextBlock Text="System"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Slide 4: Ready -->
+                <StackPanel x:Name="Slide4" VerticalAlignment="Center" Visibility="Collapsed">
+                    <TextBlock x:Name="ReadyHeading"
+                               Text="You're all set."
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,12"/>
+                    <TextBlock x:Name="ReadySummary"
+                               Text=""
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondary}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="360"
+                               Margin="0,0,0,32"/>
+                    <TextBlock Text="Press Alt+Space anytime to open Spur."
+                               FontFamily="{DynamicResource UIFont}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiary}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"/>
                 </StackPanel>
             </Grid>
 
@@ -126,7 +239,9 @@
                              Fill="{DynamicResource TextPrimary}"/>
                     <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="0,0,8,0"
                              Fill="{DynamicResource BorderStrong}"/>
-                    <Ellipse x:Name="Dot3" Width="8" Height="8"
+                    <Ellipse x:Name="Dot3" Width="8" Height="8" Margin="0,0,8,0"
+                             Fill="{DynamicResource BorderStrong}"/>
+                    <Ellipse x:Name="Dot4" Width="8" Height="8"
                              Fill="{DynamicResource BorderStrong}"/>
                 </StackPanel>
 

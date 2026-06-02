@@ -241,7 +241,9 @@ public partial class MainWindow : Window
         ContentArea.Visibility = showContent ? Visibility.Visible : Visibility.Collapsed;
         FooterArea.Visibility = showContent && _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
 
-        BrowsePanelControl.Visibility = isBrowse ? Visibility.Visible : Visibility.Collapsed;
+        bool isClipboard = _vm.ActiveCategory == "clipboard";
+        ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
+        BrowsePanelControl.Visibility = isBrowse && !isClipboard ? Visibility.Visible : Visibility.Collapsed;
         ResultsListControl.Visibility = isBrowse ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
