@@ -26,8 +26,37 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         var hwnd = new WindowInteropHelper(this).Handle;
         HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
-        // DWM Mica + AllowsTransparency causes a white fringe on frameless WPF windows.
-        // Capsule uses an opaque Surface fill + drop shadow only (Spotlight-style).
+
+        // Item 8 — Glassmorphism: acrylic blur backdrop
+        EnableAcrylicBlur(hwnd);
+
+        Closed += (_, _) => WindowBlur.DisableBlur(hwnd);
+    }
+
+    private void EnableAcrylicBlur(IntPtr hwnd)
+    {
+        try
+        {
+            bool isLight = IsSystemLightTheme();
+            uint tint = isLight ? 0x44FFFFFFu : 0x99000000u;
+            WindowBlur.EnableBlur(hwnd, tint);
+        }
+        catch
+        {
+            // Fallback: keep SurfaceAcrylic but it'll show as semi-transparent
+            // without blur. Still acceptable on unsupported systems.
+        }
+    }
+
+    private static bool IsSystemLightTheme()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser
+                .OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("AppsUseLightTheme") is int i && i == 1;
+        }
+        catch { return false; }
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

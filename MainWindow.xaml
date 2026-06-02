@@ -42,7 +42,7 @@
       <Border x:Name="Capsule"
               HorizontalAlignment="Stretch"
               CornerRadius="{DynamicResource RadiusWindow}"
-              Background="{DynamicResource Surface}"
+              Background="{DynamicResource SurfaceAcrylic}"
               BorderBrush="{DynamicResource BorderBrush}"
               BorderThickness="1"
               SnapsToDevicePixels="True"
