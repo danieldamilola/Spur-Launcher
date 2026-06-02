@@ -5,7 +5,6 @@ using Arc.ViewModels;
 using Arc.Views;
 using Arc.Services;
 using Arc.Converters;
-using Arc.Models;
 
 namespace Arc;
 
@@ -66,10 +65,6 @@ public partial class App : Application
         themeMgr.Apply(config.Theme);
         services.AddSingleton<IThemeManager>(themeMgr);
 
-        // ── Surface colors ────────────────────────────────────────────
-        try { UpdateSurfaceColors(config.BackgroundColor); }
-        catch (Exception ex) { _fileLogger.Warning("UpdateSurfaceColors failed", ex); }
-
         // Core services
         services.AddSingleton<IClipboardService, ClipboardServiceImpl>();
         services.AddSingleton<IStartupService, StartupServiceImpl>();
@@ -84,13 +79,6 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
 
         _services = services.BuildServiceProvider();
-
-        // ── Initialize static facades (backward compat bridge) ───────
-        ClipboardService.Initialize(_services.GetRequiredService<IClipboardService>(), _fileLogger);
-        ThemeManager.Initialize(_services.GetRequiredService<IThemeManager>(), _fileLogger);
-        StartupService.Initialize(_services.GetRequiredService<IStartupService>(), _fileLogger);
-        IconService.Initialize(_services.GetRequiredService<IIconService>(), _fileLogger);
-        NotificationService.Initialize(_services.GetRequiredService<INotificationService>(), _fileLogger);
 
         // ── Initialize converter references ─────────────────────────
         PathToIconConverter.IconService = _services.GetRequiredService<IIconService>();
@@ -115,10 +103,7 @@ public partial class App : Application
         _settingsWindow.SetViewModel(_vm.Settings);
         _vm.OpenSettingsRequested += () =>
         {
-            if (_settingsWindow.IsVisible)
-                _settingsWindow.Activate();
-            else
-                _settingsWindow.Show();
+            ShowSettingsWindow();
         };
 
         // ── Register global hotkey ────────────────────────────────────
@@ -199,7 +184,6 @@ public partial class App : Application
                     if (_window is not null)
                     {
                         _window.Opacity = settings.WindowOpacity;
-                        _window.Width   = settings.LauncherWidth;
                     }
                     _services.GetRequiredService<IClipboardService>().MaxItems = settings.ClipboardHistorySize;
                     _services.GetRequiredService<IFileSearchService>().MaxDepth = settings.MaxFileDepth;
@@ -208,11 +192,6 @@ public partial class App : Application
                 case nameof(SettingsViewModel.WindowOpacity):
                     if (_window is not null)
                         _window.Opacity = settings.WindowOpacity;
-                    break;
-
-                case nameof(SettingsViewModel.LauncherWidth):
-                    if (_window is not null)
-                        _window.Width = settings.LauncherWidth;
                     break;
 
                 case nameof(SettingsViewModel.HotkeyEnabled):
@@ -260,27 +239,8 @@ public partial class App : Application
                         _trayIcon = null;
                     }
                     break;
-
-                case nameof(SettingsViewModel.BackgroundColor):
-                    UpdateSurfaceColors(settings.BackgroundColor);
-                    break;
             }
         };
-    }
-
-    private void UpdateSurfaceColors(string hexColor)
-    {
-        var color = (Color)ColorConverter.ConvertFromString(hexColor);
-        var lightColor = Color.FromRgb(
-            (byte)Math.Min(255, color.R + 80),
-            (byte)Math.Min(255, color.G + 80),
-            (byte)Math.Min(255, color.B + 80)
-        );
-        if (Resources["Surface"] is SolidColorBrush surfaceBrush) surfaceBrush.Color = color;
-        if (Resources["SurfaceLow"] is SolidColorBrush surfaceLowBrush) surfaceLowBrush.Color = lightColor;
-        if (Resources["DynamicSurface"] is SolidColorBrush dynamicSurfaceBrush) dynamicSurfaceBrush.Color = color;
-        if (Resources["DynamicSurfaceLow"] is SolidColorBrush dynamicSurfaceLowBrush) dynamicSurfaceLowBrush.Color = lightColor;
-        if (Resources["HoverBg"] is SolidColorBrush hoverBrush) hoverBrush.Color = Color.FromArgb(26, 255, 255, 255);
     }
 
     // ── Hotkey toggle ─────────────────────────────────────────────────
@@ -314,15 +274,35 @@ public partial class App : Application
         var menu     = new ContextMenu();
         var open     = new MenuItem { Header = "Open Arc" };
         var settings = new MenuItem { Header = "Settings" };
+        var about    = new MenuItem { Header = "About" };
         var quit     = new MenuItem { Header = "Quit" };
         open.Click     += (_, _) => { _window?.ShowWindow(); };
-        settings.Click += (_, _) => { _vm?.OpenSettingsCommand.Execute(null); };
+        settings.Click += (_, _) => ShowSettingsWindow();
+        about.Click    += (_, _) => ShowSettingsWindow("About");
         quit.Click     += (_, _) => Shutdown();
         menu.Items.Add(open);
         menu.Items.Add(settings);
+        menu.Items.Add(about);
         menu.Items.Add(new Separator());
         menu.Items.Add(quit);
         return menu;
+    }
+
+    private void ShowSettingsWindow(string? sectionName = null)
+    {
+        if (_settingsWindow is null || _vm is null) return;
+
+        if (!string.IsNullOrWhiteSpace(sectionName))
+        {
+            var section = _vm.Settings.Sections.FirstOrDefault(s => string.Equals(s.Name, sectionName, StringComparison.OrdinalIgnoreCase));
+            if (section is not null)
+                _vm.Settings.SelectedSection = section;
+        }
+
+        if (_settingsWindow.IsVisible)
+            _settingsWindow.Activate();
+        else
+            _settingsWindow.Show();
     }
 
     // ── Updates ───────────────────────────────────────────────────────

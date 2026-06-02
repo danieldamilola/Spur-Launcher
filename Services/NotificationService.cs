@@ -110,30 +110,3 @@ public sealed class NotificationServiceImpl : INotificationService
         return s.Length <= maxLen ? s : s[..(maxLen - 1)] + "\u2026";
     }
 }
-
-/// <summary>Static facade for backward compatibility.</summary>
-public static class NotificationService
-{
-    private static INotificationService? _instance;
-    private static ILogger _log = NullLogger.Instance;
-
-    public static void Initialize(INotificationService instance, ILogger logger)
-    {
-        _instance = instance;
-        _log = logger;
-    }
-
-    public static void Show(string title, string message) => Instance.Show(title, message);
-
-    private static INotificationService Instance
-    {
-        get
-        {
-            if (_instance is not null) return _instance;
-            var impl = new NotificationServiceImpl(_log);
-            _instance = impl;
-            _log.Info("NotificationService auto-initialized.");
-            return impl;
-        }
-    }
-}

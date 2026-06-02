@@ -2,530 +2,100 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:Arc.Models"
-             xmlns:conv="clr-namespace:Arc.Converters">
+             xmlns:conv="clr-namespace:Arc.Converters"
+             Background="Transparent">
 
-    <UserControl.Resources>
+    <!--
+        BrowsePanel — category browse (files / clipboard / actions).
+        Uses shared templates from CommonStyles.xaml.
+        Click handling via PreviewMouseLeftButtonDown on each ListBox.
+    -->
 
-        <!-- ── Filter chip style ──────────────────────────────────── -->
-        <Style x:Key="FilterChip" TargetType="Button">
-            <Setter Property="FontFamily"     Value="{DynamicResource UIFont}"/>
-            <Setter Property="FontSize"       Value="{DynamicResource FontXs}"/>
-            <Setter Property="Foreground"     Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="Background"     Value="{DynamicResource SurfaceLow}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"        Value="10,4"/>
-            <Setter Property="Margin"         Value="0,0,6,0"/>
-            <Setter Property="Cursor"         Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chip"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="10"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chip" Property="Background" Value="{DynamicResource HoverBg}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="FilterChipActive" TargetType="Button" BasedOn="{StaticResource FilterChip}">
-            <Setter Property="Background" Value="{DynamicResource HoverBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-
-        <!-- ── "⋯" overflow menu button style ─────────────────────── -->
-        <Style x:Key="OverflowButton" TargetType="Button">
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6">
-                            <Path Data="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-                                  Fill="{DynamicResource TextMuted}"
-                                  Width="16" Height="16" Stretch="Uniform"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SurfaceLow}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ── Section header style ────────────────────────────────── -->
-        <Style x:Key="SectionHeader" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
-            <Setter Property="FontSize" Value="{DynamicResource FontXs}"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-            <Setter Property="Padding" Value="12,8,12,4"/>
-        </Style>
-
-        <!-- ── App tile (grid view) ────────────────────────────────── -->
-        <DataTemplate x:Key="AppTile" DataType="{x:Type models:SearchResult}">
-            <Border x:Name="TileBg"
-                    Width="96" Height="72" Margin="4"
-                    CornerRadius="8" Background="Transparent"
-                    Cursor="Hand"
-                    MouseEnter="OnTileMouseEnter"
-                    MouseLeave="OnTileMouseLeave"
-                    MouseLeftButtonDown="OnItemClick">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border Width="36" Height="36"
-                            CornerRadius="8" Background="{DynamicResource SurfaceLow}"
-                            HorizontalAlignment="Center">
-                        <Image Width="24" Height="24"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Source>
-                                <Binding Path="IconPath">
-                                    <Binding.Converter>
-                                        <conv:PathToIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Image.Source>
-                        </Image>
-                    </Border>
-                    <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="11"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               MaxWidth="88"
-                               Margin="0,6,0,0"/>
-                </StackPanel>
-            </Border>
-        </DataTemplate>
-
-        <!-- ── App row (list view) ─────────────────────────────────── -->
-        <DataTemplate x:Key="AppRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="44" Margin="6,1"
-                  Background="Transparent" Cursor="Hand"
-                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
-                  MouseLeftButtonDown="OnItemClick">
-                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}" Background="Transparent"/>
-                <Grid Margin="10,0,8,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="11"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Width="30" Height="30"
-                            CornerRadius="{DynamicResource RadiusSm}" Background="{DynamicResource Depth2}"
-                            VerticalAlignment="Center">
-                        <Image Width="20" Height="20"
-                               VerticalAlignment="Center" HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Source>
-                                <Binding Path="IconPath">
-                                    <Binding.Converter>
-                                        <conv:PathToIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Image.Source>
-                        </Image>
-                    </Border>
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="13"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding Subtitle}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ── File row template ──────────────────────────────────── -->
-        <DataTemplate x:Key="FileRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="52" Margin="4,0"
-                  Background="Transparent" Cursor="Hand"
-                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
-                  MouseLeftButtonDown="OnItemClick">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                </Grid.ColumnDefinitions>
-                <Border x:Name="RowBg" Grid.ColumnSpan="3"
-                        CornerRadius="{DynamicResource RadiusRow}"
-                        Background="Transparent"/>
-                <Image Grid.Column="0" Width="20" Height="20"
-                       VerticalAlignment="Center" HorizontalAlignment="Center"
-                       RenderOptions.BitmapScalingMode="HighQuality">
-                    <Image.Source>
-                        <Binding Path="IconPath">
-                            <Binding.Converter>
-                                <conv:PathToIconConverter/>
-                            </Binding.Converter>
-                        </Binding>
-                    </Image.Source>
-                </Image>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
-                    <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontBase}"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource TextPrimary}"
-                               TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Text="{Binding Subtitle}"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontSm}"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextTrimming="CharacterEllipsis"/>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ── Clipboard row template ──────────────────────────────── -->
-        <DataTemplate x:Key="ClipRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="44" Margin="6,1"
-                  Background="Transparent" Cursor="Hand"
-                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
-                  MouseLeftButtonDown="OnItemClick">
-                <Grid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Pin / Unpin"
-                                  Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                  CommandParameter="{Binding}"/>
-                    </ContextMenu>
-                </Grid.ContextMenu>
-                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}" Background="Transparent"/>
-                <Grid Margin="10,0,8,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30"/>
-                        <ColumnDefinition Width="11"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Image thumbnail -->
-                    <Border x:Name="ImgBox"
-                            Grid.Column="0"
-                            Width="30" Height="30"
-                            CornerRadius="{DynamicResource RadiusSm}"
-                            Background="{DynamicResource Depth2}"
-                            VerticalAlignment="Center"
-                            Visibility="Collapsed">
-                        <Image x:Name="ClipImg"
-                               Width="28" Height="28"
-                               Stretch="UniformToFill"
-                               RenderOptions.BitmapScalingMode="HighQuality"
-                               Source="{Binding ClipImage}"/>
-                    </Border>
-
-                    <!-- Text icon (when no image) -->
-                    <Border x:Name="TextIconBox"
-                            Grid.Column="0"
-                            Width="30" Height="30"
-                            CornerRadius="{DynamicResource RadiusSm}"
-                            Background="{DynamicResource Depth2}"
-                            VerticalAlignment="Center"
-                            Visibility="Collapsed">
-                        <Path Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
-                              Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{DynamicResource Accent}" StrokeThickness="1.5"
-                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-
-                    <!-- Name + time -->
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="13"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding Subtitle}"
-                                   FontFamily="{DynamicResource MonoFont}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   Opacity="0.8"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-
-                    <!-- Pin indicator -->
-                    <Button x:Name="PinButton"
-                            Grid.Column="3"
-                            Width="22" Height="22"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            VerticalAlignment="Center"
-                            Margin="6,0,0,0"
-                            ClickMode="Press"
-                            ToolTip="Pin / Unpin">
-                        <Button.Command>
-                            <Binding Path="DataContext.TogglePinCommand"
-                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                        </Button.Command>
-                        <Button.CommandParameter>
-                            <Binding/>
-                        </Button.CommandParameter>
-                        <TextBlock Text="📌" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    </Button>
-                </Grid>
-            </Grid>
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding IsClipImage}" Value="True">
-                    <Setter TargetName="ImgBox"       Property="Visibility" Value="Visible"/>
-                    <Setter TargetName="TextIconBox" Property="Visibility" Value="Collapsed"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsClipImage}" Value="False">
-                    <Setter TargetName="ImgBox"       Property="Visibility" Value="Collapsed"/>
-                    <Setter TargetName="TextIconBox" Property="Visibility" Value="Visible"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsPinned}" Value="True">
-                    <Setter TargetName="PinButton" Property="Opacity" Value="1"/>
-                    <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource AccentWash}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsPinned}" Value="False">
-                    <Setter TargetName="PinButton" Property="Opacity" Value="0.4"/>
-                    <Setter TargetName="PinButton" Property="Background" Value="Transparent"/>
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
-
-        <!-- ── Action command template ──────────────────────────────── -->
-        <DataTemplate x:Key="ActionRow" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot" Height="44" Margin="12,2"
-                  Background="Transparent" Cursor="Hand"
-                  MouseEnter="OnRowMouseEnter" MouseLeave="OnRowMouseLeave"
-                  MouseLeftButtonDown="OnItemClick">
-                <Border x:Name="RowBg" CornerRadius="{DynamicResource RadiusMd}"
-                        Background="Transparent"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="32"/>
-                        <ColumnDefinition Width="8"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Width="32" Height="32"
-                            CornerRadius="{DynamicResource RadiusSm}"
-                            Background="{DynamicResource Depth2}"
-                            HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Path Width="16" Height="16" Stretch="Uniform"
-                              Stroke="{DynamicResource Accent}"
-                              StrokeThickness="1.6"
-                              StrokeLineJoin="Round"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center">
-                            <Path.Data>
-                                <Binding Path="LucideIcon">
-                                    <Binding.Converter>
-                                        <conv:LucideIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Path.Data>
-                        </Path>
-                    </Border>
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="13"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding Subtitle}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-    </UserControl.Resources>
-
-    <Grid>
-
-        <!-- ══ LOADING INDICATOR ══════════════════════════════════════ -->
-        <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="Loading apps…"
-                           FontFamily="{DynamicResource UIFont}"
-                           FontSize="{DynamicResource FontBase}"
-                           Foreground="{DynamicResource TextMuted}"
-                           HorizontalAlignment="Center"
-                           Margin="0,20,0,0"/>
-                <Border Width="100" Height="4" CornerRadius="2"
-                        Background="{DynamicResource SurfaceLow}"
-                        Margin="0,12,0,0" HorizontalAlignment="Center">
-                    <Border x:Name="LoadingBar"
-                            Width="30"
-                            CornerRadius="2"
-                            Background="{DynamicResource TextMuted}"
-                            HorizontalAlignment="Left">
-                        <Border.RenderTransform>
-                            <TranslateTransform x:Name="LoadingBarTranslate" X="0"/>
-                        </Border.RenderTransform>
-                        <Border.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever" Duration="0:0:1.2">
-                                        <DoubleAnimation Storyboard.TargetName="LoadingBarTranslate"
-                                                         Storyboard.TargetProperty="X"
-                                                         From="0" To="70" Duration="0:0:0.6"
-                                                         AutoReverse="True"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Border.Triggers>
-                    </Border>
-                </Border>
-            </StackPanel>
-        </Grid>
-
-        <!-- ══ FILES: filter chips + list ═══════════════════════════════ -->
-        <Grid x:Name="FilesSection" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <ScrollViewer Grid.Row="0"
-                          HorizontalScrollBarVisibility="Hidden"
-                          VerticalScrollBarVisibility="Disabled"
-                          Padding="0">
-                <StackPanel Orientation="Horizontal" Margin="8,8,8,6">
-                    <Button x:Name="FilterAll"       Tag="All"       Content="All"       Click="OnFilterClick" Style="{StaticResource FilterChipActive}"/>
-                    <Button x:Name="FilterDocuments" Tag="Documents" Content="Documents" Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterImages"    Tag="Images"    Content="Images"    Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterPDFs"      Tag="PDFs"      Content="PDFs"      Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterVideos"    Tag="Videos"    Content="Videos"    Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterMusic"     Tag="Music"     Content="Music"     Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterCode"      Tag="Code"      Content="Code"      Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                    <Button x:Name="FilterFolders"   Tag="Folders"   Content="Folders"   Click="OnFilterClick" Style="{StaticResource FilterChip}"/>
-                </StackPanel>
-            </ScrollViewer>
-
-            <ListBox x:Name="FilesList"
-                     Grid.Row="1"
-                     Padding="0,4,0,8"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     ScrollViewer.CanContentScroll="False"
-                     ItemTemplate="{StaticResource FileRow}"/>
-        </Grid>
-
-        <!-- ══ CLIPBOARD: history list ══════════════════════════════════ -->
-        <Grid x:Name="ClipSection" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Header: title + count + clear button -->
-            <Grid Grid.Row="0" Margin="12,8,12,4">
-                <TextBlock Text="CLIPBOARD"
-                           Style="{StaticResource SectionHeader}"
-                           HorizontalAlignment="Left"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock x:Name="ClipCount"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="{DynamicResource FontXs}"
-                               Foreground="{DynamicResource TextMuted}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,12,0"/>
-                    <Button Content="Clear"
-                            FontFamily="{DynamicResource UIFont}"
-                            FontSize="{DynamicResource FontXs}"
-                            Foreground="{DynamicResource TextSecondary}"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="0"
-                            Cursor="Hand"
-                            Click="OnClearClipboard">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <TextBlock Text="{TemplateBinding Content}"
-                                                       FontFamily="{DynamicResource UIFont}"
-                                                       FontSize="{DynamicResource FontXs}"
-                                                       Foreground="{DynamicResource TextSecondary}"/>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
-            </Grid>
-
-            <!-- List -->
-            <ListBox x:Name="ClipList"
-                     Grid.Row="1"
-                     Padding="0,4,0,8"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     ScrollViewer.CanContentScroll="False"
-                     ItemTemplate="{StaticResource ClipRow}"/>
-        </Grid>
-
-        <!-- ══ ACTIONS: command drawer ══════════════════════════════════ -->
-        <Grid x:Name="ActionsSection" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="0" Margin="18,16,18,8">
-                <StackPanel>
-                    <TextBlock Text="Actions"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextSecondary}"/>
-                    <TextBlock Text="Type a command or launch one directly"
-                               FontFamily="{DynamicResource UIFont}"
-                               FontSize="11"
-                               Foreground="{DynamicResource TextSecondary}"
-                               Margin="0,2,0,0"/>
-                </StackPanel>
-            </Grid>
-
-            <ListBox x:Name="ActionsList"
-                     Grid.Row="1"
-                     Padding="0,0,0,10"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     ScrollViewer.CanContentScroll="False"
-                     ItemTemplate="{StaticResource ActionRow}"/>
-        </Grid>
-
+    <!-- ═══ Loading ═══ -->
+    <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <ProgressBar Grid.Row="1" IsIndeterminate="True"
+                     Foreground="{DynamicResource Accent}"
+                     Background="Transparent"
+                     Height="2"
+                     HorizontalAlignment="Center" Width="120"/>
     </Grid>
+
+    <!-- ═══ Files section ═══ -->
+    <Grid x:Name="FilesSection" Visibility="Collapsed">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Recent files"
+                   Style="{DynamicResource ShelfHeaderStyle}"/>
+
+        <ListBox x:Name="FilesList" Grid.Row="1"
+                 BorderThickness="0" Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingStackPanel.IsVirtualizing="True"
+                 FocusVisualStyle="{x:Null}"
+                 ItemTemplate="{DynamicResource ResultRowTemplate}"
+                 PreviewMouseLeftButtonDown="OnItemClick"/>
+    </Grid>
+
+    <!-- ═══ Clipboard section ═══ -->
+    <Grid x:Name="ClipSection" Visibility="Collapsed">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Clipboard"
+                   Style="{DynamicResource ShelfHeaderStyle}"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,6">
+            <TextBlock x:Name="ClipCount"
+                       FontFamily="{DynamicResource UIFont}"
+                       FontSize="{DynamicResource FontXs}"
+                       Foreground="{DynamicResource TextMuted}"
+                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+            <Button Style="{DynamicResource FilterChipStyle}"
+                    Content="Clear all"
+                    Click="OnClearClipboard"/>
+        </StackPanel>
+
+        <ListBox x:Name="ClipList" Grid.Row="2"
+                 BorderThickness="0" Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingStackPanel.IsVirtualizing="True"
+                 FocusVisualStyle="{x:Null}"
+                 ItemTemplate="{DynamicResource ClipResultTemplate}"
+                 PreviewMouseLeftButtonDown="OnItemClick"/>
+    </Grid>
+
+    <!-- ═══ Actions section ═══ -->
+    <Grid x:Name="ActionsSection" Visibility="Collapsed">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Commands"
+                   Style="{DynamicResource ShelfHeaderStyle}"/>
+
+        <ListBox x:Name="ActionsList" Grid.Row="1"
+                 BorderThickness="0" Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingStackPanel.IsVirtualizing="True"
+                 FocusVisualStyle="{x:Null}"
+                 ItemTemplate="{DynamicResource ActionResultTemplate}"
+                 PreviewMouseLeftButtonDown="OnItemClick"/>
+    </Grid>
+
 </UserControl>

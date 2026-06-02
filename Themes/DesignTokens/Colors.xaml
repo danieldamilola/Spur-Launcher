@@ -1,40 +1,40 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Design tokens — Colors
-       These tokens mirror the visual design system (light/dark variants included).
-       Keys are intentionally namespaced to avoid colliding with existing theme keys.
-  -->
+  <!-- Arc v2 design tokens — design.md §2 -->
 
-  <!-- Backgrounds -->
-  <SolidColorBrush x:Key="Token.Bg.Base.Light" Color="#F5F5F7" />
+  <!-- Dark -->
+  <SolidColorBrush x:Key="Token.Bg.Void.Dark" Color="#0C0C0E" />
+  <SolidColorBrush x:Key="Token.Bg.Base.Dark" Color="#121214" />
+  <SolidColorBrush x:Key="Token.Bg.Surface.Dark" Color="#1A1A1D" />
+  <SolidColorBrush x:Key="Token.Bg.Elevated.Dark" Color="#222226" />
+  <SolidColorBrush x:Key="Token.Bg.Selected.Dark" Color="#2A2A2E" />
+  <SolidColorBrush x:Key="Token.Text.Primary.Dark" Color="#F4F2EF" />
+  <SolidColorBrush x:Key="Token.Text.Secondary.Dark" Color="#9B9893" />
+  <SolidColorBrush x:Key="Token.Text.Tertiary.Dark" Color="#5C5A57" />
+  <SolidColorBrush x:Key="Token.Brand.Accent.Dark" Color="#C9C4BC" />
+  <SolidColorBrush x:Key="Token.Brand.Highlight.Dark" Color="#E8E4DF" />
+  <SolidColorBrush x:Key="Token.Border.Subtle.Dark" Color="#0FFFFFFF" />
+  <SolidColorBrush x:Key="Token.Border.Strong.Dark" Color="#1AFFFFFF" />
+  <SolidColorBrush x:Key="Token.Semantic.Danger.Dark" Color="#C45C5C" />
+  <SolidColorBrush x:Key="Token.Semantic.Success.Dark" Color="#6B8F71" />
+
+  <!-- Light -->
+  <SolidColorBrush x:Key="Token.Bg.Base.Light" Color="#F2F2F4" />
   <SolidColorBrush x:Key="Token.Bg.Surface.Light" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Token.Bg.Elevated.Light" Color="#FFFFFF" />
-
-  <SolidColorBrush x:Key="Token.Bg.Base.Dark" Color="#141414" />
-  <SolidColorBrush x:Key="Token.Bg.Surface.Dark" Color="#1C1C1E" />
-  <SolidColorBrush x:Key="Token.Bg.Elevated.Dark" Color="#242426" />
-
-  <!-- Text -->
-  <SolidColorBrush x:Key="Token.Text.Primary.Light" Color="#1C1C1E" />
+  <SolidColorBrush x:Key="Token.Bg.Elevated.Light" Color="#F7F7F8" />
+  <SolidColorBrush x:Key="Token.Bg.Selected.Light" Color="#EEEEF0" />
+  <SolidColorBrush x:Key="Token.Text.Primary.Light" Color="#1A1A1D" />
   <SolidColorBrush x:Key="Token.Text.Secondary.Light" Color="#6E6E73" />
   <SolidColorBrush x:Key="Token.Text.Tertiary.Light" Color="#AEAEB2" />
+  <SolidColorBrush x:Key="Token.Brand.Accent.Light" Color="#3A3A3D" />
+  <SolidColorBrush x:Key="Token.Brand.Highlight.Light" Color="#1A1A1D" />
+  <SolidColorBrush x:Key="Token.Border.Subtle.Light" Color="#0F000000" />
+  <SolidColorBrush x:Key="Token.Border.Strong.Light" Color="#1A000000" />
+  <SolidColorBrush x:Key="Token.Semantic.Danger.Light" Color="#C45C5C" />
+  <SolidColorBrush x:Key="Token.Semantic.Success.Light" Color="#6B8F71" />
 
-  <SolidColorBrush x:Key="Token.Text.Primary.Dark" Color="#F5F5F7" />
-  <SolidColorBrush x:Key="Token.Text.Secondary.Dark" Color="#8E8E93" />
-  <SolidColorBrush x:Key="Token.Text.Tertiary.Dark" Color="#48484A" />
-
-  <!-- Accent -->
-  <SolidColorBrush x:Key="Token.Accent" Color="#0A84FF" />
-  <SolidColorBrush x:Key="Token.Accent.Subtle.Light" Color="#1A84FF1F" />
-  <SolidColorBrush x:Key="Token.Accent.Subtle.Dark" Color="#261A84FF" />
-
-  <!-- Semantic -->
-  <SolidColorBrush x:Key="Token.Destructive.Light" Color="#FF3B30" />
-  <SolidColorBrush x:Key="Token.Destructive.Dark" Color="#FF453A" />
-
-  <!-- Borders -->
-  <SolidColorBrush x:Key="Token.Border.Light" Color="#14000000" />
-  <SolidColorBrush x:Key="Token.Border.Dark" Color="#0FFFFFFF" />
+  <!-- Shared alias (theme files override at runtime) -->
+  <SolidColorBrush x:Key="Token.Accent" Color="#C9C4BC" />
 
 </ResourceDictionary>

@@ -3,30 +3,67 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:Arc.Models"
              xmlns:conv="clr-namespace:Arc.Converters"
-             Height="32">
+             Height="30">
 
     <UserControl.Resources>
         <conv:ScopeEqualsConverter x:Key="ScopeEquals"/>
+
+        <Style x:Key="ScopeChip" TargetType="Button">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinWidth" Value="44"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+            <Setter Property="FontSize" Value="{DynamicResource FontHint}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chip"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="999"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                    <Setter Property="Background" Value="{DynamicResource HoverBg}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ScopeChipActive" TargetType="Button" BasedOn="{StaticResource ScopeChip}">
+            <Setter Property="Background" Value="{DynamicResource SelectedBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
     </UserControl.Resources>
 
     <ItemsControl ItemsSource="{Binding ScopeFilters}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" Margin="16,0,16,8"/>
+                <StackPanel Orientation="Horizontal" Margin="16,2,16,7"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type models:ScopeFilterItem}">
-                <TextBlock Margin="0,4,16,0"
-                           Cursor="Hand"
-                           FontFamily="{DynamicResource UIFont}"
-                           FontSize="{DynamicResource FontHint}"
-                           Tag="{Binding Id}"
-                           MouseLeftButtonDown="OnScopeClick">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource TextTertiary}"/>
-                            <Setter Property="FontWeight" Value="Normal"/>
+                <Button Tag="{Binding Id}"
+                        Click="OnScopeClick">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ScopeChip}">
                             <Style.Triggers>
                                 <DataTrigger Value="True">
                                     <DataTrigger.Binding>
@@ -36,15 +73,19 @@
                                             <Binding Path="Id"/>
                                         </MultiBinding>
                                     </DataTrigger.Binding>
+                                    <Setter Property="Background" Value="{DynamicResource SelectedBg}"/>
                                     <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                                     <Setter Property="FontWeight" Value="Medium"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </TextBlock.Style>
-                    <Run Text="{Binding Label, Mode=OneWay}"/>
-                    <Run Text="{Binding Count, StringFormat=' {0}', Mode=OneWay}"/>
-                </TextBlock>
+                    </Button.Style>
+                    <TextBlock>
+                        <Run Text="{Binding Label, Mode=OneWay}"/>
+                        <Run Text="{Binding Count, StringFormat=' {0}', Mode=OneWay}"
+                             Foreground="{DynamicResource TextTertiary}"/>
+                    </TextBlock>
+                </Button>
             </DataTemplate>
         </ItemsControl.ItemTemplate>
     </ItemsControl>

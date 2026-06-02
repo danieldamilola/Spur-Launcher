@@ -15,47 +15,12 @@ public sealed class ArcConfig
     /// <summary>"dark" | "light" | "system"</summary>
     public string Theme { get; set; } = "dark";
 
-    /// <summary>Whether blur effect is enabled on the search bar.</summary>
-    public bool EnableBlur { get; set; } = true;
-
-    /// <summary>Background surface color in hex (#RRGGBB).</summary>
-    public string BackgroundColor { get; set; } = "#141416";
-
-    /// <summary>Custom accent color in hex (#RRGGBB). Empty = follow Windows accent.</summary>
-    public string AccentColor { get; set; } = string.Empty;
-
-    /// <summary>When true, the Windows accent color overrides AccentColor.</summary>
-    public bool UseWindowsAccentColor { get; set; } = true;
-
     /// <summary>Window opacity as a fraction (0.0–1.0). Clamped on load.</summary>
     public double WindowOpacity { get; set; } = 0.95;
-
-    /// <summary>UI font family name.</summary>
-    public string FontFamily { get; set; } = "Segoe UI Variable";
-
-    /// <summary>Base font size in px.</summary>
-    public double FontSize { get; set; } = 14;
-
-    /// <summary>Launcher window width in px (300–1200).</summary>
-    public double LauncherWidth { get; set; } = 440;
 
     /// <summary>How many results to display before scrolling (5, 8, or 10).</summary>
     public int ResultsCount { get; set; } = 5;
 
-    /// <summary>Show category labels in the browse panel.</summary>
-    public bool ShowCategoryLabels { get; set; } = true;
-
-    /// <summary>Corner radius in px.</summary>
-    public double CornerRadius { get; set; } = 12;
-
-    /// <summary>Animation speed: "instant", "fast", or "smooth".</summary>
-    public string AnimationSpeed { get; set; } = "smooth";
-
-    /// <summary>Show app icons in results.</summary>
-    public bool ShowAppIcons { get; set; } = true;
-
-    /// <summary>Compact mode with tighter rows.</summary>
-    public bool CompactMode { get; set; } = false;
 
     /// <summary>True after the user completes the first-launch onboarding.</summary>
     public bool OnboardingComplete { get; set; } = false;
@@ -107,7 +72,7 @@ public sealed class ArcConfig
     public string LastQueryStyle { get; set; } = "clear";
 
     /// <summary>Enable built-in shell command results.</summary>
-    public bool IndexShell { get; set; } = true;
+    public bool IndexShell { get; set; } = false;
 
     /// <summary>Enable system command results such as shutdown, lock, and settings.</summary>
     public bool IndexSystemCommands { get; set; } = true;
@@ -123,14 +88,14 @@ public sealed class ArcConfig
 
     // Per-action toggles — each action can be individually disabled in Settings → Actions
     public bool ActionColor      { get; set; } = true;
-    public bool ActionTimer      { get; set; } = true;
-    public bool ActionIp         { get; set; } = true;
-    public bool ActionAi         { get; set; } = true;
+    public bool ActionTimer      { get; set; } = false;
+    public bool ActionIp         { get; set; } = false;
+    public bool ActionAi         { get; set; } = false;
     public bool ActionCurrency   { get; set; } = true;
-    public bool ActionPasswordGen { get; set; } = true;
-    public bool ActionQuickNote  { get; set; } = true;
-    public bool ActionKillProcess { get; set; } = true;
-    public bool ActionScreenshot { get; set; } = true;
+    public bool ActionPasswordGen { get; set; } = false;
+    public bool ActionQuickNote  { get; set; } = false;
+    public bool ActionKillProcess { get; set; } = false;
+    public bool ActionScreenshot { get; set; } = false;
 
     /// <summary>Maximum directory depth for recursive file search (1–5).</summary>
     public int MaxFileDepth { get; set; } = 3;
@@ -195,27 +160,14 @@ public sealed class ArcConfig
     /// <summary>Show recently used items first.</summary>
     public bool ShowRecentFirst { get; set; } = true;
 
-    /// <summary>Show placeholder text when the query is empty.</summary>
-    public bool ShowPlaceholder { get; set; } = true;
-
-    /// <summary>Placeholder text shown when query is empty.</summary>
-    public string PlaceholderText { get; set; } = "Search";
-
     /// <summary>Use launcher show/hide animations.</summary>
     public bool AnimationEnabled { get; set; } = true;
 
     /// <summary>Play a small sound when the launcher opens.</summary>
     public bool SoundEffectEnabled { get; set; } = false;
 
-    /// <summary>Monitor used for launcher placement. Currently "primary".</summary>
-    public string SearchWindowLocation { get; set; } = "primary";
-
     /// <summary>Launcher placement on the selected monitor.</summary>
     public string SearchWindowPosition { get; set; } = "center";
-    public bool IgnoreHotkeysInFullscreen { get; set; } = true;
-
-    /// <summary>Keep the preview panel open when the launcher activates.</summary>
-    public bool AlwaysPreview { get; set; } = false;
 
     // ═══════════════════════════════════════════════════════════════
     // AI (API keys are encrypted at rest via DPAPI)
@@ -316,10 +268,7 @@ public sealed class ArcConfig
     public void Validate()
     {
         WindowOpacity  = Math.Clamp(WindowOpacity, 0.3, 1.0);
-        LauncherWidth  = Math.Clamp(LauncherWidth, 300, 1200);
         ResultsCount   = Math.Clamp(ResultsCount, 3, 20);
-        FontSize       = Math.Clamp(FontSize, 11, 20);
-        CornerRadius   = Math.Clamp(CornerRadius, 0, 28);
         MaxFileDepth   = Math.Clamp(MaxFileDepth, 1, 5);
         ClipboardHistorySize = Math.Clamp(ClipboardHistorySize, 5, 200);
         PinnedClipboard ??= [];

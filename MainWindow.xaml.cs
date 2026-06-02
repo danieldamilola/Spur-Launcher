@@ -1,7 +1,8 @@
 using System.Windows.Interop;
-using System.Windows.Media.Animation;
+using System.Windows.Media;
 using Arc.Models;
 using Arc.ViewModels;
+using Arc.Views;
 
 namespace Arc;
 
@@ -10,7 +11,10 @@ public partial class MainWindow : Window
     private bool _isVisible;
     private bool _isPointerInside;
     private bool _categoryExpanded;
+    private bool _queryWasEmpty = true;
     private MainViewModel? _vm;
+
+    private CategoryCircle[] AnchorCircles => [CircleFiles, CircleCommands, CircleClipboard];
 
     public MainWindow()
     {
@@ -76,10 +80,11 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        Width = LauncherLayout.WidthCompact;
-        MinWidth = LauncherLayout.WidthCompact;
-        MaxWidth = LauncherLayout.WidthExpanded;
-        Capsule.CornerRadius = (CornerRadius)FindResource("RadiusWindow");
+        Width = LauncherLayout.BarWidth;
+        MinWidth = LauncherLayout.BarWidth;
+        MaxWidth = LauncherLayout.BarWidth;
+
+
         PositionWindow();
     }
 
@@ -99,15 +104,13 @@ public partial class MainWindow : Window
         if (_vm?.Config.SoundEffectEnabled == true)
             System.Media.SystemSounds.Asterisk.Play();
 
-        if (_vm?.Config.AnimationEnabled == false)
-            Opacity = 1;
-        else
-            AnimateIn();
+        ArcMotion.Show(this, WindowScale, _vm?.Config.AnimationEnabled != false);
     }
 
     public void HideWindow()
     {
         if (!_isVisible) return;
+        _vm?.CancelSearch();
         _isPointerInside = false;
         _categoryExpanded = false;
 
@@ -116,34 +119,19 @@ public partial class MainWindow : Window
             Hide();
             _isVisible = false;
             _vm?.Reset();
+            _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
             return;
         }
 
-        AnimateOut(() =>
+        ArcMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
         {
             Hide();
             _isVisible = false;
             _vm?.Reset();
+            _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
         });
-    }
-
-    private void AnimateIn()
-    {
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
-        var scale = new DoubleAnimation(0.98, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
-        WindowScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scale);
-        WindowScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scale);
-    }
-
-    private void AnimateOut(Action onComplete)
-    {
-        var ease = new QuadraticEase { EasingMode = EasingMode.EaseIn };
-        var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease };
-        fade.Completed += (_, _) => onComplete();
-        BeginAnimation(OpacityProperty, fade);
     }
 
     private void PositionWindow()
@@ -181,106 +169,75 @@ public partial class MainWindow : Window
             nameof(MainViewModel.IsBrowsePanelVisible),
             nameof(MainViewModel.ActiveCategory),
             nameof(MainViewModel.Query),
-            nameof(MainViewModel.ActiveActionId),
             nameof(MainViewModel.IsScopeBarVisible),
             nameof(MainViewModel.FooterHint),
+            nameof(MainViewModel.SelectedIndex),
         };
 
         if (layoutProps.Contains(e.PropertyName))
-            Dispatcher.InvokeAsync(() => ApplySpotlightLayout(animate: true));
+        {
+            var fastAnchorHide = e.PropertyName == nameof(MainViewModel.Query)
+                && _vm is not null
+                && !string.IsNullOrEmpty(_vm.Query)
+                && _queryWasEmpty;
+            if (e.PropertyName == nameof(MainViewModel.Query))
+                _queryWasEmpty = string.IsNullOrEmpty(_vm?.Query);
+
+            Dispatcher.InvokeAsync(() => ApplySpotlightLayout(animate: true, fastAnchorHide: fastAnchorHide));
+        }
 
         if (e.PropertyName is nameof(MainViewModel.ActiveCategory) or nameof(MainViewModel.Query))
             Dispatcher.InvokeAsync(UpdateCategoryVisuals);
     }
 
     /// <summary>
-    /// Spotlight-style: empty query and pointer in window widens the capsule; category rail fades in on the right.
-    /// Typing collapses width and hides categories.
+    /// Empty query + pointer over window: category circles stagger in on the right (640px bar stays fixed).
+    /// Typing hides circles immediately.
     /// </summary>
     private bool ShouldShowCategoryRail()
     {
         if (_vm is null) return false;
         if (!string.IsNullOrEmpty(_vm.Query)) return false;
-        if (_vm.ActiveActionId is not null) return false;
         return _isPointerInside || _vm.ActiveCategory is not null;
     }
 
-    private void ApplySpotlightLayout(bool animate)
+    private void ApplySpotlightLayout(bool animate, bool fastAnchorHide = false)
     {
         if (_vm is null) return;
 
-        bool hasQuery = !string.IsNullOrEmpty(_vm.Query);
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
-        bool showContent = hasResults || _vm.ActiveActionId is not null;
+        bool showContent = isBrowse || hasResults;
 
         ContentArea.Visibility = showContent ? Visibility.Visible : Visibility.Collapsed;
-        FooterArea.Visibility = showContent && _vm.ActiveActionId is null ? Visibility.Visible : Visibility.Collapsed;
+        FooterArea.Visibility = showContent && _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
 
         BrowsePanelControl.Visibility = isBrowse ? Visibility.Visible : Visibility.Collapsed;
         ResultsListControl.Visibility = isBrowse ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
-        double targetWidth = expandRail ? LauncherLayout.WidthExpanded : LauncherLayout.WidthCompact;
+        var animEnabled = animate && _vm.Config.AnimationEnabled;
 
-        if (animate && _vm.Config.AnimationEnabled)
-        {
-            AnimateWindowWidth(targetWidth);
-            AnimateCategoryRail(expandRail);
-        }
+        if (expandRail)
+            ArcMotion.RevealAnchors(
+                CategoryColumn,
+                CategoryColumn.Width,
+                LauncherLayout.CategoryZoneWidth,
+                CategoryDivider,
+                CategoryButtons,
+                AnchorCircles,
+                animEnabled);
         else
-        {
-            Width = targetWidth;
-            SetCategoryRailInstant(expandRail);
-            PositionWindow();
-        }
+            ArcMotion.HideAnchors(
+                CategoryColumn,
+                CategoryColumn.Width,
+                CategoryDivider,
+                CategoryButtons,
+                AnchorCircles,
+                animEnabled,
+                fastForTyping: fastAnchorHide);
 
         _categoryExpanded = expandRail;
-    }
-
-    private void AnimateWindowWidth(double target)
-    {
-        if (Math.Abs(Width - target) < 0.5)
-        {
-            PositionWindow();
-            return;
-        }
-
-        var anim = new DoubleAnimation(target, TimeSpan.FromMilliseconds(200))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        anim.CurrentTimeInvalidated += (_, _) => PositionWindow();
-        anim.Completed += (_, _) => PositionWindow();
-        BeginAnimation(WidthProperty, anim);
-    }
-
-    private void AnimateCategoryRail(bool show)
-    {
-        var duration = TimeSpan.FromMilliseconds(show ? 200 : 140);
-        var ease = new CubicEase { EasingMode = show ? EasingMode.EaseOut : EasingMode.EaseIn };
-
-        CategoryColumn.BeginAnimation(ColumnDefinition.WidthProperty, null);
-        var widthAnim = new GridLengthAnimation(
-            CategoryColumn.Width,
-            new GridLength(show ? LauncherLayout.CategoryZoneWidth : 0, GridUnitType.Pixel),
-            duration)
-        { EasingFunction = ease };
-        CategoryColumn.BeginAnimation(ColumnDefinition.WidthProperty, widthAnim);
-
-        CategoryDivider.BeginAnimation(UIElement.OpacityProperty, null);
-        CategoryButtons.BeginAnimation(UIElement.OpacityProperty, null);
-
-        var fade = new DoubleAnimation(show ? 1 : 0, duration) { EasingFunction = ease };
-        CategoryDivider.BeginAnimation(UIElement.OpacityProperty, fade);
-        CategoryButtons.BeginAnimation(UIElement.OpacityProperty, fade);
-    }
-
-    private void SetCategoryRailInstant(bool show)
-    {
-        CategoryColumn.Width = new GridLength(show ? LauncherLayout.CategoryZoneWidth : 0, GridUnitType.Pixel);
-        CategoryDivider.Opacity = show ? 1 : 0;
-        CategoryButtons.Opacity = show ? 1 : 0;
     }
 
     private void OnWindowMouseEnter(object sender, MouseEventArgs e)
@@ -304,8 +261,8 @@ public partial class MainWindow : Window
 
     private void OnCategoryClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not System.Windows.Controls.Button btn || _vm is null) return;
-        var category = btn.Tag as string;
+        if (sender is not FrameworkElement el || _vm is null) return;
+        var category = el.Tag as string;
 
         if (category == "clipboard")
             _vm.ActivateClipboardCategory();
@@ -317,21 +274,22 @@ public partial class MainWindow : Window
         ApplySpotlightLayout(animate: true);
     }
 
+    private void OnBackClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null) return;
+        _vm.ActiveCategory = null;
+        SearchBarControl.FocusInput();
+        UpdateCategoryVisuals();
+        ApplySpotlightLayout(animate: true);
+    }
+
     private void UpdateCategoryVisuals()
     {
         if (_vm is null) return;
-        SetCatActive(BtnFiles, IconFiles, _vm.ActiveCategory == "files");
-        SetCatActive(BtnCommands, IconCommands, _vm.ActiveCategory == "actions");
-        SetCatActive(BtnClipboard, IconClipboard, _vm.ActiveCategory == "clipboard");
-    }
-
-    private static void SetCatActive(System.Windows.Controls.Button btn, System.Windows.Shapes.Path icon, bool active)
-    {
-        var primary = btn.TryFindResource("TextPrimary") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White;
-        var secondary = btn.TryFindResource("TextSecondary") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Gray;
-        icon.Stroke = active ? primary : secondary;
-        icon.StrokeThickness = active ? 2.0 : 1.5;
-        btn.Background = System.Windows.Media.Brushes.Transparent;
+        CircleFiles.IsActive     = _vm.ActiveCategory == "files";
+        CircleCommands.IsActive  = _vm.ActiveCategory == "actions";
+        CircleClipboard.IsActive = _vm.ActiveCategory == "clipboard";
+        CategoryBackButton.Visibility = _vm.ActiveCategory is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
@@ -361,12 +319,8 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (string.Equals(_vm.ActiveActionId, "ai", StringComparison.OrdinalIgnoreCase))
-                    _vm.BackFromAiChat();
-                else if (!string.IsNullOrEmpty(_vm.Query))
+                if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
-                else if (_vm.ActiveActionId is not null)
-                    _vm.ClearActiveMode();
                 else if (_vm.ActiveCategory is not null)
                     _vm.ActiveCategory = null;
                 else
@@ -374,10 +328,18 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 break;
 
+            case Key.Left:
+                if (_vm.ActiveCategory is not null)
+                {
+                    _vm.ActiveCategory = null;
+                    e.Handled = true;
+                }
+                break;
+
             case Key.Enter:
-                if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+                if (Keyboard.Modifiers == ModifierKeys.Control)
                     _vm.RunAsAdminCommand.Execute(null);
-                else if (Keyboard.Modifiers == ModifierKeys.Control)
+                else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
                     _vm.OpenFolderCommand.Execute(null);
                 else
                     _vm.OpenSelectedCommand.Execute(null);
@@ -402,6 +364,14 @@ public partial class MainWindow : Window
             case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:
                 _vm.OpenSettingsCommand.Execute(null);
                 e.Handled = true; break;
+
+            case Key.C when Keyboard.Modifiers == ModifierKeys.Control:
+                _vm.CopySelectedPathCommand.Execute(null);
+                e.Handled = true; break;
+
+            case Key.E when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                _vm.OpenFolderCommand.Execute(null);
+                e.Handled = true; break;
         }
     }
 
@@ -416,38 +386,5 @@ public partial class MainWindow : Window
         base.OnMouseLeftButtonDown(e);
         if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
         try { DragMove(); } catch { }
-    }
-}
-
-/// <summary>Animates <see cref="ColumnDefinition.Width"/> between grid length values.</summary>
-internal sealed class GridLengthAnimation : AnimationTimeline
-{
-    public GridLength From { get; set; }
-    public GridLength To { get; set; }
-
-    public GridLengthAnimation() { }
-
-    public GridLengthAnimation(GridLength from, GridLength to, Duration duration)
-    {
-        From = from;
-        To = to;
-        Duration = duration;
-    }
-
-    public IEasingFunction? EasingFunction { get; set; }
-
-    public override Type TargetPropertyType => typeof(GridLength);
-
-    protected override Freezable CreateInstanceCore() => new GridLengthAnimation();
-
-    public override object GetCurrentValue(object defaultOriginValue, object originValue, AnimationClock clock)
-    {
-        if (clock.CurrentProgress is not double t) return To;
-        if (EasingFunction is not null)
-            t = EasingFunction.Ease(t);
-
-        var from = From.Value;
-        var to = To.Value;
-        return new GridLength(from + (to - from) * t, GridUnitType.Pixel);
     }
 }

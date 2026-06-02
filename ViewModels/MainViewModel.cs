@@ -305,6 +305,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IClipboardService    _clipboard;
     private readonly INotificationService _notification;
     private readonly IAiService           _aiService;
+    private readonly IThemeManager        _themeManager;
+    private readonly IStartupService      _startupService;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel _ai;
@@ -347,7 +349,9 @@ public sealed partial class MainViewModel : ObservableObject
         IConfigService        configSvc,
         IClipboardService     clipboard,
         INotificationService  notification,
-        IAiService            aiService)
+        IAiService            aiService,
+        IThemeManager         themeManager,
+        IStartupService       startupService)
     {
         _log          = log;
         _apps         = apps;
@@ -355,11 +359,13 @@ public sealed partial class MainViewModel : ObservableObject
         _freq         = freq;
         _configSvc    = configSvc;
         _clipboard    = clipboard;
-        _notification = notification;
-        _aiService    = aiService;
+        _notification  = notification;
+        _aiService     = aiService;
+        _themeManager  = themeManager;
+        _startupService = startupService;
 
         Config   = config;
-        Settings = new SettingsViewModel(Config, _configSvc, this);
+        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService);
 
         // Push initial config to services
         _files.MaxDepth     = Config.MaxFileDepth;
@@ -372,7 +378,6 @@ public sealed partial class MainViewModel : ObservableObject
         // Forward sub-VM property changes for backward-compatible bindings
         _ai.PropertyChanged    += (_, args) => OnPropertyChanged(args.PropertyName);
         _timer.PropertyChanged += (_, args) => OnPropertyChanged(args.PropertyName);
-        _ai.ConversationChanged += (_, args) => ConversationChanged?.Invoke(this, args);
 
         _ = LoadAppsAsync();
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
@@ -383,8 +388,6 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _files.MaxDepth     = value.MaxFileDepth;
         _clipboard.MaxItems = value.ClipboardHistorySize;
-        if (value.CompactMode)
-            Application.Current?.Dispatcher.Invoke(() => Results.Clear());
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -430,57 +433,17 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSettingsOpen;
 
-    // ── Action preview state ─────────────────────────────────────────
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsPreviewVisible))]
-    private string? _activeActionId;   // "calc", "color", "timer", "ip", "ai"
-
-    [ObservableProperty] private string  _calcResult   = string.Empty;
-    [ObservableProperty] private string  _calcExpr     = string.Empty;
-
-    [ObservableProperty] private string  _colorHex     = string.Empty;
-    [ObservableProperty] private string  _colorRgb     = string.Empty;
-    [ObservableProperty] private string  _colorHsl     = string.Empty;
-    [ObservableProperty] private Color   _colorSwatch  = Colors.Transparent;
-
-    // Timer pass-through properties — owned by TimerViewModel
+    // Timer — background extra (no inline panel in v2)
     public string TimerDisplay  => _timer.TimerDisplay;
     public double TimerProgress => _timer.TimerProgress;
     public bool   TimerRunning  { get => _timer.TimerRunning; set => _timer.TimerRunning = value; }
     public IRelayCommand StartTimerCommand  => _timer.StartCommand;
     public IRelayCommand CancelTimerCommand => _timer.CancelCommand;
 
-    [ObservableProperty] private string  _ipLocal      = "Fetching…";
-    [ObservableProperty] private string  _ipPublic     = "Fetching…";
-
-    // AI pass-through properties — owned by AiChatViewModel
-    public string AiText    => _ai.AiText;
-    public bool   AiLoading => _ai.AiLoading;
-    public string AiError   { get => _ai.AiError; set => _ai.AiError = value; }
+    // AI — keyword extra only (no inline panel in v2)
     public IRelayCommand AiFollowUpCommand => _ai.AiFollowUpCommand;
 
-    /// <summary>Raised when the AI conversation changes (messages added).</summary>
-    public event EventHandler? ConversationChanged;
-
-    /// <summary>Public view of the AI conversation for binding.</summary>
-    public IReadOnlyList<(string Role, string Content)> AiConversation => _ai.AiConversation;
-
-    /// <summary>Clears the AI conversation, cancels streaming, and returns to Hub.</summary>
-    public void BackFromAiChat()
-    {
-        _ai.ClearConversation();
-        CancelActionWork();
-        ActiveCategory = null;
-        Query = string.Empty;
-        ClearIdleState();
-    }
-
-    /// <summary>Returns the full AI conversation formatted as a copyable text block.</summary>
-    public string GetAiConversationText() => _ai.GetConversationText();
-
-    /// <summary>Cancels the in-flight AI generation without clearing the conversation.</summary>
-    public void CancelAiGeneration() => _ai.CancelPending();
+    public void CancelSearch() => _searchCts?.Cancel();
 
     // ═══════════════════════════════════════════════════════════════
     // Computed properties
@@ -488,13 +451,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasQuery          => !string.IsNullOrEmpty(Query);
     public bool HasResults         => Results.Count > 0;
-    public bool IsPreviewVisible => false;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
 
     /// <summary>Hub removed per ux.md — always false.</summary>
     public bool IsHubVisible => false;
 
-    public bool IsScopeBarVisible => ScopeFilters.Count > 1 && !string.IsNullOrEmpty(Query) && ActiveCategory is null;
+    public bool IsScopeBarVisible => ScopeFilters.Count >= 2 && !string.IsNullOrEmpty(Query) && ActiveCategory is null;
+
+    public string SearchPlaceholder => ActiveCategory switch
+    {
+        "files"     => "Search files…",
+        "actions"   => "Search actions…",
+        "clipboard" => "Filter clipboard…",
+        _           => "Search apps, files, actions…",
+    };
 
     public SearchResult? SelectedResult
     {
@@ -542,6 +512,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnActiveCategoryChanged(string? value)
     {
         OnPropertyChanged(nameof(IsBrowsePanelVisible));
+        OnPropertyChanged(nameof(SearchPlaceholder));
         OnQueryChanged(Query ?? string.Empty);
     }
 
@@ -550,7 +521,6 @@ public sealed partial class MainViewModel : ObservableObject
     {
         CancelActionWork();
         _searchCts?.Cancel();
-        ActiveActionId = null;
         _rawResults.Clear();
         ScopeFilters.Clear();
         OnPropertyChanged(nameof(IsScopeBarVisible));
@@ -579,10 +549,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void CycleScope()
     {
-        if (ScopeFilters.Count == 0) return;
+        if (ScopeFilters.Count < 2) return;
+
+        if (ActiveScopeId == "all")
+        {
+            ActiveScopeId = ScopeFilters[0].Id;
+            return;
+        }
+
         var idx = ScopeFilters.ToList().FindIndex(s => s.Id == ActiveScopeId);
-        var next = ScopeFilters[(idx + 1) % ScopeFilters.Count];
-        ActiveScopeId = next.Id;
+        ActiveScopeId = idx + 1 >= ScopeFilters.Count ? "all" : ScopeFilters[idx + 1].Id;
     }
 
     private void CommitResults(List<object> items)
@@ -647,6 +623,7 @@ public sealed partial class MainViewModel : ObservableObject
         "files"     => sectionTitle == "Files",
         "clipboard" => sectionTitle == "Clipboard",
         "commands"  => sectionTitle == "Commands",
+        "web"       => sectionTitle == "Web",
         _           => true,
     };
 
@@ -685,11 +662,10 @@ public sealed partial class MainViewModel : ObservableObject
         ScopeFilters.Clear();
         if (counts.Count < 2) return;
 
-        ScopeFilters.Add(new ScopeFilterItem { Id = "all", Label = "All", Count = _rawResults.OfType<SearchResult>().Count() });
         foreach (var (id, (label, count)) in counts)
             ScopeFilters.Add(new ScopeFilterItem { Id = id, Label = label, Count = count });
 
-        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId))
+        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId) && ActiveScopeId != "all")
             ActiveScopeId = "all";
     }
 
@@ -699,32 +675,39 @@ public sealed partial class MainViewModel : ObservableObject
         "Files" => "files",
         "Clipboard" => "clipboard",
         "Commands" => "commands",
+        "Web"      => "web",
         _ => null,
     };
 
     private static string SectionToScopeLabel(string title) => title switch
     {
         "Applications" or "Settings" => "Apps",
-        "Actions" => "Commands",
-        _ => title,
+        "Commands" or "Actions"      => "Actions",
+        "Web"                          => "Web",
+        _                              => title,
     };
 
     private void UpdateFooterHint()
     {
-        if (!HasResults && !string.IsNullOrEmpty(Query))
+        var r = SelectedResult;
+        if (r is null)
         {
-            FooterHint = "No results";
+            FooterHint = string.Empty;
             return;
         }
 
-        var r = SelectedResult;
-        FooterHint = r?.Type switch
+        FooterHint = r.Type switch
         {
-            ResultType.App        => "Return to open  ·  Ctrl+Return admin  ·  Ctrl+Shift+R reveal",
-            ResultType.File       => "Return to open  ·  Ctrl+Shift+R reveal  ·  Ctrl+C copy path",
-            ResultType.Clipboard  => "Return to paste  ·  Ctrl+P pin  ·  Ctrl+D delete",
-            ResultType.Action     => "Return to run",
-            _                     => HasResults ? "Return to open" : string.Empty,
+            ResultType.App       => "↵ Open  ·  Ctrl+↵ Admin  ·  Ctrl+Shift+E Reveal",
+            ResultType.File      => "↵ Open  ·  Ctrl+Shift+E Reveal  ·  Ctrl+C Copy path",
+            ResultType.Clipboard => "↵ Paste  ·  Ctrl+P Pin  ·  Delete Remove",
+            ResultType.Action    => r.ActionId switch
+            {
+                "calc" or "color" or "currency" => "↵ Copy result",
+                "web" or "url"                  => "↵ Open",
+                _                               => "↵ Run",
+            },
+            _ => "↵ Open",
         };
     }
 
@@ -737,19 +720,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             if (ct.IsCancellationRequested) return;
-
-            // 1. Check built-in actions first (calculator, color, timer, ip, ai, settings)
-            var action = Actions.FirstOrDefault(a => IsActionEnabled(a.Id) && a.CanHandle(query));
-            if (action is not null)
-            {
-                ActivateAction(action, query);
-                return;
-            }
-
-            // 2. Cancel any running action work
             CancelActionWork();
-
-            // 3. Fuzzy search
             _ = SearchAsync(query, ct);
         }
         catch (Exception ex)
@@ -802,6 +773,13 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (ct.IsCancellationRequested) return;
 
+            // ── Inline answers (typing only) ───────────────────────────
+            if (ActiveCategory is null)
+            {
+                foreach (var inline in BuildInlineResults(query))
+                    newResults.Add(inline);
+            }
+
             // ── Files ─────────────────────────────────────────────────
             bool showFiles = Config.FileSearchEnabled && (ActiveCategory is null or "files");
             if (showFiles)
@@ -833,7 +811,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 int limit = isBrowseMode ? 50 : Config.ResultsCount;
                 var clips = _clipboard.GetHistory()
-                    .Where(c => MatchScore(query, c.Preview) >= 0)
+                    .Where(c => string.IsNullOrEmpty(query) || MatchScore(query, c.Preview) >= 0)
                     .Take(limit)
                     .Select(c => new SearchResult
                     {
@@ -874,15 +852,17 @@ public sealed partial class MainViewModel : ObservableObject
                 var actionMatches = availableActions
                     .Where(a => MatchScore(query, a.Name) >= 0)
                     .Select(a => { a.Score = MatchScore(query, a.Name); return a; })
-                    .OrderByDescending(a => a.Score)
                     .ToList();
 
-                if (!string.IsNullOrWhiteSpace(query))
+                foreach (var kw in BuildKeywordActionResults(query))
                 {
-                    AddDynamicAction(actionMatches, BuildUrlAction(query));
-                    AddDynamicAction(actionMatches, BuildWebSearchAction(query));
-                    AddDynamicAction(actionMatches, BuildShellAction(query));
+                    if (actionMatches.All(a => a.ActionId != kw.ActionId))
+                        actionMatches.Add(kw);
                 }
+
+                AddDynamicAction(actionMatches, BuildShellAction(query));
+
+                actionMatches = actionMatches.OrderByDescending(a => a.Score).ToList();
 
                 if (actionMatches.Count > 0)
                 {
@@ -915,6 +895,16 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             if (ct.IsCancellationRequested) return;
+
+            if (ActiveCategory is null && ShouldOfferWebFallback(query, newResults))
+            {
+                var web = BuildWebSearchAction(query);
+                if (web is not null)
+                {
+                    newResults.Add(new SectionLabel("Web"));
+                    newResults.Add(web);
+                }
+            }
 
             // Commit results on UI thread
             Application.Current?.Dispatcher.Invoke(() => CommitResults(newResults));
@@ -984,16 +974,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     private SearchResult? BuildWebSearchAction(string query)
     {
-        if (!Config.IndexWebSearches || string.IsNullOrWhiteSpace(query)) return null;
+        var q = NormalizeWebQuery(query);
+        if (!Config.IndexWebSearches || string.IsNullOrWhiteSpace(q)) return null;
         return new SearchResult
         {
-            Id = $"web:{query}",
+            Id = $"web:{q}",
             Type = ResultType.Action,
-            Name = $"Search web for {query}",
-            Subtitle = "Web search",
+            Name = $"Search the web for \"{q}\"",
+            Subtitle = "Web",
             LucideIcon = "search",
             ActionId = "web",
-            Score = 100,
+            Score = 50,
         };
     }
 
@@ -1018,62 +1009,49 @@ public sealed partial class MainViewModel : ObservableObject
         => Uri.TryCreate(NormalizeUrl(query), UriKind.Absolute, out var uri)
            && uri.Scheme is "http" or "https";
 
+    private static string NormalizeWebQuery(string query)
+    {
+        var q = query.Trim();
+        return q.StartsWith('?') ? q[1..].Trim() : q;
+    }
+
+    private IEnumerable<SearchResult> BuildInlineResults(string query)
+    {
+        foreach (var id in new[] { "calc", "color", "currency" })
+        {
+            var action = Actions.FirstOrDefault(a => a.Id == id);
+            if (action is null || !IsActionEnabled(id) || !action.CanHandle(query)) continue;
+            yield return action.BuildResult(query);
+        }
+
+        var url = BuildUrlAction(query);
+        if (url is not null)
+            yield return url;
+    }
+
+    private IEnumerable<SearchResult> BuildKeywordActionResults(string query)
+    {
+        foreach (var action in Actions)
+        {
+            if (action.Id is "calc" or "color" or "currency" or "ai") continue;
+            if (!IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
+            yield return action.BuildResult(query);
+        }
+    }
+
+    private static bool ShouldOfferWebFallback(string query, List<object> results)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return false;
+        var localCount = results.OfType<SearchResult>().Count();
+        return localCount < 3;
+    }
+
     private static string NormalizeUrl(string value)
     {
         var trimmed = value.Trim();
         return trimmed.Contains("://", StringComparison.Ordinal)
             ? trimmed
             : $"https://{trimmed}";
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // Action activation
-    // ═══════════════════════════════════════════════════════════════
-
-    private void ActivateAction(IAction action, string query)
-    {
-        CancelActionWork();
-
-        var result = action.BuildResult(query);
-        ActiveActionId = action.Id;
-        CommitResults([new SectionLabel("Commands"), result]);
-
-        switch (action.Id)
-        {
-            case "calc":     StartCalc(query);           break;
-            case "color":    StartColor(query);          break;
-            case "timer":    _timer.StartTimerPreview(query); break;
-            case "ip":       _ = StartIpAsync();         break;
-            case "settings": break; // Settings panel shows immediately
-            // AI does NOT auto-start — user must press Enter
-            case "ai":       break;
-        }
-    }
-
-    private void StartCalc(string query)
-    {
-        CalcExpr   = query.Trim();
-        CalcResult = CalculatorAction.Evaluate(query);
-    }
-
-    private void StartColor(string query)
-    {
-        var hex = ColorAction.Normalize(query.Trim());
-        ColorAction.ParseHex(hex, out var r, out var g, out var b);
-        ColorAction.RgbToHsl(r, g, b, out var h, out var s, out var l);
-
-        ColorHex    = hex.ToUpperInvariant();
-        ColorRgb    = $"RGB({r}, {g}, {b})";
-        ColorHsl    = $"HSL({h:F0}°, {s:F0}%, {l:F0}%)";
-        ColorSwatch = Color.FromRgb(r, g, b);
-    }
-
-    private async Task StartIpAsync()
-    {
-        IpLocal  = IpAction.GetLocalIp() ?? "Not connected";
-        IpPublic = "Fetching…";
-        var pub  = await IpAction.GetPublicIpAsync();
-        IpPublic = pub ?? "Unavailable";
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1124,22 +1102,43 @@ public sealed partial class MainViewModel : ObservableObject
                     SystemAction.Execute(Query);
                     return;
                 }
-                // Timer: start countdown on Enter
                 if (result.ActionId == "timer")
+                {
                     StartTimerCommand.Execute(null);
-                // AI: start streaming on Enter
+                    _notification.Show("Timer", _timer.TimerDisplay);
+                    HideAfterLaunch();
+                }
                 else if (result.ActionId == "ai")
                 {
-                    try { _ = _ai.StartAiAsync(Query); }
+                    try
+                    {
+                        await _ai.StartAiAsync(Query);
+                        if (!string.IsNullOrEmpty(_ai.AiText))
+                            _clipboard.CopyToSystem(_ai.AiText);
+                        _notification.Show("AI", string.IsNullOrEmpty(_ai.AiError) ? "Response copied" : _ai.AiError);
+                    }
                     catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
+                    HideAfterLaunch();
                 }
                 // Calc/Color/IP: Enter copies result to clipboard
                 else if (result.ActionId == "calc")
-                    _clipboard.CopyToSystem(CalcResult.TrimStart('=', ' '));
+                {
+                    _clipboard.CopyToSystem(result.Name.TrimStart('=', ' '));
+                    HideAfterLaunch();
+                }
                 else if (result.ActionId == "color")
-                    _clipboard.CopyToSystem(ColorHex);
+                {
+                    _clipboard.CopyToSystem(result.Name);
+                    HideAfterLaunch();
+                }
                 else if (result.ActionId == "ip")
-                    _clipboard.CopyToSystem(IpLocal);
+                {
+                    var local = IpAction.GetLocalIp() ?? "Not connected";
+                    var pub = await IpAction.GetPublicIpAsync();
+                    _clipboard.CopyToSystem($"{local} / {pub ?? "Unavailable"}");
+                    _notification.Show("IP Address", $"{local} · {pub ?? "Unavailable"}");
+                    HideAfterLaunch();
+                }
                 // Settings: open settings panel when clicked
                 else if (result.ActionId == "settings")
                 {
@@ -1153,7 +1152,8 @@ public sealed partial class MainViewModel : ObservableObject
                 }
                 else if (result.ActionId == "web")
                 {
-                    Launch($"https://www.google.com/search?q={Uri.EscapeDataString(Query)}");
+                    var q = NormalizeWebQuery(Query);
+                    Launch($"https://www.google.com/search?q={Uri.EscapeDataString(q)}");
                     HideAfterLaunch();
                 }
                 else if (result.ActionId == "shell")
@@ -1232,15 +1232,32 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
         }
 
-        string? folder = result.Type switch
+        string? targetPath = result.Type switch
         {
-            ResultType.App  => result.ExePath is not null ? Path.GetDirectoryName(result.ExePath) : null,
-            ResultType.File => result.FilePath is not null ? Path.GetDirectoryName(result.FilePath) : null,
+            ResultType.App  => result.ExePath ?? result.LnkPath,
+            ResultType.File => result.FilePath,
             _               => null,
         };
 
-        if (folder is not null && Directory.Exists(folder))
-            Process.Start("explorer.exe", folder);
+        if (!string.IsNullOrWhiteSpace(targetPath) && File.Exists(targetPath))
+            Process.Start("explorer.exe", $"/select,\"{targetPath}\"");
+    }
+
+    [RelayCommand]
+    public void CopySelectedPath()
+    {
+        var result = SelectedResult;
+        if (result is null) return;
+
+        string? path = result.Type switch
+        {
+            ResultType.App  => result.ExePath ?? result.LnkPath,
+            ResultType.File => result.FilePath,
+            _               => null,
+        };
+
+        if (!string.IsNullOrWhiteSpace(path))
+            _clipboard.CopyToSystem(path);
     }
 
     /// <summary>Launches the selected app as administrator (UAC elevation).</summary>
@@ -1455,25 +1472,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void ClearActiveMode()
     {
-        ActiveActionId = null;
         ActiveCategory = null;
         SelectedIndex = -1;
-        AiError = string.Empty;
     }
 
     private void ClearAll()
     {
         Results.Clear();
-        SelectedIndex  = -1;
-        if (!Config.AlwaysPreview)
-            CancelActionWork();
+        SelectedIndex = -1;
+        CancelActionWork();
     }
 
     private void CancelActionWork()
     {
         _ai.CancelPending();
         _timer.Stop();
-        ActiveActionId = null;
     }
 
     private int FindFirstResultIndex()
