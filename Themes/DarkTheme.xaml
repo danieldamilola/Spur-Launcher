@@ -9,6 +9,7 @@
         <ResourceDictionary Source="/Themes/DesignTokens/Spacing.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Radii.xaml"/>
         <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>
+        <ResourceDictionary Source="/Themes/ResultTemplates.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
     <SolidColorBrush x:Key="Void"            Color="#09090A"/>
