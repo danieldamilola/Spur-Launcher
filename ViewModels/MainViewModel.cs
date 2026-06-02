@@ -29,8 +29,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IStartupService      _startupService;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
-    private readonly AiChatViewModel _ai;
-    private readonly TimerViewModel  _timer;
+    private readonly AiChatViewModel    _ai;
+    private readonly TimerViewModel     _timer;
+    private readonly ClipboardViewModel _clipboardVm;
 
     private static readonly IAction[] Actions =
     [
@@ -92,8 +93,9 @@ public sealed partial class MainViewModel : ObservableObject
         _clipboard.MaxItems = Config.ClipboardHistorySize;
 
         // Sub-ViewModels
-        _ai    = new AiChatViewModel(_aiService, Config);
-        _timer = new TimerViewModel(_notification);
+        _ai          = new AiChatViewModel(_aiService, Config);
+        _timer       = new TimerViewModel(_notification);
+        _clipboardVm = new ClipboardViewModel(_clipboard, Config, _configSvc);
 
         // Forward sub-VM property changes for backward-compatible bindings
         _ai.PropertyChanged    += (_, args) => OnPropertyChanged(args.PropertyName);
@@ -154,8 +156,9 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isSettingsOpen;
 
     // Sub-ViewModels — exposed for direct XAML binding (no pass-throughs)
-    public TimerViewModel Timer => _timer;
-    public AiChatViewModel AiChat => _ai;
+    public TimerViewModel      Timer      => _timer;
+    public AiChatViewModel     AiChat     => _ai;
+    public ClipboardViewModel  Clipboard  => _clipboardVm;
 
     public void CancelSearch() => _searchCts?.Cancel();
 
@@ -1047,6 +1050,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Removes a single clipboard item from history by its content.</summary>
+    [RelayCommand]
     public void RemoveClipboardItem(SearchResult result)
     {
         if (result.Type != ResultType.Clipboard || result.ClipContent is null) return;

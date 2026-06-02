@@ -11,6 +11,8 @@
         Click handling via PreviewMouseLeftButtonDown on each ListBox.
     -->
 
+    <Grid>
+
     <!-- ═══ Loading ═══ -->
     <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Background="Transparent">
         <Grid.RowDefinitions>
@@ -96,6 +98,8 @@
                  FocusVisualStyle="{x:Null}"
                  ItemTemplate="{DynamicResource ActionResultTemplate}"
                  PreviewMouseLeftButtonDown="OnItemClick"/>
+    </Grid>
+
     </Grid>
 
 </UserControl>
