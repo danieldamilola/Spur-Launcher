@@ -13,7 +13,8 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
+        <Border x:Name="SearchIconBorder"
+                Grid.Column="0"
                 Width="30" Height="30"
                 CornerRadius="9"
                 Background="{DynamicResource AccentGhost}"
@@ -41,7 +42,30 @@
                  BorderThickness="0"
                  Padding="0"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                 TextChanged="OnTextChanged"/>
+                 TextChanged="OnTextChanged">
+            <TextBox.Triggers>
+                <EventTrigger RoutedEvent="TextBox.GotFocus">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="SearchIconBorder"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0.6" Duration="0:0:0.15"
+                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="TextBox.LostFocus">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="SearchIconBorder"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1" Duration="0:0:0.25"
+                                             EasingFunction="{StaticResource AnimEaseIn}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </TextBox.Triggers>
+        </TextBox>
 
         <TextBlock x:Name="Placeholder"
                    Grid.Column="1"
