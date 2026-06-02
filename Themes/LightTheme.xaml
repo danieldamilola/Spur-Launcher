@@ -27,6 +27,7 @@
     <SolidColorBrush x:Key="PreviewBg"       Color="#D9FFFFFF"/>
 
     <SolidColorBrush x:Key="Surface"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceAcrylic"  Color="#CCFFFFFF"/>
     <SolidColorBrush x:Key="SurfaceLow"      Color="#F2F2F4"/>
     <SolidColorBrush x:Key="SurfaceRaised"   Color="#F7F7F8"/>
 

@@ -37,4 +37,8 @@
   <!-- Shared alias (theme files override at runtime) -->
   <SolidColorBrush x:Key="Token.Accent" Color="#C9C4BC" />
 
+  <!-- Acrylic — semi-transparent surfaces for glassmorphism (Item 8) -->
+  <SolidColorBrush x:Key="Token.Bg.Acrylic.Dark" Color="#CC1A1A1D" />
+  <SolidColorBrush x:Key="Token.Bg.Acrylic.Light" Color="#CCFFFFFF" />
+
 </ResourceDictionary>
