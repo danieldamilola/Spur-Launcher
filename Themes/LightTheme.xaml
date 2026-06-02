@@ -6,6 +6,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Themes/DesignTokens/Colors.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Typography.xaml"/>
+                <ResourceDictionary Source="/Themes/DesignTokens/IconTokens.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Spacing.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Radii.xaml"/>
         <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>

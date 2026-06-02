@@ -135,7 +135,7 @@
                                       Label="Files"
                                       AutomationProperties.Name="Files"
                                       Margin="0,0,4,0"
-                                      IconData="{Binding Source='folder', Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                      IconData="{Binding Source={StaticResource Icon.Category.Files}, Converter={x:Static conv:LucideIconConverter.Instance}}"
                                       Click="OnCategoryClick"/>
 
                 <views:CategoryCircle x:Name="CircleCommands"
@@ -143,14 +143,14 @@
                                       Label="Commands"
                                       AutomationProperties.Name="Commands"
                                       Margin="0,0,4,0"
-                                      IconData="{Binding Source='terminal', Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                      IconData="{Binding Source={StaticResource Icon.Category.Commands}, Converter={x:Static conv:LucideIconConverter.Instance}}"
                                       Click="OnCategoryClick"/>
 
                 <views:CategoryCircle x:Name="CircleClipboard"
                                       Tag="clipboard"
                                       Label="Clips"
                                       AutomationProperties.Name="Clips"
-                                      IconData="{Binding Source='clipboard', Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                      IconData="{Binding Source={StaticResource Icon.Category.Clipboard}, Converter={x:Static conv:LucideIconConverter.Instance}}"
                                       Click="OnCategoryClick"/>
               </StackPanel>
             </Grid>
