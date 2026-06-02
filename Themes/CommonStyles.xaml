@@ -212,19 +212,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#FFFFFF" Opacity="0.15"/>
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
                             <Setter Property="Foreground"                 Value="{DynamicResource TextPrimary}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#FFFFFF" Opacity="0.08"/>
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -639,6 +631,29 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Polish-pass additions
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Panel: card container used throughout SettingsView -->
+    <Style x:Key="Panel" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Depth1}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- Divider: alias for SettingsDivider -->
+    <Style x:Key="Divider" TargetType="Border" BasedOn="{StaticResource SettingsDivider}"/>
+
+    <!-- Onboarding theme-preview surfaces (static colours; they must show
+         the target theme regardless of the current theme) -->
+    <SolidColorBrush x:Key="OnboardingPreviewDark"  Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="OnboardingPreviewLight" Color="#F2F2F4"/>
+
+    <!-- Shadow plate for MainWindow launcher backdrop (design.md: #000 @ 40 %) -->
+    <SolidColorBrush x:Key="ShadowPlateBrush" Color="#66000000"/>
 
 </ResourceDictionary>
 

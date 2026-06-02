@@ -28,6 +28,34 @@ public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _vm;
     private bool _recordingShortcut;
+    // ── Sidebar event handlers ───────────────────────────────────
+    private void OnRemoveFolderClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string path)
+            _vm?.RemoveFolderCommand.Execute(path);
+    }
+
+    private void OnRemoveFileTypeClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string ext)
+            _vm?.RemoveFileTypeCommand.Execute(ext);
+    }
+
+    private void OnAddFileTypeClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.AddFileTypeCommand.Execute(null);
+    }
+
+    private void OnDecrementClipboardHistoryClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is not null) _vm.ClipboardHistorySize -= 10;
+    }
+
+    private void OnIncrementClipboardHistoryClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is not null) _vm.ClipboardHistorySize += 10;
+    }
+
 
     public SettingsView()
     {
