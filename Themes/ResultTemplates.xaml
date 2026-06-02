@@ -46,6 +46,11 @@
                     Grid.Column="2"
                     Background="Transparent"
                     CornerRadius="{DynamicResource RadiusRow}"/>
+            <Border x:Name="HoverOverlay"
+                    Grid.Column="2"
+                    Background="{DynamicResource HoverBg}"
+                    CornerRadius="{DynamicResource RadiusRow}"
+                    Opacity="0"/>
 
             <Grid Grid.Column="2" Margin="12,0,14,0">
                 <Grid.ColumnDefinitions>
@@ -132,12 +137,32 @@
         </Grid>
 
         <DataTemplate.Triggers>
+            <!-- Hover animation (unselected) -->
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
                 </MultiDataTrigger.Conditions>
-                <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                <MultiDataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1" Duration="0:0:0.15"
+                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </MultiDataTrigger.EnterActions>
+                <MultiDataTrigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0" Duration="0:0:0.2"
+                                             EasingFunction="{StaticResource AnimEaseIn}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </MultiDataTrigger.ExitActions>
             </MultiDataTrigger>
 
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
@@ -164,6 +189,10 @@
             <Border x:Name="RowBg"
                     CornerRadius="{DynamicResource RadiusMd}"
                     Background="Transparent"/>
+            <Border x:Name="HoverOverlay"
+                    CornerRadius="{DynamicResource RadiusMd}"
+                    Background="{DynamicResource HoverBg}"
+                    Opacity="0"/>
 
             <Grid Margin="10,0,8,0">
                 <Grid.ColumnDefinitions>
@@ -230,8 +259,28 @@
         </Grid>
 
         <DataTemplate.Triggers>
+            <!-- Hover animation -->
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
-                <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1" Duration="0:0:0.15"
+                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0" Duration="0:0:0.2"
+                                             EasingFunction="{StaticResource AnimEaseIn}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.ExitActions>
             </DataTrigger>
 
             <DataTrigger Binding="{Binding IsClipImage}" Value="True">
@@ -257,6 +306,10 @@
             <Border x:Name="RowBg"
                     CornerRadius="{DynamicResource RadiusMd}"
                     Background="Transparent"/>
+            <Border x:Name="HoverOverlay"
+                    CornerRadius="{DynamicResource RadiusMd}"
+                    Background="{DynamicResource HoverBg}"
+                    Opacity="0"/>
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -307,8 +360,28 @@
         </Grid>
 
         <DataTemplate.Triggers>
+            <!-- Hover animation -->
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
-                <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1" Duration="0:0:0.15"
+                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0" Duration="0:0:0.2"
+                                             EasingFunction="{StaticResource AnimEaseIn}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.ExitActions>
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
@@ -412,6 +485,12 @@
                         Grid.Column="2"
                         Background="Transparent"
                         CornerRadius="{DynamicResource RadiusRow}"/>
+                <!-- Hover overlay (animated) -->
+                <Border x:Name="HoverOverlay"
+                        Grid.Column="2"
+                        Background="{DynamicResource HoverBg}"
+                        CornerRadius="{DynamicResource RadiusRow}"
+                        Opacity="0"/>
 
                 <Grid Grid.Column="2" Margin="12,0,14,0">
                     <Grid.ColumnDefinitions>
@@ -561,13 +640,32 @@
             </Grid>
 
             <DataTemplate.Triggers>
-                <!-- Hover (unselected) -->
+                <!-- Hover animation (unselected) -->
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                         <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
                     </MultiDataTrigger.Conditions>
-                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                    <MultiDataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="1" Duration="0:0:0.15"
+                                                 EasingFunction="{StaticResource AnimEaseOut}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </MultiDataTrigger.EnterActions>
+                    <MultiDataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0" Duration="0:0:0.2"
+                                                 EasingFunction="{StaticResource AnimEaseIn}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </MultiDataTrigger.ExitActions>
                 </MultiDataTrigger>
 
                 <!-- Selected -->

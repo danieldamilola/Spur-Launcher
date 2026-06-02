@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Animations.xaml — Shared animation resources for Arc launcher.
+    
+    Window show/hide animations (scale+fade, 200ms/140ms) are handled by
+    ArcMotion.cs. This file provides easing functions and documents the
+    shared timing constants for consistency across the codebase.
+    
+    Duration constants (mirror ArcMotion.cs):
+      ShowDurationMs       200   — window appear (ease-out, scale 0.97→1, opacity 0→1)
+      HideDurationMs       140   — window dismiss (ease-in,  scale 1→0.98, opacity 1→0)
+      HoverEnterMs         150   — result hover overlay fade in
+      HoverExitMs          200   — result hover overlay fade out
+      FocusPulseMs         300   — input focus pulse
+      CrossfadeMs          120   — view transitions
+      AnchorRevealMs       150   — category column reveal
+      AnchorHideMs         100   — category column hide
+      AnchorStaggerMs       30   — per-anchor stagger delay
+      ColumnRevealMs       200   — column width animation
+      DividerRevealMs      120   — divider fade
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══ Shared easing functions ═══ -->
+    <CubicEase x:Key="AnimEaseOut" EasingMode="EaseOut"/>
+    <CubicEase x:Key="AnimEaseIn"  EasingMode="EaseIn"/>
+
+</ResourceDictionary>
