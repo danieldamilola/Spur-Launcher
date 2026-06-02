@@ -70,32 +70,3 @@ public sealed class StartupServiceImpl : IStartupService
         }
     }
 }
-
-/// <summary>Static facade — delegates to the configured IStartupService instance.</summary>
-public static class StartupService
-{
-    private static IStartupService? _instance;
-    private static ILogger _log = NullLogger.Instance;
-
-    public static void Initialize(IStartupService instance, ILogger logger)
-    {
-        _instance = instance;
-        _log = logger;
-    }
-
-    public static void Enable() => Instance.Enable();
-    public static void Disable() => Instance.Disable();
-    public static bool IsEnabled() => Instance.IsEnabled();
-
-    private static IStartupService Instance
-    {
-        get
-        {
-            if (_instance is not null) return _instance;
-            var impl = new StartupServiceImpl(_log);
-            _instance = impl;
-            _log.Info("StartupService auto-initialized with defaults.");
-            return impl;
-        }
-    }
-}

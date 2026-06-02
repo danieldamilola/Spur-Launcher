@@ -128,38 +128,3 @@ public sealed class ClipboardServiceImpl : IClipboardService
         lock (_lock) _history.RemoveAll(e => !contentToKeep.Contains(e.Content));
     }
 }
-
-/// <summary>Static facade — delegates to the configured IClipboardService instance.</summary>
-public static class ClipboardService
-{
-    private static IClipboardService? _instance;
-    private static ILogger _log = NullLogger.Instance;
-
-    /// <summary>Sets the underlying instance and logger. Call once at startup.</summary>
-    public static void Initialize(IClipboardService instance, ILogger logger)
-    {
-        _instance = instance;
-        _log = logger;
-    }
-
-    public static int MaxItems { get => Instance.MaxItems; set => Instance.MaxItems = value; }
-    public static IReadOnlyList<ClipboardEntry> GetHistory() => Instance.GetHistory();
-    public static void Add(string text) => Instance.Add(text);
-    public static void AddImage(System.Windows.Media.Imaging.BitmapSource image) => Instance.AddImage(image);
-    public static void CopyToSystem(string text) => Instance.CopyToSystem(text);
-    public static string? ReadFromSystem() => Instance.ReadFromSystem();
-    public static System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem() => Instance.ReadImageFromSystem();
-    public static void Clear() => Instance.Clear();
-
-    private static IClipboardService Instance
-    {
-        get
-        {
-            if (_instance is not null) return _instance;
-            var impl = new ClipboardServiceImpl(_log);
-            _instance = impl;
-            _log.Info("ClipboardService auto-initialized with defaults.");
-            return impl;
-        }
-    }
-}

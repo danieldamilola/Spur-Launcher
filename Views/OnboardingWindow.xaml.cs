@@ -9,7 +9,7 @@ namespace Arc.Views;
 
 public partial class OnboardingWindow : Window
 {
-    private int _slide = 0;
+    private int _slide;
     private readonly StackPanel[] _slides;
     private readonly Ellipse[] _dots;
 
@@ -18,64 +18,55 @@ public partial class OnboardingWindow : Window
     public OnboardingWindow()
     {
         InitializeComponent();
-
-        _slides = new[] { Slide1, Slide2, Slide3 };
-        _dots   = new[] { Dot1, Dot2, Dot3 };
-
-        _slides[0].Opacity = 1;
+        _slides = [Slide1, Slide2, Slide3];
+        _dots = [Dot1, Dot2, Dot3];
     }
+
+    private void OnSkipClick(object sender, RoutedEventArgs e) => Finish();
 
     private void OnNextClick(object sender, RoutedEventArgs e)
     {
-        var current = _slides[_slide];
-
-        _slide++;
-
-        if (_slide >= _slides.Length)
+        if (_slide >= _slides.Length - 1)
         {
-            OnCompleted?.Invoke();
-            Close();
+            Finish();
             return;
         }
 
-        // Animate current slide out
-        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200))
+        var current = _slides[_slide];
+        _slide++;
+
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
         };
         fadeOut.Completed += (_, _) => current.Visibility = Visibility.Collapsed;
         current.BeginAnimation(OpacityProperty, fadeOut);
 
-        // Show and animate next slide in
         var next = _slides[_slide];
         next.Visibility = Visibility.Visible;
         next.Opacity = 0;
+        next.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            });
 
-        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-            BeginTime = TimeSpan.FromMilliseconds(100)
-        };
-        next.BeginAnimation(OpacityProperty, fadeIn);
+        UpdateDots();
+        NextButton.Content = _slide == _slides.Length - 1 ? "Finish" : "Continue";
+    }
 
-        var slideUp = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(300))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-            BeginTime = TimeSpan.FromMilliseconds(100)
-        };
-        var transform = (TranslateTransform)next.RenderTransform;
-        transform.BeginAnimation(TranslateTransform.YProperty, slideUp);
+    private void UpdateDots()
+    {
+        var active = TryFindResource("TextPrimary") as Brush ?? Brushes.White;
+        var idle = TryFindResource("BorderStrong") as Brush ?? Brushes.Gray;
+        for (var i = 0; i < _dots.Length; i++)
+            _dots[i].Fill = i == _slide ? active : idle;
+    }
 
-        // Update dots
-        for (int i = 0; i < _dots.Length; i++)
-        {
-            _dots[i].Fill = i == _slide
-                ? (Brush)TryFindResource("Accent") ?? Brushes.Gray
-                : (Brush)TryFindResource("BorderStrong") ?? Brushes.DimGray;
-        }
-
-        // Update button text for last slide
-        NextButton.Content = _slide == _slides.Length - 1 ? "Launch Arc" : "Continue";
+    private void Finish()
+    {
+        OnCompleted?.Invoke();
+        Close();
     }
 
     private void OnDrag(object sender, MouseButtonEventArgs e)

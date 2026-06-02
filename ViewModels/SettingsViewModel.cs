@@ -9,23 +9,29 @@ namespace Arc.ViewModels;
 /// </summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
-    private readonly IConfigService _configService;
-    private readonly MainViewModel  _main;
-    private          ArcConfig     _config;
+    private readonly IConfigService   _configService;
+    private readonly MainViewModel    _main;
+    private readonly IThemeManager    _themeManager;
+    private readonly IStartupService  _startupService;
+    private          ArcConfig       _config;
 
-    public SettingsViewModel(ArcConfig config, IConfigService configService, MainViewModel main)
+    public SettingsViewModel(ArcConfig config, IConfigService configService, MainViewModel main,
+                             IThemeManager themeManager, IStartupService startupService)
     {
-        _config        = config;
-        _configService = configService;
-        _main          = main;
+        _config          = config;
+        _configService   = configService;
+        _main            = main;
+        _themeManager    = themeManager;
+        _startupService  = startupService;
 
-        // Init sidebar sections — 4 consolidated groups
+        // Init sidebar — features.md §6
         Sections = new ObservableCollection<SettingsSection>
         {
             new("General",  "settings", "\ue721"),
             new("Search",   "search",   "\ue721"),
             new("Actions",  "zap",      "\ue945"),
-            new("Advanced", "info",     "\ue946"),
+            new("Extras",   "sparkles", "\ue945"),
+            new("About",    "info",     "\ue946"),
         };
         SelectedSection = Sections[0];
 
@@ -65,7 +71,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void SetTheme(string theme)
     {
         _config.Theme = theme;
-        ThemeManager.Apply(theme);
+        _themeManager.Apply(theme);
         Save();
         OnPropertyChanged(nameof(ThemeDark));
         OnPropertyChanged(nameof(ThemeLight));
@@ -77,84 +83,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.WindowOpacity;
         set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public string BackgroundColor
-    {
-        get => _config.BackgroundColor;
-        set { _config.BackgroundColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public bool EnableBlur
-    {
-        get => _config.EnableBlur;
-        set { _config.EnableBlur = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public bool UseWindowsAccentColor
-    {
-        get => _config.UseWindowsAccentColor;
-        set { _config.UseWindowsAccentColor = value; Save(); OnPropertyChanged(); OnPropertyChanged(nameof(UseCustomAccentColor)); }
-    }
-
-    public bool UseCustomAccentColor
-    {
-        get => !_config.UseWindowsAccentColor;
-        set { UseWindowsAccentColor = !value; }
-    }
-
-    public string AccentColor
-    {
-        get => _config.AccentColor;
-        set { _config.AccentColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public string FontFamilySetting
-    {
-        get => _config.FontFamily;
-        set { if (!string.IsNullOrWhiteSpace(value)) { _config.FontFamily = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); } }
-    }
-
-    public double FontSize
-    {
-        get => _config.FontSize;
-        set { _config.FontSize = Math.Clamp(value, 10, 24); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public double LauncherWidth
-    {
-        get => _config.LauncherWidth;
-        set { _config.LauncherWidth = Math.Clamp(value, 400, 1200); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public bool ShowCategoryLabels
-    {
-        get => _config.ShowCategoryLabels;
-        set { _config.ShowCategoryLabels = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public double CornerRadius
-    {
-        get => _config.CornerRadius;
-        set { _config.CornerRadius = Math.Clamp(value, 0, 20); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public string AnimationSpeed
-    {
-        get => _config.AnimationSpeed;
-        set { _config.AnimationSpeed = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public bool ShowAppIcons
-    {
-        get => _config.ShowAppIcons;
-        set { _config.ShowAppIcons = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-
-    public bool CompactMode
-    {
-        get => _config.CompactMode;
-        set { _config.CompactMode = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -427,7 +355,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             _launchOnStartup = value;
             _config.LaunchOnStartup = value;
-            if (value) StartupService.Enable(); else StartupService.Disable();
+            if (value) _startupService.Enable(); else _startupService.Disable();
             Save();
             OnPropertyChanged();
         }
@@ -528,18 +456,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.ShowRecentFirst = value; Save(); OnPropertyChanged(); }
     }
 
-    public bool ShowPlaceholder
-    {
-        get => _config.ShowPlaceholder;
-        set { _config.ShowPlaceholder = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
-    }
-
-    public string PlaceholderText
-    {
-        get => _config.PlaceholderText;
-        set { _config.PlaceholderText = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
-    }
-
     public bool AnimationEnabled
     {
         get => _config.AnimationEnabled;
@@ -550,14 +466,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.SoundEffectEnabled;
         set { _config.SoundEffectEnabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
-    }
-
-    public string[] SearchWindowLocations { get; } = ["Primary Monitor"];
-
-    public string SearchWindowLocation
-    {
-        get => "Primary Monitor";
-        set { _config.SearchWindowLocation = "primary"; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
     }
 
     public string[] SearchWindowPositions { get; } = ["Center", "Center Top", "Left Top", "Right Top", "Custom Position"];
@@ -611,18 +519,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => SearchWindowPosition == "Right Top";
         set { if (value) SearchWindowPosition = "Right Top"; }
-    }
-
-    public bool AlwaysPreview
-    {
-        get => _config.AlwaysPreview;
-        set { _config.AlwaysPreview = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
-    }
-
-    public bool IgnoreHotkeysInFullscreen
-    {
-        get => _config.IgnoreHotkeysInFullscreen;
-        set { _config.IgnoreHotkeysInFullscreen = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -798,8 +694,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     // About
     // ═══════════════════════════════════════════════════════════════
 
-    public string Version => "Arc v1.2.0";
-    public string Credits => "Built with .NET 9 + WPF";
+    public string Version =>
+        $"Arc v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.2.0"}";
+
+    public string Credits => "Built with .NET 9 + WPF · Monochrome v2 design system";
     public string License => "MIT License";
 
     // ═══════════════════════════════════════════════════════════════
@@ -808,7 +706,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private void LoadStartupState()
     {
-        _launchOnStartup = StartupService.IsEnabled();
+        _launchOnStartup = _startupService.IsEnabled();
         OnPropertyChanged(nameof(LaunchOnStartup));
     }
 

@@ -7,10 +7,236 @@
 
     <UserControl.Resources>
 
+        <!-- ── Bool converters (also used by MainWindow via MergedDictionary) ── -->
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:BoolToVisibilityConverter x:Key="InvBoolToVis" Invert="True"/>
 
-        <!-- Section label (generic) -->
+        <!-- ── Unified result template with clipboard actions ── -->
+        <DataTemplate x:Key="ResultTemplate" DataType="{x:Type models:SearchResult}">
+            <Grid x:Name="RowRoot"
+                  Height="{DynamicResource RowHeight}"
+                  Background="Transparent"
+                  Cursor="Hand"
+                  ToolTip="{Binding Name}"
+                  AutomationProperties.Name="{Binding Name}"
+                  MouseLeftButtonDown="OnRowClick">
+
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Run as Administrator"
+                                  Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  InputGestureText="Ctrl+Enter"/>
+                        <MenuItem Header="Open file location"
+                                  Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  InputGestureText="Ctrl+Shift+E"/>
+                        <MenuItem Header="Copy path"
+                                  Command="{Binding DataContext.CopySelectedPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  InputGestureText="Ctrl+C"/>
+                    </ContextMenu>
+                </Grid.ContextMenu>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="2"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Selection rail -->
+                <Border x:Name="SelectionRail"
+                        Grid.Column="1"
+                        Background="Transparent"
+                        CornerRadius="2"
+                        Margin="0,8,0,8"/>
+
+                <!-- Row background -->
+                <Border x:Name="RowBg"
+                        Grid.Column="2"
+                        Background="Transparent"
+                        CornerRadius="{DynamicResource RadiusRow}"/>
+
+                <Grid Grid.Column="2" Margin="12,0,14,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="32"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon -->
+                    <Border Grid.Column="0"
+                            Width="32" Height="32"
+                            CornerRadius="8"
+                            Background="{DynamicResource SurfaceLow}"
+                            VerticalAlignment="Center">
+                        <Image x:Name="AppIcon"
+                               Width="26" Height="26"
+                               Stretch="Uniform"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Source>
+                                <Binding Path="IconPath">
+                                    <Binding.Converter>
+                                        <conv:PathToIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Image.Source>
+                        </Image>
+                        <Path x:Name="LucideIcon"
+                              Width="15" Height="15"
+                              Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondary}"
+                              StrokeThickness="1.5"
+                              StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              Fill="Transparent"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Visibility="Collapsed">
+                            <Path.Data>
+                                <Binding Path="LucideIcon">
+                                    <Binding.Converter>
+                                        <conv:LucideIconConverter/>
+                                    </Binding.Converter>
+                                </Binding>
+                            </Path.Data>
+                        </Path>
+                    </Border>
+
+                    <!-- Name + subtitle -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock x:Name="NameText"
+                                   Text="{Binding Name}"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="{DynamicResource FontResult}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="SubtitleText"
+                                   FontFamily="{DynamicResource UIFont}"
+                                   FontSize="{DynamicResource FontMeta}"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Text="{Binding DisplaySubtitle}"/>
+                    </StackPanel>
+
+                    <!-- Enter hint -->
+                    <Border x:Name="EnterHint"
+                            Grid.Column="3"
+                            CornerRadius="6"
+                            Background="{DynamicResource SurfaceRaised}"
+                            Padding="7,3"
+                            Margin="8,0,0,0"
+                            Visibility="Collapsed"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="↵"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextTertiary}"/>
+                    </Border>
+
+                    <!-- Clipboard actions -->
+                    <StackPanel x:Name="ClipActions"
+                                Grid.Column="3"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="4,0,0,0"
+                                Visibility="Collapsed">
+                        <Button x:Name="PinBtn"
+                                Width="26" Height="26"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" FocusVisualStyle="{x:Null}"
+                                ToolTip="Pin"
+                                Tag="{Binding IsPinned}"
+                                Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="5">
+                                        <Path Width="11" Height="11" Stretch="Uniform"
+                                              x:Name="PinPath"
+                                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Fill="Transparent"
+                                              Data="M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
+                                            <Setter TargetName="PinPath" Property="Fill" Value="{DynamicResource TextPrimary}"/>
+                                            <Setter TargetName="PinPath" Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Width="26" Height="26"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" FocusVisualStyle="{x:Null}"
+                                ToolTip="Remove"
+                                Click="OnClipDeleteClick">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="5">
+                                        <Path Width="11" Height="11" Stretch="Uniform"
+                                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Fill="Transparent"
+                                              Data="M3 6h18M19 6l-1 14H6L5 6M9 6V4h6v2"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <!-- Hover (unselected) -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
+                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                </MultiDataTrigger>
+
+                <!-- Selected -->
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                    <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
+                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SelectedBg}"/>
+                    <Setter TargetName="EnterHint" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+
+                <!-- No file icon → Lucide fallback -->
+                <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
+                    <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed"/>
+                    <Setter TargetName="LucideIcon" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+
+                <!-- Clipboard actions on hover -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
+                        <Condition Binding="{Binding Type}" Value="Clipboard"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ClipActions" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="EnterHint" Property="Visibility" Value="Collapsed"/>
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Section label template -->
         <DataTemplate x:Key="SectionTemplate" DataType="{x:Type models:SectionLabel}">
             <Grid Margin="0">
                 <Grid.ColumnDefinitions>
@@ -21,13 +247,12 @@
                            Text="{Binding Title}"
                            FontFamily="{DynamicResource UIFont}"
                            FontSize="{DynamicResource FontHint}"
-                           FontWeight="Normal"
-                           Foreground="{DynamicResource TextTertiary}"
-                           Padding="16,8,16,4"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextMuted}"
+                           Padding="16,10,16,6"
                            TextOptions.TextFormattingMode="Display"/>
-                <!-- Clear all button — only shown on CLIPBOARD section label -->
                 <Button Grid.Column="1"
-                        Content="Clear all"
+                        Content="Clear"
                         FontFamily="{DynamicResource UIFont}"
                         FontSize="10"
                         Foreground="{DynamicResource TextMuted}"
@@ -52,241 +277,6 @@
             </Grid>
         </DataTemplate>
 
-        <!-- Result row -->
-        <DataTemplate x:Key="ResultTemplate" DataType="{x:Type models:SearchResult}">
-            <Grid x:Name="RowRoot"
-                  Height="{DynamicResource RowHeight}"
-                  Background="Transparent"
-                  ToolTip="{Binding DetailText}"
-                  MouseLeftButtonDown="OnRowClick"
-                  Cursor="Hand">
-
-                <Grid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Run as Administrator"
-                                  Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                  InputGestureText="Ctrl+Return"/>
-                        <MenuItem Header="Open file location"
-                                  Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                  InputGestureText="Ctrl+Shift+R"/>
-                    </ContextMenu>
-                </Grid.ContextMenu>
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Border x:Name="SelectionRail"
-                        Grid.Column="0"
-                        Background="Transparent"
-                        CornerRadius="0,2,2,0"/>
-
-                <Border x:Name="RowBg"
-                        Grid.Column="1"
-                        Background="Transparent"/>
-
-                <Grid Grid.Column="1" Margin="16,0,16,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="28"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border x:Name="ImgBox"
-                            Grid.Column="0"
-                            Width="28" Height="28"
-                            CornerRadius="6"
-                            Background="Transparent"
-                            VerticalAlignment="Center">
-                        <Image x:Name="AppIcon"
-                               Width="28" Height="28"
-                               Stretch="Uniform"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Source>
-                                <Binding Path="IconPath">
-                                    <Binding.Converter>
-                                        <conv:PathToIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Image.Source>
-                        </Image>
-                    </Border>
-
-                    <!-- Lucide icon — shown when no file icon is available -->
-                    <Border x:Name="LucideBox"
-                            Grid.Column="0"
-                            Width="28" Height="28"
-                            CornerRadius="6"
-                            Background="{DynamicResource SurfaceRaised}"
-                            VerticalAlignment="Center"
-                            Visibility="Collapsed">
-                        <Path x:Name="LucideIconPath"
-                              Width="14" Height="14"
-                              Stretch="Uniform"
-                              Stroke="{DynamicResource TextSecondary}"
-                              StrokeThickness="1.5"
-                              StrokeLineJoin="Round"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center">
-                            <Path.Data>
-                                <Binding Path="LucideIcon">
-                                    <Binding.Converter>
-                                        <conv:LucideIconConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </Path.Data>
-                        </Path>
-                    </Border>
-
-                    <!-- Name + subtitle -->
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <TextBlock x:Name="NameText"
-                                   Text="{Binding Name}"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="{DynamicResource FontResult}"
-                                   FontWeight="Normal"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="SubtitleText"
-                                   FontFamily="{DynamicResource UIFont}"
-                                   FontSize="{DynamicResource FontMeta}"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextTrimming="CharacterEllipsis">
-                            <TextBlock.Text>
-                                <Binding Path="DisplaySubtitle"/>
-                            </TextBlock.Text>
-                        </TextBlock>
-                    </StackPanel>
-
-                    <!-- Enter hint — only on selected row -->
-                    <Border x:Name="EnterHint"
-                            Grid.Column="3"
-                            CornerRadius="4"
-                            Background="{DynamicResource Depth2}"
-                            Padding="5,2"
-                            Margin="8,0,0,0"
-                            Visibility="Collapsed"
-                            VerticalAlignment="Center">
-                        <TextBlock Text="↵"
-                                   FontFamily="{DynamicResource MonoFont}"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}"/>
-                    </Border>
-
-                    <!-- Clipboard action buttons — pin + delete, shown on hover for clipboard items -->
-                    <StackPanel x:Name="ClipActions"
-                                Grid.Column="3"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Margin="4,0,0,0"
-                                Visibility="Collapsed">
-
-                        <!-- Pin/Unpin button — Tag={IsPinned} so ControlTemplate can read it -->
-                        <Button x:Name="PinBtn"
-                                Width="26" Height="26"
-                                Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" FocusVisualStyle="{x:Null}"
-                                ToolTip="Pin"
-                                Tag="{Binding IsPinned}"
-                                Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="5">
-                                        <Path Width="11" Height="11" Stretch="Uniform"
-                                              x:Name="PinPath"
-                                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Fill="Transparent"
-                                              Data="M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
-                                        </Trigger>
-                                        <!-- Pinned state: fill the icon in accent color -->
-                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
-                                            <Setter TargetName="PinPath" Property="Fill"   Value="{DynamicResource Accent}"/>
-                                            <Setter TargetName="PinPath" Property="Stroke" Value="{DynamicResource Accent}"/>
-                                        </DataTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-
-                        <!-- Delete single item button -->
-                        <Button Width="26" Height="26"
-                                Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" FocusVisualStyle="{x:Null}"
-                                ToolTip="Remove"
-                                Click="OnClipDeleteClick">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="5">
-                                        <Path Width="11" Height="11" Stretch="Uniform"
-                                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Fill="Transparent"
-                                              Data="M3 6h18M19 6l-1 14H6L5 6M9 6V4h6v2"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-
-                    </StackPanel>
-                </Grid>
-            </Grid>
-
-            <DataTemplate.Triggers>
-
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
-                    </MultiDataTrigger.Conditions>
-                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
-                </MultiDataTrigger>
-
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                    <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
-                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
-                </DataTrigger>
-
-                <!-- No file icon → use Lucide fallback -->
-                <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
-                    <Setter TargetName="ImgBox"   Property="Visibility" Value="Collapsed"/>
-                    <Setter TargetName="LucideBox" Property="Visibility" Value="Visible"/>
-                </DataTrigger>
-
-                <!-- Show clipboard action buttons on hover -->
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
-                        <Condition Binding="{Binding Type}" Value="Clipboard"/>
-                    </MultiDataTrigger.Conditions>
-                    <Setter TargetName="ClipActions" Property="Visibility" Value="Visible"/>
-                    <Setter TargetName="EnterHint"   Property="Visibility" Value="Collapsed"/>
-                </MultiDataTrigger>
-
-
-            </DataTemplate.Triggers>
-        </DataTemplate>
-
-        <!-- Template selector -->
         <local:ResultTemplateSelector x:Key="TemplateSelector"
                                       SectionTemplate="{StaticResource SectionTemplate}"
                                       ResultTemplate="{StaticResource ResultTemplate}"/>
@@ -299,9 +289,11 @@
              SelectionChanged="OnSelectionChanged"
              HorizontalContentAlignment="Stretch"
              Padding="0,2,0,4"
-             MaxHeight="280"
+             MaxHeight="352"
              Focusable="False"
              ScrollViewer.VerticalScrollBarVisibility="Auto"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-             ScrollViewer.CanContentScroll="False"/>
+             VirtualizingStackPanel.IsVirtualizing="True"
+             VirtualizingStackPanel.VirtualizationMode="Recycling"
+             ScrollViewer.CanContentScroll="True"/>
 </UserControl>

@@ -2,7 +2,7 @@ namespace Arc.Extensions;
 
 /// <summary>
 /// Timer action. Triggered by "timer 10m", "timer 30s", "timer 1h".
-/// The actual countdown runs in the PreviewPanel / MainViewModel.
+/// The actual countdown runs in the background via TimerViewModel.
 /// </summary>
 public sealed class TimerAction : IAction
 {
