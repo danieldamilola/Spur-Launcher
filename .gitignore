@@ -6,4 +6,8 @@ obj/
 .idea/
 *.DS_Store
 Output/
+dist/
+out/
+publish/
+*.exclude
 nul
