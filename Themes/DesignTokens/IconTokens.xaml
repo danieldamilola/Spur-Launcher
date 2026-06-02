@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icon Tokens — Semantic icon keys mapped to Lucide icon names.
+  
+  All icons use Lucide (lucide.dev, MIT license). The LucideIconConverter
+  resolves these string names to Path geometries at runtime.
+  
+  Data-driven icons (SearchResult.LucideIcon assigned in C#) also use Lucide
+  names directly — those will be migrated to token keys in a follow-up pass
+  once a TokenKey → LucideName lookup is added to LucideIconConverter.
+  
+  References in XAML:
+    IconData="{Binding Source={StaticResource Icon.Category.Files},
+                       Converter={x:Static conv:LucideIconConverter.Instance}}"
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  Category Icons (MainWindow navigation tabs)                   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <sys:String x:Key="Icon.Category.Files"     >folder</sys:String>
+    <sys:String x:Key="Icon.Category.Commands"  >terminal</sys:String>
+    <sys:String x:Key="Icon.Category.Clipboard" >clipboard</sys:String>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  Settings Icons (SettingsView tabs)                            -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <sys:String x:Key="Icon.Settings.Close"      >x</sys:String>
+    <sys:String x:Key="Icon.Settings.Appearance" >palette</sys:String>
+    <sys:String x:Key="Icon.Settings.Theme"      >blend</sys:String>
+    <sys:String x:Key="Icon.Settings.Hotkey"     >keyboard</sys:String>
+    <sys:String x:Key="Icon.Settings.Behavior"   >move</sys:String>
+    <sys:String x:Key="Icon.Settings.AI"         >sparkles</sys:String>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  Action Icons (assigned via SearchResult.LucideIcon in C#)     -->
+    <!--  Documented here for discoverability; used at runtime.         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--
+    Icon.Action.Calculator   = calculator
+    Icon.Action.Timer        = timer
+    Icon.Action.ColorPicker  = palette
+    Icon.Action.IP           = globe
+    Icon.Action.AI           = sparkles
+    Icon.Action.Settings     = settings
+    Icon.Action.Currency     = dollar-sign
+    Icon.Action.Password     = key
+    Icon.Action.QuickNote    = file-text
+    Icon.Action.KillProcess  = x-octagon
+    Icon.Action.Screenshot   = camera
+
+    Icon.System.Wifi         = wifi
+    Icon.System.Signal       = signal
+    Icon.System.Airplane     = plane
+    Icon.System.Hotspot      = share-2
+    Icon.System.Bluetooth    = bluetooth
+    Icon.System.Display      = monitor
+    Icon.System.Sound        = volume-2
+    Icon.System.Battery      = battery
+    Icon.System.Update       = refresh-cw
+    Icon.System.Security     = shield
+    Icon.System.Apps         = package
+    Icon.System.DefaultApps  = layout-grid
+    Icon.System.Notifications= bell
+    Icon.System.Themes       = palette
+    Icon.System.Accounts     = user
+    Icon.System.DateTime     = clock
+    Icon.System.Region       = globe
+    Icon.System.Accessibility= eye
+    Icon.System.Storage      = hard-drive
+    Icon.System.About        = info
+    Icon.System.Performance  = activity
+    Icon.System.Devices      = cpu
+    -->
+</ResourceDictionary>
