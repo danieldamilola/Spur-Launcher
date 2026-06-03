@@ -27,6 +27,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IAiService           _aiService;
     private readonly IThemeManager        _themeManager;
     private readonly IStartupService      _startupService;
+    private readonly ICommandRegistry     _registry;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel    _ai;
@@ -72,7 +73,9 @@ public sealed partial class MainViewModel : ObservableObject
         INotificationService  notification,
         IAiService            aiService,
         IThemeManager         themeManager,
-        IStartupService       startupService)
+        IStartupService       startupService,
+        ICommandRegistry      registry,
+        CommandPaletteViewModel commandPalette)
     {
         _log          = log;
         _apps         = apps;
@@ -84,6 +87,7 @@ public sealed partial class MainViewModel : ObservableObject
         _aiService     = aiService;
         _themeManager  = themeManager;
         _startupService = startupService;
+        _registry = registry;
 
         Config   = config;
         Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService);
@@ -100,6 +104,10 @@ public sealed partial class MainViewModel : ObservableObject
         // Forward sub-VM property changes for backward-compatible bindings
         _ai.PropertyChanged    += (_, args) => OnPropertyChanged(args.PropertyName);
         _timer.PropertyChanged += (_, args) => OnPropertyChanged(args.PropertyName);
+
+        CommandPalette = commandPalette;
+
+        PopulatePaletteCommands();
 
         _ = LoadAppsAsync();
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
@@ -1095,10 +1103,93 @@ public sealed partial class MainViewModel : ObservableObject
             _           => null,
         };
     }
+    // ═══════════════════════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════════════════════
-    // Settings
+    // Command Palette
     // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Exposed for the command palette overlay.</summary>
+    public CommandPaletteViewModel CommandPalette { get; }
+
+    private void PopulatePaletteCommands()
+    {
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "toggle-theme",
+            Label = "Toggle Theme",
+            Description = "Switch between dark and light mode",
+            LucideIcon = "SunMoon",
+            Execute = () =>
+            {
+                var current = Config.Theme;
+                var next = current switch
+                {
+                    "dark" => "light",
+                    "light" => "dark",
+                    "system" => "dark",
+                    _ => "dark"
+                };
+                Config.Theme = next;
+                _themeManager.Apply(next);
+            }
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "open-settings",
+            Label = "Open Settings",
+            Description = "Open the settings window",
+            LucideIcon = "Settings",
+            Execute = () => OpenSettingsRequested?.Invoke()
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "clear-clipboard",
+            Label = "Clear Clipboard History",
+            Description = "Remove all clipboard entries",
+            LucideIcon = "Trash2",
+            Execute = ClearClipboard
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "cycle-scope",
+            Label = "Cycle Search Scope",
+            Description = "Switch between All, Files, Commands, Clipboard",
+            LucideIcon = "RefreshCw",
+            Execute = CycleScope
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "open-folder",
+            Label = "Open Containing Folder",
+            Description = "Open the folder of the selected item",
+            LucideIcon = "FolderOpen",
+            Execute = OpenFolder
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "copy-path",
+            Label = "Copy Path",
+            Description = "Copy the selected item path to clipboard",
+            LucideIcon = "Copy",
+            Execute = CopySelectedPath
+        });
+
+        _registry.Register(new CommandPaletteEntry
+        {
+            Id = "run-as-admin",
+            Label = "Run as Administrator",
+            Description = "Launch the selected app with elevated privileges",
+            LucideIcon = "Shield",
+            Execute = RunAsAdmin
+        });
+    }
+
 
     [RelayCommand]
     public void OpenSettings()
@@ -1111,6 +1202,7 @@ public sealed partial class MainViewModel : ObservableObject
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Raised when the VM wants the window to hide itself.</summary>
+
     public event Action? RequestHide;
 
     /// <summary>Raised when the user requests the Settings window.</summary>
