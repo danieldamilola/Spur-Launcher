@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Arc — Release publish + Velopack installer
+# Spur — Release publish + Velopack installer
 # Usage: .\publish.ps1
 # Requires: dotnet tool install -g vpk  (run once)
 
@@ -12,13 +12,13 @@ $ErrorActionPreference = "Stop"
 $ProjectDir = $PSScriptRoot
 
 Write-Host ""
-Write-Host "  Arc Release Build v$Version" -ForegroundColor Cyan
+Write-Host "  Spur Release Build v$Version" -ForegroundColor Cyan
 Write-Host "  ─────────────────────────────" -ForegroundColor DarkGray
 Write-Host ""
 
 # ── 1. Kill running instance ─────────────────────────────────────────────────
-Write-Host "  [1/4] Stopping running Arc..." -ForegroundColor Yellow
-taskkill /IM Arc.exe /F 2>$null
+Write-Host "  [1/4] Stopping running Spur..." -ForegroundColor Yellow
+taskkill /IM Spur.exe /F 2>$null
 Start-Sleep -Milliseconds 400
 
 # ── 2. Clean previous publish ────────────────────────────────────────────────
@@ -28,7 +28,7 @@ if (Test-Path $PublishDir) { Remove-Item $PublishDir -Recurse -Force }
 if (Test-Path $OutputDir)  { Remove-Item $OutputDir  -Recurse -Force }
 
 # ── 3. Publish (self-contained, single-file, win-x64, Release) ──────────────
-Write-Host "  [3/4] Publishing Arc..." -ForegroundColor Yellow
+Write-Host "  [3/4] Publishing Spur..." -ForegroundColor Yellow
 dotnet publish "$ProjectDir\Arc.csproj" `
     -c Release `
     -r win-x64 `
@@ -57,13 +57,13 @@ if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) {
 }
 
 vpk pack `
-    --packId "Arc" `
+    --packId "Spur" `
     --packVersion "$Version" `
     --packDir "$PublishDir" `
     --outputDir "$OutputDir" `
-    --packTitle "Arc Launcher" `
-    --icon "$ProjectDir\Icons\arc-launcher-256x256.ico" `
-    --mainExe "Arc.exe"
+    --packTitle "Spur Launcher" `
+    --icon "$ProjectDir\Icons\spur-launcher-256x256.ico" `
+    --mainExe "Spur.exe"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  ✗ Velopack packaging failed." -ForegroundColor Red
@@ -72,7 +72,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "  ✓ Done! Installer at: $OutputDir\ArcSetup.exe" -ForegroundColor Green
+Write-Host "  ✓ Done! Installer at: $OutputDir\SpurSetup.exe" -ForegroundColor Green
 Write-Host ""
 
 # Show output files

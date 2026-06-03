@@ -1,8 +1,8 @@
-# Copies the canonical 256px app icon to Assets\arc.ico for legacy tooling.
+# Copies the canonical 256px app icon to Assets\spur.ico for legacy tooling.
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
-$src  = Join-Path $PSScriptRoot "arc-launcher-256x256.ico"
-$dest = Join-Path $root "Assets\arc.ico"
+$src  = Join-Path $PSScriptRoot "spur-launcher-256x256.ico"
+$dest = Join-Path $root "Assets\spur.ico"
 
 if (-not (Test-Path $src)) {
     Write-Error "Missing source icon: $src"
