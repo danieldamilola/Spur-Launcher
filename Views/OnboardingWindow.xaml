@@ -1,4 +1,4 @@
-<Window x:Class="Arc.Views.OnboardingWindow"
+<Window x:Class="Spur.Views.OnboardingWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Welcome to Spur"
@@ -9,6 +9,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize"
+        AutomationProperties.Name="Welcome to Spur"
         MouseLeftButtonDown="OnDrag">
 
     <Border Background="{DynamicResource Depth1}"
@@ -28,7 +29,7 @@
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24"
                            RenderOptions.BitmapScalingMode="HighQuality"
-                           Source="pack://application:,,,/Icons/arc-launcher-64x64.ico"/>
+                           Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"/>
                     <TextBlock Text="Spur"
                                FontFamily="{DynamicResource UIFont}"
                                FontSize="36"
@@ -78,6 +79,7 @@
                             Padding="32,24"
                             HorizontalAlignment="Center"
                             MinWidth="220"
+                            AutomationProperties.Name="Click to set shortcut key"
                             PreviewKeyDown="OnKeyCaptureDown"
                             LostFocus="OnKeyCaptureLostFocus"
                             GotFocus="OnKeyCaptureGotFocus"
@@ -135,6 +137,7 @@
                                 Padding="0"
                                 Margin="0,0,10,0"
                                 Cursor="Hand"
+                                AutomationProperties.Name="Dark theme"
                                 MouseLeftButtonDown="OnThemeDarkClick">
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
@@ -158,6 +161,7 @@
                                 Padding="0"
                                 Margin="0,0,10,0"
                                 Cursor="Hand"
+                                AutomationProperties.Name="Light theme"
                                 MouseLeftButtonDown="OnThemeLightClick">
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
@@ -180,6 +184,7 @@
                                 BorderThickness="2"
                                 Padding="0"
                                 Cursor="Hand"
+                                AutomationProperties.Name="System theme"
                                 MouseLeftButtonDown="OnThemeSystemClick">
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
@@ -236,13 +241,17 @@
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="0,0,8,0"
-                             Fill="{DynamicResource TextPrimary}"/>
+                             Fill="{DynamicResource TextPrimary}"
+                             AutomationProperties.Name="Step 1 of 4"/>
                     <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="0,0,8,0"
-                             Fill="{DynamicResource BorderStrong}"/>
+                             Fill="{DynamicResource BorderStrong}"
+                             AutomationProperties.Name="Step 2 of 4"/>
                     <Ellipse x:Name="Dot3" Width="8" Height="8" Margin="0,0,8,0"
-                             Fill="{DynamicResource BorderStrong}"/>
+                             Fill="{DynamicResource BorderStrong}"
+                             AutomationProperties.Name="Step 3 of 4"/>
                     <Ellipse x:Name="Dot4" Width="8" Height="8"
-                             Fill="{DynamicResource BorderStrong}"/>
+                             Fill="{DynamicResource BorderStrong}"
+                             AutomationProperties.Name="Step 4 of 4"/>
                 </StackPanel>
 
                 <Button Grid.Column="1"
@@ -255,6 +264,7 @@
                         BorderThickness="0"
                         Padding="12,8"
                         Cursor="Hand"
+                        AutomationProperties.Name="Skip onboarding"
                         Click="OnSkipClick"/>
 
                 <Button Grid.Column="2"
@@ -269,6 +279,7 @@
                         BorderThickness="1"
                         Padding="20,8"
                         Cursor="Hand"
+                        AutomationProperties.Name="Continue"
                         Click="OnNextClick">
                     <Button.Resources>
                         <Style TargetType="Border">

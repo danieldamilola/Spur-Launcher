@@ -2,9 +2,9 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using Arc.Models;
+using Spur.Models;
 
-namespace Arc.Helpers;
+namespace Spur.Helpers;
 
 /// <summary>Loads embedded .ico resources for tray and UI.</summary>
 public static class IconLoader

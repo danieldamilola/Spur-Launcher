@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
 /// Default implementation of ICommandRegistry.

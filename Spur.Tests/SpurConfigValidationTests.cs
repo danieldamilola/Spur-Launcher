@@ -1,14 +1,14 @@
-using Arc.Models;
+using Spur.Models;
 using Xunit;
 
-namespace Arc.Tests;
+namespace Spur.Tests;
 
-public class ArcConfigValidationTests
+public class SpurConfigValidationTests
 {
     [Fact]
     public void Validate_ClampsWindowOpacityOutOfRange()
     {
-        var cfg = new ArcConfig { WindowOpacity = 2.0 };
+        var cfg = new SpurConfig { WindowOpacity = 2.0 };
         cfg.Validate();
         Assert.Equal(1.0, cfg.WindowOpacity);
     }
@@ -16,7 +16,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsWindowOpacityBelowMin()
     {
-        var cfg = new ArcConfig { WindowOpacity = 0.1 };
+        var cfg = new SpurConfig { WindowOpacity = 0.1 };
         cfg.Validate();
         Assert.Equal(0.3, cfg.WindowOpacity);
     }
@@ -24,7 +24,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_LeavesWindowOpacityInRange()
     {
-        var cfg = new ArcConfig { WindowOpacity = 0.85 };
+        var cfg = new SpurConfig { WindowOpacity = 0.85 };
         cfg.Validate();
         Assert.Equal(0.85, cfg.WindowOpacity);
     }
@@ -32,7 +32,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsResultsCountOutOfRange()
     {
-        var cfg = new ArcConfig { ResultsCount = 100 };
+        var cfg = new SpurConfig { ResultsCount = 100 };
         cfg.Validate();
         Assert.Equal(20, cfg.ResultsCount);
     }
@@ -40,7 +40,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsResultsCountBelowMin()
     {
-        var cfg = new ArcConfig { ResultsCount = 0 };
+        var cfg = new SpurConfig { ResultsCount = 0 };
         cfg.Validate();
         Assert.Equal(3, cfg.ResultsCount);
     }
@@ -48,7 +48,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsMaxFileDepth()
     {
-        var cfg = new ArcConfig { MaxFileDepth = 10 };
+        var cfg = new SpurConfig { MaxFileDepth = 10 };
         cfg.Validate();
         Assert.Equal(5, cfg.MaxFileDepth);
     }
@@ -56,7 +56,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsMaxFileDepthBelowMin()
     {
-        var cfg = new ArcConfig { MaxFileDepth = 0 };
+        var cfg = new SpurConfig { MaxFileDepth = 0 };
         cfg.Validate();
         Assert.Equal(1, cfg.MaxFileDepth);
     }
@@ -64,7 +64,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsClipboardHistorySize()
     {
-        var cfg = new ArcConfig { ClipboardHistorySize = 999 };
+        var cfg = new SpurConfig { ClipboardHistorySize = 999 };
         cfg.Validate();
         Assert.Equal(200, cfg.ClipboardHistorySize);
     }
@@ -72,7 +72,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_ClampsClipboardHistorySizeBelowMin()
     {
-        var cfg = new ArcConfig { ClipboardHistorySize = 1 };
+        var cfg = new SpurConfig { ClipboardHistorySize = 1 };
         cfg.Validate();
         Assert.Equal(5, cfg.ClipboardHistorySize);
     }
@@ -80,7 +80,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Validate_NullPinnedClipboard_BecomesEmpty()
     {
-        var cfg = new ArcConfig { PinnedClipboard = null! };
+        var cfg = new SpurConfig { PinnedClipboard = null! };
         cfg.Validate();
         Assert.NotNull(cfg.PinnedClipboard);
         Assert.Empty(cfg.PinnedClipboard);
@@ -89,7 +89,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Clone_ProducesEqualButNotSameObject()
     {
-        var original = new ArcConfig
+        var original = new SpurConfig
         {
             Theme = "light",
             ResultsCount = 8,
@@ -110,7 +110,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Clone_ModifyingCloneDoesNotAffectOriginal()
     {
-        var original = new ArcConfig { Theme = "dark" };
+        var original = new SpurConfig { Theme = "dark" };
         var clone = original.Clone();
 
         clone.Theme = "light";
@@ -122,7 +122,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void ActiveApiKey_RoutesByProvider()
     {
-        var cfg = new ArcConfig
+        var cfg = new SpurConfig
         {
             AiProvider = "groq",
             EncryptedGroqApiKey = "UExBSU46dGVzdF9ncm9xX2tleQ==",   // PLAIN:test_groq_key
@@ -138,14 +138,14 @@ public class ArcConfigValidationTests
     [Fact]
     public void ActiveApiKey_UnknownProvider_ReturnsEmpty()
     {
-        var cfg = new ArcConfig { AiProvider = "nonexistent" };
+        var cfg = new SpurConfig { AiProvider = "nonexistent" };
         Assert.Equal(string.Empty, cfg.ActiveApiKey);
     }
 
     [Fact]
     public void ActiveModel_RoutesByProvider()
     {
-        var cfg = new ArcConfig
+        var cfg = new SpurConfig
         {
             AiProvider = "groq",
             GroqModel = "llama-3.2-70b",
@@ -161,7 +161,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void FileSearchEnabled_AliasMirrorsIndexFiles()
     {
-        var cfg = new ArcConfig();
+        var cfg = new SpurConfig();
 
         cfg.FileSearchEnabled = false;
         Assert.False(cfg.IndexFiles);
@@ -173,7 +173,7 @@ public class ArcConfigValidationTests
     [Fact]
     public void Defaults_AreSensible()
     {
-        var cfg = new ArcConfig();
+        var cfg = new SpurConfig();
 
         Assert.Equal("dark", cfg.Theme);
         Assert.Equal(0.95, cfg.WindowOpacity, 3);
@@ -191,3 +191,4 @@ public class ArcConfigValidationTests
         Assert.NotNull(cfg.ExcludedFolders);
     }
 }
+

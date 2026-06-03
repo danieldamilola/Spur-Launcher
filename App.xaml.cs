@@ -1,12 +1,12 @@
 using System.Windows.Interop;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.DependencyInjection;
-using Arc.ViewModels;
-using Arc.Views;
-using Arc.Services;
-using Arc.Converters;
+using Spur.ViewModels;
+using Spur.Views;
+using Spur.Services;
+using Spur.Converters;
 
-namespace Arc;
+namespace Spur;
 
 public partial class App : Application
 {
@@ -59,7 +59,7 @@ public partial class App : Application
         config.Validate();
         configSvc.Save(config);
         services.AddSingleton<IConfigService>(configSvc);
-        services.AddSingleton(config); // Register ArcConfig directly
+        services.AddSingleton(config); // Register SpurConfig directly
 
         // Theme
         var themeMgr = new ThemeManagerImpl(_fileLogger);
@@ -351,3 +351,4 @@ public partial class App : Application
         base.OnExit(e);
     }
 }
+

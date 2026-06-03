@@ -4,7 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public partial class CategoryCircle : UserControl
 {
@@ -76,8 +76,8 @@ public partial class CategoryCircle : UserControl
             return;
         }
 
-        var delay = TimeSpan.FromMilliseconds(ArcMotion.AnchorStaggerMs * index);
-        var duration = TimeSpan.FromMilliseconds(ArcMotion.AnchorRevealDurationMs);
+        var delay = TimeSpan.FromMilliseconds(SpurMotion.AnchorStaggerMs * index);
+        var duration = TimeSpan.FromMilliseconds(SpurMotion.AnchorRevealDurationMs);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
         BeginAnimation(OpacityProperty, null);
@@ -91,7 +91,7 @@ public partial class CategoryCircle : UserControl
         CircleScale.BeginAnimation(ScaleTransform.ScaleYProperty, scale);
     }
 
-    public void PlayHideAnimation(bool animate, int durationMs = ArcMotion.AnchorHideDurationMs)
+    public void PlayHideAnimation(bool animate, int durationMs = SpurMotion.AnchorHideDurationMs)
     {
         if (!animate)
         {

@@ -1,8 +1,8 @@
 using System.Windows.Controls;
 using System.Windows.Input;
-using Arc.ViewModels;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 /// <summary>
 /// Command palette overlay — VS Code-style Ctrl+Shift+P.

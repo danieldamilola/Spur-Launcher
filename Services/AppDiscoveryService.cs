@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using Arc.Models;
+using Spur.Models;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
 /// Discovers user-facing installed applications from multiple sources:
@@ -24,9 +24,9 @@ public interface IAppDiscoveryService
 public sealed class AppDiscoveryService : IAppDiscoveryService
 {
     private readonly ILogger _logger;
-    private readonly ArcConfig _config;
+    private readonly SpurConfig _config;
 
-    public AppDiscoveryService(ILogger logger, ArcConfig config)
+    public AppDiscoveryService(ILogger logger, SpurConfig config)
     {
         _logger = logger;
         _config = config;
@@ -91,7 +91,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
     // ── Cache ─────────────────────────────────────────────────────
     private static readonly string CachePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Arc", "Arc.catalog.json");
+        "Spur", "Spur.catalog.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 
@@ -1129,3 +1129,4 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
         catch { }
     }
 }
+

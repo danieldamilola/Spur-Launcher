@@ -1,4 +1,4 @@
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Color action. Triggered when the query is a hex color like #FF5733 or #abc.

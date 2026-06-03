@@ -24,11 +24,11 @@ A fast, minimal launcher for Windows — one search field, Spotlight-style categ
 ```powershell
 git clone <repo-url> C:\dev\Spur
 cd C:\dev\Spur
-dotnet build Arc.csproj
-dotnet run --project Arc.csproj
+dotnet build Spur.csproj
+dotnet run --project Spur.csproj
 ```
 
-> **Note:** Project/assembly rename from Arc → Spur is in progress. The .csproj and folder names still say `Arc` — this is a temporary state.
+> **Note:** Project/assembly rename from Spur → Spur is in progress. The .csproj and folder names still say `Spur` — this is a temporary state.
 
 Press **Alt+Space** to open the launcher (after first-run onboarding).
 
@@ -42,13 +42,13 @@ Brand icons live in **[`Icons/`](Icons/README.md)** — not to be confused with 
 | Notification tray | `Icons/spur-launcher-16x16.ico` |
 | Installer (Velopack) | `Icons/spur-launcher-256x256.ico` |
 
-Legacy `arc-launcher-*` icons have been replaced by the `spur-launcher-*` set above.
+Legacy `spur-launcher-*` icons have been replaced by the `spur-launcher-*` set above.
 
 After changing icons, run:
 
 ```powershell
 .\Icons\sync-to-assets.ps1
-dotnet build Arc.csproj
+dotnet build Spur.csproj
 ```
 
 Full details: **[Icons/README.md](Icons/README.md)**.
@@ -64,7 +64,7 @@ Produces installers under `dist/` using Velopack. Requires `vpk` (`dotnet tool i
 ## Project layout
 
 ```
-Arc/
+Spur/
 ├── Icons/              # Windows .ico brand assets (see Icons/README.md)
 ├── Assets/             # spur.ico (synced from Icons/)
 ├── Themes/             # Dark/light XAML themes + design tokens
@@ -73,7 +73,7 @@ Arc/
 ├── Services/           # Search, clipboard, hotkey, icons, commands
 ├── Extensions/         # IAction plugins (calc, system, AI, …)
 ├── new/                # UX/design specs (ux.md, design.md, …)
-├── Arc.Tests/          # Unit tests
+├── Spur.Tests/          # Unit tests
 └── handoff.md          # Session handoff notes
 ```
 
@@ -97,3 +97,4 @@ Product and visual specs are in [`new/ux.md`](new/ux.md) and [`new/design.md`](n
 ## License
 
 See [LICENSE](LICENSE).
+

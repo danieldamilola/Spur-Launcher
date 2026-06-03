@@ -1,7 +1,7 @@
 using System.Data;
-using Arc.Extensions;
+using Spur.Extensions;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Evaluates math expressions. Triggered when the entire query looks like a math expression.

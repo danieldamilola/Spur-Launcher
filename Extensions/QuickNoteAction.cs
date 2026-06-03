@@ -1,10 +1,10 @@
 using System.Diagnostics;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Quick Note action. Triggered by "note [text]", e.g. "note buy groceries".
-/// Saves a timestamped note to Documents/Arc/notes.txt and opens it.
+/// Saves a timestamped note to Documents/Spur/notes.txt and opens it.
 /// </summary>
 public sealed class QuickNoteAction : IAction
 {
@@ -14,7 +14,7 @@ public sealed class QuickNoteAction : IAction
         @"^note\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private static readonly string _notesDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Arc");
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Spur");
     private static readonly string _notesFile = Path.Combine(_notesDir, "notes.txt");
 
     public bool CanHandle(string query)

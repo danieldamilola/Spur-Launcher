@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Arc v2 design tokens — design.md §2 -->
+  <!-- Spur v2 design tokens — design.md §2 -->
 
   <!-- Dark -->
   <SolidColorBrush x:Key="Token.Bg.Void.Dark" Color="#0C0C0E" />
@@ -42,3 +42,4 @@
   <SolidColorBrush x:Key="Token.Bg.Acrylic.Light" Color="#CCFFFFFF" />
 
 </ResourceDictionary>
+

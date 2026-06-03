@@ -1,4 +1,4 @@
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Timer action. Triggered by "timer 10m", "timer 30s", "timer 1h".

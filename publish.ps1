@@ -29,7 +29,7 @@ if (Test-Path $OutputDir)  { Remove-Item $OutputDir  -Recurse -Force }
 
 # ── 3. Publish (self-contained, single-file, win-x64, Release) ──────────────
 Write-Host "  [3/4] Publishing Spur..." -ForegroundColor Yellow
-dotnet publish "$ProjectDir\Arc.csproj" `
+dotnet publish "`$ProjectDir\\Spur.csproj" `
     -c Release `
     -r win-x64 `
     --self-contained true `
@@ -81,3 +81,4 @@ Get-ChildItem $OutputDir | ForEach-Object {
     Write-Host "    $($_.Name)  ($size)" -ForegroundColor DarkGray
 }
 Write-Host ""
+

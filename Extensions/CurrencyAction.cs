@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Currency conversion action. Triggered by "100 usd to eur" or "50 gbp to jpy".

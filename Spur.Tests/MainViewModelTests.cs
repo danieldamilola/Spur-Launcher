@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Arc.Models;
-using Arc.Services;
-using Arc.ViewModels;
+using Spur.Models;
+using Spur.Services;
+using Spur.ViewModels;
 using Xunit;
 
-namespace Arc.Tests;
+namespace Spur.Tests;
 
 public class MainViewModelTests
 {
@@ -46,12 +48,12 @@ public class MainViewModelTests
 
     private sealed class FakeConfigSvc : IConfigService
     {
-        private readonly ArcConfig _cfg;
-        public FakeConfigSvc(ArcConfig cfg) => _cfg = cfg;
-        public ArcConfig Load() => _cfg;
-        public void Save(ArcConfig config) { }
-        public Task<ArcConfig> LoadAsync() => Task.FromResult(_cfg);
-        public Task SaveAsync(ArcConfig config) { return Task.CompletedTask; }
+        private readonly SpurConfig _cfg;
+        public FakeConfigSvc(SpurConfig cfg) => _cfg = cfg;
+        public SpurConfig Load() => _cfg;
+        public void Save(SpurConfig config) { }
+        public Task<SpurConfig> LoadAsync() => Task.FromResult(_cfg);
+        public Task SaveAsync(SpurConfig config) { return Task.CompletedTask; }
     }
 
     private sealed class FakeClip : IClipboardService
@@ -89,13 +91,25 @@ public class MainViewModelTests
         public bool IsEnabled() => Enabled;
     }
 
+    private sealed class FakeRegistry : ICommandRegistry
+    {
+        private readonly List<CommandPaletteEntry> _items = new();
+        public IReadOnlyList<CommandPaletteEntry> All => _items;
+        public void Register(CommandPaletteEntry entry) { _items.Add(entry); }
+        public IEnumerable<CommandPaletteEntry> Search(string filter) => _items.Where(i => i.Label.Contains(filter ?? "", StringComparison.OrdinalIgnoreCase) || i.Description.Contains(filter ?? "", StringComparison.OrdinalIgnoreCase));
+        public CommandPaletteEntry? Find(string id) => _items.FirstOrDefault(i => i.Id == id);
+    }
+
     [Fact]
     public async Task QueryProducesAppResults()
     {
-        var cfg = new ArcConfig { FuzzySearch = true };
+        var cfg = new SpurConfig { FuzzySearch = true };
+        var registry = new FakeRegistry();
+        var commandPalette = new CommandPaletteViewModel(registry);
         var vm = new MainViewModel(cfg, NullLogger.Instance,
             new FakeApps(), new FakeFiles(), new FakeFreq(), new FakeConfigSvc(cfg),
-            new FakeClip(), new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup());
+            new FakeClip(), new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
+            registry, commandPalette);
 
         // Set query and wait for debounce + async search
         vm.Query = "note";
@@ -106,3 +120,6 @@ public class MainViewModelTests
         Assert.True(found, "Expected Notepad to appear in results");
     }
 }
+
+
+

@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 public class OpacityConverter : IMultiValueConverter
 {

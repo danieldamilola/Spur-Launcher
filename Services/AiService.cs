@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for AI streaming service.</summary>
 public interface IAiService

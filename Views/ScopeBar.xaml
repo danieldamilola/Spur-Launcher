@@ -1,8 +1,8 @@
-<UserControl x:Class="Arc.Views.ScopeBar"
+<UserControl x:Class="Spur.Views.ScopeBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="clr-namespace:Arc.Models"
-             xmlns:conv="clr-namespace:Arc.Converters"
+             xmlns:models="clr-namespace:Spur.Models"
+             xmlns:conv="clr-namespace:Spur.Converters"
              Height="30">
 
     <UserControl.Resources>

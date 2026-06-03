@@ -1,7 +1,7 @@
 using System.Windows.Controls;
-using Arc.ViewModels;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public partial class SearchBar : UserControl
 {

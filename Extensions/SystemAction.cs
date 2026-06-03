@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Handles system power/session commands: shutdown, restart, sleep, hibernate, lock, sign out.

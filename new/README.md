@@ -1,10 +1,10 @@
-# Arc — Rebrand & Product Spec (`/new`)
+# Spur — Rebrand & Product Spec (`/new`)
 
-This folder is the **source of truth** for Arc’s premium minimal rebrand. Implementation in the WPF app should follow these documents in order—not the older root-level `UX.md` / `DESIGN.md` copies or the `,md/` drafts.
+This folder is the **source of truth** for Spur’s premium minimal rebrand. Implementation in the WPF app should follow these documents in order—not the older root-level `UX.md` / `DESIGN.md` copies or the `,md/` drafts.
 
 ## Vision (one line)
 
-**Arc is a quiet command surface for Windows:** one beautiful bar, instant results, gone before you notice it was there.
+**Spur is a quiet command surface for Windows:** one beautiful bar, instant results, gone before you notice it was there.
 
 ## What changed
 
@@ -20,7 +20,7 @@ This folder is the **source of truth** for Arc’s premium minimal rebrand. Impl
 
 | File | Read when you need… |
 |------|---------------------|
-| [**brand.md**](brand.md) | Name, personality, icon rules, voice, what Arc is *not* |
+| [**brand.md**](brand.md) | Name, personality, icon rules, voice, what Spur is *not* |
 | [**design.md**](design.md) | Color, type, spacing, components, materials, tokens |
 | [**motion.md**](motion.md) | Durations, springs, state transitions, reduced motion |
 | [**ux.md**](ux.md) | Screen-by-screen flows, keyboard model, empty/hover/search |
@@ -50,3 +50,4 @@ When in doubt: fewer pixels, slower fade-out, faster fade-in.
 | phases.md | ✅ Draft for rebrand |
 
 Start with **brand.md** + **ux.md**, then **design.md** + **motion.md**, then implement via **phases.md**.
+

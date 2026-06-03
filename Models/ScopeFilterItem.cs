@@ -1,4 +1,4 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 public sealed class ScopeFilterItem
 {

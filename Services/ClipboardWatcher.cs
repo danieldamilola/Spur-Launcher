@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
 /// Listens for system clipboard changes using Win32 AddClipboardFormatListener.

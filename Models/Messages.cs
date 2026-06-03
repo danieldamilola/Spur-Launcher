@@ -1,3 +1,3 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 public record HideWindowMessage();

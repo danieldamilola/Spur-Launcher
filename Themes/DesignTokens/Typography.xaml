@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
   <!-- ═══════════════════════════════════════════════════════════════
-       TYPOGRAPHY — Arc v2 "Premium & Calm"
+       TYPOGRAPHY — Spur v2 "Premium & Calm"
        One typeface. Larger default size. Calm reading rhythm.
        Inter primary, DM Mono for code.
        ═══════════════════════════════════════════════════════════════ -->
@@ -34,3 +34,4 @@
   <sys:Double x:Key="Token.Font.Hint">11</sys:Double>
 
 </ResourceDictionary>
+

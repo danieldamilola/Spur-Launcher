@@ -1,4 +1,4 @@
-# design.md — Visual System (Arc v2)
+# design.md — Visual System (Spur v2)
 
 > **Philosophy:** Matte, monochrome, precise. Depth comes from value steps—not blur stacks, not accent floods.
 
@@ -6,9 +6,9 @@ Aligned with [brand.md](brand.md). Implements on Windows with **WPF** + optional
 
 ---
 
-## 1. Principles (HIG-adapted for Arc)
+## 1. Principles (HIG-adapted for Spur)
 
-| Principle | Arc interpretation |
+| Principle | Spur interpretation |
 |-----------|-------------------|
 | **Clarity** | One primary focal point per state (caret, then selection rail) |
 | **Deference** | Chrome is 56px until content earns height |
@@ -227,12 +227,12 @@ Appear **below** search row when multiple domains match.
 Map to `Themes/DesignTokens/`:
 
 ```
-Arc.Color.Bg.Surface      → bg.surface
-Arc.Color.Text.Primary    → text.primary
-Arc.Color.Brand.Accent    → brand.accent
-Arc.Radius.Window         → 14
-Arc.Space.Inset           → 16
-Arc.Motion.Duration.Fast  → 120ms (see motion.md)
+Spur.Color.Bg.Surface      → bg.surface
+Spur.Color.Text.Primary    → text.primary
+Spur.Color.Brand.Accent    → brand.accent
+Spur.Radius.Window         → 14
+Spur.Space.Inset           → 16
+Spur.Motion.Duration.Fast  → 120ms (see motion.md)
 ```
 
 Theme files (`DarkTheme.xaml`, `LightTheme.xaml`) should **only** assign DynamicResource keys—no raw hex in Views.
@@ -245,9 +245,10 @@ Theme files (`DarkTheme.xaml`, `LightTheme.xaml`) should **only** assign Dynamic
 |-------------|----------|
 | Contrast | Primary on surface ≥ 7:1 |
 | Focus | Visible rail + focus rect on anchors in keyboard mode |
-| Motion | Respect `SystemParameters.ClientAreaAnimation` + Arc setting |
+| Motion | Respect `SystemParameters.ClientAreaAnimation` + Spur setting |
 | Screen reader | AutomationProperties.Name on rows, anchors |
 
 ---
 
 *Motion timing: [motion.md](motion.md) · Flows: [ux.md](ux.md)*
+
