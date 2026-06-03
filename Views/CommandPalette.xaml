@@ -1,0 +1,218 @@
+<UserControl x:Class="Arc.Views.CommandPalette"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Arc.Converters"
+             x:Name="PaletteRoot"
+             Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}"
+             IsVisibleChanged="OnIsVisibleChanged">
+
+    <Border Background="{DynamicResource Surface}"
+            CornerRadius="12"
+            Margin="8,8,8,0">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Search input -->
+            <Border Grid.Row="0"
+                    Margin="12,12,12,8"
+                    Background="{DynamicResource Depth2}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Magnifying glass icon -->
+                    <Path Grid.Column="0"
+                          Width="16"
+                          Height="16"
+                          Margin="12,0,8,0"
+                          Stretch="Uniform"
+                          Stroke="{DynamicResource TextTertiary}"
+                          StrokeThickness="1.5"
+                          StrokeLineJoin="Round"
+                          Data="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                          VerticalAlignment="Center"/>
+
+                    <TextBox x:Name="FilterBox"
+                             Grid.Column="1"
+                             Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             FontFamily="{DynamicResource UIFont}"
+                             FontSize="14"
+                             Foreground="{DynamicResource TextPrimary}"
+                             CaretBrush="{DynamicResource TextPrimary}"
+                             Padding="0,8,0,8"
+                             VerticalAlignment="Center"
+                             AutomationProperties.Name="Command palette search"
+                             PreviewKeyDown="OnFilterBoxKeyDown"
+                             IsTabStop="False"/>
+
+                    <!-- Clear button (visible when has filter) -->
+                    <Button Grid.Column="2"
+                            Width="24"
+                            Height="24"
+                            Margin="0,0,8,0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Visibility="{Binding HasFilter, Converter={StaticResource BoolToVisibility}}"
+                            Click="OnClearClick"
+                            AutomationProperties.Name="Clear filter">
+                        <Path Width="14"
+                              Height="14"
+                              Stretch="Uniform"
+                              Stroke="{DynamicResource TextTertiary}"
+                              StrokeThickness="1.5"
+                              StrokeLineJoin="Round"
+                              Data="M18 6L6 18M6 6l12 12"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Results list -->
+            <ListBox x:Name="ResultsList"
+                     Grid.Row="1"
+                     ItemsSource="{Binding FilteredCommands}"
+                     SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Margin="8,0,8,8"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.ScrollUnit="Pixel"
+                     IsTabStop="False"
+                     Focusable="False"
+                     MaxHeight="340">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="Margin" Value="0,1"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="ItemBorder"
+                                            Background="{TemplateBinding Background}"
+                                            CornerRadius="6"
+                                            Padding="{TemplateBinding Padding}"
+                                            Margin="{TemplateBinding Margin}"
+                                            BorderThickness="0">
+                                        <ContentPresenter Content="{TemplateBinding Content}"
+                                                          ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SelectedBg}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Icon -->
+                            <Border Grid.Column="0"
+                                    Width="28"
+                                    Height="28"
+                                    Margin="0,0,10,0"
+                                    Background="{DynamicResource HoverBg}"
+                                    CornerRadius="6"
+                                    VerticalAlignment="Center">
+                                <Path Width="16"
+                                      Height="16"
+                                      Stretch="Uniform"
+                                      Stroke="{DynamicResource TextSecondary}"
+                                      StrokeThickness="1.5"
+                                      StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center">
+                                    <Path.Data>
+                                        <Binding Path="LucideIcon">
+                                            <Binding.Converter>
+                                                <conv:LucideIconConverter/>
+                                            </Binding.Converter>
+                                        </Binding>
+                                    </Path.Data>
+                                </Path>
+                            </Border>
+
+                            <!-- Label + Description -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Label}"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Description}"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiary}"
+                                           TextTrimming="CharacterEllipsis"
+                                           Margin="0,1,0,0"/>
+                            </StackPanel>
+
+                            <!-- Keyboard hint -->
+                            <Border Grid.Column="2"
+                                    Margin="10,0,0,0"
+                                    Background="{DynamicResource HoverBg}"
+                                    CornerRadius="4"
+                                    Padding="6,2,6,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock x:Name="HintText"
+                                           Text="↵"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiary}"/>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- No match state -->
+            <Border Grid.Row="2"
+                    Height="40"
+                    Margin="12,0,12,12"
+                    Background="{DynamicResource Depth2}"
+                    CornerRadius="8"
+                    Visibility="{Binding ShowNoMatch, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="No matching commands"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextTertiary}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

@@ -197,6 +197,15 @@
                        Foreground="{DynamicResource TextTertiary}"
                        Text="{Binding FooterHint}"/>
           </Border>
+
+          <!-- Command palette overlay -->
+          <views:CommandPalette x:Name="CommandPaletteControl"
+                                Grid.RowSpan="4"
+                                DataContext="{Binding CommandPalette}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                IsHitTestVisible="True"
+                                Panel.ZIndex="100"/>
         </Grid>
       </Border>
     </Grid>

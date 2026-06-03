@@ -16,6 +16,7 @@ public partial class App : Application
     private ClipboardWatcher?   _clipboard;
     private TaskbarIcon?        _trayIcon;
     private ILogger?            _fileLogger;
+    private INotificationService? _notification;
     private IServiceProvider?   _services;
     private SettingsWindow?     _settingsWindow;
 
@@ -77,9 +78,10 @@ public partial class App : Application
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
+        services.AddSingleton<ICommandRegistry, CommandRegistry>();
+        services.AddSingleton<CommandPaletteViewModel>();
 
-        _services = services.BuildServiceProvider();
-
+        _services = services.BuildServiceProvider();        _notification = _services.GetRequiredService<INotificationService>();
         // ── Initialize converter references ─────────────────────────
         PathToIconConverter.IconService = _services.GetRequiredService<IIconService>();
 
@@ -112,7 +114,10 @@ public partial class App : Application
         if (config.HotkeyEnabled)
         {
             _hotkey = new HotkeyService(_fileLogger);
-            _hotkey.Register(hwnd, config.Shortcut, ToggleWindow);
+            if (!_hotkey.Register(hwnd, config.Shortcut, ToggleWindow))
+            {
+                _notification?.Show("Hotkey unavailable", $"Unable to register {config.Shortcut}. Another app may already be using it.");
+            }
         }
 
         // ── Clipboard watcher ─────────────────────────────────────────
@@ -201,7 +206,10 @@ public partial class App : Application
                     {
                         _hotkey?.Dispose();
                         _hotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
-                        _hotkey.Register(hwnd, settings.Shortcut, ToggleWindow);
+                        if (!_hotkey.Register(hwnd, settings.Shortcut, ToggleWindow))
+                        {
+                            _notification?.Show("Hotkey unavailable", $"Unable to register {settings.Shortcut}. Another app may already be using it.");
+                        }
                     }
                     else
                     {
@@ -211,12 +219,15 @@ public partial class App : Application
                     break;
 
                 case nameof(SettingsViewModel.Shortcut):
-                    if (_window is not null && settings.HotkeyEnabled && _hotkey is not null)
+                    if (_window is not null && settings.HotkeyEnabled)
                     {
-                        _hotkey.Dispose();
+                        _hotkey?.Dispose();
                         _hotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
                         var h = new WindowInteropHelper(_window).Handle;
-                        _hotkey.Register(h, settings.Shortcut, ToggleWindow);
+                        if (!_hotkey.Register(h, settings.Shortcut, ToggleWindow))
+                        {
+                            _notification?.Show("Hotkey unavailable", $"Unable to register {settings.Shortcut}. Another app may already be using it.");
+                        }
                     }
                     break;
 
