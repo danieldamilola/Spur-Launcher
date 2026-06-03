@@ -435,8 +435,8 @@
     </Style>
 
     <views:ResultTemplateSelector x:Key="SharedResultTemplateSelector"
-                                  SectionTemplate="{DynamicResource SectionHeaderTemplate}"
-                                  ResultTemplate="{DynamicResource ResultRowTemplate}"/>
+                                  SectionTemplate="{StaticResource SectionHeaderTemplate}"
+                                  ResultTemplate="{StaticResource ResultRowTemplate}"/>
 
     <!-- ═══════════════════════════════════════════════════════════
          RICH RESULT TEMPLATES (from ResultsList)

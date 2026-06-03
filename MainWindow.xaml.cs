@@ -328,6 +328,8 @@ public partial class MainWindow : Window
         base.OnPreviewKeyDown(e);
         if (_vm is null) return;
 
+        if (_vm.CommandPalette.IsOpen) return;
+
         if (e.Key is Key.Down or Key.Up)
         {
             _vm.MoveSelection(e.Key == Key.Down ? 1 : -1);
@@ -350,7 +352,9 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (!string.IsNullOrEmpty(_vm.Query))
+                if (_vm.CommandPalette.IsOpen)
+                    _vm.CommandPalette.IsOpen = false;
+                else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
                 else if (_vm.ActiveCategory is not null)
                     _vm.ActiveCategory = null;
@@ -374,6 +378,11 @@ public partial class MainWindow : Window
                     _vm.OpenFolderCommand.Execute(null);
                 else
                     _vm.OpenSelectedCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.P when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                _vm.CommandPalette.IsOpen = !_vm.CommandPalette.IsOpen;
                 e.Handled = true;
                 break;
 

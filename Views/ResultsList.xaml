@@ -12,8 +12,8 @@
         <conv:BoolToVisibilityConverter x:Key="InvBoolToVis" Invert="True"/>
 
         <local:ResultTemplateSelector x:Key="TemplateSelector"
-                                      SectionTemplate="{DynamicResource SectionTemplate}"
-                                      ResultTemplate="{DynamicResource ResultTemplate}"/>
+                                      SectionTemplate="{StaticResource SectionTemplate}"
+                                      ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 
     <ListBox x:Name="ResultsBox"
