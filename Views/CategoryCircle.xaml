@@ -53,7 +53,7 @@
 
                     Cursor="Hand"
 
-                    ><Button.Template>
+                    AutomationProperties.Name="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"><Button.Template>
 
                     <ControlTemplate TargetType="Button">
 
