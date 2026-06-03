@@ -1,8 +1,8 @@
-# Handoff: Arc Launcher — AI Chat Icons, Action Layout, Settings Redesign
+# Handoff: Arc Launcher — Command Palette, Theme Resources, Icon Binding Fix
 
-**Date:** 2026-05-31  
+**Date:** 2026-06-03  
 **Session type:** Coding + Debugging + Design  
-**Status:** In Progress — Search section accidentally removed, needs restoration  
+**Status:** In Progress — Command palette fully implemented, compiled, and committed. Search section still needs restoration from earlier session.  
 **Project root:** C:\dev\Arc
 
 ---
@@ -19,6 +19,17 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 
 - **LucideIconConverter** — Extended from 43 to **57 icons**. Added: `arrow-up`, `square`, `arrow-left`, `chevron-down`, `chevron-up`, `send`, `message-square`, `bot`, `copy`, `trash-2`, `stop-circle`, `check`, `plus`, `more-vertical`. All icons use standard Lucide SVG paths.
 - **AI chat panel** — Added back button (arrow-left), copy button (copy), send button (arrow-up), stop button (square). Send/stop toggle visibility via BoolToVisibility converters bound to AiLoading. Header bar with back + title + actions.
+- **Command Palette (Ctrl+Shift+P)** — Full command palette implementation with:
+  - `ICommandRegistry` interface + `CommandRegistry` service (alphabetically sorted, case-insensitive search by label/description, find by Id)
+  - `CommandPaletteItem` model wrapping `CommandPaletteEntry` with `ExecuteCommand` (ICommand)
+  - `CommandPaletteViewModel` with `FilterText`, `FilteredCommands`, `SelectedIndex`, `IsOpen`, `ShowNoMatch`, `ExecuteSelectedCommand`, `MoveSelectionCommand`, `CloseCommand`
+  - `CommandPalette.xaml` — centered overlay (440×480, rounded `Depth3` surface), search input with clear button, virtualizing item list with icon + label + description + keyboard hint, empty-state no-match message
+  - `CommandPalette.xaml.cs` — `OnFilterBoxKeyDown` (Enter executes, Escape closes, Up/Down navigate), `OnClearClick`, `OnIsVisibleChanged` (auto-focus)
+  - `App.xaml.cs` DI registrations: `ICommandRegistry→CommandRegistry` (singleton), `CommandPaletteViewModel` (singleton)
+  - `MainWindow.xaml.cs` — Ctrl+Shift+P toggle, Escape close, Up/Down guard when palette is open
+  - Theme resource key alignment: uses `Surface`, `Depth2`, `HoverBg`, `SelectedBg`, `TextPrimary`/`Secondary`/`Tertiary` instead of stale keys like `SurfaceSolid`/`InputBg`
+  - Icon fix: `Data="{Binding LucideIcon}"` changed to use `LucideIconConverter` via `<Path.Data><Binding Converter=...>` (same pattern as ResultTemplates.xaml)
+  - 7 starter commands wired to real MainViewModel methods: ToggleTheme, OpenSettings, ClearClipboard, CycleScope, OpenFolder, CopyPath, RunAsAdmin
 - **Category button migration** — All 3 category buttons in MainWindow.xaml (Files/folder, Clipboard/clipboard, Actions/zap) and the settings footer gear now use LucideIconConverter instead of hardcoded Path Data strings.
 - **Full-width actions** — `MainWindow.xaml.cs UpdateWindowState()` changed `isAi` → `isAction` (any active action). Calculator, timer, color picker, IP, and AI chat all take the full content area. Results list hidden during actions.
 - **Onboarding polish** — All unicode icons (⌘, ⊡, 📋, ⚡, ⌕) replaced with Lucide icons (sparkles, folder, clipboard, zap, search). Heading sizes adjusted to match type scale (28→24, 14→13).
@@ -31,6 +42,7 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 
 - **Search section was removed** — The entire Search section (~370 lines) was deleted from `SettingsView.xaml` and its entry removed from `SettingsViewModel.Sections`. This was a **misunderstanding** — the user said "remove the design for search and url search" but did NOT want the entire Search section deleted. **This must be restored.** The Search section contains: search sources (Apps, Files, Folders, Clipboard), commands & URLs (System, URLs, Web, Windows Settings), search behavior (fuzzy, last query, precision), locations (indexed folders, file types), and window behavior (location, position, always preview, auto-refresh).
 - **Settings card-based redesign** — The user independently redesigned SettingsView.xaml with a card-based layout (`SettingCard`, `CardRow`, `RowDivider`, `GroupLabel` styles). This is NOT the consolidated 4-section design from `DESIGN.md`. The current design uses cards with borders, icon containers, and sectioned rows.
+- **Command palette polish** — Icon rendering verified via `LucideIconConverter`. Keyboard navigation (Enter, Escape, Up/Down) all bound. Auto-focus on open. Selected index clamps to bounds. All 7 commands wired to real MainViewModel methods (no stubs). Compiles clean (0 errors).
 
 ### Bug fixes applied this session
 
@@ -43,15 +55,21 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 
 ### Not started / deferred
 
-- Restore the Search section to settings
+- Restore the Search section to settings (from earlier session)
 - `history`, `sliders`, `network`, `folder-open`, `file-text` icons referenced in SettingsView.xaml but not verified in LucideIconConverter
 - Settings sidebar currently uses 3 sections: General, Actions, Advanced (Search missing)
+- Keyboard shortcut hints in CommandPalette.xaml — currently shows `↵` placeholder; could show actual shortcut like "Ctrl+Shift+P" per command
+- Filter box placeholder text — currently hardcoded "Type a command..."; could localize
 
 ---
 
 ## 3. What We're Currently Working On
 
-The session ended after accidentally removing the Search section. **The immediate task is restoring the Search section to Settings.** The section content was deleted from lines 854–1225 of `SettingsView.xaml` and the `"Search"` entry was removed from `SettingsViewModel.Sections`. Both need to be restored to their state before the deletion (the card-based design version that the user created).
+**Last session (2026-05-31):** Ended after accidentally removing the Search section from Settings.
+
+**This session (2026-06-03):** Built and shipped the Ctrl+Shift+P command palette — interface, registry, ViewModel, XAML overlay, code-behind, keyboard handling, DI registration, theme resource alignment, and icon converter fix. All 12 files committed. Build passed (0 errors).
+
+**Next task:** Either restore the Search section to settings, or continue polishing the command palette (e.g. keyboard shortcut hints per command, localization).
 
 ---
 
@@ -60,22 +78,26 @@ The session ended after accidentally removing the Search section. **The immediat
 - **Attempted to remove "Search design"** — Misunderstood user's request. Deleted the entire Search section from settings (~370 lines) using `sed -i '854,1225d'`. User was upset — this was wrong. The section needs to be restored from git.
 - **Tried to use edit_file for large XAML block** — The Search section is ~370 lines. edit_file couldn't match the old_text for such a large block. Resorted to sed which worked but was the wrong action.
 - **Multiple Settings redesign iterations** — Went from 9 sections → 4 sections (per DESIGN.md) → user independently redesigned with card-based layout → then Search section deleted. The settings layout has churned significantly. The user's card-based design is the current intended state.
+- **edit_document find/replace failed on Path.Data** — The exact icon binding replacement in CommandPalette.xaml didn't match via edit_document (whitespace or line-ending issue). Used `sed` (via Python `subprocess`) as fallback, which worked.
 
 ---
 
 ## 5. Next Steps
 
-1. **Restore the Search section** — `git checkout HEAD -- Views/SettingsView.xaml` to get the card-based version back, or cherry-pick just the Search section. Then re-apply the Search entry in `SettingsViewModel.Sections`.
+1. **Restore the Search section to Settings** — `git checkout HEAD -- Views/SettingsView.xaml` to get the card-based version back, or cherry-pick just the Search section. Then re-add `new("Search", "search", "\ue721")` to `SettingsViewModel.Sections`.
 2. **Verify missing converter icons** — The card-based SettingsView.xaml references icons that may not exist in LucideIconConverter: `history`, `sliders`, `network`, `folder-open`, `file-text`. Add any that are missing.
-3. **Test full-width actions** — Close running Arc, rebuild, verify calculator/timer/color/IP/AI all render full-width with no blank panels.
-4. **Polish remaining hardcoded paths** — SearchBar.xaml still uses hardcoded `IconSearch`/`IconBack` strings via `Geometry.Parse()`. BrowsePanel.xaml clipboard text icon uses hardcoded clipboard path. Consider migrating.
-5. **Settings sidebar ordering** — Current sections are General, Actions, Advanced. If Search is restored, decide where it goes in the list.
+3. **Polish command palette** — Add keyboard shortcut hints per command (currently shows `↵` placeholder). Verify all 7 commands work correctly at runtime. Consider position-remembering (restore last filter text?).
+4. **Test full-width actions** — Close running Arc, rebuild, verify calculator/timer/color/IP/AI all render full-width with no blank panels.
+5. **Polish remaining hardcoded paths** — SearchBar.xaml still uses hardcoded `IconSearch`/`IconBack` strings via `Geometry.Parse()`. BrowsePanel.xaml clipboard text icon uses hardcoded clipboard path. Consider migrating.
+6. **Settings sidebar ordering** — Current sections are General, Actions, Advanced. If Search is restored, decide where it goes in the list.
 
 ---
 
 ## 6. Key Decisions & Constraints
 
 - **All icons now centralized in LucideIconConverter.cs** — 57 icons. Any new icon should be added there, not hardcoded in XAML.
+- **Command palette uses ICommandRegistry pattern** — Register commands at startup via DI, filter/search at runtime. Interface: `All`, `Register()`, `Search(filter)`, `Find(id)`. Duplicate Ids silently ignored. Alphabetical by default.
+- **Command palette keyboard handling lives in MainWindow.xaml.cs** — `OnPreviewKeyDown` guards Up/Down when palette is open. `OnKeyDown` handles Ctrl+Shift+P toggle and Escape close. Code-behind handles Enter/Up/Down/Escape inside the filter box.
 - **Actions are full-width by default** — `isAction = _vm.ActiveActionId is not null` in `UpdateWindowState()`. No more 300px side panel for non-AI actions.
 - **Converter resources live in App.xaml** — `BoolToVisibility`, `BoolToInverseVisibility`, `StringToVisibility`. PreviewPanel.xaml should NOT redeclare them.
 - **ActivateAction ordering matters** — `ActiveActionId` must be set BEFORE `ActiveActionResult` to prevent the race condition where `UpdateWindowState` takes the wrong branch.
@@ -109,6 +131,12 @@ The session ended after accidentally removing the Search section. **The immediat
 | MainViewModel.cs | Modified (CancelAiGeneration, ActivateAction reorder) | `C:\dev\Arc\ViewModels\MainViewModel.cs` |
 | App.xaml | Modified (converter resources added) | `C:\dev\Arc\App.xaml` |
 | OnboardingWindow.xaml | Modified (unicode→Lucide icons) | `C:\dev\Arc\Views\OnboardingWindow.xaml` |
+| ICommandRegistry.cs | New | `C:\dev\Arc\Services\ICommandRegistry.cs` |
+| CommandRegistry.cs | New | `C:\dev\Arc\Services\CommandRegistry.cs` |
+| CommandPaletteItem.cs | New | `C:\dev\Arc\Models\CommandPaletteItem.cs` |
+| CommandPaletteViewModel.cs | New | `C:\dev\Arc\ViewModels\CommandPaletteViewModel.cs` |
+| CommandPalette.xaml | New | `C:\dev\Arc\Views\CommandPalette.xaml` |
+| CommandPalette.xaml.cs | New | `C:\dev\Arc\Views\CommandPalette.xaml.cs` |
 | DESIGN.md | Modified (full-width action layout) | `C:\dev\Arc\DESIGN.md` |
 
 ---
@@ -118,9 +146,10 @@ The session ended after accidentally removing the Search section. **The immediat
 ### Session history
 - 2026-05-30: Phase 1–3 complete — DI container, service interfaces, ViewModel decomposition, Hub idle state, 3 categories, bar shrink on hover, settings as separate window
 - 2026-05-31: AI chat icons, extended LucideIconConverter to 57 icons, full-width action layout, settings sidebar with section filtering, Compact Mode setting added, onboarding icon polish, bug fixes for race condition/missing icons/duplicate resources, Search section accidentally deleted
+- 2026-06-03: Full command palette — ICommandRegistry + CommandRegistry service + CommandPaletteItem model + CommandPaletteViewModel (filtering, selection, execution) + CommandPalette XAML overlay (440×480, themed, icon+label+description+keyboard hint per item) + CommandPalette.xaml.cs (keyboard handlers, auto-focus, clear) + DI registrations + MainWindow.xaml.cs keyboard integration (Ctrl+Shift+P, Escape, Up/Down guard) + theme resource key alignment (Surface/Depth2/HoverBg/SelectedBg) + LucideIconConverter fix on Path.Data binding. All files committed. Build passes (0 errors). Search section restoration is still pending.
 
 ### Project background
-Arc is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit.Mvvm. Global hotkey (`Alt+Space`) opens a frameless floating search bar. Searches apps, files, clipboard, and built-in actions (calculator, timer, AI, etc.).
+Arc is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit.Mvvm. Global hotkey (`Alt+Space`) opens a frameless floating search bar. Searches apps, files, clipboard, and built-in actions (calculator, timer, AI, etc.). Now has a Ctrl+Shift+P command palette with 7 starter commands (toggle theme, open settings, clear clipboard, cycle scope, open folder, copy path, run as admin).
 
 ### User preferences
 - Must follow opus methodology for all code changes
@@ -133,4 +162,12 @@ Arc is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit
 
 ## 10. Paste-In Opener
 
-> Continue working on the Arc launcher at C:\dev\Arc. Last session we extended the Lucide icon system to 57 icons, made all action features full-width (not just AI), added AI chat controls, polished onboarding icons, and fixed several bugs. The user independently redesigned Settings with a card-based layout. I made a mistake: I accidentally deleted the entire Search section from settings when the user only wanted specific elements removed. The Search section needs to be restored from git. Start by running `git checkout HEAD -- Views/SettingsView.xaml` to restore the Search section, then re-add `new("Search", "search", "\ue721")` to SettingsViewModel.Sections. Before writing any code, read the opus skill — the user requires it. The terminal is unreliable so builds should be verified by checking for "error CS" lines only (ignore MSB file-lock errors). Close any running Arc instance before building.
+> Continue working on the Arc launcher at C:\dev\Arc. 
+> 
+> **Last session (2026-06-03):** Built and shipped the Ctrl+Shift+P command palette. All 12 files committed — interface (`ICommandRegistry`), service (`CommandRegistry`), model (`CommandPaletteItem`), ViewModel (`CommandPaletteViewModel`), XAML overlay (`Views/CommandPalette.xaml`), code-behind (`CommandPalette.xaml.cs`), DI registrations (`App.xaml.cs`), and keyboard handling (`MainWindow.xaml.cs`). Theme resources aligned (`Surface`, `Depth2`, `HoverBg`, `SelectedBg`). Icon binding fixed with `LucideIconConverter`. 7 starter commands wired to real MainViewModel methods (no stubs). Build compiles clean (0 errors).
+> 
+> **Two threads from earlier still pending:**
+> 1. Restore the Search section to Settings — `git checkout HEAD~2 -- Views/SettingsView.xaml` (before the accidental sed delete), then re-add `new("Search", "search", "\ue721")` to `SettingsViewModel.Sections`
+> 2. Verify missing converter icons: `history`, `sliders`, `network`, `folder-open`, `file-text`
+> 
+> **Before writing any code**, read the opus skill — the user requires it. The terminal is unreliable on Windows so builds should be verified by checking for "error CS" lines only (ignore MSB file-lock errors). Close any running Arc instance before building.
