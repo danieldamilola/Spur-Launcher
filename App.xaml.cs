@@ -147,7 +147,7 @@ public partial class App : Application
             {
                 var cachePath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Arc", "arc.catalog.json");
+                    "Spur", "spur.catalog.json");
                 if (File.Exists(cachePath)) File.Delete(cachePath);
             }
             catch (Exception ex) { _fileLogger.Warning("Cache delete failed", ex); }
@@ -163,11 +163,11 @@ public partial class App : Application
         // ── Check for updates ─────────────────────────────────────────
         _ = CheckForUpdatesAsync();
 
-        _fileLogger.Info("Arc started successfully.");
+        _fileLogger.Info("Spur started successfully.");
         }
         catch (Exception ex)
         {
-            _fileLogger.Fatal("Arc startup failed", ex);
+            _fileLogger.Fatal("Spur startup failed", ex);
             throw;
         }
     }
@@ -268,7 +268,7 @@ public partial class App : Application
     // ── Tray icon ─────────────────────────────────────────────────────
     private void BuildTrayIcon()
     {
-        _trayIcon = new TaskbarIcon { ToolTipText = "Arc", ContextMenu = BuildTrayMenu() };
+        _trayIcon = new TaskbarIcon { ToolTipText = "Spur", ContextMenu = BuildTrayMenu() };
         try
         {
             if (Helpers.IconLoader.LoadTrayIcon() is { } icon)
@@ -283,7 +283,7 @@ public partial class App : Application
     private ContextMenu BuildTrayMenu()
     {
         var menu     = new ContextMenu();
-        var open     = new MenuItem { Header = "Open Arc" };
+        var open     = new MenuItem { Header = "Open Spur" };
         var settings = new MenuItem { Header = "Settings" };
         var about    = new MenuItem { Header = "About" };
         var quit     = new MenuItem { Header = "Quit" };
@@ -317,7 +317,7 @@ public partial class App : Application
     }
 
     // ── Updates ───────────────────────────────────────────────────────
-    private const string UpdateUrl = "https://github.com/danieldamilola/Arc-Launcher/releases/latest/download";
+    private const string UpdateUrl = "https://github.com/danieldamilola/Spur-Launcher/releases/latest/download";
     private async Task CheckForUpdatesAsync()
     {
         try
@@ -346,7 +346,7 @@ public partial class App : Application
         _settingsWindow?.Close();
         // Dispose the DI container (frees all singleton IDisposable services)
         (_services as IDisposable)?.Dispose();
-        _fileLogger?.Info("Arc shutting down.");
+        _fileLogger?.Info("Spur shutting down.");
         if (_fileLogger is IDisposable d) d.Dispose();
         base.OnExit(e);
     }
