@@ -1,4 +1,6 @@
-# Arc
+# Spur
+
+Spur your workflow.
 
 A fast, minimal launcher for Windows — one search field, Spotlight-style categories, and instant actions. Built with **WPF** and **.NET 9**.
 
@@ -8,7 +10,8 @@ A fast, minimal launcher for Windows — one search field, Spotlight-style categ
 - App, file, clipboard, and command search with keyboard-first navigation
 - Three in-bar categories on hover: **Files**, **Commands**, **Clipboard**
 - Built-in actions: calculator, web search, system commands, and more
-- Light / dark themes with system accent support
+- Acrylic glassmorphism background with system-aware light/dark themes
+- Command palette (`Ctrl+Shift+P`) for quick actions
 - Optional system tray icon and Velopack updates
 
 ## Requirements
@@ -19,11 +22,13 @@ A fast, minimal launcher for Windows — one search field, Spotlight-style categ
 ## Quick start
 
 ```powershell
-git clone <repo-url> C:\dev\Arc
-cd C:\dev\Arc
+git clone <repo-url> C:\dev\Spur
+cd C:\dev\Spur
 dotnet build Arc.csproj
 dotnet run --project Arc.csproj
 ```
+
+> **Note:** Project/assembly rename from Arc → Spur is in progress. The .csproj and folder names still say `Arc` — this is a temporary state.
 
 Press **Alt+Space** to open the launcher (after first-run onboarding).
 
@@ -33,9 +38,11 @@ Brand icons live in **[`Icons/`](Icons/README.md)** — not to be confused with 
 
 | Purpose | File |
 |---------|------|
-| Executable / taskbar pinned app | `Icons/arc-launcher-256x256.ico` |
-| Notification tray | `Icons/arc-launcher-16x16.ico` |
-| Installer (Velopack) | `Icons/arc-launcher-256x256.ico` |
+| Executable / taskbar pinned app | `Icons/spur-launcher-256x256.ico` *(coming soon)* |
+| Notification tray | `Icons/spur-launcher-16x16.ico` *(coming soon)* |
+| Installer (Velopack) | `Icons/spur-launcher-256x256.ico` *(coming soon)* |
+
+Legacy `arc-launcher-*` icons remain in place until the new icon set (Phase 2, Item 10) is complete.
 
 After changing icons, run:
 
@@ -61,12 +68,13 @@ Arc/
 ├── Icons/              # Windows .ico brand assets (see Icons/README.md)
 ├── Assets/             # Legacy arc.ico (synced from Icons/)
 ├── Themes/             # Dark/light XAML themes + design tokens
-├── Views/              # WPF UI (search bar, results, settings)
-├── ViewModels/         # MVVM (MainViewModel, settings)
-├── Services/           # Search, clipboard, hotkey, icons
+├── Views/              # WPF UI (search bar, results, settings, command palette)
+├── ViewModels/         # MVVM (MainViewModel, SettingsViewModel, CommandPaletteViewModel)
+├── Services/           # Search, clipboard, hotkey, icons, commands
 ├── Extensions/         # IAction plugins (calc, system, AI, …)
 ├── new/                # UX/design specs (ux.md, design.md, …)
-└── Arc.Tests/          # Unit tests
+├── Arc.Tests/          # Unit tests
+└── handoff.md          # Session handoff notes
 ```
 
 ## Keyboard shortcuts
@@ -79,6 +87,7 @@ Arc/
 | `Enter` | Open / run |
 | `Ctrl+1` / `2` / `3` | Files / Clipboard / Commands |
 | `Ctrl+,` | Settings |
+| `Ctrl+Shift+P` | Command palette |
 | `Win+Shift+V` | Clipboard mode *(when configured)* |
 
 ## Design docs
