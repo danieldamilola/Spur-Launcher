@@ -724,7 +724,7 @@
                         Padding="8,3,10,0"
                         VerticalAlignment="Bottom"
                         Command="{Binding DataContext.ClearClipboardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        AutomationProperties.Name="Clear clipboard"
+                        AutomationProperties.Name="Clear clipboard">
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Visibility" Value="Collapsed"/>
