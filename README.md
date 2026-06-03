@@ -38,11 +38,11 @@ Brand icons live in **[`Icons/`](Icons/README.md)** — not to be confused with 
 
 | Purpose | File |
 |---------|------|
-| Executable / taskbar pinned app | `Icons/spur-launcher-256x256.ico` *(coming soon)* |
-| Notification tray | `Icons/spur-launcher-16x16.ico` *(coming soon)* |
-| Installer (Velopack) | `Icons/spur-launcher-256x256.ico` *(coming soon)* |
+| Executable / taskbar pinned app | `Icons/spur-launcher-256x256.ico` |
+| Notification tray | `Icons/spur-launcher-16x16.ico` |
+| Installer (Velopack) | `Icons/spur-launcher-256x256.ico` |
 
-Legacy `arc-launcher-*` icons remain in place until the new icon set (Phase 2, Item 10) is complete.
+Legacy `arc-launcher-*` icons have been replaced by the `spur-launcher-*` set above.
 
 After changing icons, run:
 
@@ -66,7 +66,7 @@ Produces installers under `dist/` using Velopack. Requires `vpk` (`dotnet tool i
 ```
 Arc/
 ├── Icons/              # Windows .ico brand assets (see Icons/README.md)
-├── Assets/             # Legacy arc.ico (synced from Icons/)
+├── Assets/             # spur.ico (synced from Icons/)
 ├── Themes/             # Dark/light XAML themes + design tokens
 ├── Views/              # WPF UI (search bar, results, settings, command palette)
 ├── ViewModels/         # MVVM (MainViewModel, SettingsViewModel, CommandPaletteViewModel)
