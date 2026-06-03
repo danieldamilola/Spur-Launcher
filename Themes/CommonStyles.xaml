@@ -41,7 +41,6 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding"         Value="12,6"/>
         <Setter Property="Cursor"          Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -136,7 +135,6 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor"          Value="Hand"/>
         <Setter Property="Padding"         Value="8,5"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
@@ -166,7 +164,6 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding"         Value="0"/>
         <Setter Property="Cursor"          Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Width"           Value="{DynamicResource CategoryButtonSize}"/>
         <Setter Property="Height"          Value="{DynamicResource CategoryButtonSize}"/>
         <Setter Property="Template">
@@ -199,7 +196,6 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor"          Value="Hand"/>
         <Setter Property="Padding"         Value="10,5"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
@@ -235,7 +231,6 @@
         <Setter Property="Padding"          Value="10,0,6,0"/>
         <Setter Property="Height"           Value="32"/>
         <Setter Property="Cursor"           Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
@@ -325,7 +320,6 @@
         <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="Padding"         Value="12,8"/>
         <Setter Property="Cursor"          Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
@@ -419,7 +413,6 @@
         <Setter Property="Background"       Value="Transparent"/>
         <Setter Property="Height"           Value="22"/>
         <Setter Property="Cursor"           Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Slider">
@@ -459,7 +452,6 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -550,7 +542,6 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -602,7 +593,6 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
