@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 /// <summary>Converts a Lucide icon name string to a WPF <see cref="Geometry"/> for Path.Data binding.</summary>
 [ValueConversion(typeof(string), typeof(Geometry))]

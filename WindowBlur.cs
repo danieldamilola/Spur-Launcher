@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace Arc
+namespace Spur
 {
     internal static class WindowBlur
     {

@@ -15,7 +15,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         LIGHT THEME — Arc v2 (design.md §2.2)
+         LIGHT THEME — Spur v2 (design.md §2.2)
          ═══════════════════════════════════════════════════════════ -->
 
     <SolidColorBrush x:Key="Void"            Color="#F2F2F4"/>
@@ -100,3 +100,4 @@
     <sys:Double x:Key="WindowWidthExpanded">640</sys:Double>
 
 </ResourceDictionary>
+

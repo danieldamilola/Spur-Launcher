@@ -1,6 +1,6 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
-public static class ArcConstants
+public static class SpurConstants
 {
     public static readonly SearchResult[] WindowsSettings =
     [
@@ -45,3 +45,4 @@ public static class ArcConstants
         new() { Id = "act:screenshot",Type = ResultType.Action,Name = "Screenshot",   Subtitle = "Type 'screenshot' to capture the screen",         LucideIcon = "camera",     ActionId = "screenshot"},
     ];
 }
+

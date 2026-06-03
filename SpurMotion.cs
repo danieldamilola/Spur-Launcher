@@ -2,12 +2,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using Arc.Views;
+using Spur.Views;
 
-namespace Arc;
+namespace Spur;
 
 /// <summary>Launcher motion primitives — timings from motion.md.</summary>
-public static class ArcMotion
+public static class SpurMotion
 {
     public const int ShowDurationMs = 200;
     public const int HideDurationMs = 140;

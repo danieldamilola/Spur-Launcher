@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>Arc</AssemblyName>
-    <RootNamespace>Arc</RootNamespace>
-    <ApplicationIcon>Icons\arc-launcher-256x256.ico</ApplicationIcon>
+    <AssemblyName>Spur</AssemblyName>
+    <RootNamespace>Spur</RootNamespace>
+    <ApplicationIcon>Icons\spur-launcher-256x256.ico</ApplicationIcon>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 
@@ -17,10 +17,10 @@
     <Version>1.2.0</Version>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
     <FileVersion>1.2.0.0</FileVersion>
-    <Product>Arc Launcher</Product>
-    <Company>Arc</Company>
-    <Copyright>Copyright © 2025 Arc</Copyright>
-    <Description>Arc — a fast, beautiful app launcher for Windows</Description>
+    <Product>Spur Launcher</Product>
+    <Company>Spur</Company>
+    <Copyright>Copyright © 2025 Spur</Copyright>
+    <Description>Spur — a fast, beautiful app launcher for Windows</Description>
   </PropertyGroup>
 
   <!-- Debug builds: optimisation OFF for step-through debugging -->
@@ -52,23 +52,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Arc.Tests\**" />
+    <Compile Remove="Spur.Tests\**" />
     <Compile Remove="RefactorApp\**" />
     <!-- Ensure ViewModel sources are compiled -->
-    <Page Remove="Arc.Tests\**" />
+    <Page Remove="Spur.Tests\**" />
     <Page Remove="RefactorApp\**" />
     <!-- Font files bundled as resources -->
     <Resource Include="Themes\Fonts\*.ttf" />
     <!-- Brand icons (tray + UI); exe icon from ApplicationIcon above -->
-    <Resource Include="Icons\arc-launcher-16x16.ico" />
-    <Resource Include="Icons\arc-launcher-32x32.ico" />
-    <Resource Include="Icons\arc-launcher-64x64.ico" />
-    <Resource Include="Icons\arc-launcher-128x128.ico" />
-    <Resource Include="Icons\arc-launcher-256x256.ico" />
-    <Resource Include="Icons\arc-launcher-512x512.ico" />
-    <Resource Include="Icons\arc-launcher-1024x1024.ico" />
+    <Resource Include="Icons\spur-launcher-16x16.ico" />
+    <Resource Include="Icons\spur-launcher-32x32.ico" />
+    <Resource Include="Icons\spur-launcher-64x64.ico" />
+    <Resource Include="Icons\spur-launcher-128x128.ico" />
+    <Resource Include="Icons\spur-launcher-256x256.ico" />
+    <Resource Include="Icons\spur-launcher-512x512.ico" />
+    <Resource Include="Icons\spur-launcher-1024x1024.ico" />
     <!-- Legacy copy for publish.ps1 / Velopack (synced from 256px source) -->
-    <Content Include="Assets\arc.ico" CopyToOutputDirectory="Never" />
+    <Content Include="Assets\spur.ico" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>
+

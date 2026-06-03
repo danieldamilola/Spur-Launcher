@@ -4,23 +4,23 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
-using Arc.Models;
-using Arc.Services;
+using Spur.Models;
+using Spur.Services;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public partial class OnboardingWindow : Window
 {
     private int _slide;
     private readonly StackPanel[] _slides;
     private readonly Ellipse[] _dots;
-    private readonly ArcConfig _config;
+    private readonly SpurConfig _config;
     private readonly IConfigService _configService;
     private bool _recordingShortcut;
 
     public event Action? OnCompleted;
 
-    public OnboardingWindow(ArcConfig config, IConfigService configService)
+    public OnboardingWindow(SpurConfig config, IConfigService configService)
     {
         _config = config;
         _configService = configService;
@@ -174,3 +174,4 @@ public partial class OnboardingWindow : Window
         ThemeSystemCard.BorderBrush = _config.Theme == "system" ? accent : Brushes.Transparent;
     }
 }
+

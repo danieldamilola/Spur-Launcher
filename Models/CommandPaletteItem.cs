@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>
 /// View model item for a single command palette entry.

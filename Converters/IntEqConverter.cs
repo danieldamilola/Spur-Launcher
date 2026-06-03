@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 /// <summary>
 /// Returns true when the bound int value equals the converter parameter.

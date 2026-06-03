@@ -1,4 +1,4 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>Layout constants from ux.md / design.md.</summary>
 public static class LauncherLayout

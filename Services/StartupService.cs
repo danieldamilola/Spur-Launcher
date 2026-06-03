@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for startup registry management.</summary>
 public interface IStartupService
@@ -11,12 +11,12 @@ public interface IStartupService
 }
 
 /// <summary>
-/// Toggles Arc's "launch when Windows starts" behaviour via the
+/// Toggles Spur's "launch when Windows starts" behaviour via the
 /// HKCU\Software\Microsoft\Windows\CurrentVersion\Run registry key.
 /// </summary>
 public sealed class StartupServiceImpl : IStartupService
 {
-    private const string AppName = "Arc";
+    private const string AppName = "Spur";
     private readonly ILogger _log;
     private readonly string _exePath;
 
@@ -25,7 +25,7 @@ public sealed class StartupServiceImpl : IStartupService
         _log = log;
         _exePath = Environment.ProcessPath
             ?? Process.GetCurrentProcess().MainModule?.FileName
-            ?? "Arc.exe";
+            ?? "Spur.exe";
     }
 
     public void Enable()

@@ -1,17 +1,17 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for config persistence.</summary>
 public interface IConfigService
 {
-    ArcConfig Load();
-    void Save(ArcConfig config);
-    Task<ArcConfig> LoadAsync();
-    Task SaveAsync(ArcConfig config);
+    SpurConfig Load();
+    void Save(SpurConfig config);
+    Task<SpurConfig> LoadAsync();
+    Task SaveAsync(SpurConfig config);
 }
 
 /// <summary>
-/// Reads and writes <see cref="ArcConfig"/> as JSON to
-/// <c>%LocalAppData%\Arc\Arc.config.json</c>.
+/// Reads and writes <see cref="SpurConfig"/> as JSON to
+/// <c>%LocalAppData%\Spur\Spur.config.json</c>.
 /// </summary>
 public sealed class ConfigService : IConfigService
 {
@@ -27,24 +27,24 @@ public sealed class ConfigService : IConfigService
 
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Arc");
+            "Spur");
         Directory.CreateDirectory(dir);
-        _path = Path.Combine(dir, "arc.config.json");
+        _path = Path.Combine(dir, "Spur.config.json");
     }
 
-    public ArcConfig Load()
+    public SpurConfig Load()
     {
         try
         {
             if (File.Exists(_path))
             {
                 var json = File.ReadAllText(_path);
-                return JsonSerializer.Deserialize<ArcConfig>(json) ?? new ArcConfig();
+                return JsonSerializer.Deserialize<SpurConfig>(json) ?? new SpurConfig();
             }
         }
         catch (Exception ex) { _log.Warning("Config load failed — using defaults", ex); }
 
-        var defaults = new ArcConfig();
+        var defaults = new SpurConfig();
         Save(defaults);
         return defaults;
     }
@@ -53,7 +53,7 @@ public sealed class ConfigService : IConfigService
     /// Synchronously persists <paramref name="config"/> to disk.
     /// Uses the same semaphore as <see cref="SaveAsync"/> to prevent concurrent writes.
     /// </summary>
-    public void Save(ArcConfig config)
+    public void Save(SpurConfig config)
     {
         var json = JsonSerializer.Serialize(config, JsonOptions);
         SaveGate.Wait();
@@ -62,8 +62,8 @@ public sealed class ConfigService : IConfigService
         finally { SaveGate.Release(); }
     }
 
-    public Task<ArcConfig> LoadAsync() => Task.Run(Load);
-    public async Task SaveAsync(ArcConfig config)
+    public Task<SpurConfig> LoadAsync() => Task.Run(Load);
+    public async Task SaveAsync(SpurConfig config)
     {
         var json = JsonSerializer.Serialize(config, JsonOptions);
         await SaveGate.WaitAsync();
@@ -72,3 +72,4 @@ public sealed class ConfigService : IConfigService
         finally { SaveGate.Release(); }
     }
 }
+

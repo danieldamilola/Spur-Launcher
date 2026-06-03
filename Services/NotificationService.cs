@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for showing notifications.</summary>
 public interface INotificationService

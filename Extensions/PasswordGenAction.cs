@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Password Generator action. Triggered by "pw [length]", e.g. "pw 16" or "pw".

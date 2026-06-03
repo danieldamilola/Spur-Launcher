@@ -1,10 +1,10 @@
-using Arc.ViewModels;
+using Spur.ViewModels;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public sealed class InvertBoolConverter : IValueConverter
 {
@@ -161,7 +161,7 @@ public sealed class SectionVisibilityConverter : System.Windows.Data.IValueConve
     public object Convert(object value, Type targetType, object parameter,
         System.Globalization.CultureInfo culture)
     {
-        var sectionName = (value as Arc.ViewModels.SettingsSection)?.Name ?? "";
+        var sectionName = (value as Spur.ViewModels.SettingsSection)?.Name ?? "";
         var target = parameter as string ?? "";
         return sectionName == target
             ? System.Windows.Visibility.Visible

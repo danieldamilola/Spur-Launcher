@@ -1,7 +1,7 @@
 using System.Windows.Controls.Primitives;
-using Arc.ViewModels;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 /// <summary>DataTemplateSelector that routes SectionLabel vs SearchResult.</summary>
 public sealed class ResultTemplateSelector : DataTemplateSelector

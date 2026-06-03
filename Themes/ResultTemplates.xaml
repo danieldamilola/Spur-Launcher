@@ -1,12 +1,12 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:models="clr-namespace:Arc.Models"
-    xmlns:conv="clr-namespace:Arc.Converters"
-    xmlns:views="clr-namespace:Arc.Views">
+    xmlns:models="clr-namespace:Spur.Models"
+    xmlns:conv="clr-namespace:Spur.Converters"
+    xmlns:views="clr-namespace:Spur.Views">
 
     <!-- ═══════════════════════════════════════════════════════════
-         RESULT TEMPLATES — Arc Design System
+         RESULT TEMPLATES — Spur Design System
          Shared by ResultsList, BrowsePanel, and any result views.
          All colour/font/size references use DynamicResource.
          ═══════════════════════════════════════════════════════════ -->
@@ -185,7 +185,8 @@
               Height="{DynamicResource RowHeight}"
               Margin="4,1"
               Background="Transparent"
-              Cursor="Hand">
+              Cursor="Hand"
+              AutomationProperties.Name="{Binding Name}">
 
             <Border x:Name="RowBg"
                     CornerRadius="{DynamicResource RadiusMd}"
@@ -302,7 +303,8 @@
               Height="{DynamicResource RowHeight}"
               Margin="12,2"
               Background="Transparent"
-              Cursor="Hand">
+              Cursor="Hand"
+              AutomationProperties.Name="{Binding Name}">
 
             <Border x:Name="RowBg"
                     CornerRadius="{DynamicResource RadiusMd}"
@@ -587,7 +589,7 @@
                         <Button x:Name="PinBtn"
                                 Width="26" Height="26"
                                 Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" FocusVisualStyle="{x:Null}"
+                                Cursor="Hand"
                                 ToolTip="Pin"
                                 Tag="{Binding IsPinned}"
                                 Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -617,7 +619,7 @@
                         </Button>
                         <Button Width="26" Height="26"
                                 Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" FocusVisualStyle="{x:Null}"
+                                Cursor="Hand"
                                 ToolTip="Remove"
                                 Command="{Binding DataContext.RemoveClipboardItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                             <Button.Template>
@@ -740,3 +742,4 @@
 
 
 </ResourceDictionary>
+

@@ -1,4 +1,4 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>Search category identifiers used throughout the app.</summary>
 public enum Category

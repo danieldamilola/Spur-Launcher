@@ -2,7 +2,7 @@
 
 > **Rule:** Finish each phase’s gate before the next. Update `Themes/` and `Views/` to match `/new` specs—not the reverse.
 
-**Branch suggestion:** `rebrand/arc-v2`
+**Branch suggestion:** `rebrand/Spur-v2`
 
 ---
 
@@ -30,7 +30,7 @@ Phase R9  Polish gate (perf, a11y, reduced motion)
 ### Tasks
 
 1. Replace `Token.Accent` `#0A84FF` with brand tokens from [design.md §2](design.md#2-color-system)
-2. Add `Arc.Motion` helper (Show/Hide/Anchors/Crossfade)
+2. Add `Spur.Motion` helper (Show/Hide/Anchors/Crossfade)
 3. Bundle **Inter Variable**; map `UIFont` key
 4. Document icon sampling script (optional `tools/sample-brand-colors.ps1`)
 
@@ -39,7 +39,7 @@ Phase R9  Polish gate (perf, a11y, reduced motion)
 ```
 □ Dark + light themes load without duplicate resource keys
 □ Caret uses brand.accent, not #0A84FF
-□ Arc.Motion.Show/Hide called from MainWindow only
+□ Spur.Motion.Show/Hide called from MainWindow only
 ```
 
 ---
@@ -199,7 +199,7 @@ Phase R9  Polish gate (perf, a11y, reduced motion)
 1. AI chat, timer UI → only via Extra keyword or Settings
 2. Delete unused views: hub, side preview, duplicate ViewModels
 3. Remove `CategoryCircle` dead code paths
-4. Align `ArcConfig` defaults with features.md
+4. Align `SpurConfig` defaults with features.md
 
 ### Gate
 
@@ -265,3 +265,4 @@ Delete or archive obsolete root docs (`UX.md`, `DESIGN.md`) after v2 ships.
 ---
 
 *Start: [README.md](README.md) · Brand: [brand.md](brand.md)*
+

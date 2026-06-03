@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 /// <summary>Converts a string to bool for RadioButton comparison (value == parameter).</summary>
 [ValueConversion(typeof(string), typeof(bool))]

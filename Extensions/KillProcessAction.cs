@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Kill Process action. Triggered by "kill [name]", e.g. "kill notepad".

@@ -1,6 +1,6 @@
-using Arc.ViewModels;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public partial class ScopeBar
 {

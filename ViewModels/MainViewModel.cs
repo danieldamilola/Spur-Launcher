@@ -1,16 +1,16 @@
 using System.Collections.ObjectModel;
-using Arc.Extensions;
-using Arc.Services;
-using Arc.Models;
+using Spur.Extensions;
+using Spur.Services;
+using Spur.Models;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 // ═══════════════════════════════════════════════════════════════════
-// MainViewModel — central orchestrator for the Arc launcher
+// MainViewModel — central orchestrator for the Spur launcher
 // ═══════════════════════════════════════════════════════════════════
 
 /// <summary>
-/// Central orchestrator for the Arc launcher.
+/// Central orchestrator for the Spur launcher.
 /// Owns the search query, result list, selection, category filter,
 /// and all action state (AI streaming, timer countdown, color/IP data).
 /// </summary>
@@ -63,7 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ── Constructor ──────────────────────────────────────────────────
     public MainViewModel(
-        ArcConfig             config,
+        SpurConfig             config,
         ILogger               log,
         IAppDiscoveryService  apps,
         IFileSearchService    files,
@@ -114,7 +114,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Pushes config values to services whenever the config object is replaced.</summary>
-    partial void OnConfigChanged(ArcConfig value)
+    partial void OnConfigChanged(SpurConfig value)
     {
         _files.MaxDepth     = value.MaxFileDepth;
         _clipboard.MaxItems = value.ClipboardHistorySize;
@@ -130,7 +130,7 @@ public sealed partial class MainViewModel : ObservableObject
     private string _query = string.Empty;
 
     [ObservableProperty]
-    private ArcConfig _config;
+    private SpurConfig _config;
 
     [ObservableProperty]
     private SettingsViewModel _settings;
@@ -572,7 +572,7 @@ public sealed partial class MainViewModel : ObservableObject
             bool showActions = ActiveCategory is null or "actions";
             if (showActions)
             {
-                var availableActions = ArcConstants.StaticActions.Where(a => IsActionEnabled(a.ActionId));
+                var availableActions = SpurConstants.StaticActions.Where(a => IsActionEnabled(a.ActionId));
 
                 var actionMatches = availableActions
                     .Where(a => MatchScore(query, a.Name) >= 0)
@@ -599,7 +599,7 @@ public sealed partial class MainViewModel : ObservableObject
             // ── Windows Settings (only when there is a query) ───────────
             if (Config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (ActiveCategory is null or "apps"))
             {
-                var settingsMatches = ArcConstants.WindowsSettings
+                var settingsMatches = SpurConstants.WindowsSettings
                     .Select(s =>
                     {
                         var sc = MatchScore(query, s.Name);
@@ -913,7 +913,7 @@ public sealed partial class MainViewModel : ObservableObject
                 else if (result.ActionId == "note")
                 {
                     QuickNoteAction.Execute(Query);
-                    _notification.Show("Note saved", "Documents\\Arc\\notes.txt");
+                    _notification.Show("Note saved", "Documents\\Spur\\notes.txt");
                     HideAfterLaunch();
                 }
                 // Currency: fetch conversion and copy
@@ -1317,3 +1317,4 @@ public sealed partial class MainViewModel : ObservableObject
         ActionId = s.ActionId,
     };
 }
+

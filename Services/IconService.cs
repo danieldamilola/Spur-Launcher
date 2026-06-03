@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for app icon extraction and caching.</summary>
 public interface IIconService

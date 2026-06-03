@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>Arc</AssemblyName>
-    <RootNamespace>Arc</RootNamespace>
-    <ApplicationIcon>Assets\arc.ico</ApplicationIcon>
+    <AssemblyName>Spur</AssemblyName>
+    <RootNamespace>Spur</RootNamespace>
+    <ApplicationIcon>Assets\spur.ico</ApplicationIcon>
     <Optimize>true</Optimize>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
@@ -20,16 +20,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Arc.Tests\**" />
+    <Compile Remove="Spur.Tests\**" />
     <Compile Remove="RefactorApp\**" />
     <Compile Remove="obj\**" />
-    <Page Remove="Arc.Tests\**" />
+    <Page Remove="Spur.Tests\**" />
     <Page Remove="RefactorApp\**" />
     <Page Remove="obj\**" />
     <!-- Font files bundled as resources -->
     <Resource Include="Themes\Fonts\*.ttf" />
-    <!-- Tray icon (add Assets\arc.ico to enable) -->
+    <!-- Tray icon (add Assets\Spur.ico to enable) -->
   </ItemGroup>
 
 </Project>
+
 

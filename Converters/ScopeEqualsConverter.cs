@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 public sealed class ScopeEqualsConverter : IMultiValueConverter
 {

@@ -1,8 +1,8 @@
-using Arc.Extensions;
-using Arc.Services;
-using Arc.Models;
+using Spur.Extensions;
+using Spur.Services;
+using Spur.Models;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 public sealed partial class TimerViewModel : ObservableObject
 {
@@ -54,7 +54,7 @@ public sealed partial class TimerViewModel : ObservableObject
             _timerRemaining = TimeSpan.Zero;
             _timerTick?.Stop();
             TimerRunning = false;
-            _notification.Show("Arc Timer", "Your timer has finished!");
+            _notification.Show("Spur Timer", "Your timer has finished!");
         }
         UpdateTimerDisplay();
     }

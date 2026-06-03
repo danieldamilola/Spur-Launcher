@@ -1,4 +1,4 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>Persisted pinned clipboard entry (text-only).</summary>
 public sealed record PinnedClipboardItem

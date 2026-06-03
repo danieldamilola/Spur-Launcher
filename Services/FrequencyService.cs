@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 public interface IFrequencyService : IDisposable
 {
@@ -10,7 +10,7 @@ public interface IFrequencyService : IDisposable
 
 /// <summary>
 /// Persists per-path launch frequency counts to disk with debounced writes.
-/// Stored as a JSON dictionary at %LocalAppData%\Arc\Arc.freq.json.
+/// Stored as a JSON dictionary at %LocalAppData%\Spur\Spur.freq.json.
 /// Writes are batched — at most one disk write per 30 seconds.
 /// </summary>
 public sealed class FrequencyService : IFrequencyService, IDisposable
@@ -31,9 +31,9 @@ public sealed class FrequencyService : IFrequencyService, IDisposable
 
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Arc");
+            "Spur");
         Directory.CreateDirectory(dir);
-        _path = Path.Combine(dir, "Arc.freq.json");
+        _path = Path.Combine(dir, "Spur.freq.json");
         Load();
 
         // Debounce writes: save at most once per 30 seconds

@@ -1,10 +1,10 @@
 using System.Windows.Interop;
 using System.Windows.Media;
-using Arc.Models;
-using Arc.ViewModels;
-using Arc.Views;
+using Spur.Models;
+using Spur.ViewModels;
+using Spur.Views;
 
-namespace Arc;
+namespace Spur;
 
 public partial class MainWindow : Window
 {
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
         if (_vm?.Config.SoundEffectEnabled == true)
             System.Media.SystemSounds.Asterisk.Play();
 
-        ArcMotion.Show(this, WindowScale, _vm?.Config.AnimationEnabled != false);
+        SpurMotion.Show(this, WindowScale, _vm?.Config.AnimationEnabled != false);
     }
 
     public void HideWindow()
@@ -153,7 +153,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        ArcMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
+        SpurMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
         {
             Hide();
             _isVisible = false;
@@ -250,7 +250,7 @@ public partial class MainWindow : Window
         var animEnabled = animate && _vm.Config.AnimationEnabled;
 
         if (expandRail)
-            ArcMotion.RevealAnchors(
+            SpurMotion.RevealAnchors(
                 CategoryColumn,
                 CategoryColumn.Width,
                 LauncherLayout.CategoryZoneWidth,
@@ -259,7 +259,7 @@ public partial class MainWindow : Window
                 AnchorCircles,
                 animEnabled);
         else
-            ArcMotion.HideAnchors(
+            SpurMotion.HideAnchors(
                 CategoryColumn,
                 CategoryColumn.Width,
                 CategoryDivider,

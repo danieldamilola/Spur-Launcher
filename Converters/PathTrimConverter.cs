@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 /// <summary>
 /// Shortens file-system paths for display by replacing the user profile root with ~

@@ -1,4 +1,4 @@
-# features.md — Product Scope (Arc v2)
+# features.md — Product Scope (Spur v2)
 
 > **Rule:** The bar shows what helps *this week*. Everything else is an **Extra** in Settings.
 
@@ -9,7 +9,7 @@ Design drives packaging—see [ux.md](ux.md).
 ## 1. Tiers
 
 ```
-CORE      Always in the bar loop; cannot disable without breaking Arc
+CORE      Always in the bar loop; cannot disable without breaking Spur
 BUILT-IN  Ships on; user toggles in Settings → Actions / Search
 EXTRA     Off by default or separate surface; never clutters Empty state
 ```
@@ -161,3 +161,4 @@ About/
 ---
 
 *Implementation phases: [phases.md](phases.md)*
+

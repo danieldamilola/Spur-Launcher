@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
 /// Lightweight in-order fuzzy scorer. Characters must appear in the target

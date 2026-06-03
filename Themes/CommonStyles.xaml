@@ -1,9 +1,9 @@
-<ResourceDictionary xmlns:models="clr-namespace:Arc.Models" xmlns:conv="clr-namespace:Arc.Converters" xmlns:views="clr-namespace:Arc.Views"
+<ResourceDictionary xmlns:models="clr-namespace:Spur.Models" xmlns:conv="clr-namespace:Spur.Converters" xmlns:views="clr-namespace:Spur.Views"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════
-         COMMON CONTROL STYLES — Arc Design System
+         COMMON CONTROL STYLES — Spur Design System
          All colour/font/geometry references use DynamicResource so
          they are resolved from whichever theme file is active.
          ═══════════════════════════════════════════════════════════ -->
@@ -224,7 +224,7 @@
         </Setter>
     </Style>
 
-    <!-- ComboBox: flat Arc style -->
+    <!-- ComboBox: flat Spur style -->
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily"       Value="{DynamicResource UIFont}"/>
         <Setter Property="FontSize"         Value="{DynamicResource FontSm}"/>
@@ -414,7 +414,7 @@
         </Setter>
     </Style>
 
-    <!-- Slider: flat Arc style -->
+    <!-- Slider: flat Spur style -->
     <Style TargetType="Slider">
         <Setter Property="Background"       Value="Transparent"/>
         <Setter Property="Height"           Value="22"/>
@@ -656,4 +656,5 @@
     <SolidColorBrush x:Key="ShadowPlateBrush" Color="#66000000"/>
 
 </ResourceDictionary>
+
 

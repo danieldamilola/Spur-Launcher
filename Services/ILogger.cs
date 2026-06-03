@@ -1,7 +1,7 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
-/// Simple logging abstraction for Arc. Production apps should use Microsoft.Extensions.Logging.
+/// Simple logging abstraction for Spur. Production apps should use Microsoft.Extensions.Logging.
 /// </summary>
 public interface ILogger
 {
@@ -27,12 +27,12 @@ public sealed class FileLogger : ILogger, IDisposable
     {
         logDirectory ??= Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Arc", "Logs");
+            "Spur", "Logs");
         
         Directory.CreateDirectory(logDirectory);
         
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-        _logPath = Path.Combine(logDirectory, $"arc_{timestamp}.log");
+        _logPath = Path.Combine(logDirectory, $"spur_{timestamp}.log");
         
         _writer = new StreamWriter(_logPath, append: true) { AutoFlush = true };
         
@@ -94,3 +94,4 @@ public sealed class NullLogger : ILogger
     public void Error(string message, Exception? exception = null) { }
     public void Fatal(string message, Exception? exception = null) { }
 }
+

@@ -1,4 +1,4 @@
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>AI action. Triggered by "ai " followed by any non-empty question.</summary>
 public sealed class AiAction : IAction

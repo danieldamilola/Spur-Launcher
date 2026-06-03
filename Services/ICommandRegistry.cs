@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>
 /// A registered command entry for the command palette.
