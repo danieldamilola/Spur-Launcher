@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 /// <summary>
 /// Sidebar-based settings view model with instant-save semantics.
@@ -14,9 +14,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly MainViewModel    _main;
     private readonly IThemeManager    _themeManager;
     private readonly IStartupService  _startupService;
-    private          ArcConfig       _config;
+    private          SpurConfig       _config;
 
-    public SettingsViewModel(ArcConfig config, IConfigService configService, MainViewModel main,
+    public SettingsViewModel(SpurConfig config, IConfigService configService, MainViewModel main,
                              IThemeManager themeManager, IStartupService startupService)
     {
         _config          = config;
@@ -239,7 +239,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             if (value)
             {
                 var result = System.Windows.MessageBox.Show(
-                    "Arc will monitor and store everything you copy, including passwords, " +
+                    "Spur will monitor and store everything you copy, including passwords, " +
                     "2FA codes, and other sensitive data.\n\n" +
                     "Clipboard history is stored locally and never sent anywhere.\n\n" +
                     "Enable clipboard history?",
@@ -703,7 +703,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void ResetToDefaults()
     {
-        _config = new ArcConfig();
+        _config = new SpurConfig();
         _configService.Save(_config);
         _main.Config = _config.Clone();
         LoadStartupState();
@@ -717,7 +717,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     // ═══════════════════════════════════════════════════════════════
 
     public string Version =>
-        $"Arc v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.2.0"}";
+        $"Spur v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.2.0"}";
 
     public string Credits => "Built with .NET 9 + WPF · Monochrome v2 design system";
     public string License => "MIT License";
@@ -743,3 +743,4 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 /// <summary>A single sidebar section in the settings UI.</summary>
 public record SettingsSection(string Name, string LucideIcon, string SegoeFluentIcon);
+

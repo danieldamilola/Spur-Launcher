@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using Arc.Models;
-using Arc.ViewModels;
+using Spur.Models;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 /// <summary>
 /// Code-behind for ClipboardManager.xaml. Refreshes the ViewModel on load

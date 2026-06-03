@@ -1,4 +1,4 @@
-# ux.md — Experience & Flows (Arc v2)
+# ux.md — Experience & Flows (Spur v2)
 
 > One surface. Three ways to intent: **type**, **hover**, **anchor**. Everything else is a consequence.
 
@@ -40,8 +40,8 @@ Companion: [brand.md](brand.md) · [design.md](design.md) · [motion.md](motion.
 
 ## 2. Idle
 
-- Tray: `arc-launcher-16x16.ico`
-- Menu: **Open Arc** · Settings · About · Quit
+- Tray: `spur-launcher-16x16.ico`
+- Menu: **Open Spur** · Settings · About · Quit
 - No badges, no update nags in tray
 
 **Entry:** login / launch  
@@ -238,7 +238,7 @@ About            Version, links, icon credit
 
 | Step | Content | Primary |
 |------|---------|---------|
-| 1 | Arc mark + “Instant search for everything on your PC.” | Continue |
+| 1 | Spur mark + “Instant search for everything on your PC.” | Continue |
 | 2 | What’s indexed locally (apps, optional folders) | Continue |
 | 3 | Press `Alt+Space` to try | Finish |
 
@@ -289,3 +289,4 @@ No modals in the bar.
 ---
 
 *Feature mapping: [features.md](features.md) · Build order: [phases.md](phases.md)*
+

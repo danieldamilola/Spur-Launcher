@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 public interface IHotkeyService : IDisposable
 {

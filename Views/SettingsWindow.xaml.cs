@@ -1,7 +1,7 @@
-using Arc.ViewModels;
+using Spur.ViewModels;
 using System.Windows;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 /// <summary>
 /// Settings window — thin host shell.

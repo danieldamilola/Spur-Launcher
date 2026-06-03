@@ -1,8 +1,8 @@
 using System.Windows.Controls.Primitives;
-using Arc.Models;
-using Arc.ViewModels;
+using Spur.Models;
+using Spur.ViewModels;
 
-namespace Arc.Views;
+namespace Spur.Views;
 
 public partial class BrowsePanel : UserControl
 {

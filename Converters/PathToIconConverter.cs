@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
-using Arc.Services;
+using Spur.Services;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 [ValueConversion(typeof(string), typeof(BitmapSource))]
 public sealed class PathToIconConverter : IValueConverter

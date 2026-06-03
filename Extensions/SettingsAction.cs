@@ -1,4 +1,4 @@
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// Settings action. Triggered by "settings".

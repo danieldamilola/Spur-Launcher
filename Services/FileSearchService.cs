@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for file/folder search.</summary>
 public interface IFileSearchService

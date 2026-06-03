@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 public static class WindowBackdrop
 {

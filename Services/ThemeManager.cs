@@ -1,4 +1,4 @@
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for theme switching.</summary>
 public interface IThemeManager

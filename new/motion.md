@@ -1,6 +1,6 @@
 # motion.md — Motion & Animation
 
-> Motion explains **state**, not personality. Arc animates like a system utility: fast in, softer out, never bouncy for fun.
+> Motion explains **state**, not personality. Spur animates like a system utility: fast in, softer out, never bouncy for fun.
 
 ---
 
@@ -140,10 +140,10 @@ Cancel all storyboards on `Hide`.
 ## 8. Implementation notes (WPF)
 
 ```csharp
-// Pseudocode — centralize in Arc.Motion class
-ArcMotion.ShowLauncher(window);
-ArcMotion.AnimateAnchors(visible: true, stagger: true);
-ArcMotion.CrossfadeResults(oldPanel, newPanel);
+// Pseudocode — centralize in Spur.Motion class
+SpurMotion.ShowLauncher(window);
+SpurMotion.AnimateAnchors(visible: true, stagger: true);
+SpurMotion.CrossfadeResults(oldPanel, newPanel);
 ```
 
 - Prefer `BeginAnimation` with `FillBehavior.Stop` so values don’t stick.
@@ -164,3 +164,4 @@ ArcMotion.CrossfadeResults(oldPanel, newPanel);
 ---
 
 *Flows: [ux.md](ux.md) · Visual tokens: [design.md](design.md)*
+

@@ -1,4 +1,4 @@
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>Result type discriminator.</summary>
 public enum ResultType { App, File, Clipboard, Action }

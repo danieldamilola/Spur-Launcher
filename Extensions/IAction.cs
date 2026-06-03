@@ -1,4 +1,4 @@
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>
 /// A built-in action that activates automatically when the query matches a pattern.

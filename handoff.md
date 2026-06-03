@@ -1,9 +1,9 @@
-# Handoff: Arc Launcher — Command Palette, Theme Resources, Icon Binding Fix
+# Handoff: Spur Launcher — Command Palette, Theme Resources, Icon Binding Fix
 
 **Date:** 2026-06-03  
 **Session type:** Coding + Debugging + Design  
 **Status:** In Progress — Command palette fully implemented, compiled, and committed. Search section still needs restoration from earlier session.  
-**Project root:** C:\dev\Arc
+**Project root:** C:\dev\Spur
 
 ---
 
@@ -87,7 +87,7 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 1. **Restore the Search section to Settings** — `git checkout HEAD -- Views/SettingsView.xaml` to get the card-based version back, or cherry-pick just the Search section. Then re-add `new("Search", "search", "\ue721")` to `SettingsViewModel.Sections`.
 2. **Verify missing converter icons** — The card-based SettingsView.xaml references icons that may not exist in LucideIconConverter: `history`, `sliders`, `network`, `folder-open`, `file-text`. Add any that are missing.
 3. **Polish command palette** — Add keyboard shortcut hints per command (currently shows `↵` placeholder). Verify all 7 commands work correctly at runtime. Consider position-remembering (restore last filter text?).
-4. **Test full-width actions** — Close running Arc, rebuild, verify calculator/timer/color/IP/AI all render full-width with no blank panels.
+4. **Test full-width actions** — Close running Spur, rebuild, verify calculator/timer/color/IP/AI all render full-width with no blank panels.
 5. **Polish remaining hardcoded paths** — SearchBar.xaml still uses hardcoded `IconSearch`/`IconBack` strings via `Geometry.Parse()`. BrowsePanel.xaml clipboard text icon uses hardcoded clipboard path. Consider migrating.
 6. **Settings sidebar ordering** — Current sections are General, Actions, Advanced. If Search is restored, decide where it goes in the list.
 
@@ -103,7 +103,7 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 - **ActivateAction ordering matters** — `ActiveActionId` must be set BEFORE `ActiveActionResult` to prevent the race condition where `UpdateWindowState` takes the wrong branch.
 - **Settings design is card-based** — The user's current design uses `SettingCard`, `CardRow`, `RowDivider`, `GroupLabel`, `SectionTitle`, `IconContainer`, `GhostBtn`, `DangerBtn` styles. This supersedes the DESIGN.md's minimal design.
 - **opus skill required for all code changes** — User explicitly requires reading opus methodology before any code change.
-- **Terminal unreliable on Windows** — The `dotnet build` command sometimes works but often hits file-lock errors from a running Arc process. User must close Arc before building. The `grep` pipe pattern is unreliable on Windows.
+- **Terminal unreliable on Windows** — The `dotnet build` command sometimes works but often hits file-lock errors from a running Spur process. User must close Spur before building. The `grep` pipe pattern is unreliable on Windows.
 
 ---
 
@@ -120,24 +120,24 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 
 | Item | Type | Location |
 |------|------|----------|
-| LucideIconConverter.cs | Modified (57 icons) | `C:\dev\Arc\Converters\LucideIconConverter.cs` |
-| PreviewPanel.xaml | Heavily modified | `C:\dev\Arc\Views\PreviewPanel.xaml` |
-| PreviewPanel.xaml.cs | Modified | `C:\dev\Arc\Views\PreviewPanel.xaml.cs` |
-| MainWindow.xaml | Modified (category icons + conv namespace) | `C:\dev\Arc\MainWindow.xaml` |
-| MainWindow.xaml.cs | Modified (UpdateWindowState + AnimateCornerRadius) | `C:\dev\Arc\MainWindow.xaml.cs` |
-| SettingsView.xaml | Heavily modified (card redesign, then Search deleted) | `C:\dev\Arc\Views\SettingsView.xaml` |
-| SettingsView.xaml.cs | Modified (OnSectionClick handler) | `C:\dev\Arc\Views\SettingsView.xaml.cs` |
-| SettingsViewModel.cs | Modified (sections consolidated, Search removed) | `C:\dev\Arc\ViewModels\SettingsViewModel.cs` |
-| MainViewModel.cs | Modified (CancelAiGeneration, ActivateAction reorder) | `C:\dev\Arc\ViewModels\MainViewModel.cs` |
-| App.xaml | Modified (converter resources added) | `C:\dev\Arc\App.xaml` |
-| OnboardingWindow.xaml | Modified (unicode→Lucide icons) | `C:\dev\Arc\Views\OnboardingWindow.xaml` |
-| ICommandRegistry.cs | New | `C:\dev\Arc\Services\ICommandRegistry.cs` |
-| CommandRegistry.cs | New | `C:\dev\Arc\Services\CommandRegistry.cs` |
-| CommandPaletteItem.cs | New | `C:\dev\Arc\Models\CommandPaletteItem.cs` |
-| CommandPaletteViewModel.cs | New | `C:\dev\Arc\ViewModels\CommandPaletteViewModel.cs` |
-| CommandPalette.xaml | New | `C:\dev\Arc\Views\CommandPalette.xaml` |
-| CommandPalette.xaml.cs | New | `C:\dev\Arc\Views\CommandPalette.xaml.cs` |
-| DESIGN.md | Modified (full-width action layout) | `C:\dev\Arc\DESIGN.md` |
+| LucideIconConverter.cs | Modified (57 icons) | `C:\dev\Spur\Converters\LucideIconConverter.cs` |
+| PreviewPanel.xaml | Heavily modified | `C:\dev\Spur\Views\PreviewPanel.xaml` |
+| PreviewPanel.xaml.cs | Modified | `C:\dev\Spur\Views\PreviewPanel.xaml.cs` |
+| MainWindow.xaml | Modified (category icons + conv namespace) | `C:\dev\Spur\MainWindow.xaml` |
+| MainWindow.xaml.cs | Modified (UpdateWindowState + AnimateCornerRadius) | `C:\dev\Spur\MainWindow.xaml.cs` |
+| SettingsView.xaml | Heavily modified (card redesign, then Search deleted) | `C:\dev\Spur\Views\SettingsView.xaml` |
+| SettingsView.xaml.cs | Modified (OnSectionClick handler) | `C:\dev\Spur\Views\SettingsView.xaml.cs` |
+| SettingsViewModel.cs | Modified (sections consolidated, Search removed) | `C:\dev\Spur\ViewModels\SettingsViewModel.cs` |
+| MainViewModel.cs | Modified (CancelAiGeneration, ActivateAction reorder) | `C:\dev\Spur\ViewModels\MainViewModel.cs` |
+| App.xaml | Modified (converter resources added) | `C:\dev\Spur\App.xaml` |
+| OnboardingWindow.xaml | Modified (unicode→Lucide icons) | `C:\dev\Spur\Views\OnboardingWindow.xaml` |
+| ICommandRegistry.cs | New | `C:\dev\Spur\Services\ICommandRegistry.cs` |
+| CommandRegistry.cs | New | `C:\dev\Spur\Services\CommandRegistry.cs` |
+| CommandPaletteItem.cs | New | `C:\dev\Spur\Models\CommandPaletteItem.cs` |
+| CommandPaletteViewModel.cs | New | `C:\dev\Spur\ViewModels\CommandPaletteViewModel.cs` |
+| CommandPalette.xaml | New | `C:\dev\Spur\Views\CommandPalette.xaml` |
+| CommandPalette.xaml.cs | New | `C:\dev\Spur\Views\CommandPalette.xaml.cs` |
+| DESIGN.md | Modified (full-width action layout) | `C:\dev\Spur\DESIGN.md` |
 
 ---
 
@@ -149,20 +149,20 @@ This session had three threads: (1) extend the Lucide icon system and migrate al
 - 2026-06-03: Full command palette — ICommandRegistry + CommandRegistry service + CommandPaletteItem model + CommandPaletteViewModel (filtering, selection, execution) + CommandPalette XAML overlay (440×480, themed, icon+label+description+keyboard hint per item) + CommandPalette.xaml.cs (keyboard handlers, auto-focus, clear) + DI registrations + MainWindow.xaml.cs keyboard integration (Ctrl+Shift+P, Escape, Up/Down guard) + theme resource key alignment (Surface/Depth2/HoverBg/SelectedBg) + LucideIconConverter fix on Path.Data binding. All files committed. Build passes (0 errors). Search section restoration is still pending.
 
 ### Project background
-Arc is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit.Mvvm. Global hotkey (`Alt+Space`) opens a frameless floating search bar. Searches apps, files, clipboard, and built-in actions (calculator, timer, AI, etc.). Now has a Ctrl+Shift+P command palette with 7 starter commands (toggle theme, open settings, clear clipboard, cycle scope, open folder, copy path, run as admin).
+Spur is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit.Mvvm. Global hotkey (`Alt+Space`) opens a frameless floating search bar. Searches apps, files, clipboard, and built-in actions (calculator, timer, AI, etc.). Now has a Ctrl+Shift+P command palette with 7 starter commands (toggle theme, open settings, clear clipboard, cycle scope, open folder, copy path, run as admin).
 
 ### User preferences
 - Must follow opus methodology for all code changes
 - Wants clean, premium, Spotlight-like design
 - Three categories only: Files, Clipboard, Actions
 - Settings is the user's own card-based design (not DESIGN.md's minimal version)
-- Terminal is unreliable — user runs builds manually after closing Arc
+- Terminal is unreliable — user runs builds manually after closing Spur
 
 ---
 
 ## 10. Paste-In Opener
 
-> Continue working on the Arc launcher at C:\dev\Arc. 
+> Continue working on the Spur launcher at C:\dev\Spur. 
 > 
 > **Last session (2026-06-03):** Built and shipped the Ctrl+Shift+P command palette. All 12 files committed — interface (`ICommandRegistry`), service (`CommandRegistry`), model (`CommandPaletteItem`), ViewModel (`CommandPaletteViewModel`), XAML overlay (`Views/CommandPalette.xaml`), code-behind (`CommandPalette.xaml.cs`), DI registrations (`App.xaml.cs`), and keyboard handling (`MainWindow.xaml.cs`). Theme resources aligned (`Surface`, `Depth2`, `HoverBg`, `SelectedBg`). Icon binding fixed with `LucideIconConverter`. 7 starter commands wired to real MainViewModel methods (no stubs). Build compiles clean (0 errors).
 > 
@@ -170,4 +170,5 @@ Arc is a Windows launcher (like Spotlight/Raycast). WPF .NET 9, CommunityToolkit
 > 1. Restore the Search section to Settings — `git checkout HEAD~2 -- Views/SettingsView.xaml` (before the accidental sed delete), then re-add `new("Search", "search", "\ue721")` to `SettingsViewModel.Sections`
 > 2. Verify missing converter icons: `history`, `sliders`, `network`, `folder-open`, `file-text`
 > 
-> **Before writing any code**, read the opus skill — the user requires it. The terminal is unreliable on Windows so builds should be verified by checking for "error CS" lines only (ignore MSB file-lock errors). Close any running Arc instance before building.
+> **Before writing any code**, read the opus skill — the user requires it. The terminal is unreliable on Windows so builds should be verified by checking for "error CS" lines only (ignore MSB file-lock errors). Close any running Spur instance before building.
+

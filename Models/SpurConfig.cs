@@ -3,10 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>All user-configurable settings. Persisted as JSON with encrypted API keys.</summary>
-public sealed class ArcConfig
+public sealed class SpurConfig
 {
     // ═══════════════════════════════════════════════════════════════
     // Appearance
@@ -114,7 +114,7 @@ public sealed class ArcConfig
     // Startup & Performance
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Launch Arc when Windows starts.</summary>
+    /// <summary>Launch Spur when Windows starts.</summary>
     public bool LaunchOnStartup { get; set; } = true;
 
     /// <summary>Minimize to system tray instead of closing.</summary>
@@ -142,7 +142,7 @@ public sealed class ArcConfig
     /// <summary>Whether clipboard monitoring is active.</summary>
     public bool ClipboardEnabled { get; set; } = true;
 
-    /// <summary>Clear clipboard history when Arc exits.</summary>
+    /// <summary>Clear clipboard history when Spur exits.</summary>
     public bool ClearClipboardOnExit { get; set; } = false;
 
     /// <summary>Auto-exclude sensitive folders (AppData, .git, etc.) from search.</summary>
@@ -208,7 +208,7 @@ public sealed class ArcConfig
     // API Key helpers (transparent encryption via DPAPI)
     // ═══════════════════════════════════════════════════════════════
 
-    private static readonly byte[] Entropy = "Arc.Launcher.v1"u8.ToArray();
+    private static readonly byte[] Entropy = "Spur.Launcher.v1"u8.ToArray();
 
     [JsonIgnore]
     public string GroqApiKey
@@ -311,10 +311,11 @@ public sealed class ArcConfig
     // Clone
     // ═══════════════════════════════════════════════════════════════
 
-    public ArcConfig Clone()
+    public SpurConfig Clone()
     {
         // Fast shallow clone via JSON round-trip — handles all nested collections
         var json = JsonSerializer.Serialize(this);
-        return JsonSerializer.Deserialize<ArcConfig>(json) ?? new ArcConfig();
+        return JsonSerializer.Deserialize<SpurConfig>(json) ?? new SpurConfig();
     }
 }
+

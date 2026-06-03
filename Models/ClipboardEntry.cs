@@ -1,6 +1,6 @@
 using System.Windows.Media.Imaging;
 
-namespace Arc.Models;
+namespace Spur.Models;
 
 /// <summary>A single clipboard history entry — either text or an image.</summary>
 public sealed class ClipboardEntry

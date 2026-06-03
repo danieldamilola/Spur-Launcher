@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
-using Arc.Models;
-using Arc.Services;
+using Spur.Models;
+using Spur.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 /// <summary>
 /// Standalone clipboard manager ViewModel. Extracted from the launcher's main
@@ -13,12 +13,12 @@ namespace Arc.ViewModels;
 public sealed partial class ClipboardViewModel : ObservableObject
 {
     private readonly IClipboardService _clipboard;
-    private readonly ArcConfig _config;
+    private readonly SpurConfig _config;
     private readonly IConfigService _configSvc;
 
     public ClipboardViewModel(
         IClipboardService clipboard,
-        ArcConfig config,
+        SpurConfig config,
         IConfigService configSvc)
     {
         _clipboard = clipboard;
@@ -165,3 +165,4 @@ public sealed partial class ClipboardViewModel : ObservableObject
         OnPropertyChanged(nameof(FilteredCount));
     }
 }
+

@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Arc.Models;
-using Arc.Services;
+using Spur.Models;
+using Spur.Services;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 /// <summary>
 /// ViewModel for the Ctrl+Shift+P command palette overlay.

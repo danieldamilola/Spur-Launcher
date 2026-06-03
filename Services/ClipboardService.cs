@@ -1,6 +1,6 @@
-using Arc.Models;
+using Spur.Models;
 
-namespace Arc.Services;
+namespace Spur.Services;
 
 /// <summary>Interface for in-memory clipboard history management.</summary>
 public interface IClipboardService

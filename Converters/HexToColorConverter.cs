@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Arc.Converters;
+namespace Spur.Converters;
 
 public class HexToColorConverter : IValueConverter
 {

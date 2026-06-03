@@ -18,6 +18,6 @@ global using System.Windows.Media;
 global using System.Windows.Threading;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
-global using Arc.Models;
-global using Arc.Services;
+global using Spur.Models;
+global using Spur.Services;
 

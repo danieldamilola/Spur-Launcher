@@ -1,18 +1,18 @@
 using System.Collections.ObjectModel;
-using Arc.Extensions;
-using Arc.Services;
-using Arc.Models;
+using Spur.Extensions;
+using Spur.Services;
+using Spur.Models;
 
-namespace Arc.ViewModels;
+namespace Spur.ViewModels;
 
 public sealed partial class AiChatViewModel : ObservableObject
 {
     private readonly IAiService _aiService;
-    private readonly ArcConfig  _config;
+    private readonly SpurConfig  _config;
     private CancellationTokenSource? _aiCts;
     private readonly List<(string Role, string Content)> _aiConversation = [];
 
-    public AiChatViewModel(IAiService aiService, ArcConfig config)
+    public AiChatViewModel(IAiService aiService, SpurConfig config)
     {
         _aiService = aiService;
         _config = config;
@@ -182,3 +182,4 @@ public sealed partial class AiChatViewModel : ObservableObject
         _            => (_config.GroqApiKey,        _config.GroqModel),
     };
 }
+

@@ -1,7 +1,7 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace Arc.Extensions;
+namespace Spur.Extensions;
 
 /// <summary>IP action. Triggered by typing exactly "ip".</summary>
 public sealed class IpAction : IAction

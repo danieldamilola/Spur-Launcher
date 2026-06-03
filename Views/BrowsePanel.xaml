@@ -1,8 +1,8 @@
-<UserControl x:Class="Arc.Views.BrowsePanel"
+<UserControl x:Class="Spur.Views.BrowsePanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="clr-namespace:Arc.Models"
-             xmlns:conv="clr-namespace:Arc.Converters"
+             xmlns:models="clr-namespace:Spur.Models"
+             xmlns:conv="clr-namespace:Spur.Converters"
              Background="Transparent">
 
     <!--
@@ -24,7 +24,8 @@
                      Foreground="{DynamicResource Accent}"
                      Background="Transparent"
                      Height="2"
-                     HorizontalAlignment="Center" Width="120"/>
+                     HorizontalAlignment="Center" Width="120"
+                     AutomationProperties.Name="Loading"/>
     </Grid>
 
     <!-- ═══ Files section ═══ -->
@@ -35,7 +36,8 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="Recent files"
-                   Style="{DynamicResource ShelfHeaderStyle}"/>
+                   Style="{DynamicResource ShelfHeaderStyle}"
+                   AutomationProperties.Name="Recent files"/>
 
         <ListBox x:Name="FilesList" Grid.Row="1"
                  BorderThickness="0" Background="Transparent"
@@ -44,7 +46,8 @@
                  VirtualizingStackPanel.IsVirtualizing="True"
                  FocusVisualStyle="{x:Null}"
                  ItemTemplate="{DynamicResource ResultRowTemplate}"
-                 PreviewMouseLeftButtonDown="OnItemClick"/>
+                 PreviewMouseLeftButtonDown="OnItemClick"
+                 AutomationProperties.Name="Recent files list"/>
     </Grid>
 
     <!-- ═══ Clipboard section ═══ -->
@@ -56,7 +59,8 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="Clipboard"
-                   Style="{DynamicResource ShelfHeaderStyle}"/>
+                   Style="{DynamicResource ShelfHeaderStyle}"
+                   AutomationProperties.Name="Clipboard"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,0,12,6">
             <TextBlock x:Name="ClipCount"
@@ -67,7 +71,8 @@
 
             <Button Style="{DynamicResource FilterChipStyle}"
                     Content="Clear all"
-                    Click="OnClearClipboard"/>
+                    Click="OnClearClipboard"
+                    AutomationProperties.Name="Clear all clipboard entries"/>
         </StackPanel>
 
         <ListBox x:Name="ClipList" Grid.Row="2"
@@ -77,7 +82,8 @@
                  VirtualizingStackPanel.IsVirtualizing="True"
                  FocusVisualStyle="{x:Null}"
                  ItemTemplate="{DynamicResource ClipResultTemplate}"
-                 PreviewMouseLeftButtonDown="OnItemClick"/>
+                 PreviewMouseLeftButtonDown="OnItemClick"
+                 AutomationProperties.Name="Clipboard list"/>
     </Grid>
 
     <!-- ═══ Actions section ═══ -->
@@ -88,7 +94,8 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="Commands"
-                   Style="{DynamicResource ShelfHeaderStyle}"/>
+                   Style="{DynamicResource ShelfHeaderStyle}"
+                   AutomationProperties.Name="Commands"/>
 
         <ListBox x:Name="ActionsList" Grid.Row="1"
                  BorderThickness="0" Background="Transparent"
@@ -97,7 +104,8 @@
                  VirtualizingStackPanel.IsVirtualizing="True"
                  FocusVisualStyle="{x:Null}"
                  ItemTemplate="{DynamicResource ActionResultTemplate}"
-                 PreviewMouseLeftButtonDown="OnItemClick"/>
+                 PreviewMouseLeftButtonDown="OnItemClick"
+                 AutomationProperties.Name="Commands list"/>
     </Grid>
 
     </Grid>
