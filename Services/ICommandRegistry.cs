@@ -8,7 +8,7 @@ public sealed record CommandPaletteEntry
     public required string Id { get; init; }
     public required string Label { get; init; }
     public required string Description { get; init; }
-    public required string LucideIcon { get; init; }
+    public required string IconGlyph { get; init; }
     public required Action Execute { get; init; }
 }
 

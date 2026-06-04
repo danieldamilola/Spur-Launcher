@@ -19,7 +19,7 @@ public sealed class IpAction : IAction
         Type     = ResultType.Action,
         Name     = "IP Address",
         Subtitle = "Local and public IP",
-        LucideIcon = "wifi",
+        IconGlyph = "\ue701",
         ActionId = Id,
     };
 
@@ -50,4 +50,5 @@ public sealed class IpAction : IAction
         catch { return null; }
     }
 }
+
 

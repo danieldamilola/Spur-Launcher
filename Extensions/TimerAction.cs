@@ -25,7 +25,7 @@ public sealed class TimerAction : IAction
             Type     = ResultType.Action,
             Name     = $"Timer · {label}",
             Subtitle = "Press ↵ to start",
-            LucideIcon = "timer",
+            IconGlyph = "\ue121",
             ActionId = Id,
         };
     }
@@ -57,4 +57,5 @@ public sealed class TimerAction : IAction
         return $"{(int)ts.TotalSeconds}s";
     }
 }
+
 

@@ -37,7 +37,7 @@ public sealed class CalculatorAction : IAction
             Type     = ResultType.Action,
             Name     = resultText,
             Subtitle = expression,
-            LucideIcon = "calculator",
+            IconGlyph = "\ue1d0",
             ActionId = Id,
         };
     }
@@ -63,4 +63,5 @@ public sealed class CalculatorAction : IAction
         catch { return "Invalid expression"; }
     }
 }
+
 

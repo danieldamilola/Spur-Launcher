@@ -1,5 +1,7 @@
 namespace Spur.Services;
 
+using iNKORE.UI.WPF.Modern;
+
 /// <summary>Interface for theme switching.</summary>
 public interface IThemeManager
 {
@@ -41,6 +43,12 @@ public sealed class ThemeManagerImpl : IThemeManager
         {
             dicts.Add(newDict);
         }
+
+        try
+        {
+            ThemeManager.Current.ApplicationTheme = resolved == "light" ? ApplicationTheme.Light : ApplicationTheme.Dark;
+        }
+        catch (Exception ex) { _log.Warning("Failed to set iNKORE theme", ex); }
 
         _log.Info($"Theme applied: {resolved}");
     }

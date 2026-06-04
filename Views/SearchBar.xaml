@@ -1,13 +1,14 @@
 <UserControl x:Class="Spur.Views.SearchBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              xmlns:conv="clr-namespace:Spur.Converters">
 
     <Border Height="56"
-            Margin="14,0,8,0"
+            Margin="12,0,8,0"
             Background="Transparent"
             CornerRadius="16">
-        <Grid Margin="10,0">
+        <Grid Margin="0,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -16,21 +17,14 @@
 
         <Border x:Name="SearchIconBorder"
                 Grid.Column="0"
-                Width="30" Height="30"
-                CornerRadius="9"
-                Background="{DynamicResource AccentGhost}"
                 VerticalAlignment="Center"
                 Margin="0,0,12,0"
                 AutomationProperties.Name="Search">
-            <Path Width="16" Height="16"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Stretch="Uniform"
-                  Data="{Binding ConverterParameter=search, Converter={x:Static conv:LucideIconConverter.Instance}}"
-                  Stroke="{DynamicResource Accent}"
-                  StrokeThickness="1.5"
-                  StrokeLineJoin="Round"
-                  Fill="Transparent"/>
+            <ui:FontIcon Glyph="&#xE11A;"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontSize="20"/>
         </Border>
 
         <TextBox x:Name="SearchInput"
@@ -97,3 +91,4 @@
         </Grid>
     </Border>
 </UserControl>
+

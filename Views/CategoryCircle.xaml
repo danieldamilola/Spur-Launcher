@@ -1,15 +1,10 @@
 <UserControl x:Class="Spur.Views.CategoryCircle"
-
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              Width="52" Height="52"
-
              RenderTransformOrigin="0.5,0.5"
-
              Opacity="0"
-
              IsHitTestVisible="False">
 
 
@@ -27,7 +22,7 @@
         <Border x:Name="Root"
                 Width="50" Height="50"
                 HorizontalAlignment="Center"
-                CornerRadius="{DynamicResource RadiusWindow}"
+                CornerRadius="{DynamicResource RadiusLg}"
                 BorderThickness="1"
                 SnapsToDevicePixels="True"
                 ToolTip="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -67,22 +62,21 @@
 
                 </Button.Template>
 
-                <Path x:Name="IconPath"
-                      Width="22" Height="22"
-                      Stretch="Uniform"
-                      StrokeThickness="1.5"
-                      Fill="Transparent">
-                    <Path.Style>
-                        <Style TargetType="Path">
-                            <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
+                <ui:FontIcon x:Name="IconPresenter"
+                               FontSize="20"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center">
+                    <ui:FontIcon.Style>
+                        <Style TargetType="ui:FontIcon">
+                            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                    <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Path.Style>
-                </Path>
+                    </ui:FontIcon.Style>
+                </ui:FontIcon>
 
             </Button>
 
@@ -91,6 +85,8 @@
     </StackPanel>
 
 </UserControl>
+
+
 
 
 

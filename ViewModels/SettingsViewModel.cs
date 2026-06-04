@@ -33,11 +33,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         // Init sidebar — features.md §6
         Sections = new ObservableCollection<SettingsSection>
         {
-            new("General",  "settings", "\ue721"),
-            new("Search",   "search",   "\ue721"),
-            new("Actions",  "zap",      "\ue945"),
-            new("Extras",   "sparkles", "\ue945"),
-            new("About",    "info",     "\ue946"),
+            new("General",  "\ue713"),
+            new("Search",   "\ue11A"),
+            new("Actions",  "\ue945"),
+            new("Extras",   "\ue113"),
+            new("About",    "\ue946"),
         };
         SelectedSection = Sections[0];
 
@@ -765,5 +765,5 @@ public sealed partial class SettingsViewModel : ObservableObject
 }
 
 /// <summary>A single sidebar section in the settings UI.</summary>
-public record SettingsSection(string Name, string LucideIcon, string SegoeFluentIcon);
+public record SettingsSection(string Name, string IconGlyph);
 

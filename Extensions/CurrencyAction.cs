@@ -35,7 +35,7 @@ public sealed class CurrencyAction : IAction
             Type       = ResultType.Action,
             Name       = $"Convert {amount:N2} {fromCurr.ToUpperInvariant()} → {toCurr.ToUpperInvariant()}",
             Subtitle   = "Press ↵ to fetch rate and copy",
-            LucideIcon = "dollar-sign",
+            IconGlyph = "\ue825",
             ActionId   = Id,
         };
     }
@@ -80,3 +80,4 @@ public sealed class CurrencyAction : IAction
         public Dictionary<string, decimal>? Rates { get; set; }
     }
 }
+

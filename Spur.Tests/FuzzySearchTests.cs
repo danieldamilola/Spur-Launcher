@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Spur.Models;
 using Spur.Services;
 
@@ -15,7 +15,7 @@ public class FuzzySearchTests
     public void Score_PositiveMatch_ReturnsNonNegative(string query, string target)
     {
         var score = FuzzySearch.Score(query, target);
-        Assert.True(score >= 0, $"Expected non-negative score for '{query}' → '{target}', got {score}");
+        Assert.True(score >= 0, $"Expected non-negative score for '{query}' ? '{target}', got {score}");
     }
 
     [Theory]
@@ -25,7 +25,7 @@ public class FuzzySearchTests
     public void Score_NoMatch_ReturnsNegative(string query, string target)
     {
         var score = FuzzySearch.Score(query, target);
-        Assert.True(score < 0, $"Expected negative score for '{query}' → '{target}', got {score}");
+        Assert.True(score < 0, $"Expected negative score for '{query}' ? '{target}', got {score}");
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class FuzzySearchTests
     public void Score_CaseInsensitive_Match(string query, string target)
     {
         var score = FuzzySearch.Score(query, target);
-        Assert.True(score >= 0, $"Expected match for '{query}' → '{target}'");
+        Assert.True(score >= 0, $"Expected match for '{query}' ? '{target}'");
     }
 
     [Fact]

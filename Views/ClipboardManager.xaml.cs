@@ -17,7 +17,7 @@ public partial class ClipboardManager : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
-        Loaded += OnLoaded;
+        IsVisibleChanged += OnIsVisibleChanged;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -29,9 +29,12 @@ public partial class ClipboardManager : UserControl
         }
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        _vm?.Refresh();
+        if (IsVisible)
+        {
+            _vm?.Refresh();
+        }
     }
 
     private void OnPinClick(object sender, RoutedEventArgs e)

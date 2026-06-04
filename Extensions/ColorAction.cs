@@ -26,7 +26,7 @@ public sealed class ColorAction : IAction
             Type     = ResultType.Action,
             Name     = hex.ToUpperInvariant(),
             Subtitle = $"RGB({r},{g},{b})  HSL({h:F0}°,{s:F0}%,{l:F0}%)",
-            LucideIcon = "palette",
+            IconGlyph = "\ue790",
             ActionId = Id,
         };
     }
@@ -69,4 +69,5 @@ public sealed class ColorAction : IAction
         if (h < 0) h += 360;
     }
 }
+
 

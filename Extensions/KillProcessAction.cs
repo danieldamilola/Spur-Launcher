@@ -33,7 +33,7 @@ public sealed class KillProcessAction : IAction
                 ? $"Kill \"{name}\" · {count} running"
                 : $"Kill \"{name}\" · not found",
             Subtitle   = count > 0 ? "Press ↵ to force-close" : "No matching process running",
-            LucideIcon = "x-octagon",
+            IconGlyph = "\ue711",
             ActionId   = Id,
         };
     }
@@ -64,3 +64,4 @@ public sealed class KillProcessAction : IAction
         return killed;
     }
 }
+

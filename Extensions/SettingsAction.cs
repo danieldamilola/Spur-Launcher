@@ -19,9 +19,10 @@ public sealed class SettingsAction : IAction
             Type       = ResultType.Action,
             Name       = "Open Settings",
             Subtitle   = "Press ↵ to open the settings panel",
-            LucideIcon = "settings",
+            IconGlyph = "\ue713",
             ActionId   = Id,
         };
     }
 }
+
 

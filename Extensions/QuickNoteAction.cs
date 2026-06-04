@@ -30,7 +30,7 @@ public sealed class QuickNoteAction : IAction
             Type       = ResultType.Action,
             Name       = "Save Quick Note",
             Subtitle   = string.IsNullOrWhiteSpace(preview) ? "Press ↵ to save" : $"\"{preview}\"",
-            LucideIcon = "file-text",
+            IconGlyph = "\ue8a5",
             ActionId   = Id,
         };
     }
@@ -60,3 +60,4 @@ public sealed class QuickNoteAction : IAction
         }
     }
 }
+

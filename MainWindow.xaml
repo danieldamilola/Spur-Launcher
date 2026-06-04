@@ -1,12 +1,13 @@
 <Window x:Class="Spur.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
         xmlns:views="clr-namespace:Spur.Views"
         xmlns:conv="clr-namespace:Spur.Converters"
-        Title="Spur"
-        Width="640"
-        MinWidth="640"
-        MaxWidth="640"
+        Title=""
+        Width="{Binding Config.BarWidth, FallbackValue=640}"
+        MinWidth="{Binding Config.BarWidth, FallbackValue=640}"
+        MaxWidth="{Binding Config.BarWidth, FallbackValue=640}"
         MinHeight="56"
         SizeToContent="Height"
         WindowStyle="None"
@@ -24,7 +25,7 @@
 
   <Border x:Name="RootBorder"
           Background="Transparent"
-          Padding="12"
+          Padding="0"
           SnapsToDevicePixels="True">
 
     <Border.RenderTransform>
@@ -42,17 +43,10 @@
 
       <!-- ── Search capsule (search bar + results only, no categories) ── -->
       <Grid Grid.Column="0" Background="Transparent">
-        <Border x:Name="ShadowPlate"
-                Margin="0,10,0,-4"
-                CornerRadius="18"
-                Background="{DynamicResource ShadowPlateBrush}"
-                SnapsToDevicePixels="True"/>
-
         <Border x:Name="Capsule"
                 HorizontalAlignment="Stretch"
                 CornerRadius="{DynamicResource RadiusWindow}"
-                Background="{DynamicResource SurfaceAcrylic}"
-                BorderBrush="{DynamicResource BorderBrush}"
+                BorderBrush="{DynamicResource GlassBorder}"
                 BorderThickness="1"
                 SnapsToDevicePixels="True"
                 ClipToBounds="True">
@@ -64,6 +58,24 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
+
+            <!-- Background Plate for WindowOpacity -->
+            <Border Grid.RowSpan="4" 
+                    CornerRadius="{DynamicResource RadiusWindow}"
+                    Background="{DynamicResource SurfaceAcrylic}" 
+                    Opacity="{Binding Config.WindowOpacity}"/>
+
+            <!-- Liquid glass: subtle top-edge luminosity highlight -->
+            <Border Grid.RowSpan="4"
+                    CornerRadius="{DynamicResource RadiusWindow}"
+                    IsHitTestVisible="False">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="#0AFFFFFF" Offset="0"/>
+                  <GradientStop Color="#00FFFFFF" Offset="0.4"/>
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
 
             <!-- Search bar row (no category column here anymore) -->
             <views:SearchBar x:Name="SearchBarControl"
@@ -87,7 +99,7 @@
               <Border Grid.Row="0" Background="{DynamicResource Separator}"/>
 
               <Grid Grid.Row="1">
-                <views:UnifiedResultsView DataContext="{Binding}" />
+                <views:UnifiedResultsView x:Name="UnifiedResultsControl" DataContext="{Binding}" />
                 <views:ClipboardManager x:Name="ClipboardManagerControl"
                                         DataContext="{Binding Clipboard}"
                                         Visibility="Collapsed"/>
@@ -149,20 +161,19 @@
           <Button.Template>
             <ControlTemplate TargetType="Button">
               <Border x:Name="BackButtonBg"
-                      Background="Transparent"
-                      CornerRadius="6">
-                <Path Width="14"
-                      Height="14"
-                      Stretch="Uniform"
-                      Stroke="{DynamicResource TextSecondary}"
-                      StrokeThickness="1.5"
-                      StrokeLineJoin="Round"
-                      StrokeStartLineCap="Round"
-                      StrokeEndLineCap="Round"
-                      Fill="Transparent"
-                      Data="M15 18l-6-6 6-6M9 12h10"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"/>
+                      Background="{DynamicResource Depth2}"
+                      BorderBrush="{DynamicResource BorderBrush}"
+                      BorderThickness="1"
+                      CornerRadius="4"
+                      Width="28" Height="20"
+                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="esc"
+                           FontFamily="{DynamicResource Token.Font.Mono}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextSecondary}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="0,0,0,1"/>
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -193,7 +204,7 @@
                                 Label="Files"
                                 AutomationProperties.Name="Files"
                                 Margin="0,0,4,0"
-                                IconData="{Binding Source={StaticResource Icon.Category.Files}, Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                IconGlyph="&#xE8A5;"
                                 Click="OnCategoryClick"/>
 
           <views:CategoryCircle x:Name="CircleCommands"
@@ -201,20 +212,23 @@
                                 Label="Commands"
                                 AutomationProperties.Name="Commands"
                                 Margin="0,0,4,0"
-                                IconData="{Binding Source={StaticResource Icon.Category.Commands}, Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                IconGlyph="&#xE756;"
                                 Click="OnCategoryClick"/>
 
           <views:CategoryCircle x:Name="CircleClipboard"
                                 Tag="clipboard"
                                 Label="Clips"
                                 AutomationProperties.Name="Clips"
-                                IconData="{Binding Source={StaticResource Icon.Category.Clipboard}, Converter={x:Static conv:LucideIconConverter.Instance}}"
+                                IconGlyph="&#xE8C8;"
                                 Click="OnCategoryClick"/>
         </StackPanel>
       </Grid>
     </Grid>
   </Border>
 </Window>
+
+
+
 
 
 
