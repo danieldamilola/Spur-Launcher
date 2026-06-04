@@ -87,8 +87,12 @@ public sealed partial class ClipboardViewModel : ObservableObject
     public void Copy(ClipboardEntry? entry)
     {
         if (entry is null) return;
+        // Promote to top of history BEFORE writing to system clipboard.
+        // ClipboardWatcher deduplicates against index 0, so the upcoming
+        // WM_CLIPBOARDUPDATE message will be ignored — no duplicate created.
+        _clipboard.Add(entry.Content);
         _clipboard.CopyToSystem(entry.Content);
-        StatusText = "Copied";
+        StatusText = "Copied ✓";
     }
 
     /// <summary>Remove a single entry from history.</summary>
@@ -157,7 +161,22 @@ public sealed partial class ClipboardViewModel : ObservableObject
             }
         }
 
+        if (Entries.Count > 0 && (SelectedEntry == null || !Entries.Contains(SelectedEntry)))
+        {
+            SelectedEntry = Entries[0];
+        }
+
         UpdateStatus();
+    }
+
+    public void MoveSelection(int delta)
+    {
+        if (Entries.Count == 0) return;
+        int idx = SelectedEntry is null ? -1 : Entries.IndexOf(SelectedEntry);
+        idx += delta;
+        if (idx < 0) idx = 0;
+        if (idx >= Entries.Count) idx = Entries.Count - 1;
+        SelectedEntry = Entries[idx];
     }
 
     private void UpdateStatus()

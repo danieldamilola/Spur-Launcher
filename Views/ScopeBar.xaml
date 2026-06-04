@@ -39,8 +39,7 @@
                     </Button.Style>
                     <TextBlock>
                         <Run Text="{Binding Label, Mode=OneWay}"/>
-                        <Run Text="{Binding Count, StringFormat=' {0}', Mode=OneWay}"
-                             Foreground="{DynamicResource TextTertiary}"/>
+
                     </TextBlock>
                 </Button>
             </DataTemplate>

@@ -52,24 +52,31 @@ public static class LauncherWindowBehavior
         var width = window.Width > 0 && !double.IsNaN(window.Width) ? window.Width : window.ActualWidth;
         var height = window.Height > 0 && !double.IsNaN(window.Height) ? window.Height : window.ActualHeight;
 
+        // Center based on the search bar height (56px) so the drop down expands downward from the center
+        var barHeight = 56.0;
         var left = screen.Left + (screen.Width - width) / 2;
-        var top = screen.Top + (screen.Height - height) / 2;
+        var top = screen.Top + (screen.Height - barHeight) / 2;
 
-        switch (vm.Config.SearchWindowPosition)
+        switch (vm.Config.SearchWindowPosition?.ToLowerInvariant())
         {
-            case "centerTop":
+            case "centertop":
+            case "center top":
                 top = screen.Top + screen.Height * 0.15;
                 break;
-            case "leftTop":
+            case "lefttop":
+            case "left top":
                 left = screen.Left + 32;
                 top = screen.Top + 32;
                 break;
-            case "rightTop":
+            case "righttop":
+            case "right top":
                 left = screen.Right - width - 32;
                 top = screen.Top + 32;
                 break;
             case "custom":
-                return;
+                if (vm.Config.CustomWindowLeft >= 0) left = vm.Config.CustomWindowLeft;
+                if (vm.Config.CustomWindowTop >= 0) top = vm.Config.CustomWindowTop;
+                break;
         }
 
         window.Left = left;
@@ -132,7 +139,17 @@ public static class LauncherWindowBehavior
         if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
         if (sender is Window window)
         {
-            try { window.DragMove(); } catch { }
+            try 
+            { 
+                window.DragMove(); 
+                if (window.DataContext is MainViewModel vm && vm.Config.SearchWindowPosition == "custom")
+                {
+                    vm.Config.CustomWindowLeft = window.Left;
+                    vm.Config.CustomWindowTop = window.Top;
+                    vm.SaveConfig();
+                }
+            } 
+            catch { }
         }
     }
 
