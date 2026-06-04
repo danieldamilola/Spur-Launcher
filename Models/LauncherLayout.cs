@@ -9,8 +9,8 @@ public static class LauncherLayout
     public const double WidthCompact  = BarWidth;
     public const double WidthExpanded = BarWidth;
 
-    /// <summary>Space for three 44px category circles + gaps.</summary>
-    public const double CategoryZoneWidth = 156;
+    /// <summary>Space for three category circles + gaps.</summary>
+    public const double CategoryZoneWidth = 180;
 
     public const double BarHeight = 56;
     public const double FooterHeight = 36;

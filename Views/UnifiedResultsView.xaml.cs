@@ -13,9 +13,9 @@ public sealed class ResultTemplateSelector : DataTemplateSelector
         => item is SectionLabel ? SectionTemplate : ResultTemplate;
 }
 
-public partial class ResultsList : UserControl
+public partial class UnifiedResultsView : UserControl
 {
-    public ResultsList()
+    public UnifiedResultsView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;

@@ -16,6 +16,7 @@ public class MainViewModelTests
 {
     private sealed class FakeApps : IAppDiscoveryService
     {
+        public event Action<List<SearchResult>>? CatalogRefreshed;
         public Task<List<SearchResult>> DiscoverAsync(CancellationToken ct = default)
         {
             var list = new List<SearchResult>
@@ -23,6 +24,7 @@ public class MainViewModelTests
                 new SearchResult { Id = "app:notepad", Type = ResultType.App, Name = "Notepad" },
                 new SearchResult { Id = "app:vsc", Type = ResultType.App, Name = "Visual Studio Code" },
             };
+            CatalogRefreshed?.Invoke(list);
             return Task.FromResult(list);
         }
         public void ClearCache() { }
@@ -100,16 +102,30 @@ public class MainViewModelTests
         public CommandPaletteEntry? Find(string id) => _items.FirstOrDefault(i => i.Id == id);
     }
 
+    private class FakeSecureStorage : ISecureStorageService
+    {
+        public string Encrypt(string plain) => plain;
+        public string Decrypt(string cipher) => cipher;
+    }
+
     [Fact]
     public async Task QueryProducesAppResults()
     {
         var cfg = new SpurConfig { FuzzySearch = true };
         var registry = new FakeRegistry();
         var commandPalette = new CommandPaletteViewModel(registry);
+        
+        var apps = new FakeApps();
+        var files = new FakeFiles();
+        var freq = new FakeFreq();
+        var clip = new FakeClip();
+        
+        var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq);
+
         var vm = new MainViewModel(cfg, NullLogger.Instance,
-            new FakeApps(), new FakeFiles(), new FakeFreq(), new FakeConfigSvc(cfg),
-            new FakeClip(), new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
-            registry, commandPalette);
+            apps, files, freq, new FakeConfigSvc(cfg),
+            clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
+            registry, commandPalette, searchEngine, new FakeSecureStorage());
 
         // Set query and wait for debounce + async search
         vm.Query = "note";

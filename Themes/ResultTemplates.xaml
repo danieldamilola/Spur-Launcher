@@ -14,7 +14,7 @@
     <!-- Section header (e.g. "Apps", "Files", "Clipboard") -->
     <DataTemplate x:Key="SectionHeaderTemplate" DataType="{x:Type models:SectionLabel}">
         <TextBlock Text="{Binding Title}"
-                   FontFamily="{DynamicResource UIFont}"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
                    FontSize="{DynamicResource FontHint}"
                    FontWeight="Medium"
                    Foreground="{DynamicResource TextMuted}"
@@ -108,13 +108,13 @@
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                     <TextBlock x:Name="NameText"
                                Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontResult}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="SubtitleText"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontMeta}"
                                Foreground="{DynamicResource TextSecondary}"
                                TextTrimming="CharacterEllipsis"
@@ -130,7 +130,7 @@
                         Visibility="Collapsed"
                         VerticalAlignment="Center">
                     <TextBlock Text="↵"
-                               FontFamily="{DynamicResource MonoFont}"
+                               FontFamily="{DynamicResource Token.Font.Mono}"
                                FontSize="10"
                                Foreground="{DynamicResource TextTertiary}"/>
                 </Border>
@@ -228,18 +228,18 @@
                           StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Fill="Transparent"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                          Data="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>
+                          Data="{Binding ConverterParameter=clipboard, Converter={x:Static conv:LucideIconConverter.Instance}}"/>
                 </Border>
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding Subtitle}"
-                               FontFamily="{DynamicResource MonoFont}"
+                               FontFamily="{DynamicResource Token.Font.Mono}"
                                FontSize="11"
                                Foreground="{DynamicResource TextMuted}"
                                Opacity="0.8"
@@ -253,7 +253,7 @@
                       Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
                       StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Fill="Transparent"
-                      Data="M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z"
+                      Data="{Binding ConverterParameter=pin, Converter={x:Static conv:LucideIconConverter.Instance}}"
                       VerticalAlignment="Center"
                       Margin="6,0,0,0"
                       Visibility="Collapsed"/>
@@ -348,13 +348,13 @@
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Name}"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding Subtitle}"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="11"
                                Foreground="{DynamicResource TextSecondary}"
                                TextTrimming="CharacterEllipsis"/>
@@ -391,7 +391,7 @@
 
     <!-- Filter chip -->
     <Style x:Key="FilterChipStyle" TargetType="Button">
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="{DynamicResource FontXs}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
@@ -428,7 +428,7 @@
     </Style>
 
     <Style x:Key="ShelfHeaderStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="{DynamicResource FontHint}"/>
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
@@ -550,13 +550,13 @@
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock x:Name="NameText"
                                    Text="{Binding Name}"
-                                   FontFamily="{DynamicResource UIFont}"
+                                   FontFamily="{DynamicResource Token.Font.Primary}"
                                    FontSize="{DynamicResource FontResult}"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimary}"
                                    TextTrimming="CharacterEllipsis"/>
                         <TextBlock x:Name="SubtitleText"
-                                   FontFamily="{DynamicResource UIFont}"
+                                   FontFamily="{DynamicResource Token.Font.Primary}"
                                    FontSize="{DynamicResource FontMeta}"
                                    Foreground="{DynamicResource TextSecondary}"
                                    TextTrimming="CharacterEllipsis"
@@ -573,7 +573,7 @@
                             Visibility="Collapsed"
                             VerticalAlignment="Center">
                         <TextBlock Text="↵"
-                                   FontFamily="{DynamicResource MonoFont}"
+                                   FontFamily="{DynamicResource Token.Font.Mono}"
                                    FontSize="10"
                                    Foreground="{DynamicResource TextTertiary}"/>
                     </Border>
@@ -601,7 +601,7 @@
                                               Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
                                               StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               Fill="Transparent"
-                                              Data="M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z"
+                                              Data="{Binding ConverterParameter=pin, Converter={x:Static conv:LucideIconConverter.Instance}}"
                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -707,7 +707,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{Binding Title}"
-                           FontFamily="{DynamicResource UIFont}"
+                           FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="{DynamicResource FontHint}"
                            FontWeight="Medium"
                            Foreground="{DynamicResource TextMuted}"
@@ -715,7 +715,7 @@
                            TextOptions.TextFormattingMode="Display"/>
                 <Button Grid.Column="1"
                         Content="Clear"
-                        FontFamily="{DynamicResource UIFont}"
+                        FontFamily="{DynamicResource Token.Font.Primary}"
                         FontSize="10"
                         Foreground="{DynamicResource TextMuted}"
                         Background="Transparent"

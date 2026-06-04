@@ -19,7 +19,7 @@ public static class SpurMotion
     public const int DividerRevealDurationMs = 120;
 
     public static bool ShouldAnimate(bool userEnabled)
-        => userEnabled && SystemParameters.ClientAreaAnimation;
+        => userEnabled;
 
     public static int ScaleMs(int baseMs, bool userEnabled)
     {
@@ -185,8 +185,8 @@ public static class SpurMotion
 /// <summary>Animates <see cref="ColumnDefinition.Width"/> between grid length values.</summary>
 internal sealed class GridLengthAnimation : AnimationTimeline
 {
-    public GridLength From { get; set; }
-    public GridLength To { get; set; }
+    public static readonly DependencyProperty FromProperty = DependencyProperty.Register(nameof(From), typeof(GridLength), typeof(GridLengthAnimation), new PropertyMetadata(new GridLength(0))); public GridLength From { get => (GridLength)GetValue(FromProperty); set => SetValue(FromProperty, value); }
+    public static readonly DependencyProperty ToProperty = DependencyProperty.Register(nameof(To), typeof(GridLength), typeof(GridLengthAnimation), new PropertyMetadata(new GridLength(0))); public GridLength To { get => (GridLength)GetValue(ToProperty); set => SetValue(ToProperty, value); }
 
     public GridLengthAnimation() { }
 
@@ -214,3 +214,5 @@ internal sealed class GridLengthAnimation : AnimationTimeline
         return new GridLength(from + (to - from) * t, GridUnitType.Pixel);
     }
 }
+
+

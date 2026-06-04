@@ -1,0 +1,22 @@
+<UserControl x:Class="Spur.Views.Settings.ActionsSettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Spur.Views"
+             xmlns:conv="clr-namespace:Spur.Converters">
+    <StackPanel>
+        <TextBlock Text="Commands" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <WrapPanel Margin="16,14,10,8">
+                <CheckBox Content="Calculator" IsChecked="{Binding ActionCalc, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Color tools" IsChecked="{Binding ActionColor, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Currency" IsChecked="{Binding ActionCurrency, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Password generator" IsChecked="{Binding ActionPasswordGen, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Quick note" IsChecked="{Binding ActionQuickNote, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="IP tools" IsChecked="{Binding ActionIp, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Kill process" IsChecked="{Binding ActionKillProcess, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Screenshot" IsChecked="{Binding ActionScreenshot, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="System commands" IsChecked="{Binding ActionSystem, Mode=TwoWay}" Margin="0,0,18,8"/>
+            </WrapPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

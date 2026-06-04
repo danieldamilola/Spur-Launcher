@@ -1,157 +1,45 @@
-# brand.md — Spur Identity
+Rebranding Plan
 
-> Spur is not “Spotlight for Windows.” It is a **native-feeling command surface** with its own calm voice—borrowed discipline from Apple, owned visual character from the Spur mark.
+Current StateName: Arc
+Tagline: "A fast, minimal launcher for Windows"
+Product: WPF / .NET 9 desktop launcher — global hotkey (Alt+Space), floating search surface, three categories (Files, Commands, Clipboard), built-in calculator, web search, system commands
+Visual style: Dark/light themes with system accent, Lucide icons, compact search-bar UI, settings window, onboarding window
+Distribution: Velopack updates, optional system tray icon
+Brand assets: arc-launcher-256x256.ico (exe/taskbar), arc-launcher-16x16.ico (tray), both in Icons/
+Tone: Technical, minimal, fast
+Target audience: Power users, developers, Windows enthusiasts
 
----
+Target IdentityNew name: _TBD — choose during Phase 1 Item 6_
+New tagline: _TBD — derived from name personality_
+New name: Spur
+New tagline: "Spur your workflow."
+Personality: Fast, lightweight, invisible when not needed, surgically precise. Feels like a power tool, not an app. Terminal-grade respect for the user — no tracking, no upsells, no clutter.
+Target audience: Same (power users, developers, Windows enthusiasts), plus expand to designers and productivity users via usability improvements
+Design direction: Micro-interactions and motion that make the tool feel alive; glassmorphism depth; typographic hierarchy; breathing room in the UI
 
-## 1. Brand essence
+Changes (one at a time)
 
-| Pillar | Meaning for Spur |
-|--------|------------------|
-| **Quiet** | UI speaks in whispers: low contrast borders, no shouting badges |
-| **Immediate** | Open → type → act in one breath; motion is quick, never playful |
-| **Considered** | Every margin is intentional; nothing “default WPF” shows through |
-| **Honest** | Windows app, Windows shortcuts, Windows materials—no fake macOS chrome |
+Phase 1 — Foundation (repo health + naming):check mark: Clean repo. Expand .gitignore, delete dead files (RefactorApp/, .exclude, nul, refactor_appdisc.py, tools/sample-brand-colors.ps1, clean.ps1, clean2.ps1, AddUsings.ps1, AddUsingsToServices.ps1).Eliminate static facades. Kill Services/Facade.cs static singletons, convert to proper DI. Touch App.xaml.cs, ArcViewModel.cs, MainViewModel.cs, KeyboardHook.cs, Theme/ThemeEngine.cs, Services/Facade.cs, ViewModels/.cs.
+Archive POC experiments. Archive CLI/, PowerLauncher/, WpfApp/ to _archive/poc/ with a README explaining what they were.
+Add CI. GitHub Actions: dotnet build, dotnet test, dotnet format --verify on push/PR.
+Add minimal tests. Start with Arc.Tests/MainViewModelTests.cs (search behavior, command dispatch). Target: 5-10 tests to establish the pattern.
+Pick the new name. Brainstorm 20+ candidates, shortlist top 5, check availability (domain, NuGet, GitHub, trademark), pick one.
+:check mark: Pick the new name. Brainstormed 20+ candidates, shortlisted (Blink, Ray, Snap, Flick, Beam), checked conflicts, all rejected. Second round (Spur, Lance, Kilo) — Spur won: sharp, power-tool, one syllable, no conflicts. Tagline: "Spur your workflow."*
 
-**Tagline (internal):** *Find it. Do it. Leave.*
+Phase 2 — Design system (the new look)Design tokens. Replace hardcoded hex/RGBA colors with resource dictionary tokens. Standardize spacing (4px grid), typography scale, border radii, shadows. Apply to all .xaml files.Glassmorphism background. Acrylic/blur backdrop for the search window via WindowBlur.cs + SetWindowCompositionAttribute. System-aware — follows light/dark mode.
+Typography pass. Choose a monospace font for results (Cascadia Code / JetBrains Mono / Fira Code), set type scale (13px results, 18px input, 11px metadata). Implement in Styles/Typography.xaml.
+New icon set. Generate .ico files for the new brand name (256x256 for exe/taskbar, 16x16 for tray). Place in Icons/.
+Replace Lucide icons. Evaluate whether Lucide still fits the new personality. If yes, keep but re-key to match token naming. If no, pick a new set. Update all Style="{StaticResource Lucide}" references.
+Motion micro-interactions. Add storyboard animations: opening/closing with a subtle scale+fade, result hover states, typing ripple. Implement in Styles/Animations.xaml.
 
----
+Phase 3 — Product architecture:check mark: Settings redesign. Horizontal tabs + search bar. Replaced sidebar with tab strip (General | Search | Actions | Extras | About), added search TextBox in header with FilteredSections binding, full-width content area. Implemented in Views/SettingsView.xaml + ViewModels/SettingsViewModel.cs.Onboarding experience. Replace the existing onboarding with a 3-step welcome flow: welcome → hotkey → first search. Implement in Views/OnboardingWindow.xaml.
+Clipboard Manager extraction. Extract clipboard from launcher into a standalone mode or separate view. Implement Views/ClipboardManager.xaml and ViewModels/ClipboardViewModel.cs.
+Command palette. Ctrl+Shift+P opens a VS Code-style command palette for actions like "Toggle theme", "Open settings", "Clear clipboard history". Implement in ViewModels/CommandPaletteViewModel.cs.
 
-## 2. The mark (`Icons/`)
+Phase 4 — Distribution + polishVelopack branding. Update update URLs, manifest, and installer metadata to the new name.Website/GitHub. Update README with new branding, screenshots, logo. Register domain. Set up landing page.
+Accessibility pass. Ensure full keyboard navigation, screen reader labels, contrast ratios, focus indicators, and AutomationProperties on all interactive elements.
 
-The launcher icon set (`spur-launcher-*.ico`) is the **only** full-color brand artifact in the product.
-
-### What the mark communicates (design intent)
-
-Read the 256px master as:
-
-- **Field:** deep, neutral graphite (not pure black—soft depth)
-- **Stroke:** a single confident **Spur**—bright, slightly warm highlight (think moonlit edge, not neon)
-- **Shape language:** continuous curve, no sharp logo clutter; reads at 16px in the tray
-
-### Rules
-
-| Rule | Detail |
-|------|--------|
-| **Shell vs UI** | `.ico` → taskbar, tray, installer, About. Never scale the mark inside the search bar. |
-| **In-app glyph** | Use a **1.5px stroke** Lucide-style icon set, rounded caps—same weight as the Spur stroke *feeling* |
-| **No duplicates** | Don’t place the app icon next to every result; app icons come from the OS. |
-| **Clear space** | Minimum padding around the mark = ½ Spur radius in marketing; in UI, 8px. |
-
-### Sampling accent from the icon (implementation)
-
-1. Open `Icons/spur-launcher-256x256.ico` in a color picker.
-2. Sample the **brightest stroke** along the Spur → `Brand.Highlight`
-3. Sample the **deepest field** → `Brand.Field`
-4. Derive `Brand.Accent` = Highlight at **72% luminance** (slightly subdued for UI, never full neon)
-
-**Fallback tokens** (if sampling not done yet)—neutral brand, not generic blue:
-
-| Token | Hex | Role |
-|-------|-----|------|
-| `Brand.Field` | `#121214` | Icon background family |
-| `Brand.Highlight` | `#E8E4DF` | Spur stroke family (warm pearl) |
-| `Brand.Accent` | `#C9C4BC` | Focus caret, selection rail, active scope |
-
-> **Banned as default:** `#0A84FF`, `#6366F1`, purple gradients, cyan glow, “AI assistant” lavender.
-
-User-selectable accent (Settings) is **Phase 2**—ship monochrome first.
-
----
-
-## 3. Personality & voice
-
-### Sounds like
-
-- Calm, direct, short sentences.
-- “Search” not “What would you like to find?”
-- Error: “Couldn’t reach the index.” not “Oops! Something went wrong.”
-
-### Doesn’t sound like
-
-- Startup hype, chatbot friendliness, gamified copy.
-- Feature dumps in the empty state.
-
-### Microcopy patterns
-
-| Context | Pattern | Example |
-|---------|---------|---------|
-| Placeholder | verb + light scope | `Search apps, files, actions…` |
-| Empty results | fact, no apology | `No matches for “figma”` |
-| Loading | progressive | `Indexing apps…` → `Ready` |
-| Destructive | verb first | `Delete from history` |
-
----
-
-## 4. Product metaphor
-
-**The bar is a lens**, not a dashboard.
-
-```
-         ┌───────────────────────────────┐
-  You ──►│  lens (search + context)      │──► Result world (apps, files, …)
-         └───────────────────────────────┘
-                    │
-                    └── dismisses instantly after action
-```
-
-- **No hub** on open (no grid of modules).
-- **No persistent side nav** in the launcher.
-- **Settings** is a separate, slower room—visited intentionally.
-
----
-
-## 5. Competitive position
-
-| Tool | Spur difference |
-|------|----------------|
-| Windows Search | Narrow, fast, keyboard-native, clipboard + verbs built in |
-| PowerToys Run | Fewer modes visible; stricter visual system |
-| Raycast (Mac) | Windows-native materials; no plugin marketplace in the bar |
-| Alfred | Simpler surface; learning happens in results order, not workflows |
-
----
-
-## 6. Naming inside the app
-
-| Old / generic | Spur name | Why |
-|---------------|----------|-----|
-| Categories | **Scopes** (when typing) / **Anchors** (hover) | Avoid “category picker” mental model |
-| Commands | **Actions** | Plain language |
-| Browse panel | **Shelf** | Short content strip, not a “panel” |
-| Extensions / plugins | **Extras** | Settings area, not the bar |
-
-**Anchors** (hover, right side)—three affordances, icon-only until hover:
-
-| Anchor | Icon idea | Job |
-|--------|-----------|-----|
-| **Find** | Folder / doc stroke | Recent & indexed files |
-| **Do** | Sliders / bolt stroke | System & app actions |
-| **Recall** | Clipboard stroke | History |
-
-Apps are **never** an anchor—typing is the app launcher.
-
----
-
-## 7. What Spur refuses to be
-
-- A **widget dashboard** (weather, stocks, news cards).
-- An **AI chat window** disguised as search (AI is an Extra, invoked by intent).
-- A **theme demo** (glass, neon, gradients).
-- A **settings app** that happens to search (Settings is secondary).
-
----
-
-## 8. Brand checklist (review every PR)
-
-- [ ] No default blue focus/caret unless user chose accent
-- [ ] No double shadows or glow stacks
-- [ ] No icon + text + badge + shortcut in one row unless selected
-- [ ] Tray icon matches `Icons/spur-launcher-16x16.ico`
-- [ ] Motion under 250ms for open; under 120ms for hover feedback
-- [ ] Empty state fits in **one line** of chrome
-
----
-
-*Next: [design.md](design.md) for tokens and components · [ux.md](ux.md) for flows*
-
+NotesEvery phase leaves the project buildable and runnable. No multi-PR waterfall.
+Name change touches: assembly name, namespaces, folder structure, .csproj, .sln, installer config, window titles, about text, tray tooltip, README.
+Static facade removal (Item 2) is the riskiest change — budget time for DI registration debugging.
+POC archiving (Item 3) is safe but touches project structure — keep the archive in-repo so history is preserved.

@@ -56,7 +56,7 @@ public partial class App : Application
         // Config (load before registering so it's available)
         var configSvc = new ConfigService(_fileLogger);
         var config = configSvc.Load();
-        config.Validate();
+        ConfigValidator.Validate(config);
         configSvc.Save(config);
         services.AddSingleton<IConfigService>(configSvc);
         services.AddSingleton(config); // Register SpurConfig directly
@@ -75,15 +75,17 @@ public partial class App : Application
         services.AddSingleton<IFileSearchService, FileSearchService>();
         services.AddSingleton<IAiService, AiService>();
         services.AddSingleton<IFrequencyService, FrequencyService>();
+        services.AddSingleton<ISearchEngineService, SearchEngineService>();
+        services.AddSingleton<ISecureStorageService, SecureStorageService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<ICommandRegistry, CommandRegistry>();
         services.AddSingleton<CommandPaletteViewModel>();
 
-        _services = services.BuildServiceProvider();        _notification = _services.GetRequiredService<INotificationService>();
-        // ── Initialize converter references ─────────────────────────
-        PathToIconConverter.IconService = _services.GetRequiredService<IIconService>();
+        _services = services.BuildServiceProvider();
+        CommunityToolkit.Mvvm.DependencyInjection.Ioc.Default.ConfigureServices(_services);
+        _notification = _services.GetRequiredService<INotificationService>();
 
         // ── Resolve MainViewModel ─────────────────────────────────────
         _vm = _services.GetRequiredService<MainViewModel>();

@@ -10,7 +10,7 @@
 
     <!-- TextBox: transparent, no border, DM Sans -->
     <Style TargetType="TextBox">
-        <Setter Property="FontFamily"               Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"               Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"                 Value="{DynamicResource FontLg}"/>
         <Setter Property="Foreground"               Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background"               Value="Transparent"/>
@@ -33,7 +33,7 @@
 
     <!-- Button: ghost style -->
     <Style TargetType="Button">
-        <Setter Property="FontFamily"      Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
         <Setter Property="Foreground"      Value="{DynamicResource TextSecondary}"/>
         <Setter Property="Background"      Value="Transparent"/>
@@ -130,7 +130,7 @@
 
     <!-- ToggleButton: ghost -->
     <Style TargetType="ToggleButton">
-        <Setter Property="FontFamily"      Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="Background"      Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor"          Value="Hand"/>
@@ -189,7 +189,7 @@
 
     <!-- Segmented radio button (used in settings and elsewhere) -->
     <Style x:Key="SegmentedRadio" TargetType="RadioButton">
-        <Setter Property="FontFamily"      Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"        Value="{DynamicResource FontSm}"/>
         <Setter Property="Foreground"      Value="{DynamicResource TextMuted}"/>
         <Setter Property="Background"      Value="Transparent"/>
@@ -222,7 +222,7 @@
 
     <!-- ComboBox: flat Spur style -->
     <Style TargetType="ComboBox">
-        <Setter Property="FontFamily"       Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"         Value="{DynamicResource FontSm}"/>
         <Setter Property="Foreground"       Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background"       Value="{DynamicResource SurfaceLow}"/>
@@ -254,7 +254,7 @@
                                             </Grid.ColumnDefinitions>
                                             <!-- selected item shown by ContentSite below -->
                                             <Path Grid.Column="1"
-                                                  Data="M6 9l6 6 6-6"
+                                                  Data="{Binding ConverterParameter=chevron-down, Converter={x:Static conv:LucideIconConverter.Instance}}"
                                                   Stroke="{DynamicResource TextMuted}"
                                                   StrokeThickness="1.5"
                                                   StrokeLineJoin="Round"
@@ -314,7 +314,7 @@
 
     <!-- ComboBoxItem: flat -->
     <Style TargetType="ComboBoxItem">
-        <Setter Property="FontFamily"      Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"        Value="{DynamicResource FontSm}"/>
         <Setter Property="Foreground"      Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background"      Value="Transparent"/>
@@ -344,7 +344,7 @@
 
     <!-- PasswordBox: matches TextBox -->
     <Style TargetType="PasswordBox">
-        <Setter Property="FontFamily"               Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily"               Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"                 Value="{DynamicResource FontSm}"/>
         <Setter Property="Foreground"               Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background"               Value="Transparent"/>
@@ -457,7 +457,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
                         <TextBlock Text="{TemplateBinding Content}"
-                                   FontFamily="{DynamicResource UIFont}"
+                                   FontFamily="{DynamicResource Token.Font.Primary}"
                                    FontSize="13"
                                    FontWeight="Medium"
                                    Foreground="{DynamicResource TextSecondary}"
@@ -494,7 +494,7 @@
     </Style>
 
     <Style x:Key="SettingsKicker" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
@@ -502,14 +502,14 @@
     </Style>
 
     <Style x:Key="SettingsTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
 
     <Style x:Key="SettingsHint" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         <Setter Property="Margin" Value="0,2,0,0"/>
@@ -535,7 +535,7 @@
     <Style x:Key="SettingsSoftButton" TargetType="Button">
         <Setter Property="Height" Value="30"/>
         <Setter Property="Padding" Value="12,0"/>
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
@@ -579,13 +579,65 @@
         <Setter Property="Padding" Value="10,0"/>
     </Style>
 
+    <!-- â”€â”€ Premium CheckBox Style â”€â”€ -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid Background="Transparent" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Border" 
+                                Width="16" Height="16" 
+                                Background="{DynamicResource SurfaceLow}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                VerticalAlignment="Center">
+                            <Path x:Name="CheckMark" 
+                                  Width="9" Height="9" 
+                                  Stretch="Uniform" 
+                                  Data="M3.5,8 L1,5.5 L2,4.5 L3.5,6 L8.5,1 L9.5,2 Z" 
+                                  Fill="{DynamicResource Accent}" 
+                                  Opacity="0"/>
+                        </Border>
+                        <ContentPresenter Grid.Column="1" 
+                                          Margin="8,0,0,0" 
+                                          VerticalAlignment="Center" 
+                                          RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckMark" Property="Opacity" Value="1"/>
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SurfaceHigh}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentGhost}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ── Scope chip (pill-shaped filter toggle) ── -->
     <Style x:Key="ScopeChip" TargetType="Button">
         <Setter Property="Height" Value="24"/>
         <Setter Property="MinWidth" Value="44"/>
         <Setter Property="Padding" Value="10,0"/>
         <Setter Property="Margin" Value="0,0,5,0"/>
-        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="{DynamicResource FontHint}"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
@@ -643,7 +695,7 @@
     <SolidColorBrush x:Key="OnboardingPreviewLight" Color="#F2F2F4"/>
 
     <!-- Shadow plate for MainWindow launcher backdrop (design.md: #000 @ 40 %) -->
-    <SolidColorBrush x:Key="ShadowPlateBrush" Color="#66000000"/>
+    <SolidColorBrush x:Key="ShadowPlateBrush" Color="#00000000"/>
 
 </ResourceDictionary>
 

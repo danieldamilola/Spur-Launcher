@@ -28,30 +28,15 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IThemeManager        _themeManager;
     private readonly IStartupService      _startupService;
     private readonly ICommandRegistry     _registry;
+    private readonly ISearchEngineService _searchEngine;
+    private readonly ISecureStorageService _secureStorage;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel    _ai;
     private readonly TimerViewModel     _timer;
     private readonly ClipboardViewModel _clipboardVm;
 
-    private static readonly IAction[] Actions =
-    [
-        new CalculatorAction(),
-        new ColorAction(),
-        new TimerAction(),
-        new IpAction(),
-        new AiAction(),
-        new SettingsAction(),
-        new SystemAction(),
-        new CurrencyAction(),
-        new PasswordGenAction(),
-        new QuickNoteAction(),
-        new KillProcessAction(),
-        new ScreenshotAction(),
-    ];
-
-    // ── App catalog (loaded once on startup; volatile for safe cross-thread reads) ──
-    private volatile IReadOnlyList<SearchResult> _appCatalog = [];
+    // (Search actions and catalog moved to SearchEngineService)
 
     // ── Catalog loading state ────────────────────────────────────────
     /// <summary>True while the app catalog is being discovered.</summary>
@@ -75,7 +60,9 @@ public sealed partial class MainViewModel : ObservableObject
         IThemeManager         themeManager,
         IStartupService       startupService,
         ICommandRegistry      registry,
-        CommandPaletteViewModel commandPalette)
+        CommandPaletteViewModel commandPalette,
+        ISearchEngineService  searchEngine,
+        ISecureStorageService secureStorage)
     {
         _log          = log;
         _apps         = apps;
@@ -88,16 +75,18 @@ public sealed partial class MainViewModel : ObservableObject
         _themeManager  = themeManager;
         _startupService = startupService;
         _registry = registry;
+        _searchEngine = searchEngine;
+        _secureStorage = secureStorage;
 
         Config   = config;
-        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService);
+        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage);
 
         // Push initial config to services
         _files.MaxDepth     = Config.MaxFileDepth;
         _clipboard.MaxItems = Config.ClipboardHistorySize;
 
         // Sub-ViewModels
-        _ai          = new AiChatViewModel(_aiService, Config);
+        _ai          = new AiChatViewModel(_aiService, _secureStorage, Config);
         _timer       = new TimerViewModel(_notification);
         _clipboardVm = new ClipboardViewModel(_clipboard, Config, _configSvc);
 
@@ -109,8 +98,19 @@ public sealed partial class MainViewModel : ObservableObject
 
         PopulatePaletteCommands();
 
+        _apps.CatalogRefreshed += HandleCatalogRefreshed;
+
         _ = LoadAppsAsync();
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
+    }
+
+    private void HandleCatalogRefreshed(List<SearchResult> freshCatalog)
+    {
+        Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (!string.IsNullOrEmpty(Query))
+                OnPropertyChanged(nameof(Query));
+        });
     }
 
     /// <summary>Pushes config values to services whenever the config object is replaced.</summary>
@@ -352,48 +352,6 @@ public sealed partial class MainViewModel : ObservableObject
         _           => true,
     };
 
-    private void UpdateScopeFilters()
-    {
-        var counts = new Dictionary<string, (string Label, int Count)>();
-        string? section = null;
-        int sectionCount = 0;
-
-        void AddSection()
-        {
-            if (section is null || sectionCount == 0) return;
-            var id = SectionToScopeId(section);
-            if (id is null) return;
-            if (counts.TryGetValue(id, out var existing))
-                counts[id] = (existing.Label, existing.Count + sectionCount);
-            else
-                counts[id] = (SectionToScopeLabel(section), sectionCount);
-        }
-
-        foreach (var item in _rawResults)
-        {
-            if (item is SectionLabel label)
-            {
-                AddSection();
-                section = label.Title;
-                sectionCount = 0;
-            }
-            else if (item is SearchResult)
-            {
-                sectionCount++;
-            }
-        }
-        AddSection();
-
-        ScopeFilters.Clear();
-        if (counts.Count < 2) return;
-
-        foreach (var (id, (label, count)) in counts)
-            ScopeFilters.Add(new ScopeFilterItem { Id = id, Label = label, Count = count });
-
-        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId) && ActiveScopeId != "all")
-            ActiveScopeId = "all";
-    }
-
     private static string? SectionToScopeId(string title) => title switch
     {
         "Applications" or "Settings" => "apps",
@@ -436,9 +394,59 @@ public sealed partial class MainViewModel : ObservableObject
         };
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // Search pipeline
-    // ═══════════════════════════════════════════════════════════════
+    private void UpdateScopeFilters()
+    {
+        var counts = new Dictionary<string, (string Label, int Count)>();
+        string? section = null;
+        int sectionCount = 0;
+
+        void AddSection()
+        {
+            if (section is null || sectionCount == 0) return;
+            var id = SectionToScopeId(section);
+            if (id is null) return;
+            if (counts.TryGetValue(id, out var existing))
+                counts[id] = (existing.Label, existing.Count + sectionCount);
+            else
+                counts[id] = (SectionToScopeLabel(section), sectionCount);
+        }
+
+        foreach (var item in _rawResults)
+        {
+            if (item is SectionLabel label)
+            {
+                AddSection();
+                section = label.Title;
+                sectionCount = 0;
+            }
+            else if (item is SearchResult)
+            {
+                sectionCount++;
+            }
+        }
+        AddSection();
+
+        ScopeFilters.Clear();
+        if (counts.Count < 2) return;
+
+        foreach (var (id, (label, count)) in counts)
+            ScopeFilters.Add(new ScopeFilterItem { Id = id, Label = label, Count = count });
+
+        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId) && ActiveScopeId != "all")
+            ActiveScopeId = "all";
+    }
+
+    private static string NormalizeUrl(string value)
+    {
+        var trimmed = value.Trim();
+        return trimmed.Contains("://", StringComparison.Ordinal) ? trimmed : $"https://{trimmed}";
+    }
+
+    private static string NormalizeWebQuery(string query)
+    {
+        var q = query.Trim();
+        return q.StartsWith('?') ? q[1..].Trim() : q;
+    }
 
     private void RunSearch(string query, CancellationToken ct)
     {
@@ -458,180 +466,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            var newResults = new List<object>();
-            bool isBrowseMode = ActiveCategory is not null;
-
-            // ── Apps ──────────────────────────────────────────────────
-            bool showApps = Config.IndexApps && (ActiveCategory is null or "apps");
-            if (showApps && _appCatalog is not null)
-            {
-                var appMatches = _appCatalog
-                    .Select(a =>
-                    {
-                        var score = MatchScore(query, a.Name);
-                        if (score < 0) return null;
-                        var clone = Clone(a);
-                        var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
-                        clone.Score = score + freqBoost;
-                        if (Config.PinnedItems.Contains(a.Id))
-                        {
-                            clone.IsPinned = true;
-                            clone.Score += 10000;
-                        }
-                        return clone;
-                    })
-                    .Where(a => a is not null)
-                    .Cast<SearchResult>()
-                    .OrderByDescending(a => a.Score);
-
-                // In browse mode (clicked Apps circle), show ALL apps; otherwise limit
-                var appList = isBrowseMode
-                    ? appMatches.ToList()
-                    : appMatches.Take(Config.ResultsCount).ToList();
-
-                if (appList.Count > 0)
-                {
-                    newResults.Add(new SectionLabel("Applications"));
-                    newResults.AddRange(appList);
-                }
-            }
-
+            var newResults = await _searchEngine.SearchAsync(query, ActiveCategory, ct);
             if (ct.IsCancellationRequested) return;
 
-            // ── Inline answers (typing only) ───────────────────────────
-            if (ActiveCategory is null)
-            {
-                foreach (var inline in BuildInlineResults(query))
-                    newResults.Add(inline);
-            }
-
-            // ── Files ─────────────────────────────────────────────────
-            bool showFiles = Config.FileSearchEnabled && (ActiveCategory is null or "files");
-            if (showFiles)
-            {
-                int fileLimit = isBrowseMode ? 50 : Config.ResultsCount;
-
-                List<SearchResult> fileMatches;
-                if (string.IsNullOrEmpty(query) && ActiveCategory == "files")
-                {
-                    // Browse mode with no query: show recent files
-                    fileMatches = await _files.BrowseRecentAsync(fileLimit);
-                }
-                else
-                {
-                    fileMatches = await _files.SearchAsync(query, fileLimit, ct);
-                }
-
-                if (ct.IsCancellationRequested) return;
-                if (fileMatches.Count > 0)
-                {
-                    newResults.Add(new SectionLabel("Files"));
-                    newResults.AddRange(fileMatches);
-                }
-            }
-
-            // ── Clipboard ─────────────────────────────────────────────
-            bool showClip = Config.ClipboardEnabled && Config.IndexClipboard && ActiveCategory == "clipboard";
-            if (showClip)
-            {
-                int limit = isBrowseMode ? 50 : Config.ResultsCount;
-                var clips = _clipboard.GetHistory()
-                    .Where(c => string.IsNullOrEmpty(query) || MatchScore(query, c.Preview) >= 0)
-                    .Take(limit)
-                    .Select(c => new SearchResult
-                    {
-                        Id         = $"clip:{c.Timestamp.Ticks}",
-                        Type       = ResultType.Clipboard,
-                        Name       = c.Preview,
-                        Subtitle   = c.TimeAgo,
-                        LucideIcon = c.IsImage ? "image" : "clipboard",
-                        ClipContent = c.Content,
-                        ClipTimestamp = c.Timestamp,
-                        ClipImage = c.Image,
-                    })
-                    .Select(c =>
-                    {
-                        if (Config.PinnedItems.Contains(c.Id))
-                        {
-                            c.IsPinned = true;
-                            c.Score = 10000; // Force to top
-                        }
-                        return c;
-                    })
-                    .OrderByDescending(c => c.IsPinned)
-                    .ToList();
-
-                if (clips.Count > 0)
-                {
-                    newResults.Add(new SectionLabel("Clipboard"));
-                    newResults.AddRange(clips);
-                }
-            }
-
-            // ── Actions ───────────────────────────────────────────────
-            bool showActions = ActiveCategory is null or "actions";
-            if (showActions)
-            {
-                var availableActions = SpurConstants.StaticActions.Where(a => IsActionEnabled(a.ActionId));
-
-                var actionMatches = availableActions
-                    .Where(a => MatchScore(query, a.Name) >= 0)
-                    .Select(a => { a.Score = MatchScore(query, a.Name); return a; })
-                    .ToList();
-
-                foreach (var kw in BuildKeywordActionResults(query))
-                {
-                    if (actionMatches.All(a => a.ActionId != kw.ActionId))
-                        actionMatches.Add(kw);
-                }
-
-                AddDynamicAction(actionMatches, BuildShellAction(query));
-
-                actionMatches = actionMatches.OrderByDescending(a => a.Score).ToList();
-
-                if (actionMatches.Count > 0)
-                {
-                    newResults.Add(new SectionLabel("Commands"));
-                    newResults.AddRange(actionMatches);
-                }
-            }
-
-            // ── Windows Settings (only when there is a query) ───────────
-            if (Config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (ActiveCategory is null or "apps"))
-            {
-                var settingsMatches = SpurConstants.WindowsSettings
-                    .Select(s =>
-                    {
-                        var sc = MatchScore(query, s.Name);
-                        if (sc < 0) return null;
-                        var c = Clone(s); c.Score = sc; return c;
-                    })
-                    .Where(s => s is not null)
-                    .Cast<SearchResult>()
-                    .OrderByDescending(s => s.Score)
-                    .Take(4)
-                    .ToList();
-
-                if (settingsMatches.Count > 0)
-                {
-                    newResults.Add(new SectionLabel("Settings"));
-                    newResults.AddRange(settingsMatches);
-                }
-            }
-
-            if (ct.IsCancellationRequested) return;
-
-            if (ActiveCategory is null && ShouldOfferWebFallback(query, newResults))
-            {
-                var web = BuildWebSearchAction(query);
-                if (web is not null)
-                {
-                    newResults.Add(new SectionLabel("Web"));
-                    newResults.Add(web);
-                }
-            }
-
-            // Commit results on UI thread
             Application.Current?.Dispatcher.Invoke(() => CommitResults(newResults));
         }
         catch (Exception ex)
@@ -640,144 +477,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private double MatchScore(string query, string target)
-    {
-        if (string.IsNullOrEmpty(query)) return 0;
-        var score = Config.FuzzySearch
-            ? FuzzySearch.Score(query, target)
-            : (target.Contains(query, StringComparison.OrdinalIgnoreCase) ? 1 : -1);
-        return score >= MinMatchScore() ? score : -1;
-    }
 
-    private double MinMatchScore() => Config.QuerySearchPrecision switch
-    {
-        "low" => 0,
-        "strict" => 1.2,
-        _ => 0.35,
-    };
 
-    private bool IsActionEnabled(string? id) => id switch
-    {
-        "calc"       => Config.IndexCalculator,
-        "color"      => Config.ActionColor,
-        "timer"      => Config.ActionTimer,
-        "ip"         => Config.ActionIp,
-        "ai"         => Config.ActionAi,
-        "currency"   => Config.ActionCurrency,
-        "pw"         => Config.ActionPasswordGen,
-        "note"       => Config.ActionQuickNote,
-        "kill"       => Config.ActionKillProcess,
-        "screenshot" => Config.ActionScreenshot,
-        "system"     => Config.IndexSystemCommands,
-        "settings"   => Config.IndexWindowsSettings,
-        "url"        => Config.IndexUrls,
-        "web"        => Config.IndexWebSearches,
-        "shell"      => Config.IndexShell,
-        _            => true,
-    };
-
-    private static void AddDynamicAction(List<SearchResult> actions, SearchResult? action)
-    {
-        if (action is not null)
-            actions.Insert(0, action);
-    }
-
-    private SearchResult? BuildUrlAction(string query)
-    {
-        if (!Config.IndexUrls || !LooksLikeUrl(query)) return null;
-        return new SearchResult
-        {
-            Id = $"url:{query}",
-            Type = ResultType.Action,
-            Name = $"Open {query}",
-            Subtitle = "Open URL",
-            LucideIcon = "globe",
-            ActionId = "url",
-            Score = 500,
-        };
-    }
-
-    private SearchResult? BuildWebSearchAction(string query)
-    {
-        var q = NormalizeWebQuery(query);
-        if (!Config.IndexWebSearches || string.IsNullOrWhiteSpace(q)) return null;
-        return new SearchResult
-        {
-            Id = $"web:{q}",
-            Type = ResultType.Action,
-            Name = $"Search the web for \"{q}\"",
-            Subtitle = "Web",
-            LucideIcon = "search",
-            ActionId = "web",
-            Score = 50,
-        };
-    }
-
-    private SearchResult? BuildShellAction(string query)
-    {
-        if (!Config.IndexShell || !query.StartsWith(">", StringComparison.Ordinal)) return null;
-        var command = query[1..].Trim();
-        if (command.Length == 0) return null;
-        return new SearchResult
-        {
-            Id = $"shell:{command}",
-            Type = ResultType.Action,
-            Name = $"Run {command}",
-            Subtitle = "Shell command",
-            LucideIcon = "terminal",
-            ActionId = "shell",
-            Score = 600,
-        };
-    }
-
-    private static bool LooksLikeUrl(string query)
-        => Uri.TryCreate(NormalizeUrl(query), UriKind.Absolute, out var uri)
-           && uri.Scheme is "http" or "https";
-
-    private static string NormalizeWebQuery(string query)
-    {
-        var q = query.Trim();
-        return q.StartsWith('?') ? q[1..].Trim() : q;
-    }
-
-    private IEnumerable<SearchResult> BuildInlineResults(string query)
-    {
-        foreach (var id in new[] { "calc", "color", "currency" })
-        {
-            var action = Actions.FirstOrDefault(a => a.Id == id);
-            if (action is null || !IsActionEnabled(id) || !action.CanHandle(query)) continue;
-            yield return action.BuildResult(query);
-        }
-
-        var url = BuildUrlAction(query);
-        if (url is not null)
-            yield return url;
-    }
-
-    private IEnumerable<SearchResult> BuildKeywordActionResults(string query)
-    {
-        foreach (var action in Actions)
-        {
-            if (action.Id is "calc" or "color" or "currency" or "ai") continue;
-            if (!IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
-            yield return action.BuildResult(query);
-        }
-    }
-
-    private static bool ShouldOfferWebFallback(string query, List<object> results)
-    {
-        if (string.IsNullOrWhiteSpace(query)) return false;
-        var localCount = results.OfType<SearchResult>().Count();
-        return localCount < 3;
-    }
-
-    private static string NormalizeUrl(string value)
-    {
-        var trimmed = value.Trim();
-        return trimmed.Contains("://", StringComparison.Ordinal)
-            ? trimmed
-            : $"https://{trimmed}";
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // Open / Execute
@@ -801,10 +502,6 @@ public sealed partial class MainViewModel : ObservableObject
                 // Update both the result and the catalog entry so SuggestedApps picks it up
                 var newScore = _freq.Get(appKey);
                 result.FrequencyScore = newScore;
-                var catalogEntry = _appCatalog.FirstOrDefault(a =>
-                    string.Equals(a.ExePath, appKey, StringComparison.OrdinalIgnoreCase));
-                if (catalogEntry is not null)
-                    catalogEntry.FrequencyScore = newScore;
                 HideAfterLaunch();
                 break;
 
@@ -1247,19 +944,11 @@ public sealed partial class MainViewModel : ObservableObject
         CatalogLoading = true;
         try
         {
-            _appCatalog = await _apps.DiscoverAsync();
-
-            // Apply persisted frequency scores
-            foreach (var app in _appCatalog)
-                if (app.ExePath is not null)
-                    app.FrequencyScore = _freq.Get(app.ExePath);
-
-            // Icons load lazily on demand via PathToIconConverter / GetIcon
+            await _apps.DiscoverAsync();
         }
         catch (Exception ex)
         {
             _log.Warning("App catalog load failed", ex);
-            _appCatalog = [];
         }
         finally
         {
