@@ -91,7 +91,6 @@ public sealed class FileSearchService : IFileSearchService
         ".gitattributes", ".editorconfig",
     };
 
-    /// <summary>Maximum folder depth for recursive search (1–5). Default 3.</summary>
     private int _maxDepth = 3;
     public int MaxDepth
     {
@@ -100,71 +99,79 @@ public sealed class FileSearchService : IFileSearchService
     }
 
     private const int MaxResults = 100;
+    
+    // ── In-Memory Cache ───────────────────────────────────────────
+    private readonly object _cacheLock = new();
+    private List<CachedItem> _cache = [];
+    private bool _isIndexing = false;
+    private DateTime _lastIndexTime = DateTime.MinValue;
 
-    /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
-    public Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default)
-        => Task.Run(() => Search(query, maxReturn, ct), ct);
-
-    /// <summary>Returns recently modified user files (for browse mode).</summary>
-    public Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50)
-        => Task.Run(() => BrowseRecent(maxReturn));
-
-    // ═══════════════════════════════════════════════════════════════
-    // Browse (no query — show recent + folders first)
-    // ═══════════════════════════════════════════════════════════════
-
-    private List<SearchResult> BrowseRecent(int maxReturn)
+    private struct CachedItem
     {
-        var scored = new List<(double Score, SearchResult Result)>();
-
-        foreach (var root in SearchRoots)
-        {
-            if (!Directory.Exists(root)) continue;
-            CollectRecent(root, 0, scored);
-            if (scored.Count >= MaxResults) break;
-        }
-
-        return scored
-            .OrderByDescending(x => x.Score)
-            .Take(maxReturn)
-            .Select(x => x.Result)
-            .ToList();
+        public string Path;
+        public string Name;
+        public string NameNoExt;
+        public string Ext;
+        public string DirName;
+        public bool IsDirectory;
+        public DateTime LastWriteTime;
     }
 
-    private void CollectRecent(string dir, int depth,
-        List<(double Score, SearchResult Result)> results)
+    public FileSearchService()
     {
-        if (depth > MaxDepth || results.Count >= MaxResults) return;
+        // Kick off background indexing on startup
+        Task.Run(BuildIndexAsync);
+    }
+
+    private async Task BuildIndexAsync()
+    {
+        if (_isIndexing) return;
+        lock (_cacheLock) { _isIndexing = true; }
+
+        try
+        {
+            var newCache = new List<CachedItem>(10_000);
+            foreach (var root in SearchRoots)
+            {
+                if (!Directory.Exists(root)) continue;
+                await Task.Run(() => IndexDirectory(root, 0, newCache));
+            }
+
+            lock (_cacheLock)
+            {
+                _cache = newCache;
+                _lastIndexTime = DateTime.Now;
+            }
+        }
+        catch { /* ignore background index errors */ }
+        finally
+        {
+            lock (_cacheLock) { _isIndexing = false; }
+        }
+    }
+
+    private void IndexDirectory(string dir, int depth, List<CachedItem> results)
+    {
+        if (depth > MaxDepth || results.Count >= 50_000) return; // Cap at 50k items to save RAM
 
         try
         {
             foreach (var file in Directory.EnumerateFiles(dir))
             {
                 var info = new FileInfo(file);
-
-                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-                    continue;
-
+                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
                 if (!IsUserFile(info)) continue;
 
-                var days = (DateTime.Now - info.LastWriteTime).TotalDays;
-                double score = Math.Max(0, 100 - days); // recency
-
-                results.Add((score, new SearchResult
+                results.Add(new CachedItem
                 {
-                    Id            = $"file:{file}",
-                    Type          = ResultType.File,
-                    Name          = info.Name,
-                    Subtitle      = info.LastWriteTime.ToString("MMM d, yyyy  h:mm tt")
-                                    + "  •  " + (Path.GetDirectoryName(file) ?? ""),
-                    IconPath      = file,
-                    FilePath      = file,
-                    FileExtension = info.Extension,
-                    IsDirectory   = false,
-                    Score         = score,
-                }));
-
-                if (results.Count >= MaxResults) return;
+                    Path = file,
+                    Name = info.Name,
+                    NameNoExt = Path.GetFileNameWithoutExtension(info.Name),
+                    Ext = info.Extension,
+                    DirName = Path.GetDirectoryName(file) ?? "",
+                    IsDirectory = false,
+                    LastWriteTime = info.LastWriteTime
+                });
             }
 
             foreach (var sub in Directory.EnumerateDirectories(dir))
@@ -173,47 +180,125 @@ public sealed class FileSearchService : IFileSearchService
                 if (SkipDirs.Contains(dirName)) continue;
 
                 var dirInfo = new DirectoryInfo(sub);
-                if ((dirInfo.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-                    continue;
+                if ((dirInfo.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
 
-                // Folders get +1000 priority in browse mode too
-                var days = (DateTime.Now - dirInfo.LastWriteTime).TotalDays;
-                double score = 1000 + Math.Max(0, 100 - days);
-
-                results.Add((score, new SearchResult
+                results.Add(new CachedItem
                 {
-                    Id          = $"file:{sub}",
-                    Type        = ResultType.File,
-                    Name        = dirName,
-                    Subtitle    = Path.GetDirectoryName(sub) ?? "",
-                    IconPath    = sub,
-                    FilePath    = sub,
+                    Path = sub,
+                    Name = dirName,
+                    NameNoExt = dirName,
+                    Ext = "",
+                    DirName = Path.GetDirectoryName(sub) ?? "",
                     IsDirectory = true,
-                    Score       = score,
-                }));
+                    LastWriteTime = dirInfo.LastWriteTime
+                });
 
-                CollectRecent(sub, depth + 1, results);
-                if (results.Count >= MaxResults) return;
+                IndexDirectory(sub, depth + 1, results);
             }
         }
-        catch { /* skip inaccessible directories */ }
+        catch { }
+    }
+
+    /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
+    public Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default)
+        => Task.Run(() => SearchCached(query, maxReturn, ct), ct);
+
+    /// <summary>Returns recently modified user files (for browse mode).</summary>
+    public Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50)
+        => Task.Run(() => BrowseRecentCached(maxReturn));
+
+    // ═══════════════════════════════════════════════════════════════
+    // Browse (no query — show recent + folders first)
+    // ═══════════════════════════════════════════════════════════════
+
+    private List<SearchResult> BrowseRecentCached(int maxReturn)
+    {
+        // Refresh index if it's older than 30 mins
+        if ((DateTime.Now - _lastIndexTime).TotalMinutes > 30)
+            _ = BuildIndexAsync();
+
+        List<CachedItem> localCache;
+        lock (_cacheLock) { localCache = _cache; }
+
+        var results = new List<(double Score, SearchResult Result)>(MaxResults);
+
+        // Sort descending by LastWriteTime, take top 100 to score
+        var recentItems = localCache
+            .OrderByDescending(x => x.LastWriteTime)
+            .Take(200);
+
+        foreach (var item in recentItems)
+        {
+            var days = (DateTime.Now - item.LastWriteTime).TotalDays;
+            double score = Math.Max(0, 100 - days);
+            if (item.IsDirectory) score += 1000;
+
+            results.Add((score, new SearchResult
+            {
+                Id            = $"file:{item.Path}",
+                Type          = ResultType.File,
+                Name          = item.Name,
+                Subtitle      = item.IsDirectory ? item.DirName : (item.LastWriteTime.ToString("MMM d, yyyy  h:mm tt") + "  •  " + item.DirName),
+                IconPath      = item.Path,
+                FilePath      = item.Path,
+                FileExtension = item.Ext,
+                IsDirectory   = item.IsDirectory,
+                Score         = score,
+            }));
+        }
+
+        return results
+            .OrderByDescending(x => x.Score)
+            .Take(maxReturn)
+            .Select(x => x.Result)
+            .ToList();
     }
 
     // ═══════════════════════════════════════════════════════════════
     // Search (with query — fuzzy match + ranking bonuses)
     // ═══════════════════════════════════════════════════════════════
 
-    private List<SearchResult> Search(string query, int maxReturn, CancellationToken ct)
+    private List<SearchResult> SearchCached(string query, int maxReturn, CancellationToken ct)
     {
         var results = new List<SearchResult>(MaxResults);
         if (string.IsNullOrWhiteSpace(query)) return results;
 
-        foreach (var root in SearchRoots)
+        List<CachedItem> localCache;
+        lock (_cacheLock) { localCache = _cache; }
+
+        // Refresh index if it's empty or very old
+        if (localCache.Count == 0 || (DateTime.Now - _lastIndexTime).TotalMinutes > 30)
+            _ = BuildIndexAsync();
+
+        var queryLower = query.ToLowerInvariant();
+        
+        foreach (var item in localCache)
         {
-            if (!Directory.Exists(root)) continue;
             if (ct.IsCancellationRequested) break;
-            Recurse(root, query, 0, results, ct);
-            if (results.Count >= MaxResults) break;
+            
+            // Fast prefix check
+            if (!item.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                // Try fuzzy if contains fails, but skip fuzzy on massive lists unless it's a good candidate to save CPU
+                var fuzzy = FuzzySearch.Score(query, item.Name);
+                if (fuzzy < 10) continue;
+            }
+
+            double score = ScoreResult(query, item.Name, item.IsDirectory, item.LastWriteTime);
+            if (score < 0) continue;
+
+            results.Add(new SearchResult
+            {
+                Id            = $"file:{item.Path}",
+                Type          = ResultType.File,
+                Name          = item.Name,
+                Subtitle      = item.DirName,
+                IconPath      = item.Path,
+                FilePath      = item.Path,
+                FileExtension = item.Ext,
+                IsDirectory   = item.IsDirectory,
+                Score         = score,
+            });
         }
 
         return results
@@ -222,110 +307,19 @@ public sealed class FileSearchService : IFileSearchService
             .ToList();
     }
 
-    private void Recurse(string dir, string query, int depth, List<SearchResult> results, CancellationToken ct)
-    {
-        if (ct.IsCancellationRequested || depth > MaxDepth || results.Count >= MaxResults) return;
-
-        try
-        {
-            // ── Files ──────────────────────────────────────────
-            foreach (var file in Directory.EnumerateFiles(dir))
-            {
-                if (ct.IsCancellationRequested) return;
-                var name = Path.GetFileName(file);
-                var nameNoExt = Path.GetFileNameWithoutExtension(name);
-
-                var info = new FileInfo(file);
-                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-                    continue;
-
-                if (SkipNames.Contains(nameNoExt)) continue;
-                if (!AllowedExtensions.Contains(info.Extension)) continue;
-
-                double score = ScoreResult(query, name, isDirectory: false, info.LastWriteTime);
-                if (score < 0) continue;
-
-                results.Add(new SearchResult
-                {
-                    Id            = $"file:{file}",
-                    Type          = ResultType.File,
-                    Name          = name,
-                    Subtitle      = Path.GetDirectoryName(file) ?? "",
-                    IconPath      = file,
-                    FilePath      = file,
-                    FileExtension = info.Extension,
-                    IsDirectory   = false,
-                    Score         = score,
-                });
-
-                if (results.Count >= MaxResults) return;
-            }
-
-            // ── Directories ────────────────────────────────────
-            foreach (var sub in Directory.EnumerateDirectories(dir))
-            {
-                if (ct.IsCancellationRequested) return;
-                var dirName = Path.GetFileName(sub);
-                if (SkipDirs.Contains(dirName)) continue;
-
-                var dirInfo = new DirectoryInfo(sub);
-                if ((dirInfo.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-                    continue;
-
-                double score = ScoreResult(query, dirName, isDirectory: true, dirInfo.LastWriteTime);
-                if (score >= 0)
-                {
-                    results.Add(new SearchResult
-                    {
-                        Id          = $"file:{sub}",
-                        Type        = ResultType.File,
-                        Name        = dirName,
-                        Subtitle    = Path.GetDirectoryName(sub) ?? "",
-                        IconPath    = sub,
-                        FilePath    = sub,
-                        IsDirectory = true,
-                        Score       = score,
-                    });
-
-                    if (results.Count >= MaxResults) return;
-                }
-
-                Recurse(sub, query, depth + 1, results, ct);
-                if (results.Count >= MaxResults) return;
-            }
-        }
-        catch { /* skip inaccessible directories */ }
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // Scoring
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Computes a composite relevance score for a file or directory.
-    /// Negative scores mean "no match" and the item is excluded.
-    /// </summary>
-    private static double ScoreResult(string query, string name,
-        bool isDirectory, DateTime lastModified)
+    private static double ScoreResult(string query, string name, bool isDirectory, DateTime lastModified)
     {
-        // Base fuzzy-match score (characters in order, rewards word starts)
         double score = FuzzySearch.Score(query, name);
         if (score < 0) return -1;
 
-        // ── Bonuses (layered on top of fuzzy score) ────────────
-
-        // Folders always rank ahead of identically-matched files
         if (isDirectory) score += 1000;
+        if (string.Equals(name, query, StringComparison.OrdinalIgnoreCase)) score += 500;
+        else if (name.StartsWith(query, StringComparison.OrdinalIgnoreCase)) score += 200;
 
-        // Exact name match (case-insensitive)
-        if (string.Equals(name, query, StringComparison.OrdinalIgnoreCase))
-            score += 500;
-
-        // Name starts with the query
-        else if (name.StartsWith(query, StringComparison.OrdinalIgnoreCase))
-            score += 200;
-
-        // Recency: newer items score higher (max +100, decays over 100 days)
         double daysSinceModified = (DateTime.Now - lastModified).TotalDays;
         score += Math.Max(0, 100 - daysSinceModified);
 
@@ -336,26 +330,12 @@ public sealed class FileSearchService : IFileSearchService
     // File filtering
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Returns true when the file has a whitelisted extension
-    /// and is not a hidden/system/artifact file.</summary>
     private static bool IsUserFile(FileInfo info)
     {
-        if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-            return false;
-
-        var name = info.Name;
-        var ext  = info.Extension;
-
-        var nameNoExt = Path.GetFileNameWithoutExtension(name);
-        if (SkipNames.Contains(nameNoExt))
-            return false;
-
-        if (!AllowedExtensions.Contains(ext))
-            return false;
-
-        if (name.StartsWith(".", StringComparison.Ordinal))
-            return false;
-
+        var nameNoExt = Path.GetFileNameWithoutExtension(info.Name);
+        if (SkipNames.Contains(nameNoExt)) return false;
+        if (!AllowedExtensions.Contains(info.Extension)) return false;
+        if (info.Name.StartsWith(".", StringComparison.Ordinal)) return false;
         return true;
     }
 }

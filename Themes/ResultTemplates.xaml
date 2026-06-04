@@ -73,7 +73,8 @@
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
+                               RenderOptions.BitmapScalingMode="LowQuality"
+                               RenderOptions.CachingHint="Cache">
                             <Image.Source>
                                 <Binding Path="IconPath">
                                     <Binding.Converter>
@@ -201,7 +202,8 @@
                         Visibility="Collapsed">
                     <Image Width="28" Height="28"
                            Stretch="UniformToFill"
-                           RenderOptions.BitmapScalingMode="HighQuality"
+                           RenderOptions.BitmapScalingMode="LowQuality"
+                           RenderOptions.CachingHint="Cache"
                            Source="{Binding ClipImage}"/>
                 </Border>
 
@@ -487,7 +489,8 @@
                                    Stretch="Uniform"
                                    VerticalAlignment="Center"
                                    HorizontalAlignment="Center"
-                                   RenderOptions.BitmapScalingMode="HighQuality">
+                                   RenderOptions.BitmapScalingMode="LowQuality"
+                                   RenderOptions.CachingHint="Cache">
                                 <Image.Source>
                                     <Binding Path="IconPath">
                                         <Binding.Converter>

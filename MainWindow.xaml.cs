@@ -140,6 +140,11 @@ public partial class MainWindow : Window
             _vm?.Reset();
             _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
+            
+            // Aggressively clear memory while idle
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
             return;
         }
 
@@ -150,6 +155,11 @@ public partial class MainWindow : Window
             _vm?.Reset();
             _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
+            
+            // Aggressively clear memory while idle
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         });
     }
 

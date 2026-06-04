@@ -508,9 +508,10 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
     /// </summary>
     private string? GetUwpAppIdFromLnk(string lnkPath)
     {
+        IShellLinkW? link = null;
         try
         {
-            var link = (IShellLinkW)new ShellLink();
+            link = (IShellLinkW)new ShellLink();
             var persist = (IPersistFile)link;
             persist.Load(lnkPath, 0);
 
@@ -543,6 +544,11 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
         catch
         {
             return null;
+        }
+        finally
+        {
+            if (link != null)
+                Marshal.ReleaseComObject(link);
         }
     }
 
@@ -1061,9 +1067,10 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
     /// </summary>
     private LnkInfo ResolveLnk(string lnkPath)
     {
+        IShellLinkW? link = null;
         try
         {
-            var link    = (IShellLinkW)new ShellLink();
+            link = (IShellLinkW)new ShellLink();
             var persist = (IPersistFile)link;
             persist.Load(lnkPath, 0);
 
@@ -1075,8 +1082,6 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                 target = lnkPath;
 
             // Detect UWP / Store apps:
-            //   - Target is explorer.exe with shell:AppsFolder arguments
-            //   - Target lives inside C:\Program Files\WindowsApps
             bool isUwp = false;
             var targetFile = Path.GetFileName(target);
             if (targetFile.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase))
@@ -1096,6 +1101,11 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
         catch
         {
             return new LnkInfo(lnkPath, false);
+        }
+        finally
+        {
+            if (link != null)
+                Marshal.ReleaseComObject(link);
         }
     }
 
