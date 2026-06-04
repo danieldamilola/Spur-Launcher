@@ -541,6 +541,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             OnPropertyChanged(nameof(PositionTop));
             OnPropertyChanged(nameof(PositionLeft));
             OnPropertyChanged(nameof(PositionRight));
+            OnPropertyChanged(nameof(PositionCustom));
         }
     }
 
@@ -563,6 +564,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => SearchWindowPosition == "Right Top";
         set { if (value) SearchWindowPosition = "Right Top"; }
+    }
+    public bool PositionCustom
+    {
+        get => SearchWindowPosition == "Custom Position";
+        set { if (value) SearchWindowPosition = "Custom Position"; }
     }
 
     // ═══════════════════════════════════════════════════════════════

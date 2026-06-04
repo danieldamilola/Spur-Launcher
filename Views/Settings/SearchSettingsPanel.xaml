@@ -63,12 +63,29 @@
                             <ColumnDefinition Width="130"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Precision" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Use strict matching if you prefer predictable, literal results." Style="{StaticResource SettingsHint}"/>
+                            <TextBlock Text="Query Search Precision" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Changes minimum match score required for results." Style="{StaticResource SettingsHint}"/>
                         </StackPanel>
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding QuerySearchPrecisionOptions}"
                                   SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}"
+                                  VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Last Query Style" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Show/Hide previous results when launcher is reactivated." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding LastQueryStyleOptions}"
+                                  SelectedItem="{Binding LastQueryStyle, Mode=TwoWay}"
                                   VerticalAlignment="Center"/>
                     </Grid>
                 </Border>

@@ -1,6 +1,7 @@
 using System.Windows.Interop;
 using System.Threading;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Spur.Models;
 using Spur.ViewModels;
 using Spur.Views;
@@ -233,15 +234,92 @@ public partial class MainWindow : Window
         bool hasResults = _vm.HasResults || isBrowse;
         bool showContent = isBrowse || hasResults;
 
-        ContentArea.Visibility = showContent ? Visibility.Visible : Visibility.Collapsed;
-        FooterArea.Visibility = showContent && _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
-
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
         UnifiedResultsControl.Visibility = isClipboard ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
+
+        // Animate content area expand/collapse
+        if (showContent)
+        {
+            if (ContentArea.Visibility != Visibility.Visible)
+            {
+                if (animEnabled)
+                {
+                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    
+                    ExpandedScale.ScaleY = 0;
+                    ContentArea.Opacity = 0;
+                    if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
+                    
+                    ContentArea.Visibility = Visibility.Visible;
+                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+
+                    var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                    
+                    var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+
+                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
+                    ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                    if (_vm.SelectedResult is not null) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                }
+                else
+                {
+                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    ExpandedScale.ScaleY = 1;
+                    ContentArea.Opacity = 1;
+                    FooterArea.Opacity = 1;
+                    ContentArea.Visibility = Visibility.Visible;
+                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                FooterArea.Opacity = 1;
+            }
+        }
+        else
+        {
+            if (ContentArea.Visibility != Visibility.Collapsed)
+            {
+                if (animEnabled)
+                {
+                    var anim = new DoubleAnimation(ExpandedScale.ScaleY, 0, TimeSpan.FromMilliseconds(120))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+                    
+                    var fadeAnim = new DoubleAnimation(ContentArea.Opacity, 0, TimeSpan.FromMilliseconds(120))
+                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+
+                    anim.Completed += (s, e) => 
+                    { 
+                        ContentArea.Visibility = Visibility.Collapsed; 
+                        FooterArea.Visibility = Visibility.Collapsed; 
+                    };
+                    
+                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
+                    ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                    FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                }
+                else
+                {
+                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
+                    ExpandedScale.ScaleY = 1;
+                    ContentArea.Visibility = Visibility.Collapsed;
+                    FooterArea.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
 
         if (expandRail)
             SpurMotion.RevealAnchors(
@@ -336,7 +414,11 @@ public partial class MainWindow : Window
 
         if (e.Key is Key.Down or Key.Up)
         {
-            _vm.MoveSelection(e.Key == Key.Down ? 1 : -1);
+            if (_vm.ActiveCategory == "clipboard")
+                ClipboardManagerControl.MoveSelection(e.Key == Key.Down ? 1 : -1);
+            else
+                _vm.MoveSelection(e.Key == Key.Down ? 1 : -1);
+                
             e.Handled = true;
             return;
         }

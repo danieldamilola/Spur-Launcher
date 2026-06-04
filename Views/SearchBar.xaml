@@ -15,17 +15,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="SearchIconBorder"
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                Margin="0,0,12,0"
-                AutomationProperties.Name="Search">
-            <ui:FontIcon Glyph="&#xE11A;"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondary}"
-                           FontSize="20"/>
-        </Border>
+
 
         <TextBox x:Name="SearchInput"
                  Grid.Column="1"
@@ -40,28 +30,7 @@
                  AutomationProperties.Name="Search query"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                  TextChanged="OnTextChanged">
-            <TextBox.Triggers>
-                <EventTrigger RoutedEvent="TextBox.GotFocus">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="SearchIconBorder"
-                                             Storyboard.TargetProperty="Opacity"
-                                             To="0.6" Duration="0:0:0.15"
-                                             EasingFunction="{StaticResource AnimEaseOut}"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-                <EventTrigger RoutedEvent="TextBox.LostFocus">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="SearchIconBorder"
-                                             Storyboard.TargetProperty="Opacity"
-                                             To="1" Duration="0:0:0.25"
-                                             EasingFunction="{StaticResource AnimEaseIn}"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </TextBox.Triggers>
+
         </TextBox>
 
         <TextBlock x:Name="Placeholder"

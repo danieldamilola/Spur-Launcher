@@ -133,6 +133,8 @@
                                                                                                             AutomationProperties.Name="Left position"/>
                                 <RadioButton Content="Right" IsChecked="{Binding PositionRight}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
                                                                                                              AutomationProperties.Name="Right position"/>
+                                <RadioButton Content="Custom" IsChecked="{Binding PositionCustom}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
+                                                                                                             AutomationProperties.Name="Custom position"/>
                             </StackPanel>
                         </Border>
                     </Grid>

@@ -9,7 +9,7 @@
         MinWidth="{Binding Config.BarWidth, FallbackValue=640}"
         MaxWidth="{Binding Config.BarWidth, FallbackValue=640}"
         MinHeight="56"
-        SizeToContent="Height"
+        Height="800"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -45,6 +45,7 @@
       <Grid Grid.Column="0" Background="Transparent">
         <Border x:Name="Capsule"
                 HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
                 CornerRadius="{DynamicResource RadiusWindow}"
                 BorderBrush="{DynamicResource GlassBorder}"
                 BorderThickness="1"
@@ -91,6 +92,9 @@
                   x:Name="ContentArea"
                   Visibility="Collapsed"
                   MaxHeight="424">
+              <Grid.LayoutTransform>
+                <ScaleTransform x:Name="ExpandedScale" ScaleY="1" />
+              </Grid.LayoutTransform>
               <Grid.RowDefinitions>
                 <RowDefinition Height="1"/>
                 <RowDefinition Height="*"/>
@@ -136,7 +140,7 @@
       <!-- ── Category circles — outside the capsule, slide in on hover ── -->
       <Grid x:Name="CategoryZone"
             Grid.Column="1"
-            VerticalAlignment="Center"
+            VerticalAlignment="Top"
             Height="56"
             Margin="6,0,0,0">
         <Grid.ColumnDefinitions>

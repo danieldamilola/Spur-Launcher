@@ -170,7 +170,10 @@ public sealed class SpurConfig
     public bool SoundEffectEnabled { get; set; } = false;
 
     /// <summary>Launcher placement on the selected monitor.</summary>
-    public string SearchWindowPosition { get; set; } = "center";
+    public string SearchWindowPosition { get; set; } = "Center Top";
+
+    public double CustomWindowLeft { get; set; } = -1;
+    public double CustomWindowTop { get; set; } = -1;
 
     // ═══════════════════════════════════════════════════════════════
     // AI (API keys are encrypted at rest via DPAPI)
