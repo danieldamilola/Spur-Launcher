@@ -77,13 +77,15 @@ public sealed class LucideIconConverter : IValueConverter
         ["check"]         = "M20 6L9 17l-5-5",
         ["plus"]          = "M12 5v14M5 12h14",
         ["more-vertical"] = "M12 3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2z",
+        ["pin"]           = "M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z",
     };
 
     private static readonly Geometry _fallback = Geometry.Parse("M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z");
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not string name || !_paths.TryGetValue(name, out var data))
+        var name = (parameter as string) ?? (value as string);
+        if (name is null || !_paths.TryGetValue(name, out var data))
             return _fallback;
         try { return Geometry.Parse(data); }
         catch { return _fallback; }

@@ -27,132 +27,16 @@ public sealed class BoolToVisibilityConverter : IValueConverter
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _vm;
-    private bool _recordingShortcut;
-    // ── Sidebar event handlers ───────────────────────────────────
-    private void OnRemoveFolderClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is string path)
-            _vm?.RemoveFolderCommand.Execute(path);
-    }
-
-    private void OnRemoveFileTypeClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is string ext)
-            _vm?.RemoveFileTypeCommand.Execute(ext);
-    }
-
-    private void OnAddFileTypeClick(object sender, RoutedEventArgs e)
-    {
-        _vm?.AddFileTypeCommand.Execute(null);
-    }
-
-    private void OnDecrementClipboardHistoryClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm is not null) _vm.ClipboardHistorySize -= 10;
-    }
-
-    private void OnIncrementClipboardHistoryClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm is not null) _vm.ClipboardHistorySize += 10;
-    }
-
-
     public SettingsView()
     {
         InitializeComponent();
         DataContextChanged += (_, e) =>
         {
-            if (_vm is not null) _vm.PropertyChanged -= OnVmChanged;
             _vm = e.NewValue as SettingsViewModel;
-            if (_vm is not null)
-            {
-                _vm.PropertyChanged += OnVmChanged;
-                AiApiKeyBox.Password = _vm.ApiKey;
-            }
         };
-    }
-
-    private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(SettingsViewModel.ApiKey) or nameof(SettingsViewModel.AiProvider))
-            AiApiKeyBox.Password = _vm?.ApiKey ?? string.Empty;
-    }
-
-    private void OnAiApiKeyChanged(object sender, RoutedEventArgs e)
-    {
-        if (_vm is null || AiApiKeyBox.Password == _vm.ApiKey) return;
-        _vm.ApiKey = AiApiKeyBox.Password;
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => _vm?.CloseSettings();
-
-    private void OnBrowseFolderClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm is null) return;
-        var dlg = new Microsoft.Win32.OpenFolderDialog
-        {
-            Title = "Select a folder to include in search"
-        };
-        if (dlg.ShowDialog() == true)
-        {
-            var path = dlg.FolderName;
-            if (!_vm.IndexedFoldersList.Contains(path, StringComparer.OrdinalIgnoreCase))
-                _vm.IndexedFoldersList.Add(path);
-            _vm.NewFolderPath = string.Empty;
-        }
-    }
-
-    private void OnEditShortcutClick(object sender, RoutedEventArgs e)
-    {
-        if (_recordingShortcut) return;
-        _recordingShortcut = true;
-        if (sender is Button btn)
-        {
-            btn.Content = "Recording…";
-            if (TryFindResource("TextPrimary") is System.Windows.Media.Brush b)
-                btn.Foreground = b;
-            Keyboard.Focus(btn);
-            btn.PreviewKeyDown += OnShortcutKeyDown;
-            btn.LostFocus      += OnShortcutLostFocus;
-        }
-    }
-
-    private void OnShortcutKeyDown(object sender, KeyEventArgs e)
-    {
-        e.Handled = true;
-        var key = e.Key == Key.System ? e.SystemKey : e.Key;
-
-        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
-                 or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin)
-            return;
-
-        var mods = Keyboard.Modifiers;
-        var parts = new System.Collections.Generic.List<string>();
-        if ((mods & ModifierKeys.Control) != 0) parts.Add("Ctrl");
-        if ((mods & ModifierKeys.Alt)     != 0) parts.Add("Alt");
-        if ((mods & ModifierKeys.Shift)   != 0) parts.Add("Shift");
-        parts.Add(key.ToString());
-
-        if (_vm is not null) _vm.Shortcut = string.Join("+", parts);
-        StopRecording();
-    }
-
-    private void OnShortcutLostFocus(object sender, RoutedEventArgs e) => StopRecording();
-
-    private void StopRecording()
-    {
-        if (!_recordingShortcut) return;
-        _recordingShortcut = false;
-        // Find the button in the visual tree
-        if (this.FindName("EditShortcutBtn") is Button btn)
-        {
-            btn.Content = "Edit";
-            btn.PreviewKeyDown -= OnShortcutKeyDown;
-            btn.LostFocus      -= OnShortcutLostFocus;
-            if (TryFindResource("TextSecondary") is System.Windows.Media.Brush b)
-                btn.Foreground = b;
-        }
-    }
 }
 
 // ── Section visibility converter ────────────────────────────────────

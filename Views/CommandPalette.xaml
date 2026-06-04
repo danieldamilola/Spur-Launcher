@@ -40,7 +40,7 @@
                           Stroke="{DynamicResource TextTertiary}"
                           StrokeThickness="1.5"
                           StrokeLineJoin="Round"
-                          Data="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                          Data="{Binding ConverterParameter=search, Converter={x:Static conv:LucideIconConverter.Instance}}"
                           VerticalAlignment="Center"/>
 
                     <TextBox x:Name="FilterBox"
@@ -48,7 +48,7 @@
                              Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                              Background="Transparent"
                              BorderThickness="0"
-                             FontFamily="{DynamicResource UIFont}"
+                             FontFamily="{DynamicResource Token.Font.Primary}"
                              FontSize="14"
                              Foreground="{DynamicResource TextPrimary}"
                              CaretBrush="{DynamicResource TextPrimary}"
@@ -75,7 +75,7 @@
                               Stroke="{DynamicResource TextTertiary}"
                               StrokeThickness="1.5"
                               StrokeLineJoin="Round"
-                              Data="M18 6L6 18M6 6l12 12"
+                              Data="{Binding ConverterParameter=x, Converter={x:Static conv:LucideIconConverter.Instance}}"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"/>
                     </Button>
@@ -168,13 +168,13 @@
                             <!-- Label + Description -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Label}"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding Description}"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiary}"
                                            TextTrimming="CharacterEllipsis"
@@ -190,7 +190,7 @@
                                     VerticalAlignment="Center">
                                 <TextBlock x:Name="HintText"
                                            Text="↵"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiary}"/>
                             </Border>
@@ -207,7 +207,7 @@
                     CornerRadius="8"
                     Visibility="{Binding ShowNoMatch, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="No matching commands"
-                           FontFamily="{DynamicResource UIFont}"
+                           FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="12"
                            Foreground="{DynamicResource TextTertiary}"
                            HorizontalAlignment="Center"

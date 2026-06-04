@@ -1,0 +1,228 @@
+using System;
+using System.Linq;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Interop;
+using Spur.ViewModels;
+
+namespace Spur.Behaviors;
+
+public static class LauncherWindowBehavior
+{
+    public static readonly DependencyProperty AttachProperty =
+        DependencyProperty.RegisterAttached(
+            "Attach", typeof(bool), typeof(LauncherWindowBehavior),
+            new PropertyMetadata(false, OnAttachChanged));
+
+    public static bool GetAttach(DependencyObject obj) => (bool)obj.GetValue(AttachProperty);
+    public static void SetAttach(DependencyObject obj, bool value) => obj.SetValue(AttachProperty, value);
+
+    private static void OnAttachChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not Window window) return;
+        if ((bool)e.NewValue)
+        {
+            window.SourceInitialized += OnSourceInitialized;
+            window.PreviewKeyDown += OnPreviewKeyDown;
+            window.KeyDown += OnKeyDown;
+            window.MouseLeftButtonDown += OnMouseLeftButtonDown;
+            window.Loaded += OnLoaded;
+        }
+        else
+        {
+            window.SourceInitialized -= OnSourceInitialized;
+            window.PreviewKeyDown -= OnPreviewKeyDown;
+            window.KeyDown -= OnKeyDown;
+            window.MouseLeftButtonDown -= OnMouseLeftButtonDown;
+            window.Loaded -= OnLoaded;
+        }
+    }
+
+    private static void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Window window && window.DataContext is MainViewModel vm)
+        {
+            PositionWindow(window, vm);
+        }
+    }
+
+    public static void PositionWindow(Window window, MainViewModel vm)
+    {
+        var screen = SystemParameters.WorkArea;
+        var width = window.Width > 0 && !double.IsNaN(window.Width) ? window.Width : window.ActualWidth;
+        var height = window.Height > 0 && !double.IsNaN(window.Height) ? window.Height : window.ActualHeight;
+
+        var left = screen.Left + (screen.Width - width) / 2;
+        var top = screen.Top + (screen.Height - height) / 2;
+
+        switch (vm.Config.SearchWindowPosition)
+        {
+            case "centerTop":
+                top = screen.Top + screen.Height * 0.15;
+                break;
+            case "leftTop":
+                left = screen.Left + 32;
+                top = screen.Top + 32;
+                break;
+            case "rightTop":
+                left = screen.Right - width - 32;
+                top = screen.Top + 32;
+                break;
+            case "custom":
+                return;
+        }
+
+        window.Left = left;
+        window.Top = top;
+    }
+
+    private static void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        if (sender is Window window)
+        {
+            var hwnd = new WindowInteropHelper(window).Handle;
+            HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
+            window.Closed += (_, _) => WindowBlur.DisableBlur(hwnd);
+        }
+    }
+
+    private static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int WM_NCHITTEST = 0x0084;
+        if (msg != WM_NCHITTEST) return IntPtr.Zero;
+
+        var result = NativeMethods.DefWindowProc(hwnd, msg, wParam, lParam);
+        int ht = result.ToInt32() & 0xFFFF;
+        if (ht is 1 or 6 or 7) return result;
+
+        var source = HwndSource.FromHwnd(hwnd);
+        if (source?.RootVisual is not Window window) return IntPtr.Zero;
+
+        var point = new Point(
+            (short)(lParam.ToInt32() & 0xFFFF),
+            (short)(lParam.ToInt32() >> 16));
+        point = window.PointFromScreen(point);
+
+        const int border = 6;
+        bool left   = point.X <= border;
+        bool right  = point.X >= window.ActualWidth - border;
+        bool bottom = point.Y >= window.ActualHeight - border;
+        bool top    = point.Y <= border;
+
+        if (left && bottom)      { handled = true; return (IntPtr)16; }
+        if (right && bottom)     { handled = true; return (IntPtr)17; }
+        if (left && top)         { handled = true; return (IntPtr)13; }
+        if (right && top)        { handled = true; return (IntPtr)14; }
+        if (left)                { handled = true; return (IntPtr)10; }
+        if (right)               { handled = true; return (IntPtr)11; }
+        if (bottom)              { handled = true; return (IntPtr)15; }
+        if (top)                 { handled = true; return (IntPtr)12; }
+
+        return IntPtr.Zero;
+    }
+
+    private static class NativeMethods
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern IntPtr DefWindowProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+    }
+
+    private static void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
+        if (sender is Window window)
+        {
+            try { window.DragMove(); } catch { }
+        }
+    }
+
+    private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not Window window || window.DataContext is not MainViewModel vm) return;
+
+        if (vm.CommandPalette.IsOpen) return;
+
+        if (e.Key is Key.Down or Key.Up)
+        {
+            vm.MoveSelection(e.Key == Key.Down ? 1 : -1);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Tab && vm.IsScopeBarVisible)
+        {
+            vm.CycleScope();
+            e.Handled = true;
+        }
+    }
+
+    private static void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not Window window || window.DataContext is not MainViewModel vm) return;
+
+        switch (e.Key)
+        {
+            case Key.Escape:
+                if (vm.CommandPalette.IsOpen)
+                    vm.CommandPalette.IsOpen = false;
+                else if (!string.IsNullOrEmpty(vm.Query))
+                    vm.Query = string.Empty;
+                else if (vm.ActiveCategory is not null)
+                    vm.ActiveCategory = null;
+                else if (window is MainWindow mw)
+                    mw.HideWindow();
+                e.Handled = true;
+                break;
+
+            case Key.Left:
+                if (vm.ActiveCategory is not null)
+                {
+                    vm.ActiveCategory = null;
+                    e.Handled = true;
+                }
+                break;
+
+            case Key.Enter:
+                if (Keyboard.Modifiers == ModifierKeys.Control)
+                    vm.RunAsAdminCommand.Execute(null);
+                else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+                    vm.OpenFolderCommand.Execute(null);
+                else
+                    vm.OpenSelectedCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.P when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                vm.CommandPalette.IsOpen = !vm.CommandPalette.IsOpen;
+                e.Handled = true;
+                break;
+
+            case Key.P when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.TogglePinCommand.Execute(vm.SelectedResult);
+                e.Handled = true;
+                break;
+
+            case Key.D1 when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.ActiveCategory = vm.ActiveCategory == "files" ? null : "files";
+                e.Handled = true; break;
+            case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.ActivateClipboardCategory();
+                e.Handled = true; break;
+            case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.ActiveCategory = vm.ActiveCategory == "actions" ? null : "actions";
+                e.Handled = true; break;
+
+            case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.OpenSettingsCommand.Execute(null);
+                e.Handled = true; break;
+
+            case Key.C when Keyboard.Modifiers == ModifierKeys.Control:
+                vm.CopySelectedPathCommand.Execute(null);
+                e.Handled = true; break;
+
+            case Key.E when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                vm.OpenFolderCommand.Execute(null);
+                e.Handled = true; break;
+        }
+    }
+}

@@ -1,0 +1,222 @@
+<UserControl x:Class="Spur.Views.Settings.GeneralSettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Spur.Views"
+             xmlns:conv="clr-namespace:Spur.Converters">
+    <StackPanel>
+        <TextBlock Text="Look and feel" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <StackPanel>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.Appearance}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Theme" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Choose a quiet surface or follow Windows." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="Dark" IsChecked="{Binding ThemeDark}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
+                                                            AutomationProperties.Name="Dark theme"/>
+                                <RadioButton Content="Light" IsChecked="{Binding ThemeLight}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
+                                                             AutomationProperties.Name="Light theme"/>
+                                <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
+                                                              AutomationProperties.Name="System theme"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.Theme}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Window opacity" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="A little glass, without making text hard to read." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <Slider Grid.Column="2" Minimum="0.5" Maximum="1.0"
+                                Value="{Binding WindowOpacity, Mode=TwoWay}"
+                                TickFrequency="0.05"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                AutomationProperties.Name="Window opacity"/>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.Appearance}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Bar width" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Adjust the width of the search bar." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <Slider Grid.Column="2" Minimum="400" Maximum="1000"
+                                Value="{Binding BarWidth, Mode=TwoWay}"
+                                TickFrequency="10"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                AutomationProperties.Name="Bar width"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Behavior" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <StackPanel>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.Hotkey}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Shortcut" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="{Binding Shortcut}" Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <local:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                                    AutomationProperties.Name="Enable hotkey"/>
+                            <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}"
+                                                                    AutomationProperties.Name="Edit shortcut"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.Behavior}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Position" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Where Spur opens on screen." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="Center" IsChecked="{Binding PositionCenter}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
+                                                                                                              AutomationProperties.Name="Center position"/>
+                                <RadioButton Content="Top" IsChecked="{Binding PositionTop}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
+                                                                                                           AutomationProperties.Name="Top position"/>
+                                <RadioButton Content="Left" IsChecked="{Binding PositionLeft}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
+                                                                                                            AutomationProperties.Name="Left position"/>
+                                <RadioButton Content="Right" IsChecked="{Binding PositionRight}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
+                                                                                                             AutomationProperties.Name="Right position"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
+                                <Path.Data>
+                                    <Binding Source="{StaticResource Icon.Settings.AI}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
+                                </Path.Data>
+                            </Path>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Polish" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Motion and sound feedback." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Motion" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <local:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                            <TextBlock Text="Sound" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <local:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Startup" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <StackPanel>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Launch with Windows" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Make Spur available as soon as you sign in." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <local:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Tray icon" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Keep Spur reachable without cluttering the taskbar." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

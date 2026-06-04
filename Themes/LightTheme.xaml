@@ -62,9 +62,6 @@
 
     <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
 
-    <FontFamily x:Key="UIFont">pack://application:,,,/Themes/Fonts/#Inter, Segoe UI Variable, Segoe UI</FontFamily>
-    <FontFamily x:Key="MonoFont">Cascadia Code, JetBrains Mono, Fira Code, Consolas</FontFamily>
-
     <sys:Double x:Key="FontXxs">10</sys:Double>
     <sys:Double x:Key="FontXs">11</sys:Double>
     <sys:Double x:Key="FontSm">12</sys:Double>

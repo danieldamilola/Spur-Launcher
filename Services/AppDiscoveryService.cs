@@ -17,6 +17,7 @@ namespace Spur.Services;
 /// </summary>
 public interface IAppDiscoveryService
 {
+    event Action<List<SearchResult>>? CatalogRefreshed;
     Task<List<SearchResult>> DiscoverAsync(CancellationToken ct = default);
     void ClearCache();
 }
@@ -141,6 +142,8 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
     // Public
     // ══════════════════════════════════════════════════════════════
 
+    public event Action<List<SearchResult>>? CatalogRefreshed;
+
     public Task<List<SearchResult>> DiscoverAsync(CancellationToken ct = default)
     {
         var tcs = new TaskCompletionSource<List<SearchResult>>();
@@ -159,8 +162,13 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                     tcs.SetResult(cached);
                     ThreadPool.QueueUserWorkItem(_ =>
                     {
-                        try { SaveCache(DiscoverAll()); }
-                        catch { }
+                        try 
+                        { 
+                            var fresh = DiscoverAll();
+                            SaveCache(fresh); 
+                            CatalogRefreshed?.Invoke(fresh);
+                        }
+                        catch (Exception ex) { _logger.Warning("Background app discovery refresh failed", ex); }
                     });
                 }
                 else

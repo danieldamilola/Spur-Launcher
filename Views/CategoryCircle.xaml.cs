@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -42,28 +43,12 @@ public partial class CategoryCircle : UserControl
     {
         InitializeComponent();
         Loaded += (_, _) => ApplyVisualState();
-        Btn.Click += (_, _) =>
-        {
-            var args = new RoutedEventArgs(Button.ClickEvent, this);
-            RaiseEvent(args);
-        };
     }
 
     public event RoutedEventHandler? Click
     {
         add => AddHandler(Button.ClickEvent, value);
         remove => RemoveHandler(Button.ClickEvent, value);
-    }
-
-    private void OnMouseEnter(object sender, MouseEventArgs e)
-    {
-        if (IsActive) return;
-        Root.Background = TryFindResource("HoverBg") as Brush ?? Root.Background;
-    }
-
-    private void OnMouseLeave(object sender, MouseEventArgs e)
-    {
-        ApplyVisualState();
     }
 
     public void PlayShowAnimation(int index, bool animate)
@@ -127,21 +112,7 @@ public partial class CategoryCircle : UserControl
 
     private void ApplyVisualState()
     {
-        if (IsActive)
-        {
-            Root.Background = TryFindResource("SelectedBg") as Brush ?? Root.Background;
-            Root.BorderBrush = TryFindResource("BorderBrush") as Brush;
-            Root.BorderThickness = new Thickness(1);
-            IconPath.Stroke = TryFindResource("TextPrimary") as Brush ?? IconPath.Stroke;
-            IconPath.StrokeThickness = 1.5;
-            return;
-        }
-
-        Root.BorderThickness = new Thickness(0);
-        Root.Background = TryFindResource("Depth2") as Brush ?? Root.Background;
         if (IconData is not null)
             IconPath.Data = IconData;
-        IconPath.Stroke = TryFindResource("TextSecondary") as Brush ?? IconPath.Stroke;
-        IconPath.StrokeThickness = 1.5;
     }
 }
