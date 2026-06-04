@@ -31,20 +31,20 @@
                            RenderOptions.BitmapScalingMode="HighQuality"
                            Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"/>
                     <TextBlock Text="Spur"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="36"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,4"/>
                     <TextBlock Text="Spur your workflow."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="15"
                                Foreground="{DynamicResource Accent}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,20"/>
                     <TextBlock Text="A fast, minimal launcher for Windows. Nothing leaves your device — no tracking, no upsells, no clutter."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
@@ -56,14 +56,14 @@
                 <!-- Slide 2: Hotkey Setup -->
                 <StackPanel x:Name="Slide2" VerticalAlignment="Center" Visibility="Collapsed">
                     <TextBlock Text="Choose your shortcut"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
                     <TextBlock Text="How will you summon Spur?"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
@@ -87,14 +87,14 @@
                         <StackPanel>
                             <TextBlock x:Name="KeyCaptureText"
                                        Text="Alt + Space"
-                                       FontFamily="{DynamicResource MonoFont}"
+                                       FontFamily="{DynamicResource Token.Font.Mono}"
                                        FontSize="26"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimary}"
                                        HorizontalAlignment="Center"/>
                             <TextBlock x:Name="KeyCaptureHint"
                                        Text="Click here, then press a key combination"
-                                       FontFamily="{DynamicResource UIFont}"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
                                        FontSize="11"
                                        Foreground="{DynamicResource TextTertiary}"
                                        HorizontalAlignment="Center"
@@ -103,7 +103,7 @@
                     </Border>
 
                     <TextBlock Text="Try Alt+Space, Ctrl+Shift+K, or whatever feels natural."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="12"
                                Foreground="{DynamicResource TextTertiary}"
                                HorizontalAlignment="Center"
@@ -113,14 +113,14 @@
                 <!-- Slide 3: Theme -->
                 <StackPanel x:Name="Slide3" VerticalAlignment="Center" Visibility="Collapsed">
                     <TextBlock Text="Pick your look"
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
                     <TextBlock Text="You can change this anytime in Settings."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
@@ -143,7 +143,7 @@
                                 <Border Width="88" Height="48" CornerRadius="6"
                                         Background="{DynamicResource OnboardingPreviewDark}" Margin="0,0,0,8"/>
                                 <TextBlock Text="Dark"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}"
@@ -167,7 +167,7 @@
                                 <Border Width="88" Height="48" CornerRadius="6"
                                         Background="{DynamicResource OnboardingPreviewLight}" Margin="0,0,0,8"/>
                                 <TextBlock Text="Light"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}"
@@ -193,7 +193,7 @@
                                             Background="{DynamicResource OnboardingPreviewLight}" HorizontalAlignment="Right"/>
                                 </Border>
                                 <TextBlock Text="System"
-                                           FontFamily="{DynamicResource UIFont}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}"
@@ -207,7 +207,7 @@
                 <StackPanel x:Name="Slide4" VerticalAlignment="Center" Visibility="Collapsed">
                     <TextBlock x:Name="ReadyHeading"
                                Text="You're all set."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
@@ -215,7 +215,7 @@
                                Margin="0,0,0,12"/>
                     <TextBlock x:Name="ReadySummary"
                                Text=""
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center"
@@ -224,7 +224,7 @@
                                MaxWidth="360"
                                Margin="0,0,0,32"/>
                     <TextBlock Text="Press Alt+Space anytime to open Spur."
-                               FontFamily="{DynamicResource UIFont}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="12"
                                Foreground="{DynamicResource TextTertiary}"
                                HorizontalAlignment="Center"
@@ -257,7 +257,7 @@
                 <Button Grid.Column="1"
                         Content="Skip"
                         Margin="0,0,8,0"
-                        FontFamily="{DynamicResource UIFont}"
+                        FontFamily="{DynamicResource Token.Font.Primary}"
                         FontSize="12"
                         Foreground="{DynamicResource TextSecondary}"
                         Background="Transparent"
@@ -270,7 +270,7 @@
                 <Button Grid.Column="2"
                         x:Name="NextButton"
                         Content="Continue"
-                        FontFamily="{DynamicResource UIFont}"
+                        FontFamily="{DynamicResource Token.Font.Primary}"
                         FontSize="13"
                         FontWeight="Medium"
                         Foreground="{DynamicResource TextPrimary}"

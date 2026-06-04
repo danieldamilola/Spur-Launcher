@@ -8,13 +8,15 @@ namespace Spur.ViewModels;
 public sealed partial class AiChatViewModel : ObservableObject
 {
     private readonly IAiService _aiService;
+    private readonly ISecureStorageService _secureStorage;
     private readonly SpurConfig  _config;
     private CancellationTokenSource? _aiCts;
     private readonly List<(string Role, string Content)> _aiConversation = [];
 
-    public AiChatViewModel(IAiService aiService, SpurConfig config)
+    public AiChatViewModel(IAiService aiService, ISecureStorageService secureStorage, SpurConfig config)
     {
         _aiService = aiService;
+        _secureStorage = secureStorage;
         _config = config;
         AiFollowUpCommand = new RelayCommand<string>(OnAiFollowUp);
     }
@@ -176,10 +178,10 @@ public sealed partial class AiChatViewModel : ObservableObject
 
     private (string Key, string Model) GetAiConfig() => _config.AiProvider switch
     {
-        "gemini"     => (_config.GeminiApiKey,     _config.GeminiModel),
-        "openrouter" => (_config.OpenRouterApiKey, _config.OpenRouterModel),
-        "deepseek"   => (_config.DeepSeekApiKey,   _config.DeepSeekModel),
-        _            => (_config.GroqApiKey,        _config.GroqModel),
+        "gemini"     => (_secureStorage.Decrypt(_config.EncryptedGeminiApiKey),     _config.GeminiModel),
+        "openrouter" => (_secureStorage.Decrypt(_config.EncryptedOpenRouterApiKey), _config.OpenRouterModel),
+        "deepseek"   => (_secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),   _config.DeepSeekModel),
+        _            => (_secureStorage.Decrypt(_config.EncryptedGroqApiKey),       _config.GroqModel),
     };
 }
 

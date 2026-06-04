@@ -4,17 +4,13 @@
 
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 
-             Width="38" Height="44"
+             Width="52" Height="52"
 
              RenderTransformOrigin="0.5,0.5"
 
              Opacity="0"
 
-             IsHitTestVisible="False"
-
-             MouseEnter="OnMouseEnter"
-
-             MouseLeave="OnMouseLeave">
+             IsHitTestVisible="False">
 
 
 
@@ -26,24 +22,32 @@
 
 
 
-    <StackPanel Width="38" VerticalAlignment="Center">
+    <StackPanel Width="52" VerticalAlignment="Center">
 
         <Border x:Name="Root"
-
-                Width="34" Height="34"
-
+                Width="50" Height="50"
                 HorizontalAlignment="Center"
-
-                CornerRadius="12"
-
-                Background="{DynamicResource SurfaceLow}"
-
-                BorderBrush="{DynamicResource BorderBrush}"
-
+                CornerRadius="{DynamicResource RadiusWindow}"
                 BorderThickness="1"
-
                 SnapsToDevicePixels="True"
                 ToolTip="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Depth2}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, ElementName=Btn}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource HoverBg}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource SelectedBg}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
 
             <Button x:Name="Btn"
 
@@ -64,16 +68,21 @@
                 </Button.Template>
 
                 <Path x:Name="IconPath"
-
-                      Width="16" Height="16"
-
+                      Width="22" Height="22"
                       Stretch="Uniform"
-
-                      Stroke="{DynamicResource TextSecondary}"
-
                       StrokeThickness="1.5"
-
-                      Fill="Transparent"/>
+                      Fill="Transparent">
+                    <Path.Style>
+                        <Style TargetType="Path">
+                            <Setter Property="Stroke" Value="{DynamicResource TextSecondary}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                    <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
 
             </Button>
 
@@ -82,5 +91,7 @@
     </StackPanel>
 
 </UserControl>
+
+
 
 

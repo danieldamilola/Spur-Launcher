@@ -14,16 +14,21 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly MainViewModel    _main;
     private readonly IThemeManager    _themeManager;
     private readonly IStartupService  _startupService;
+    private readonly IFrequencyService _frequencyService;
+    private readonly ISecureStorageService _secureStorage;
     private          SpurConfig       _config;
 
     public SettingsViewModel(SpurConfig config, IConfigService configService, MainViewModel main,
-                             IThemeManager themeManager, IStartupService startupService)
+                             IThemeManager themeManager, IStartupService startupService, IFrequencyService frequencyService,
+                             ISecureStorageService secureStorage)
     {
         _config          = config;
         _configService   = configService;
         _main            = main;
         _themeManager    = themeManager;
         _startupService  = startupService;
+        _frequencyService = frequencyService;
+        _secureStorage   = secureStorage;
 
         // Init sidebar — features.md §6
         Sections = new ObservableCollection<SettingsSection>
@@ -41,7 +46,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(SearchText))
+            {
+                _filteredSections = null;
                 OnPropertyChanged(nameof(FilteredSections));
+            }
         };
     }
 
@@ -58,15 +66,23 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    private ObservableCollection<SettingsSection>? _filteredSections;
     public ObservableCollection<SettingsSection> FilteredSections
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(SearchText))
-                return Sections;
-            var term = SearchText.Trim();
-            return new ObservableCollection<SettingsSection>(
-                Sections.Where(s => s.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            if (_filteredSections == null)
+            {
+                if (string.IsNullOrWhiteSpace(SearchText))
+                    _filteredSections = Sections;
+                else
+                {
+                    var term = SearchText.Trim();
+                    _filteredSections = new ObservableCollection<SettingsSection>(
+                        Sections.Where(s => s.Name.Contains(term, StringComparison.OrdinalIgnoreCase)));
+                }
+            }
+            return _filteredSections;
         }
     }
 
@@ -105,6 +121,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.WindowOpacity;
         set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    public double BarWidth
+    {
+        get => _config.BarWidth;
+        set { _config.BarWidth = Math.Clamp(value, 400, 1000); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -629,19 +651,20 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.AiProvider switch
         {
-            "gemini"     => _config.GeminiApiKey,
-            "openrouter" => _config.OpenRouterApiKey,
-            "deepseek"   => _config.DeepSeekApiKey,
-            _            => _config.GroqApiKey,
+            "gemini"     => _secureStorage.Decrypt(_config.EncryptedGeminiApiKey),
+            "openrouter" => _secureStorage.Decrypt(_config.EncryptedOpenRouterApiKey),
+            "deepseek"   => _secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),
+            _            => _secureStorage.Decrypt(_config.EncryptedGroqApiKey),
         };
         set
         {
+            var encrypted = _secureStorage.Encrypt(value);
             switch (_config.AiProvider)
             {
-                case "gemini":     _config.GeminiApiKey     = value; break;
-                case "openrouter": _config.OpenRouterApiKey = value; break;
-                case "deepseek":   _config.DeepSeekApiKey   = value; break;
-                default:           _config.GroqApiKey       = value; break;
+                case "gemini":     _config.EncryptedGeminiApiKey     = encrypted; break;
+                case "openrouter": _config.EncryptedOpenRouterApiKey = encrypted; break;
+                case "deepseek":   _config.EncryptedDeepSeekApiKey   = encrypted; break;
+                default:           _config.EncryptedGroqApiKey       = encrypted; break;
             }
             _main.Config = _config.Clone();
             Save();
@@ -697,7 +720,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void ClearAllHistory()
     {
-        new FrequencyService().ClearAll();
+        _frequencyService.ClearAll();
     }
 
     [RelayCommand]

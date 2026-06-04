@@ -1,4 +1,5 @@
 using System.Windows.Interop;
+using System.Threading;
 using System.Windows.Media;
 using Spur.Models;
 using Spur.ViewModels;
@@ -19,6 +20,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -26,26 +28,6 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         var hwnd = new WindowInteropHelper(this).Handle;
         HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
-
-        // Item 8 — Glassmorphism: acrylic blur backdrop
-        EnableAcrylicBlur(hwnd);
-
-        Closed += (_, _) => WindowBlur.DisableBlur(hwnd);
-    }
-
-    private void EnableAcrylicBlur(IntPtr hwnd)
-    {
-        try
-        {
-            bool isLight = IsSystemLightTheme();
-            uint tint = isLight ? 0x44FFFFFFu : 0x99000000u;
-            WindowBlur.EnableBlur(hwnd, tint);
-        }
-        catch
-        {
-            // Fallback: keep SurfaceAcrylic but it'll show as semi-transparent
-            // without blur. Still acceptable on unsupported systems.
-        }
     }
 
     private static bool IsSystemLightTheme()
@@ -109,12 +91,24 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        Width = LauncherLayout.BarWidth;
-        MinWidth = LauncherLayout.BarWidth;
-        MaxWidth = LauncherLayout.BarWidth;
-
-
+        ApplyConfigWidth();
         PositionWindow();
+    }
+
+    private void ApplyConfigWidth()
+    {
+        if (_vm?.Config != null)
+        {
+            Width = _vm.Config.BarWidth;
+            MinWidth = _vm.Config.BarWidth;
+            MaxWidth = _vm.Config.BarWidth;
+        }
+        else
+        {
+            Width = 640;
+            MinWidth = 640;
+            MaxWidth = 640;
+        }
     }
 
     public void ShowWindow()
@@ -192,6 +186,11 @@ public partial class MainWindow : Window
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainViewModel.Config))
+        {
+            ApplyConfigWidth();
+        }
+
         var layoutProps = new[]
         {
             nameof(MainViewModel.HasResults),
@@ -220,14 +219,15 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Empty query + pointer over window: category circles stagger in on the right (640px bar stays fixed).
+    /// Empty query + pointer over window: category circles stagger in beside the bar.
     /// Typing hides circles immediately.
     /// </summary>
     private bool ShouldShowCategoryRail()
     {
         if (_vm is null) return false;
         if (!string.IsNullOrEmpty(_vm.Query)) return false;
-        return _isPointerInside || _vm.ActiveCategory is not null;
+        if (_vm.ActiveCategory is not null) return false;
+        return _isPointerInside;
     }
 
     private void ApplySpotlightLayout(bool animate, bool fastAnchorHide = false)
@@ -243,8 +243,6 @@ public partial class MainWindow : Window
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        BrowsePanelControl.Visibility = isBrowse && !isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        ResultsListControl.Visibility = isBrowse ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -271,8 +269,11 @@ public partial class MainWindow : Window
         _categoryExpanded = expandRail;
     }
 
+    private CancellationTokenSource? _hoverHideCts;
+
     private void OnWindowMouseEnter(object sender, MouseEventArgs e)
     {
+        _hoverHideCts?.Cancel();
         _isPointerInside = true;
         if (ShouldShowCategoryRail() != _categoryExpanded)
             ApplySpotlightLayout(animate: true);
@@ -281,8 +282,15 @@ public partial class MainWindow : Window
     private void OnWindowMouseLeave(object sender, MouseEventArgs e)
     {
         _isPointerInside = false;
-        if (_vm?.ActiveCategory is null)
-            ApplySpotlightLayout(animate: true);
+        _hoverHideCts?.Cancel();
+        _hoverHideCts = new CancellationTokenSource();
+        var token = _hoverHideCts.Token;
+
+        System.Threading.Tasks.Task.Delay(150, token).ContinueWith(t =>
+        {
+            if (t.IsCanceled) return;
+            Dispatcher.InvokeAsync(() => ApplySpotlightLayout(animate: true));
+        });
     }
 
     private void SyncPointerHoverState()

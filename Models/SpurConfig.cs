@@ -18,6 +18,9 @@ public sealed class SpurConfig
     /// <summary>Window opacity as a fraction (0.0–1.0). Clamped on load.</summary>
     public double WindowOpacity { get; set; } = 0.95;
 
+    /// <summary>Width of the main search bar window.</summary>
+    public double BarWidth { get; set; } = 640;
+
     /// <summary>How many results to display before scrolling (5, 8, or 10).</summary>
     public int ResultsCount { get; set; } = 5;
 
@@ -205,107 +208,7 @@ public sealed class SpurConfig
     public List<PinnedClipboardItem> PinnedClipboard { get; set; } = [];
 
     // ═══════════════════════════════════════════════════════════════
-    // API Key helpers (transparent encryption via DPAPI)
-    // ═══════════════════════════════════════════════════════════════
 
-    private static readonly byte[] Entropy = "Spur.Launcher.v1"u8.ToArray();
-
-    [JsonIgnore]
-    public string GroqApiKey
-    {
-        get => Decrypt(EncryptedGroqApiKey);
-        set => EncryptedGroqApiKey = Encrypt(value);
-    }
-
-    [JsonIgnore]
-    public string GeminiApiKey
-    {
-        get => Decrypt(EncryptedGeminiApiKey);
-        set => EncryptedGeminiApiKey = Encrypt(value);
-    }
-
-    [JsonIgnore]
-    public string OpenRouterApiKey
-    {
-        get => Decrypt(EncryptedOpenRouterApiKey);
-        set => EncryptedOpenRouterApiKey = Encrypt(value);
-    }
-
-    [JsonIgnore]
-    public string DeepSeekApiKey
-    {
-        get => Decrypt(EncryptedDeepSeekApiKey);
-        set => EncryptedDeepSeekApiKey = Encrypt(value);
-    }
-
-    /// <summary>Returns the active provider's API key.</summary>
-    [JsonIgnore]
-    public string ActiveApiKey => AiProvider switch
-    {
-        "groq"       => GroqApiKey,
-        "gemini"     => GeminiApiKey,
-        "openrouter" => OpenRouterApiKey,
-        "deepseek"   => DeepSeekApiKey,
-        _            => string.Empty,
-    };
-
-    /// <summary>Returns the active provider's model.</summary>
-    [JsonIgnore]
-    public string ActiveModel => AiProvider switch
-    {
-        "groq"       => GroqModel,
-        "gemini"     => GeminiModel,
-        "openrouter" => OpenRouterModel,
-        "deepseek"   => DeepSeekModel,
-        _            => string.Empty,
-    };
-
-    // ═══════════════════════════════════════════════════════════════
-    // Validation
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>Clamps out-of-range values to valid ranges.</summary>
-    public void Validate()
-    {
-        WindowOpacity  = Math.Clamp(WindowOpacity, 0.3, 1.0);
-        ResultsCount   = Math.Clamp(ResultsCount, 3, 20);
-        MaxFileDepth   = Math.Clamp(MaxFileDepth, 1, 5);
-        ClipboardHistorySize = Math.Clamp(ClipboardHistorySize, 5, 200);
-        PinnedClipboard ??= [];
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // Encryption
-    // ═══════════════════════════════════════════════════════════════
-
-    private static string Encrypt(string plain)
-    {
-        if (string.IsNullOrEmpty(plain)) return string.Empty;
-        var bytes = Encoding.UTF8.GetBytes(plain);
-        var encrypted = ProtectedData.Protect(bytes, Entropy, DataProtectionScope.CurrentUser);
-        return Convert.ToBase64String(encrypted);
-    }
-
-    private static string Decrypt(string cipher)
-    {
-        if (string.IsNullOrEmpty(cipher)) return string.Empty;
-        try
-        {
-            var bytes = Convert.FromBase64String(cipher);
-
-            // Legacy plaintext fallback support (avoid writing new ones)
-            var test = Encoding.UTF8.GetString(bytes);
-            if (test.StartsWith("PLAIN:"))
-                return test[6..];
-
-            var decrypted = ProtectedData.Unprotect(bytes, Entropy, DataProtectionScope.CurrentUser);
-            return Encoding.UTF8.GetString(decrypted);
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // Clone
@@ -313,9 +216,13 @@ public sealed class SpurConfig
 
     public SpurConfig Clone()
     {
-        // Fast shallow clone via JSON round-trip — handles all nested collections
-        var json = JsonSerializer.Serialize(this);
-        return JsonSerializer.Deserialize<SpurConfig>(json) ?? new SpurConfig();
+        var clone = (SpurConfig)MemberwiseClone();
+        clone.IndexedFolders = new List<string>(IndexedFolders);
+        clone.ExcludedFolders = new List<string>(ExcludedFolders);
+        clone.FileExtensions = new List<string>(FileExtensions);
+        clone.PinnedItems = new HashSet<string>(PinnedItems, StringComparer.OrdinalIgnoreCase);
+        clone.PinnedClipboard = PinnedClipboard.Select(p => new PinnedClipboardItem { Id = p.Id, Content = p.Content, Preview = p.Preview, Timestamp = p.Timestamp }).ToList();
+        return clone;
     }
 }
 

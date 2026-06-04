@@ -1,0 +1,113 @@
+<UserControl x:Class="Spur.Views.Settings.SearchSettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Spur.Views"
+             xmlns:conv="clr-namespace:Spur.Converters">
+    <StackPanel>
+        <TextBlock Text="What Spur can find" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <WrapPanel Margin="16,14,10,8">
+                <CheckBox Content="Apps" IsChecked="{Binding IndexApps, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Files" IsChecked="{Binding IndexFiles, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Folders" IsChecked="{Binding IndexFolders, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Clipboard" IsChecked="{Binding IndexClipboard, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Calculator" IsChecked="{Binding IndexCalculator, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Windows settings" IsChecked="{Binding IndexWindowsSettings, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="URLs" IsChecked="{Binding IndexUrls, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Web searches" IsChecked="{Binding IndexWebSearches, Mode=TwoWay}" Margin="0,0,18,8"/>
+            </WrapPanel>
+        </Border>
+
+        <TextBlock Text="Search feel" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <StackPanel>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Fuzzy matching" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Find things even when the spelling or order is not exact." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <local:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Result count" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Show enough choices without turning the launcher into a list view." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="5" IsChecked="{Binding Results5}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
+                                <RadioButton Content="8" IsChecked="{Binding Results8}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
+                                <RadioButton Content="10" IsChecked="{Binding Results10}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Divider}"/>
+                <Border Style="{StaticResource SettingsRow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Precision" Style="{StaticResource SettingsTitle}"/>
+                            <TextBlock Text="Use strict matching if you prefer predictable, literal results." Style="{StaticResource SettingsHint}"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding QuerySearchPrecisionOptions}"
+                                  SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}"
+                                  VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="Folders" Style="{StaticResource SettingsKicker}"/>
+        <Border Style="{StaticResource Panel}">
+            <StackPanel Margin="16,14">
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource SettingsInputFrame}">
+                        <TextBox Text="{Binding NewFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12"/>
+                    </Border>
+                    <Button Grid.Column="2" Content="Browse" Click="OnBrowseFolderClick" Style="{StaticResource SettingsSoftButton}"/>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding IndexedFoldersList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding}" Style="{StaticResource SettingsHint}" TextTrimming="CharacterEllipsis"/>
+                                <Button Grid.Column="1"
+                                        Content="Remove"
+                                        Command="{Binding DataContext.RemoveFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource SettingsSoftButton}"
+                                        Height="24"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

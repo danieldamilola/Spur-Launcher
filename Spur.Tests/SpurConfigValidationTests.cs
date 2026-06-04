@@ -1,4 +1,5 @@
 using Spur.Models;
+using Spur.Services;
 using Xunit;
 
 namespace Spur.Tests;
@@ -9,7 +10,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsWindowOpacityOutOfRange()
     {
         var cfg = new SpurConfig { WindowOpacity = 2.0 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(1.0, cfg.WindowOpacity);
     }
 
@@ -17,7 +18,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsWindowOpacityBelowMin()
     {
         var cfg = new SpurConfig { WindowOpacity = 0.1 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(0.3, cfg.WindowOpacity);
     }
 
@@ -25,7 +26,7 @@ public class SpurConfigValidationTests
     public void Validate_LeavesWindowOpacityInRange()
     {
         var cfg = new SpurConfig { WindowOpacity = 0.85 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(0.85, cfg.WindowOpacity);
     }
 
@@ -33,7 +34,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsResultsCountOutOfRange()
     {
         var cfg = new SpurConfig { ResultsCount = 100 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(20, cfg.ResultsCount);
     }
 
@@ -41,7 +42,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsResultsCountBelowMin()
     {
         var cfg = new SpurConfig { ResultsCount = 0 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(3, cfg.ResultsCount);
     }
 
@@ -49,7 +50,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsMaxFileDepth()
     {
         var cfg = new SpurConfig { MaxFileDepth = 10 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(5, cfg.MaxFileDepth);
     }
 
@@ -57,7 +58,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsMaxFileDepthBelowMin()
     {
         var cfg = new SpurConfig { MaxFileDepth = 0 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(1, cfg.MaxFileDepth);
     }
 
@@ -65,7 +66,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsClipboardHistorySize()
     {
         var cfg = new SpurConfig { ClipboardHistorySize = 999 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(200, cfg.ClipboardHistorySize);
     }
 
@@ -73,7 +74,7 @@ public class SpurConfigValidationTests
     public void Validate_ClampsClipboardHistorySizeBelowMin()
     {
         var cfg = new SpurConfig { ClipboardHistorySize = 1 };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.Equal(5, cfg.ClipboardHistorySize);
     }
 
@@ -81,7 +82,7 @@ public class SpurConfigValidationTests
     public void Validate_NullPinnedClipboard_BecomesEmpty()
     {
         var cfg = new SpurConfig { PinnedClipboard = null! };
-        cfg.Validate();
+        ConfigValidator.Validate(cfg);
         Assert.NotNull(cfg.PinnedClipboard);
         Assert.Empty(cfg.PinnedClipboard);
     }
@@ -96,7 +97,7 @@ public class SpurConfigValidationTests
             IndexedFolders = new() { @"C:\Projects", @"D:\Docs" },
             PinnedItems = new(StringComparer.OrdinalIgnoreCase) { "app:notepad" },
         };
-        original.Validate();
+        ConfigValidator.Validate(original);
 
         var clone = original.Clone();
 
@@ -117,45 +118,6 @@ public class SpurConfigValidationTests
 
         Assert.Equal("dark", original.Theme);
         Assert.Equal("light", clone.Theme);
-    }
-
-    [Fact]
-    public void ActiveApiKey_RoutesByProvider()
-    {
-        var cfg = new SpurConfig
-        {
-            AiProvider = "groq",
-            EncryptedGroqApiKey = "UExBSU46dGVzdF9ncm9xX2tleQ==",   // PLAIN:test_groq_key
-            EncryptedGeminiApiKey = "UExBSU46dGVzdF9nZW1pbmlfa2V5",   // PLAIN:test_gemini_key
-        };
-
-        Assert.Equal("test_groq_key", cfg.ActiveApiKey);
-
-        cfg.AiProvider = "gemini";
-        Assert.Equal("test_gemini_key", cfg.ActiveApiKey);
-    }
-
-    [Fact]
-    public void ActiveApiKey_UnknownProvider_ReturnsEmpty()
-    {
-        var cfg = new SpurConfig { AiProvider = "nonexistent" };
-        Assert.Equal(string.Empty, cfg.ActiveApiKey);
-    }
-
-    [Fact]
-    public void ActiveModel_RoutesByProvider()
-    {
-        var cfg = new SpurConfig
-        {
-            AiProvider = "groq",
-            GroqModel = "llama-3.2-70b",
-            OpenRouterModel = "openai/gpt-4o",
-        };
-
-        Assert.Equal("llama-3.2-70b", cfg.ActiveModel);
-
-        cfg.AiProvider = "openrouter";
-        Assert.Equal("openai/gpt-4o", cfg.ActiveModel);
     }
 
     [Fact]
