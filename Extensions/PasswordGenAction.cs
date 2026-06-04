@@ -29,7 +29,7 @@ public sealed class PasswordGenAction : IAction
             Type       = ResultType.Action,
             Name       = $"Generate Password · {length} chars",
             Subtitle   = "Press ↵ to generate and copy",
-            LucideIcon = "key",
+            IconGlyph = "\ue8d7",
             ActionId   = Id,
         };
     }
@@ -60,3 +60,4 @@ public sealed class PasswordGenAction : IAction
         return new string(chars);
     }
 }
+

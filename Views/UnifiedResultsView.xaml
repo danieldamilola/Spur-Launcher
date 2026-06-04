@@ -32,3 +32,4 @@
              ScrollViewer.CanContentScroll="True"
              AutomationProperties.Name="Search results"/>
 </UserControl>
+

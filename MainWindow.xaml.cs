@@ -19,7 +19,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        try { InitializeComponent(); } catch(Exception ex) { System.IO.File.WriteAllText(@"C:\dev\Spur\crash.txt", ex.ToString() + "\nInner: " + ex.InnerException?.ToString()); throw; }
         Loaded += OnLoaded;
     }
 
@@ -30,16 +30,6 @@ public partial class MainWindow : Window
         HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
     }
 
-    private static bool IsSystemLightTheme()
-    {
-        try
-        {
-            using var key = Microsoft.Win32.Registry.CurrentUser
-                .OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            return key?.GetValue("AppsUseLightTheme") is int i && i == 1;
-        }
-        catch { return false; }
-    }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
@@ -93,6 +83,11 @@ public partial class MainWindow : Window
     {
         ApplyConfigWidth();
         PositionWindow();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
     }
 
     private void ApplyConfigWidth()
@@ -243,6 +238,7 @@ public partial class MainWindow : Window
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
+        UnifiedResultsControl.Visibility = isClipboard ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -436,3 +432,4 @@ public partial class MainWindow : Window
         try { DragMove(); } catch { }
     }
 }
+

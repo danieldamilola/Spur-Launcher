@@ -13,8 +13,8 @@ public interface IClipboardService
     string? ReadFromSystem();
     System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem();
     void Clear();
-    /// <summary>Removes all entries that don't match any of the given content strings (preserves pinned).</summary>
     void KeepOnly(ISet<string> contentToKeep);
+    event Action? ClipboardChanged;
 }
 
 /// <summary>
@@ -30,6 +30,8 @@ public sealed class ClipboardServiceImpl : IClipboardService
     private readonly object _lock = new();
     private readonly ILogger _log;
 
+    public event Action? ClipboardChanged;
+
     public ClipboardServiceImpl(ILogger log) => _log = log;
 
     public int MaxItems
@@ -38,11 +40,16 @@ public sealed class ClipboardServiceImpl : IClipboardService
         set
         {
             _maxItems = Math.Clamp(value, 5, 200);
+            bool changed = false;
             lock (_lock)
             {
                 while (_history.Count > _maxItems)
+                {
                     _history.RemoveAt(_history.Count - 1);
+                    changed = true;
+                }
             }
+            if (changed) ClipboardChanged?.Invoke();
         }
     }
 
@@ -69,6 +76,7 @@ public sealed class ClipboardServiceImpl : IClipboardService
             while (_history.Count > _maxItems)
                 _history.RemoveAt(_history.Count - 1);
         }
+        ClipboardChanged?.Invoke();
     }
 
     public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
@@ -83,6 +91,7 @@ public sealed class ClipboardServiceImpl : IClipboardService
             while (_history.Count > _maxItems)
                 _history.RemoveAt(_history.Count - 1);
         }
+        ClipboardChanged?.Invoke();
     }
 
     private void TrimImages()
@@ -121,10 +130,17 @@ public sealed class ClipboardServiceImpl : IClipboardService
     public void Clear()
     {
         lock (_lock) _history.Clear();
+        ClipboardChanged?.Invoke();
     }
 
     public void KeepOnly(ISet<string> contentToKeep)
     {
-        lock (_lock) _history.RemoveAll(e => !contentToKeep.Contains(e.Content));
+        bool changed = false;
+        lock (_lock)
+        {
+            int removed = _history.RemoveAll(e => !contentToKeep.Contains(e.Content));
+            changed = removed > 0;
+        }
+        if (changed) ClipboardChanged?.Invoke();
     }
 }

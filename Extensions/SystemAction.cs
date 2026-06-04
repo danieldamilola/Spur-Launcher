@@ -34,7 +34,7 @@ public sealed class SystemAction : IAction
             Type       = ResultType.Action,
             Name       = name,
             Subtitle   = subtitle,
-            LucideIcon = icon,
+            IconGlyph = icon,
             ActionId   = Id,
         };
     }

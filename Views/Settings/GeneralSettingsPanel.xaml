@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Spur.Views"
-             xmlns:conv="clr-namespace:Spur.Converters">
+             xmlns:conv="clr-namespace:Spur.Converters"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel>
         <TextBlock Text="Look and feel" Style="{StaticResource SettingsKicker}"/>
         <Border Style="{StaticResource Panel}">
@@ -15,11 +16,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource Accent}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.Appearance}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Theme" Style="{StaticResource SettingsTitle}"/>
@@ -46,11 +43,7 @@
                             <ColumnDefinition Width="130"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.Theme}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE294;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Window opacity" Style="{StaticResource SettingsTitle}"/>
@@ -73,11 +66,7 @@
                             <ColumnDefinition Width="130"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.Appearance}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE89F;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Bar width" Style="{StaticResource SettingsTitle}"/>
@@ -105,18 +94,14 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.Hotkey}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE765;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Shortcut" Style="{StaticResource SettingsTitle}"/>
                             <TextBlock Text="{Binding Shortcut}" Style="{StaticResource SettingsHint}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <local:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"
+                            <ui:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" OnContent="{x:Null}" OffContent="{x:Null}"
                                                                     AutomationProperties.Name="Enable hotkey"/>
                             <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}"
                                                                     AutomationProperties.Name="Edit shortcut"/>
@@ -132,11 +117,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.Behavior}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE707;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Position" Style="{StaticResource SettingsTitle}"/>
@@ -165,11 +146,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5" Fill="Transparent">
-                                <Path.Data>
-                                    <Binding Source="{StaticResource Icon.Settings.AI}" Converter="{x:Static conv:LucideIconConverter.Instance}"/>
-                                </Path.Data>
-                            </Path>
+                            <ui:FontIcon Glyph="&#xE945;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Polish" Style="{StaticResource SettingsTitle}"/>
@@ -177,9 +154,9 @@
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Motion" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <local:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                            <ui:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" OnContent="{x:Null}" OffContent="{x:Null}"/>
                             <TextBlock Text="Sound" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <local:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                            <ui:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -199,7 +176,7 @@
                             <TextBlock Text="Launch with Windows" Style="{StaticResource SettingsTitle}"/>
                             <TextBlock Text="Make Spur available as soon as you sign in." Style="{StaticResource SettingsHint}"/>
                         </StackPanel>
-                        <local:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource Divider}"/>
@@ -213,10 +190,14 @@
                             <TextBlock Text="Tray icon" Style="{StaticResource SettingsTitle}"/>
                             <TextBlock Text="Keep Spur reachable without cluttering the taskbar." Style="{StaticResource SettingsHint}"/>
                         </StackPanel>
-                        <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                     </Grid>
                 </Border>
             </StackPanel>
         </Border>
     </StackPanel>
 </UserControl>
+
+
+
+

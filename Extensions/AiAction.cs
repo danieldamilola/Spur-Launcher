@@ -22,7 +22,7 @@ public sealed class AiAction : IAction
             Type     = ResultType.Action,
             Name     = "AI Assistant",
             Subtitle = $"{preview}  —  Press ↵ to ask",
-            LucideIcon = "sparkles",
+            IconGlyph = "\ue113",
             ActionId = Id,
         };
     }
@@ -31,4 +31,5 @@ public sealed class AiAction : IAction
     public static string ExtractQuestion(string query) =>
         Regex.Replace(query.Trim(), @"^ai\s+", "", RegexOptions.IgnoreCase);
 }
+
 

@@ -9,9 +9,9 @@ namespace Spur.Views;
 
 public partial class CategoryCircle : UserControl
 {
-    public static readonly DependencyProperty IconDataProperty = DependencyProperty.Register(
-        nameof(IconData), typeof(Geometry), typeof(CategoryCircle),
-        new PropertyMetadata(null, OnIconDataChanged));
+    public static readonly DependencyProperty IconGlyphProperty = DependencyProperty.Register(
+        nameof(IconGlyph), typeof(string), typeof(CategoryCircle),
+        new PropertyMetadata("\ue946", OnIconGlyphChanged));
 
     public static readonly DependencyProperty LabelProperty = DependencyProperty.Register(
         nameof(Label), typeof(string), typeof(CategoryCircle),
@@ -21,10 +21,10 @@ public partial class CategoryCircle : UserControl
         nameof(IsActive), typeof(bool), typeof(CategoryCircle),
         new PropertyMetadata(false, OnIsActiveChanged));
 
-    public Geometry? IconData
+    public string IconGlyph
     {
-        get => (Geometry?)GetValue(IconDataProperty);
-        set => SetValue(IconDataProperty, value);
+        get => (string)GetValue(IconGlyphProperty);
+        set => SetValue(IconGlyphProperty, value);
     }
 
     public string Label
@@ -98,10 +98,10 @@ public partial class CategoryCircle : UserControl
         CircleScale.BeginAnimation(ScaleTransform.ScaleYProperty, scale);
     }
 
-    private static void OnIconDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnIconGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CategoryCircle cc && !cc.IsActive && e.NewValue is Geometry g)
-            cc.IconPath.Data = g;
+        if (d is CategoryCircle cc && !cc.IsActive && e.NewValue is string sym)
+            cc.IconPresenter.Glyph = sym;
     }
 
     private static void OnIsActiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -112,7 +112,7 @@ public partial class CategoryCircle : UserControl
 
     private void ApplyVisualState()
     {
-        if (IconData is not null)
-            IconPath.Data = IconData;
+        IconPresenter.Glyph = IconGlyph;
     }
 }
+

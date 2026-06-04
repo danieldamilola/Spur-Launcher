@@ -17,9 +17,10 @@
 
   <!-- ── Semantic aliases (backward compat) ── -->
   <CornerRadius x:Key="Token.Radius.Button">6</CornerRadius>
-  <CornerRadius x:Key="Token.Radius.Window">14</CornerRadius>
+  <CornerRadius x:Key="Token.Radius.Window">8</CornerRadius>
   <CornerRadius x:Key="Token.Radius.Row">8</CornerRadius>
   <CornerRadius x:Key="Token.Radius.SearchBar">999</CornerRadius>
 
 </ResourceDictionary>
+
 

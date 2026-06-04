@@ -6,7 +6,6 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Themes/DesignTokens/Colors.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Typography.xaml"/>
-                <ResourceDictionary Source="/Themes/DesignTokens/IconTokens.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Spacing.xaml"/>
         <ResourceDictionary Source="/Themes/DesignTokens/Radii.xaml"/>
         <ResourceDictionary Source="/Themes/Animations.xaml"/>
@@ -20,12 +19,12 @@
     <SolidColorBrush x:Key="Depth3"          Color="#202023"/>
     <SolidColorBrush x:Key="Depth4"          Color="#29292D"/>
 
-    <SolidColorBrush x:Key="GlassBg"         Color="#E6101012"/>
-    <SolidColorBrush x:Key="GlassBorder"     Color="#18FFFFFF"/>
-    <SolidColorBrush x:Key="PreviewBg"       Color="#F0101012"/>
+    <SolidColorBrush x:Key="GlassBg"         Color="#80101012"/>
+    <SolidColorBrush x:Key="GlassBorder"     Color="#20FFFFFF"/>
+    <SolidColorBrush x:Key="PreviewBg"       Color="#B0101012"/>
 
     <SolidColorBrush x:Key="Surface"         Color="#171719"/>
-    <SolidColorBrush x:Key="SurfaceAcrylic"  Color="#CC171719"/>
+    <SolidColorBrush x:Key="SurfaceAcrylic"  Color="#FF171719"/>
     <SolidColorBrush x:Key="SurfaceLow"      Color="#101012"/>
     <SolidColorBrush x:Key="SurfaceRaised"   Color="#202023"/>
 
@@ -94,7 +93,7 @@
     <CornerRadius x:Key="RadiusLg">12</CornerRadius>
     <CornerRadius x:Key="RadiusXl">16</CornerRadius>
     <CornerRadius x:Key="RadiusPill">16</CornerRadius>
-    <CornerRadius x:Key="RadiusWindow">18</CornerRadius>
+    <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
     <CornerRadius x:Key="RadiusRow">10</CornerRadius>
     <CornerRadius x:Key="RadiusButton">6</CornerRadius>
     <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
@@ -109,3 +108,4 @@
     <sys:Double x:Key="WindowWidthExpanded">640</sys:Double>
 
 </ResourceDictionary>
+

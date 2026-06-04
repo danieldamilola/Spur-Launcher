@@ -1,6 +1,7 @@
 <UserControl x:Class="Spur.Views.ClipboardManager"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              xmlns:models="clr-namespace:Spur.Models"
              xmlns:conv="clr-namespace:Spur.Converters"
              Background="Transparent">
@@ -23,24 +24,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══ Search/filter ═══ -->
-        <Border Grid.Row="0" Style="{StaticResource SettingsInputFrame}"
-                Margin="12,10,12,6">
-            <TextBox x:Name="FilterBox"
-                     Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                     FontFamily="{DynamicResource Token.Font.Primary}"
-                     FontSize="12"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     VerticalContentAlignment="Center"
-                     Padding="8,6"
-                     Foreground="{DynamicResource TextPrimary}"
-                     CaretBrush="{DynamicResource Accent}"
-                     AutomationProperties.Name="Filter clipboard entries"/>
-        </Border>
-
         <!-- ═══ Actions bar ═══ -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,2,12,8">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,10,12,8">
             <Button Style="{StaticResource FilterChipStyle}"
                     Content="Clear all"
                     Command="{Binding ClearAllCommand}"
@@ -69,23 +54,40 @@
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type models:ClipboardEntry}">
                     <Grid x:Name="RowRoot"
-                          Margin="4,1"
+                          Height="56"
                           Background="Transparent"
                           Cursor="Hand"
                           AutomationProperties.Name="{Binding Preview}">
 
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="2"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Selection rail (placeholder to match padding) -->
+                        <Border x:Name="SelectionRail"
+                                Grid.Column="1"
+                                Background="Transparent"
+                                CornerRadius="2"
+                                Margin="0,8,0,8"/>
+
+                        <!-- Row background -->
                         <Border x:Name="RowBg"
-                                CornerRadius="{DynamicResource RadiusMd}"
-                                Background="Transparent"/>
+                                Grid.Column="2"
+                                Background="Transparent"
+                                CornerRadius="{DynamicResource RadiusRow}"/>
+
                         <Border x:Name="HoverOverlay"
-                                CornerRadius="{DynamicResource RadiusMd}"
+                                Grid.Column="2"
+                                CornerRadius="{DynamicResource RadiusRow}"
                                 Background="{DynamicResource HoverBg}"
                                 Opacity="0"/>
 
-                        <Grid Margin="10,6,8,6">
+                        <Grid Grid.Column="2" Margin="12,0,14,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30"/>
-                                <ColumnDefinition Width="11"/>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="12"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
@@ -93,12 +95,12 @@
                             <!-- Image preview (only visible when IsImage) -->
                             <Border x:Name="ImgBox"
                                     Grid.Column="0"
-                                    Width="30" Height="30"
-                                    CornerRadius="{DynamicResource RadiusSm}"
-                                    Background="{DynamicResource Depth2}"
+                                    Width="32" Height="32"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SurfaceLow}"
                                     VerticalAlignment="Center"
                                     Visibility="Collapsed">
-                                <Image Width="28" Height="28"
+                                <Image Width="30" Height="30"
                                        Stretch="UniformToFill"
                                        RenderOptions.BitmapScalingMode="HighQuality"
                                        Source="{Binding Image}"/>
@@ -107,31 +109,26 @@
                             <!-- Text icon -->
                             <Border x:Name="TextIconBox"
                                     Grid.Column="0"
-                                    Width="30" Height="30"
-                                    CornerRadius="{DynamicResource RadiusSm}"
-                                    Background="{DynamicResource Depth2}"
+                                    Width="32" Height="32"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SurfaceLow}"
                                     VerticalAlignment="Center">
-                                <Path Width="14" Height="14" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondary}" StrokeThickness="1.5"
-                                      StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Fill="Transparent"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Data="{Binding ConverterParameter=clipboard, Converter={x:Static conv:LucideIconConverter.Instance}}"/>
+                                <ui:FontIcon Glyph="&#xE8C8;" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
 
                             <!-- Content -->
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,2,0,0">
                                 <TextBlock Text="{Binding Preview}"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="13"
+                                           FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding TimeAgo}"
-                                           FontFamily="{DynamicResource Token.Font.Mono}"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource TextMuted}"
-                                           Opacity="0.8"/>
+                                           FontFamily="{DynamicResource Token.Font.Secondary}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiary}"
+                                           Margin="0,1,0,0"/>
                             </StackPanel>
 
                             <!-- Pin + Delete buttons -->
@@ -147,11 +144,7 @@
                                         Tag="{Binding}"
                                         AutomationProperties.Name="Pin entry"
                                         Click="OnPinClick">
-                                    <Path Width="10" Height="10" Stretch="Uniform"
-                                          Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Fill="Transparent"
-                                          Data="{Binding ConverterParameter=pin, Converter={x:Static conv:LucideIconConverter.Instance}}"/>
+                                    <ui:FontIcon Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                 </Button>
 
                                 <!-- Delete button -->
@@ -164,11 +157,7 @@
                                         AutomationProperties.Name="Delete entry"
                                         Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}">
-                                    <Path Width="12" Height="12" Stretch="Uniform"
-                                          Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Fill="Transparent"
-                                          Data="{Binding ConverterParameter=x, Converter={x:Static conv:LucideIconConverter.Instance}}"/>
+                                    <ui:FontIcon Glyph="&#xE711;" FontSize="14" Foreground="{DynamicResource TextMuted}"/>
                                 </Button>
                             </StackPanel>
                         </Grid>
@@ -254,3 +243,4 @@
     </Grid>
 
 </UserControl>
+
