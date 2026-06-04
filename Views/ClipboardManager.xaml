@@ -26,7 +26,7 @@
 
         <!-- ═══ Actions bar ═══ -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,10,12,8">
-            <Button Style="{StaticResource FilterChipStyle}"
+            <Button Style="{StaticResource SettingsSoftButton}"
                     Content="Clear all"
                     Command="{Binding ClearAllCommand}"
                     AutomationProperties.Name="Clear all clipboard entries"/>
@@ -49,6 +49,7 @@
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  VirtualizingStackPanel.IsVirtualizing="True"
                  FocusVisualStyle="{x:Null}"
+                 PreviewMouseLeftButtonUp="OnListMouseClick"
                  AutomationProperties.Name="Clipboard history">
 
             <ListBox.ItemTemplate>
@@ -204,8 +205,38 @@
                 BorderBrush="{DynamicResource Separator}"
                 BorderThickness="0,1,0,0"
                 Background="{DynamicResource Depth2}"
-                Visibility="Collapsed"
                 MaxHeight="120">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Setter Property="Opacity" Value="0"/>
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <TranslateTransform X="12"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <!-- When SelectedEntry is NOT null (so we trigger on False, wait, no, we need to trigger when it IS NOT null) -->
+                        <DataTrigger Binding="{Binding SelectedEntry}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <Trigger Property="Visibility" Value="Visible">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.16"
+                                                         EasingFunction="{StaticResource AnimEaseOut}"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                         To="0" Duration="0:0:0.16"
+                                                         EasingFunction="{StaticResource AnimEaseOut}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid Margin="12,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

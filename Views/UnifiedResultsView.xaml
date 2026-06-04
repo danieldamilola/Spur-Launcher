@@ -21,6 +21,7 @@
              ItemTemplateSelector="{StaticResource TemplateSelector}"
              SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
              SelectionChanged="OnSelectionChanged"
+             PreviewMouseLeftButtonUp="OnListMouseClick"
              HorizontalContentAlignment="Stretch"
              Padding="0,2,0,4"
              MaxHeight="352"

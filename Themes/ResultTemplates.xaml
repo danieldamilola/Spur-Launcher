@@ -460,6 +460,12 @@
                         Background="{DynamicResource HoverBg}"
                         CornerRadius="{DynamicResource RadiusRow}"
                         Opacity="0"/>
+                <!-- Selected overlay (animated) -->
+                <Border x:Name="SelectedOverlay"
+                        Grid.Column="2"
+                        Background="{DynamicResource SelectedBg}"
+                        CornerRadius="{DynamicResource RadiusRow}"
+                        Opacity="0"/>
 
                 <Grid Grid.Column="2" Margin="12,0,14,0">
                     <Grid.ColumnDefinitions>
@@ -599,7 +605,7 @@
                             <Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                                  Storyboard.TargetProperty="Opacity"
-                                                 To="1" Duration="0:0:0.15"
+                                                 To="1" Duration="0:0:0.08"
                                                  EasingFunction="{StaticResource AnimEaseOut}"/>
                             </Storyboard>
                         </BeginStoryboard>
@@ -609,7 +615,7 @@
                             <Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                                  Storyboard.TargetProperty="Opacity"
-                                                 To="0" Duration="0:0:0.2"
+                                                 To="0" Duration="0:0:0.08"
                                                  EasingFunction="{StaticResource AnimEaseIn}"/>
                             </Storyboard>
                         </BeginStoryboard>
@@ -619,8 +625,25 @@
                 <!-- Selected -->
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                     <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
-                    <Setter TargetName="RowBg" Property="Background" Value="{DynamicResource SelectedBg}"/>
                     <Setter TargetName="EnterHint" Property="Visibility" Value="Visible"/>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="1" Duration="0:0:0.06"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0" Duration="0:0:0.06"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.ExitActions>
                 </DataTrigger>
 
                 <!-- No file icon → Lucide fallback -->

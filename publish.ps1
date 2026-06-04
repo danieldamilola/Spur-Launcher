@@ -4,7 +4,7 @@
 # Requires: dotnet tool install -g vpk  (run once)
 
 param(
-    [string]$Version = "1.2.0",
+    [string]$Version = "2.0.0",
     [string]$OutputDir = ".\dist"
 )
 
@@ -77,7 +77,7 @@ Write-Host ""
 
 # Show output files
 Get-ChildItem $OutputDir | ForEach-Object {
-    $size = if ($_.Length -ge 1MB) { "$([math]::Round($_.Length/1MB,1)) MB" } else { "$([math]::Round($_.Length/1KB,0)) KB" }
+    $size = if ($_.Length -ge 1MB) { [math]::Round($_.Length/1MB,1).ToString() + " MB" } else { [math]::Round($_.Length/1KB,0).ToString() + " KB" }
     Write-Host "    $($_.Name)  ($size)" -ForegroundColor DarkGray
 }
 Write-Host ""

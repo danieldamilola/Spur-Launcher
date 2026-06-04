@@ -1,4 +1,9 @@
+using System;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Spur.ViewModels;
 
 namespace Spur.Views;
@@ -19,6 +24,48 @@ public partial class UnifiedResultsView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        ResultsBox.ItemContainerGenerator.StatusChanged += OnItemContainerStatusChanged;
+    }
+
+    private void OnItemContainerStatusChanged(object? sender, EventArgs e)
+    {
+        if (ResultsBox.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
+        {
+            if (DataContext is not MainViewModel vm) return;
+            bool animate = vm.Config.AnimationEnabled && !SpurMotion.IsReduceMotion;
+
+            for (int i = 0; i < ResultsBox.Items.Count; i++)
+            {
+                if (ResultsBox.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container)
+                {
+                    // Clean up any old animations
+                    container.BeginAnimation(UIElement.OpacityProperty, null);
+                    if (container.RenderTransform is TranslateTransform oldTt)
+                        oldTt.BeginAnimation(TranslateTransform.YProperty, null);
+
+                    if (animate)
+                    {
+                        var tt = new TranslateTransform(0, 4);
+                        container.RenderTransform = tt;
+                        container.Opacity = 0;
+
+                        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+                        var delay = TimeSpan.FromMilliseconds(i * 16);
+                        
+                        var yAnim = new DoubleAnimation(4, 0, TimeSpan.FromMilliseconds(120)) { EasingFunction = ease, BeginTime = delay };
+                        var opAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(120)) { EasingFunction = ease, BeginTime = delay };
+
+                        tt.BeginAnimation(TranslateTransform.YProperty, yAnim);
+                        container.BeginAnimation(UIElement.OpacityProperty, opAnim);
+                    }
+                    else
+                    {
+                        container.RenderTransform = null;
+                        container.Opacity = 1;
+                    }
+                }
+            }
+        }
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -48,17 +95,23 @@ public partial class UnifiedResultsView : UserControl
         container?.BringIntoView();
     }
 
-    private void OnRowClick(object sender, MouseButtonEventArgs e)
+    private void OnListMouseClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (DataContext is not MainViewModel vm) return;
-        if (sender is not FrameworkElement el) return;
-        if (el.DataContext is not SearchResult result) return;
-
-        int idx = vm.Results.IndexOf(result);
-        if (idx >= 0)
+        if (e.OriginalSource is DependencyObject src)
         {
-            vm.SelectedIndex = idx;
-            vm.OpenSelectedCommand.Execute(null);
+            var item = ItemsControl.ContainerFromElement(ResultsBox, src) as ListBoxItem;
+            if (item?.DataContext is SearchResult result)
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    int idx = vm.Results.IndexOf(result);
+                    if (idx >= 0)
+                        vm.SelectedIndex = idx;
+                        
+                    vm.OpenSelectedCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
         }
     }
 

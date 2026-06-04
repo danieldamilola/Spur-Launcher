@@ -9,7 +9,7 @@ namespace Spur;
 /// <summary>Launcher motion primitives — timings from motion.md.</summary>
 public static class SpurMotion
 {
-    public const int ShowDurationMs = 200;
+    public const int ShowDurationMs = 180;
     public const int HideDurationMs = 140;
     public const int AnchorRevealDurationMs = 150;
     public const int AnchorHideDurationMs = 100;
@@ -18,13 +18,16 @@ public static class SpurMotion
     public const int ColumnRevealDurationMs = 200;
     public const int DividerRevealDurationMs = 120;
 
+    public static bool IsReduceMotion => !SystemParameters.ClientAreaAnimation;
+
     public static bool ShouldAnimate(bool userEnabled)
         => userEnabled;
 
     public static int ScaleMs(int baseMs, bool userEnabled)
     {
         if (!userEnabled) return 0;
-        return SystemParameters.ClientAreaAnimation ? baseMs : Math.Max(baseMs / 2, 60);
+        if (IsReduceMotion) return baseMs; // We'll bypass transforms if reduce motion is on, but keep opacity fades
+        return baseMs;
     }
 
     public static void Show(Window window, ScaleTransform scale, bool animationEnabled)
@@ -37,11 +40,22 @@ public static class SpurMotion
         }
 
         var ms = ScaleMs(ShowDurationMs, animationEnabled);
-        var ease = EaseOut();
+        
+        if (IsReduceMotion)
+        {
+            window.BeginAnimation(UIElement.OpacityProperty,
+                new DoubleAnimation(0, 1, Ms(80)) { EasingFunction = EaseOut() });
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            scale.ScaleX = scale.ScaleY = 1;
+            return;
+        }
+
+        var ease = new SpringEase { Stiffness = 300, Damping = 28, DurationSec = ms / 1000.0 };
         window.BeginAnimation(UIElement.OpacityProperty,
             new DoubleAnimation(0, 1, Ms(ms)) { EasingFunction = ease });
 
-        var scaleAnim = new DoubleAnimation(0.97, 1, Ms(ms)) { EasingFunction = ease };
+        var scaleAnim = new DoubleAnimation(0.96, 1, Ms(ms)) { EasingFunction = ease };
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
     }
@@ -57,12 +71,21 @@ public static class SpurMotion
         }
 
         var ms = ScaleMs(HideDurationMs, animationEnabled);
-        var ease = EaseIn();
+        
+        if (IsReduceMotion)
+        {
+            var rfade = new DoubleAnimation(1, 0, Ms(80)) { EasingFunction = EaseOut() };
+            rfade.Completed += (_, _) => onComplete();
+            window.BeginAnimation(UIElement.OpacityProperty, rfade);
+            return;
+        }
+
+        var ease = EaseOut();
         var fade = new DoubleAnimation(1, 0, Ms(ms)) { EasingFunction = ease };
         fade.Completed += (_, _) => onComplete();
         window.BeginAnimation(UIElement.OpacityProperty, fade);
 
-        var scaleAnim = new DoubleAnimation(1, 0.98, Ms(ms)) { EasingFunction = ease };
+        var scaleAnim = new DoubleAnimation(1, 0.96, Ms(ms)) { EasingFunction = ease };
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
     }
@@ -212,6 +235,40 @@ internal sealed class GridLengthAnimation : AnimationTimeline
         var from = From.Value;
         var to = To.Value;
         return new GridLength(from + (to - from) * t, GridUnitType.Pixel);
+    }
+}
+
+public class SpringEase : EasingFunctionBase
+{
+    public double Stiffness { get; set; } = 300;
+    public double Damping { get; set; } = 28;
+    public double DurationSec { get; set; } = 0.18; // Default to 180ms
+
+    protected override Freezable CreateInstanceCore() => new SpringEase();
+
+    protected override double EaseInCore(double normalizedTime)
+    {
+        if (normalizedTime <= 0) return 0;
+        if (normalizedTime >= 1) return 1;
+
+        double t = normalizedTime * DurationSec;
+        double mass = 1.0;
+        double w0 = Math.Sqrt(Stiffness / mass);
+        double zeta = Damping / (2 * Math.Sqrt(Stiffness * mass));
+        
+        if (zeta < 1.0)
+        {
+            // Underdamped
+            double wd = w0 * Math.Sqrt(1 - zeta * zeta);
+            double expTerm = Math.Exp(-zeta * w0 * t);
+            return 1 - expTerm * (Math.Cos(wd * t) + (zeta / Math.Sqrt(1 - zeta * zeta)) * Math.Sin(wd * t));
+        }
+        else
+        {
+            // Critically damped or overdamped (fallback)
+            double expTerm = Math.Exp(-w0 * t);
+            return 1 - expTerm * (1 + w0 * t);
+        }
     }
 }
 

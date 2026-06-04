@@ -181,14 +181,14 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Hub removed per ux.md — always false.</summary>
     public bool IsHubVisible => false;
 
-    public bool IsScopeBarVisible => ScopeFilters.Count >= 2 && !string.IsNullOrEmpty(Query) && ActiveCategory is null;
+    public bool IsScopeBarVisible => false;
 
     public string SearchPlaceholder => ActiveCategory switch
     {
         "files"     => "Search files…",
         "actions"   => "Search actions…",
         "clipboard" => "Filter clipboard…",
-        _           => "Search apps, files, actions…",
+        _           => "Search",
     };
 
     public SearchResult? SelectedResult
@@ -513,7 +513,10 @@ public sealed partial class MainViewModel : ObservableObject
 
             case ResultType.Clipboard:
                 if (result.ClipContent is not null)
+                {
+                    _clipboard.Add(result.ClipContent);   // promote to top first
                     _clipboard.CopyToSystem(result.ClipContent);
+                }
                 HideAfterLaunch();
                 break;
 
@@ -726,7 +729,6 @@ public sealed partial class MainViewModel : ObservableObject
         result.IsPinned = Config.PinnedItems.Contains(result.Id);
         _configSvc.Save(Config);
 
-        // Refresh display so pin icon updates
         var idx = Results.IndexOf(result);
         if (idx >= 0)
         {
@@ -734,6 +736,8 @@ public sealed partial class MainViewModel : ObservableObject
             Results.Insert(idx, result);
         }
     }
+
+    public void SaveConfig() => _configSvc.Save(Config);
 
     /// <summary>Called when the user clicks the clipboard category button.</summary>
     public void ActivateClipboardCategory()
