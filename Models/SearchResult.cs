@@ -39,7 +39,7 @@ public class SearchResult
     public string? IconPath { get; set; }
 
     /// <summary>Lucide icon name used for non-file results (e.g. "clipboard", "zap").</summary>
-    public string? LucideIcon { get; set; }
+    public string? IconGlyph { get; set; }
 
     public double Score { get; set; }
     public double FrequencyScore { get; set; }
@@ -85,7 +85,7 @@ public record PersistedSearchResult(
     string Name,
     string Subtitle,
     string? IconPath,
-    string? LucideIcon,
+    string? IconGlyph,
     double Score,
     double FrequencyScore,
     bool IsPinned,
@@ -102,7 +102,7 @@ public record PersistedSearchResult(
     public SearchResult ToResult() => new()
     {
         Id = Id, Type = Type, Name = Name, Subtitle = Subtitle,
-        IconPath = IconPath, LucideIcon = LucideIcon,
+        IconPath = IconPath, IconGlyph = IconGlyph,
         Score = Score, FrequencyScore = FrequencyScore,
         IsPinned = IsPinned,
         ExePath = ExePath, LnkPath = LnkPath,
@@ -114,7 +114,7 @@ public record PersistedSearchResult(
 
     public static PersistedSearchResult FromResult(SearchResult r) => new(
         r.Id, r.Type, r.Name, r.Subtitle,
-        r.IconPath, r.LucideIcon,
+        r.IconPath, r.IconGlyph,
         r.Score, r.FrequencyScore,
         r.IsPinned,
         r.ExePath, r.LnkPath,

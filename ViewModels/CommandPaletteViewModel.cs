@@ -109,7 +109,7 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
                 Id = entry.Id,
                 Label = entry.Label,
                 Description = entry.Description,
-                LucideIcon = entry.LucideIcon,
+                IconGlyph = entry.IconGlyph,
                 ExecuteAction = entry.Execute,
             });
         }

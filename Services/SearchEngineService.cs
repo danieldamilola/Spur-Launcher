@@ -150,7 +150,7 @@ public sealed class SearchEngineService : ISearchEngineService
                     Type       = ResultType.Clipboard,
                     Name       = c.Preview,
                     Subtitle   = c.TimeAgo,
-                    LucideIcon = c.IsImage ? "image" : "clipboard",
+                    IconGlyph = c.IsImage ? "image" : "clipboard",
                     ClipContent = c.Content,
                     ClipTimestamp = c.Timestamp,
                     ClipImage = c.Image,
@@ -291,7 +291,7 @@ public sealed class SearchEngineService : ISearchEngineService
             Type = ResultType.Action,
             Name = $"Open {query}",
             Subtitle = "Open URL",
-            LucideIcon = "globe",
+            IconGlyph = "\ue12b",
             ActionId = "url",
             Score = 500,
         };
@@ -307,7 +307,7 @@ public sealed class SearchEngineService : ISearchEngineService
             Type = ResultType.Action,
             Name = $"Search the web for \"{q}\"",
             Subtitle = "Web",
-            LucideIcon = "search",
+            IconGlyph = "\ue11a",
             ActionId = "web",
             Score = 50,
         };
@@ -324,7 +324,7 @@ public sealed class SearchEngineService : ISearchEngineService
             Type = ResultType.Action,
             Name = $"Run {command}",
             Subtitle = "Shell command",
-            LucideIcon = "terminal",
+            IconGlyph = "\ue765",
             ActionId = "shell",
             Score = 600,
         };
@@ -382,7 +382,8 @@ public sealed class SearchEngineService : ISearchEngineService
     private static SearchResult Clone(SearchResult s) => new()
     {
         Id = s.Id, Name = s.Name, Subtitle = s.Subtitle, Type = s.Type,
-        ExePath = s.ExePath, IconPath = s.IconPath, LucideIcon = s.LucideIcon,
+        ExePath = s.ExePath, IconPath = s.IconPath, IconGlyph = s.IconGlyph,
         ActionId = s.ActionId, FrequencyScore = s.FrequencyScore
     };
 }
+

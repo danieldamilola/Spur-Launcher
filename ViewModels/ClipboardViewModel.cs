@@ -24,6 +24,14 @@ public sealed partial class ClipboardViewModel : ObservableObject
         _clipboard = clipboard;
         _config = config;
         _configSvc = configSvc;
+
+        _clipboard.ClipboardChanged += () =>
+        {
+            if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == true)
+                Refresh();
+            else
+                System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+        };
     }
 
     // ── Observable properties ──────────────────────────────────────

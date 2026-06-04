@@ -111,7 +111,7 @@ public partial class App : Application
         };
 
         // ── Register global hotkey ────────────────────────────────────
-        var hwnd = new WindowInteropHelper(_window).Handle;
+        var hwnd = new WindowInteropHelper(_window).EnsureHandle();
 
         if (config.HotkeyEnabled)
         {
@@ -203,7 +203,7 @@ public partial class App : Application
 
                 case nameof(SettingsViewModel.HotkeyEnabled):
                     if (_window is null) break;
-                    var hwnd = new WindowInteropHelper(_window).Handle;
+                    var hwnd = new WindowInteropHelper(_window).EnsureHandle();
                     if (settings.HotkeyEnabled)
                     {
                         _hotkey?.Dispose();
@@ -225,7 +225,7 @@ public partial class App : Application
                     {
                         _hotkey?.Dispose();
                         _hotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
-                        var h = new WindowInteropHelper(_window).Handle;
+                        var h = new WindowInteropHelper(_window).EnsureHandle();
                         if (!_hotkey.Register(h, settings.Shortcut, ToggleWindow))
                         {
                             _notification?.Show("Hotkey unavailable", $"Unable to register {settings.Shortcut}. Another app may already be using it.");
@@ -353,4 +353,5 @@ public partial class App : Application
         base.OnExit(e);
     }
 }
+
 

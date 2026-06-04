@@ -816,7 +816,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "toggle-theme",
             Label = "Toggle Theme",
             Description = "Switch between dark and light mode",
-            LucideIcon = "SunMoon",
+            IconGlyph = "\ue706",
             Execute = () =>
             {
                 var current = Config.Theme;
@@ -837,7 +837,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "open-settings",
             Label = "Open Settings",
             Description = "Open the settings window",
-            LucideIcon = "Settings",
+            IconGlyph = "\ue713",
             Execute = () => OpenSettingsRequested?.Invoke()
         });
 
@@ -846,7 +846,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "clear-clipboard",
             Label = "Clear Clipboard History",
             Description = "Remove all clipboard entries",
-            LucideIcon = "Trash2",
+            IconGlyph = "\ue74d",
             Execute = ClearClipboard
         });
 
@@ -855,7 +855,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "cycle-scope",
             Label = "Cycle Search Scope",
             Description = "Switch between All, Files, Commands, Clipboard",
-            LucideIcon = "RefreshCw",
+            IconGlyph = "\ue72c",
             Execute = CycleScope
         });
 
@@ -864,7 +864,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "open-folder",
             Label = "Open Containing Folder",
             Description = "Open the folder of the selected item",
-            LucideIcon = "FolderOpen",
+            IconGlyph = "\ue838",
             Execute = OpenFolder
         });
 
@@ -873,7 +873,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "copy-path",
             Label = "Copy Path",
             Description = "Copy the selected item path to clipboard",
-            LucideIcon = "Copy",
+            IconGlyph = "\ue8c8",
             Execute = CopySelectedPath
         });
 
@@ -882,7 +882,7 @@ public sealed partial class MainViewModel : ObservableObject
             Id = "run-as-admin",
             Label = "Run as Administrator",
             Description = "Launch the selected app with elevated privileges",
-            LucideIcon = "Shield",
+            IconGlyph = "\ueea1",
             Execute = RunAsAdmin
         });
     }
@@ -998,7 +998,7 @@ public sealed partial class MainViewModel : ObservableObject
     private static SearchResult Clone(SearchResult s) => new()
     {
         Id = s.Id, Type = s.Type, Name = s.Name, Subtitle = s.Subtitle,
-        IconPath = s.IconPath, LucideIcon = s.LucideIcon,
+        IconPath = s.IconPath, IconGlyph = s.IconGlyph,
         Score = s.Score, FrequencyScore = s.FrequencyScore,
         ExePath = s.ExePath, LnkPath = s.LnkPath,
         FilePath = s.FilePath, FileExtension = s.FileExtension,
@@ -1006,4 +1006,5 @@ public sealed partial class MainViewModel : ObservableObject
         ActionId = s.ActionId,
     };
 }
+
 

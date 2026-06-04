@@ -18,7 +18,7 @@ public sealed partial class CommandPaletteItem : ObservableObject
     private string _description = string.Empty;
 
     [ObservableProperty]
-    private string _lucideIcon = string.Empty;
+    private string _IconGlyph = string.Empty;
 
     /// <summary>
     /// The action to invoke when this command is selected.

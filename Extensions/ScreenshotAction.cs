@@ -22,7 +22,7 @@ public sealed class ScreenshotAction : IAction
         Type       = ResultType.Action,
         Name       = "Take Screenshot",
         Subtitle   = "Press ↵ to capture the screen",
-        LucideIcon = "camera",
+        IconGlyph = "\ue722",
         ActionId   = Id,
     };
 
@@ -47,3 +47,4 @@ public sealed class ScreenshotAction : IAction
         }
     }
 }
+
