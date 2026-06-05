@@ -163,7 +163,7 @@ public partial class App : Application
             BuildTrayIcon();
 
         // ── Check for updates ─────────────────────────────────────────
-        _ = CheckForUpdatesAsync();
+        Helpers.SafeFireAndForget.Run(CheckForUpdatesAsync, _fileLogger, "CheckForUpdates");
 
         _fileLogger.Info("Spur started successfully.");
         }
@@ -319,13 +319,14 @@ public partial class App : Application
     }
 
     // ── Updates ───────────────────────────────────────────────────────
-    private const string UpdateUrl = "https://github.com/danieldamilola/Spur-Launcher/releases/latest/download";
     private async Task CheckForUpdatesAsync()
     {
         try
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var mgr = new Velopack.UpdateManager(UpdateUrl);
+            var cfg = _services?.GetService<SpurConfig>();
+            var updateUrl = cfg?.UpdateUrl ?? "https://github.com/danieldamilola/Spur-Launcher/releases/latest/download";
+            var mgr = new Velopack.UpdateManager(updateUrl);
             var update = await mgr.CheckForUpdatesAsync();
             if (update is null) return;
             _fileLogger?.Info($"Update found: {update.TargetFullRelease.Version}");

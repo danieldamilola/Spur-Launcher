@@ -215,7 +215,7 @@ public sealed class FileSearchService : IFileSearchService
     {
         // Refresh index if it's older than 30 mins
         if ((DateTime.Now - _lastIndexTime).TotalMinutes > 30)
-            _ = BuildIndexAsync();
+            Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
 
         List<CachedItem> localCache;
         lock (_cacheLock) { localCache = _cache; }
@@ -268,7 +268,7 @@ public sealed class FileSearchService : IFileSearchService
 
         // Refresh index if it's empty or very old
         if (localCache.Count == 0 || (DateTime.Now - _lastIndexTime).TotalMinutes > 30)
-            _ = BuildIndexAsync();
+            Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
 
         var queryLower = query.ToLowerInvariant();
         

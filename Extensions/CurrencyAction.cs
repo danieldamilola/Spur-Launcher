@@ -10,6 +10,9 @@ namespace Spur.Extensions;
 public sealed class CurrencyAction : IAction
 {
     public string Id => "currency";
+    public string Name => "Currency";
+    public string IconGlyph => "\ue825";
+    public bool IsGlobal => false;
 
     private static readonly Regex _trigger = new(
         @"^([\d,.]+)\s*([a-zA-Z]{3})\s+(?:to|in)\s+([a-zA-Z]{3})$",
@@ -21,6 +24,53 @@ public sealed class CurrencyAction : IAction
         Timeout = TimeSpan.FromSeconds(5),
     };
 
+    // ── Keyword-scoped ────────────────────────────────────────────
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        var text = subQuery.Trim();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield return new SearchResult
+            {
+                Id         = "action:currency",
+                Type       = ResultType.Action,
+                Name       = "Currency Converter",
+                Subtitle   = "Type an amount like 100 usd to eur",
+                IconGlyph  = "\ue825",
+                ActionId   = Id,
+            };
+            yield break;
+        }
+
+        var (amount, from, to) = Parse(text);
+        if (amount is not null)
+        {
+            yield return new SearchResult
+            {
+                Id         = $"action:currency:{from}-{to}",
+                Type       = ResultType.Action,
+                Name       = $"Convert {amount:N2} {from.ToUpperInvariant()} → {to.ToUpperInvariant()}",
+                Subtitle   = "Press ↵ to fetch rate and copy",
+                IconGlyph  = "\ue825",
+                ActionId   = Id,
+            };
+        }
+        else
+        {
+            yield return new SearchResult
+            {
+                Id         = "action:currency",
+                Type       = ResultType.Action,
+                Name       = "Currency Converter",
+                Subtitle   = "Format: 100 usd to eur",
+                IconGlyph  = "\ue825",
+                ActionId   = Id,
+            };
+        }
+    }
+
+    // ── Legacy (global) ───────────────────────────────────────────
     public bool CanHandle(string query)
         => !string.IsNullOrWhiteSpace(query) && _trigger.IsMatch(query.Trim());
 

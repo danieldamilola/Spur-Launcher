@@ -1,54 +1,66 @@
-using System.Net.NetworkInformation;
+using System.Net;
 using System.Net.Sockets;
+using Spur.Models;
 
 namespace Spur.Extensions;
 
-/// <summary>IP action. Triggered by typing exactly "ip".</summary>
 public sealed class IpAction : IAction
 {
     public string Id => "ip";
-
-    private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+    public string Name => "IP Address";
+    public string IconGlyph => "\ue701";
+    public bool IsGlobal => false;
 
     public bool CanHandle(string query) =>
-        string.Equals(query.Trim(), "ip", StringComparison.OrdinalIgnoreCase);
+        !string.IsNullOrWhiteSpace(query) && query.Trim().Equals("ip", StringComparison.OrdinalIgnoreCase);
 
-    public SearchResult BuildResult(string query) => new()
+    public SearchResult BuildResult(string query)
     {
-        Id       = "action:ip",
-        Type     = ResultType.Action,
-        Name     = "IP Address",
-        Subtitle = "Local and public IP",
-        IconGlyph = "\ue701",
-        ActionId = Id,
-    };
+        var local = GetLocalIp();
+        return new SearchResult
+        {
+            Id = "action:ip",
+            Type = ResultType.Action,
+            Name = "IP Address",
+            Subtitle = $"Local: {local ?? "Not connected"}  ·  Public: fetching…",
+            IconGlyph = "\ue701",
+            ActionId = Id,
+            Score = 700,
+        };
+    }
 
-    /// <summary>Returns the first active non-loopback IPv4 address.</summary>
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        var local = GetLocalIp();
+        yield return new SearchResult
+        {
+            Id = "action:ip",
+            Type = ResultType.Action,
+            Name = "IP Address",
+            Subtitle = $"Local: {local ?? "Not connected"}  ·  Public: fetching…",
+            IconGlyph = "\ue701",
+            ActionId = Id,
+        };
+    }
+
     public static string? GetLocalIp()
     {
         try
         {
-            return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up)
-                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
-                .FirstOrDefault(a =>
-                    a.Address.AddressFamily == AddressFamily.InterNetwork &&
-                    !System.Net.IPAddress.IsLoopback(a.Address))
-                ?.Address.ToString();
+            using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
+            socket.Connect("8.8.8.8", 65530);
+            return (socket.LocalEndPoint as IPEndPoint)?.Address.ToString();
         }
         catch { return null; }
     }
 
-    /// <summary>Fetches the public IP from ipify.org.</summary>
-    public static async Task<string?> GetPublicIpAsync(CancellationToken ct = default)
+    public static async Task<string?> GetPublicIpAsync()
     {
         try
         {
-            var ip = await _http.GetStringAsync("https://api.ipify.org", ct);
-            return ip.Trim();
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+            return (await client.GetStringAsync("https://api.ipify.org")).Trim();
         }
         catch { return null; }
     }
 }
-
-

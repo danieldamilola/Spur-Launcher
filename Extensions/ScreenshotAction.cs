@@ -5,16 +5,27 @@ using System.Drawing.Imaging;
 namespace Spur.Extensions;
 
 /// <summary>
-/// Screenshot action. Triggered by typing exactly "screenshot" or "screen".
+/// Screenshot action. Triggered by "ss" or "screenshot".
 /// Captures the primary screen and saves to Desktop.
 /// </summary>
 public sealed class ScreenshotAction : IAction
 {
     public string Id => "screenshot";
+    public string Name => "Screenshot";
+    public string IconGlyph => "\ue722";
+    public bool IsGlobal => false;
 
+    // ── Keyword-scoped ────────────────────────────────────────────
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        yield return BuildResult("screenshot");
+    }
+
+    // ── Legacy (global) ───────────────────────────────────────────
     public bool CanHandle(string query)
         => string.Equals(query.Trim(), "screenshot", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(query.Trim(), "screen", StringComparison.OrdinalIgnoreCase);
+        || string.Equals(query.Trim(), "screen", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(query.Trim(), "ss", StringComparison.OrdinalIgnoreCase);
 
     public SearchResult BuildResult(string query) => new()
     {
@@ -47,4 +58,3 @@ public sealed class ScreenshotAction : IAction
         }
     }
 }
-

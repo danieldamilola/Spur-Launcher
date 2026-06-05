@@ -100,7 +100,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         _apps.CatalogRefreshed += HandleCatalogRefreshed;
 
-        _ = LoadAppsAsync();
+        Helpers.SafeFireAndForget.Run(LoadAppsAsync, _log, "LoadApps");
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
     }
 
@@ -160,6 +160,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _activeCategory;
 
+    /// <summary>Lucide icon glyph shown in the search bar when a keyword scope is active.</summary>
+    [ObservableProperty]
+    private string? _scopeIconGlyph;
+
     [ObservableProperty]
     private bool _isSettingsOpen;
 
@@ -177,6 +181,13 @@ public sealed partial class MainViewModel : ObservableObject
     public bool HasQuery          => !string.IsNullOrEmpty(Query);
     public bool HasResults         => Results.Count > 0;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
+
+    /// <summary>True when ActiveCategory points to a keyword-scoped action (not a category filter).</summary>
+    private static bool IsActionScope(string? category) => category switch
+    {
+        null or "apps" or "files" or "clipboard" or "actions" => false,
+        _ => true,
+    };
 
     /// <summary>Hub removed per ux.md — always false.</summary>
     public bool IsHubVisible => false;
@@ -204,7 +215,7 @@ public sealed partial class MainViewModel : ObservableObject
     // Query change handler — debounced search
     // ═══════════════════════════════════════════════════════════════
 
-    partial void OnQueryChanged(string value)
+        partial void OnQueryChanged(string value)
     {
         try
         {
@@ -213,7 +224,24 @@ public sealed partial class MainViewModel : ObservableObject
             _searchCts = new CancellationTokenSource();
             var ct = _searchCts.Token;
 
-            if (string.IsNullOrEmpty(value) && ActiveCategory is null)
+            // Detect action keyword -> lock scope
+            var effectiveQuery = value;
+            var detected = DetectActionKeyword(value);
+            if (detected is not null)
+            {
+                var (actionId, iconGlyph, subQuery) = detected.Value;
+                ActiveCategory = actionId;
+                ScopeIconGlyph = iconGlyph;
+                effectiveQuery = subQuery;
+            }
+            else if (ActiveCategory is not null && IsActionScope(ActiveCategory))
+            {
+                // User released the keyword -> exit scope
+                ActiveCategory = null;
+                ScopeIconGlyph = null;
+            }
+
+            if (string.IsNullOrEmpty(effectiveQuery) && ActiveCategory is null)
             {
                 ClearIdleState();
                 return;
@@ -225,7 +253,7 @@ public sealed partial class MainViewModel : ObservableObject
             delay.ContinueWith(_ =>
             {
                 if (!ct.IsCancellationRequested)
-                    Application.Current?.Dispatcher.InvokeAsync(() => RunSearch(value, ct));
+                    Application.Current?.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
             }, TaskScheduler.Default);
         }
         catch (Exception ex)
@@ -233,8 +261,7 @@ public sealed partial class MainViewModel : ObservableObject
             _log.Warning("OnQueryChanged error", ex);
         }
     }
-
-    partial void OnActiveCategoryChanged(string? value)
+partial void OnActiveCategoryChanged(string? value)
     {
         OnPropertyChanged(nameof(IsBrowsePanelVisible));
         OnPropertyChanged(nameof(SearchPlaceholder));
@@ -446,6 +473,44 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var q = query.Trim();
         return q.StartsWith('?') ? q[1..].Trim() : q;
+    }
+
+    /// <summary>
+    /// Detects action keywords at the start of the query (e.g. "sys ", "timer ").
+    /// Returns the action ID, icon glyph, and stripped sub-query, or null.
+    /// </summary>
+    private (string actionId, string iconGlyph, string subQuery)? DetectActionKeyword(string query)
+    {
+        if (string.IsNullOrEmpty(query)) return null;
+
+        var mapping = new Dictionary<string, (string actionId, string icon)>
+        {
+            [Config.KeywordSystem]     = ("system",     "power"),
+            [Config.KeywordColor]      = ("color",      "\ue790"),
+            [Config.KeywordTimer]      = ("timer",      "\ue121"),
+            [Config.KeywordIp]         = ("ip",         "\ue701"),
+            [Config.KeywordAi]         = ("ai",         "\ue113"),
+            [Config.KeywordCurrency]   = ("currency",   "\ue825"),
+            [Config.KeywordPassword]   = ("pw",         "\ue722"),
+            [Config.KeywordNote]       = ("note",       "\ue727"),
+            [Config.KeywordKill]       = ("kill",       "\ue747"),
+            [Config.KeywordScreenshot] = ("screenshot", "\ue74c"),
+            [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
+            [Config.KeywordFiles]      = ("files",      "\ue70a"),
+            [Config.KeywordApps]       = ("apps",       "\ue71d"),
+        };
+
+        foreach (var (keyword, (actionId, icon)) in mapping)
+        {
+            if (string.IsNullOrEmpty(keyword)) continue;
+            var prefix = keyword + " ";
+            if (query.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var subQuery = query[prefix.Length..];
+                return (actionId, icon, subQuery);
+            }
+        }
+        return null;
     }
 
     private void RunSearch(string query, CancellationToken ct)

@@ -69,7 +69,23 @@ public sealed class SearchEngineService : ISearchEngineService
         var newResults = new List<object>();
         bool isBrowseMode = activeCategory is not null;
 
-        // ── Apps ──────────────────────────────────────────────────
+        // -- Keyword-scoped action (e.g. "sys ", "timer ") ----------
+        if (activeCategory is not null)
+        {
+            var scopedAction = Actions.FirstOrDefault(a => a.Id == activeCategory && !a.IsGlobal);
+            if (scopedAction is not null)
+            {
+                var actionResults = scopedAction.GetResults(query).ToList();
+                if (actionResults.Count > 0)
+                {
+                    newResults.Add(new SectionLabel(scopedAction.Name));
+                    newResults.AddRange(actionResults);
+                }
+                return newResults;
+            }
+        }
+
+        // -- Apps --------------------------------------------------
         bool showApps = _config.IndexApps && (activeCategory is null or "apps");
         if (showApps && _appCatalog is not null)
         {
@@ -105,14 +121,14 @@ public sealed class SearchEngineService : ISearchEngineService
 
         if (ct.IsCancellationRequested) return newResults;
 
-        // ── Inline answers (typing only) ───────────────────────────
+        // -- Inline answers (global search only) --------------------
         if (activeCategory is null)
         {
             foreach (var inline in BuildInlineResults(query))
                 newResults.Add(inline);
         }
 
-        // ── Files ─────────────────────────────────────────────────
+        // -- Files -------------------------------------------------
         bool showFiles = _config.FileSearchEnabled && (activeCategory is null or "files");
         if (showFiles)
         {
@@ -136,7 +152,7 @@ public sealed class SearchEngineService : ISearchEngineService
             }
         }
 
-        // ── Clipboard ─────────────────────────────────────────────
+        // -- Clipboard ---------------------------------------------
         bool showClip = _config.ClipboardEnabled && _config.IndexClipboard && activeCategory == "clipboard";
         if (showClip)
         {
@@ -174,35 +190,34 @@ public sealed class SearchEngineService : ISearchEngineService
             }
         }
 
-        // ── Actions ───────────────────────────────────────────────
-        bool showActions = activeCategory is null or "actions";
-        if (showActions)
+        // -- Global actions (global search only) --------------------
+        if (activeCategory is null)
         {
-            var availableActions = SpurConstants.StaticActions.Where(a => IsActionEnabled(a.ActionId));
+            var globalActionResults = new List<SearchResult>();
 
-            var actionMatches = availableActions
-                .Where(a => MatchScore(query, a.Name) >= 0)
-                .Select(a => { a.Score = MatchScore(query, a.Name); return a; })
-                .ToList();
-
-            foreach (var kw in BuildKeywordActionResults(query))
+            foreach (var action in Actions.Where(a => a.IsGlobal && IsActionEnabled(a.Id) && a.CanHandle(query)))
             {
-                if (actionMatches.All(a => a.ActionId != kw.ActionId))
-                    actionMatches.Add(kw);
+                var r = action.BuildResult(query);
+                r.Score = MatchScore(query, r.Name);
+                globalActionResults.Add(r);
             }
 
-            AddDynamicAction(actionMatches, BuildShellAction(query));
+            var url = BuildUrlAction(query);
+            if (url is not null) globalActionResults.Add(url);
 
-            actionMatches = actionMatches.OrderByDescending(a => a.Score).ToList();
+            var shell = BuildShellAction(query);
+            if (shell is not null) globalActionResults.Add(shell);
 
-            if (actionMatches.Count > 0)
+            globalActionResults = globalActionResults.OrderByDescending(r => r.Score).ToList();
+
+            if (globalActionResults.Count > 0)
             {
                 newResults.Add(new SectionLabel("Commands"));
-                newResults.AddRange(actionMatches);
+                newResults.AddRange(globalActionResults);
             }
         }
 
-        // ── Windows Settings ───────────────────────────
+        // -- Windows Settings --------------------------------------
         if (_config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (activeCategory is null or "apps"))
         {
             var settingsMatches = SpurConstants.WindowsSettings
@@ -276,12 +291,6 @@ public sealed class SearchEngineService : ISearchEngineService
         _            => true,
     };
 
-    private static void AddDynamicAction(List<SearchResult> actions, SearchResult? action)
-    {
-        if (action is not null)
-            actions.Insert(0, action);
-    }
-
     private SearchResult? BuildUrlAction(string query)
     {
         if (!_config.IndexUrls || !LooksLikeUrl(query)) return null;
@@ -342,26 +351,12 @@ public sealed class SearchEngineService : ISearchEngineService
 
     private IEnumerable<SearchResult> BuildInlineResults(string query)
     {
-        foreach (var id in new[] { "calc", "color", "currency" })
-        {
-            var action = Actions.FirstOrDefault(a => a.Id == id);
-            if (action is null || !IsActionEnabled(id) || !action.CanHandle(query)) continue;
+        foreach (var action in Actions.Where(a => a.IsGlobal && IsActionEnabled(a.Id) && a.CanHandle(query)))
             yield return action.BuildResult(query);
-        }
 
         var url = BuildUrlAction(query);
         if (url is not null)
             yield return url;
-    }
-
-    private IEnumerable<SearchResult> BuildKeywordActionResults(string query)
-    {
-        foreach (var action in Actions)
-        {
-            if (action.Id is "calc" or "color" or "currency" or "ai") continue;
-            if (!IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
-            yield return action.BuildResult(query);
-        }
     }
 
     private static bool ShouldOfferWebFallback(string query, List<object> results)
@@ -386,4 +381,3 @@ public sealed class SearchEngineService : ISearchEngineService
         ActionId = s.ActionId, FrequencyScore = s.FrequencyScore
     };
 }
-

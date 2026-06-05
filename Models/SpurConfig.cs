@@ -100,6 +100,24 @@ public sealed class SpurConfig
     public bool ActionKillProcess { get; set; } = false;
     public bool ActionScreenshot { get; set; } = false;
 
+    // ═══════════════════════════════════════════════════════════════
+    // Action Keywords (Flow Launcher-style)
+    // Type "keyword " (with space) to enter that action's scope.
+    // ═══════════════════════════════════════════════════════════════
+    public string KeywordSystem    { get; set; } = "sys";
+    public string KeywordColor     { get; set; } = "color";
+    public string KeywordTimer     { get; set; } = "timer";
+    public string KeywordIp        { get; set; } = "ip";
+    public string KeywordAi        { get; set; } = "ai";
+    public string KeywordCurrency  { get; set; } = "cur";
+    public string KeywordPassword  { get; set; } = "pw";
+    public string KeywordNote      { get; set; } = "note";
+    public string KeywordKill      { get; set; } = "kill";
+    public string KeywordScreenshot { get; set; } = "ss";
+    public string KeywordClipboard { get; set; } = "c";
+    public string KeywordFiles     { get; set; } = "files";
+    public string KeywordApps      { get; set; } = "apps";
+
     /// <summary>Maximum directory depth for recursive file search (1–5).</summary>
     public int MaxFileDepth { get; set; } = 3;
 
@@ -165,6 +183,7 @@ public sealed class SpurConfig
 
     /// <summary>Use launcher show/hide animations.</summary>
     public bool AnimationEnabled { get; set; } = true;
+    public string UpdateUrl { get; set; } = "https://github.com/danieldamilola/Spur-Launcher/releases/latest/download";
 
     /// <summary>Play a small sound when the launcher opens.</summary>
     public bool SoundEffectEnabled { get; set; } = false;

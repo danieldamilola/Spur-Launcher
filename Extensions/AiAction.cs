@@ -1,35 +1,57 @@
+using Spur.Models;
+
 namespace Spur.Extensions;
 
-/// <summary>AI action. Triggered by "ai " followed by any non-empty question.</summary>
 public sealed class AiAction : IAction
 {
     public string Id => "ai";
-
-    private static readonly Regex _trigger = new(
-        @"^ai\s+.+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    public string Name => "AI";
+    public string IconGlyph => "\ue113";
+    public bool IsGlobal => false;
 
     public bool CanHandle(string query) =>
-        !string.IsNullOrWhiteSpace(query) && _trigger.IsMatch(query.Trim());
+        !string.IsNullOrWhiteSpace(query) && query.Trim().StartsWith("ai ", StringComparison.OrdinalIgnoreCase);
 
     public SearchResult BuildResult(string query)
     {
-        var question = Regex.Replace(query.Trim(), @"^ai\s+", "", RegexOptions.IgnoreCase);
-        var preview = question.Length > 50 ? question[..50] + "…" : question;
-
+        var prompt = query.Trim();
+        if (prompt.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
+            prompt = prompt[3..].Trim();
         return new SearchResult
         {
-            Id       = "action:ai",
-            Type     = ResultType.Action,
-            Name     = "AI Assistant",
-            Subtitle = $"{preview}  —  Press ↵ to ask",
+            Id = $"ai:{prompt}",
+            Type = ResultType.Action,
+            Name = $"Ask: {prompt}",
+            Subtitle = "AI",
             IconGlyph = "\ue113",
             ActionId = Id,
+            Score = 600,
         };
     }
 
-    /// <summary>Extracts the question portion of the query (strips "ai " prefix).</summary>
-    public static string ExtractQuestion(string query) =>
-        Regex.Replace(query.Trim(), @"^ai\s+", "", RegexOptions.IgnoreCase);
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        if (string.IsNullOrWhiteSpace(subQuery))
+        {
+            yield return new SearchResult
+            {
+                Id = "action:ai",
+                Type = ResultType.Action,
+                Name = "Ask AI",
+                Subtitle = "Type your question…",
+                IconGlyph = "\ue113",
+                ActionId = Id,
+            };
+            yield break;
+        }
+        yield return BuildResult($"ai {subQuery}");
+    }
+
+    public static string ExtractQuestion(string query)
+    {
+        var trimmed = query.Trim();
+        if (trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
+            return trimmed[3..].Trim();
+        return trimmed;
+    }
 }
-
-

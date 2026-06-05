@@ -1,87 +1,100 @@
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Spur.Extensions;
 
 /// <summary>
-/// Handles system power/session commands: shutdown, restart, sleep, hibernate, lock, sign out.
-/// Triggered by an exact keyword match (case-insensitive).
+/// System action. Triggered by "system [command]", e.g. "system shutdown".
+/// Executes system commands: shutdown, restart, sleep, lock, logout.
 /// </summary>
 public sealed class SystemAction : IAction
 {
     public string Id => "system";
+    public string Name => "System";
+    public string IconGlyph => "power";
+    public bool IsGlobal => false;
 
-    private static readonly Dictionary<string, (string Name, string Subtitle, string Icon)> _commands =
-        new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, (string display, string command, string args)> _commands = new()
     {
-        ["shutdown"]  = ("Shut Down",   "Power off this PC",        "power"),
-        ["restart"]   = ("Restart",     "Restart Windows",          "refresh-cw"),
-        ["sleep"]     = ("Sleep",       "Put this PC to sleep",     "moon"),
-        ["hibernate"] = ("Hibernate",   "Hibernate this PC",        "archive"),
-        ["lock"]      = ("Lock",        "Lock this screen",         "lock"),
-        ["sign out"]  = ("Sign Out",    "Sign out of Windows",      "log-out"),
-        ["logoff"]    = ("Sign Out",    "Sign out of Windows",      "log-out"),
+        ["shutdown"] = ("Shut Down",   "shutdown", "/s /t 0"),
+        ["restart"]  = ("Restart",     "shutdown", "/r /t 0"),
+        ["sleep"]    = ("Sleep",       "rundll32", "powrprof.dll,SetSuspendState 0,1,0"),
+        ["lock"]     = ("Lock",        "rundll32", "user32.dll,LockWorkStation"),
+        ["logout"]   = ("Sign Out",    "shutdown", "/l"),
     };
 
-    public bool CanHandle(string query)
-        => !string.IsNullOrWhiteSpace(query) && _commands.ContainsKey(query.Trim());
-
-    public SearchResult BuildResult(string query)
+    // ── Keyword-scoped ────────────────────────────────────────────
+    public IEnumerable<SearchResult> GetResults(string subQuery)
     {
-        var (name, subtitle, icon) = _commands[query.Trim()];
-        return new SearchResult
+        var filter = subQuery.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(filter))
         {
-            Id         = $"system:{query.Trim().ToLowerInvariant()}",
-            Type       = ResultType.Action,
-            Name       = name,
-            Subtitle   = subtitle,
-            IconGlyph = icon,
-            ActionId   = Id,
-        };
-    }
+            foreach (var (key, (display, _, _)) in _commands)
+            {
+                yield return new SearchResult
+                {
+                    Id         = $"system:{key}",
+                    Type       = ResultType.Action,
+                    Name       = display,
+                    Subtitle   = $"system {key}",
+                    IconGlyph  = "power",
+                    ActionId   = Id,
+                };
+            }
+            yield break;
+        }
 
-    public static void Execute(string query)
-    {
-        if (string.IsNullOrWhiteSpace(query)) return;
-
-        switch (query.Trim().ToLowerInvariant())
+        foreach (var (key, (display, _, _)) in _commands)
         {
-            case "sleep":
-                SetSuspendState(false, true, false);
-                break;
-
-            case "hibernate":
-                SetSuspendState(true, true, false);
-                break;
-
-            case "lock":
-                LockWorkStation();
-                break;
-
-            case "sign out":
-            case "logoff":
-                ExitWindowsEx(0x00, 0x00040000);
-                break;
-
-            case "restart":
-                Process.Start(new ProcessStartInfo("shutdown.exe", "/r /t 5")
-                    { UseShellExecute = false, CreateNoWindow = true });
-                break;
-
-            case "shutdown":
-                Process.Start(new ProcessStartInfo("shutdown.exe", "/s /t 5")
-                    { UseShellExecute = false, CreateNoWindow = true });
-                break;
+            if (key.StartsWith(filter, StringComparison.OrdinalIgnoreCase)
+                || display.StartsWith(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return new SearchResult
+                {
+                    Id         = $"system:{key}",
+                    Type       = ResultType.Action,
+                    Name       = display,
+                    Subtitle   = $"system {key}",
+                    IconGlyph  = "power",
+                    ActionId   = Id,
+                };
+            }
         }
     }
 
-    [DllImport("powrprof.dll", ExactSpelling = true)]
-    private static extern bool SetSuspendState(bool bHibernate, bool bForce, bool bWakeupEventsDisabled);
+    // ── Legacy (global) ───────────────────────────────────────────
+    public bool CanHandle(string query)
+        => !string.IsNullOrWhiteSpace(query) && _commands.ContainsKey(query.Trim().ToLowerInvariant());
 
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool LockWorkStation();
+    public SearchResult BuildResult(string query)
+    {
+        var key = query.Trim().ToLowerInvariant();
+        if (_commands.TryGetValue(key, out var cmd))
+        {
+            return new SearchResult
+            {
+                Id         = $"system:{key}",
+                Type       = ResultType.Action,
+                Name       = cmd.display,
+                Subtitle   = $"Press ↵ to {cmd.display.ToLowerInvariant()}",
+                IconGlyph  = "power",
+                ActionId   = Id,
+            };
+        }
+        return new() { Id = "action:system", Type = ResultType.Action, Name = "System", ActionId = Id };
+    }
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
+    public static void Execute(string command)
+    {
+        var key = command.Trim().ToLowerInvariant();
+        if (_commands.TryGetValue(key, out var cmd))
+        {
+            var psi = new ProcessStartInfo(cmd.command, cmd.args)
+            {
+                UseShellExecute = true,
+                CreateNoWindow = true,
+            };
+            Process.Start(psi);
+        }
+    }
 }
-

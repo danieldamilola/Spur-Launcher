@@ -28,7 +28,7 @@ dotnet build Spur.csproj
 dotnet run --project Spur.csproj
 ```
 
-> **Note:** Project/assembly rename from Spur → Spur is in progress. The .csproj and folder names still say `Spur` — this is a temporary state.
+> **Note:** Project/assembly rename from Flow → Spur is in progress. The .csproj and folder names still say `Spur` — this is a temporary state.
 
 Press **Alt+Space** to open the launcher (after first-run onboarding).
 
@@ -42,7 +42,7 @@ Brand icons live in **[`Icons/`](Icons/README.md)** — not to be confused with 
 | Notification tray | `Icons/spur-launcher-16x16.ico` |
 | Installer (Velopack) | `Icons/spur-launcher-256x256.ico` |
 
-Legacy `spur-launcher-*` icons have been replaced by the `spur-launcher-*` set above.
+Legacy `flow-launcher-*` icons have been replaced by the `spur-launcher-*` set above.
 
 After changing icons, run:
 
@@ -72,7 +72,7 @@ Spur/
 ├── ViewModels/         # MVVM (MainViewModel, SettingsViewModel, CommandPaletteViewModel)
 ├── Services/           # Search, clipboard, hotkey, icons, commands
 ├── Extensions/         # IAction plugins (calc, system, AI, …)
-├── new/                # UX/design specs (ux.md, design.md, …)
+
 ├── Spur.Tests/          # Unit tests
 └── handoff.md          # Session handoff notes
 ```
@@ -89,10 +89,6 @@ Spur/
 | `Ctrl+,` | Settings |
 | `Ctrl+Shift+P` | Command palette |
 | `Win+Shift+V` | Clipboard mode *(when configured)* |
-
-## Design docs
-
-Product and visual specs are in [`new/ux.md`](new/ux.md) and [`new/design.md`](new/design.md).
 
 ## License
 

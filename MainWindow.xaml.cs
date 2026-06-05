@@ -20,7 +20,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        try { InitializeComponent(); } catch(Exception ex) { System.IO.File.WriteAllText(@"C:\dev\Spur\crash.txt", ex.ToString() + "\nInner: " + ex.InnerException?.ToString()); throw; }
+        try { InitializeComponent(); } catch(Exception ex) { try { var crashDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Spur"); System.IO.Directory.CreateDirectory(crashDir); System.IO.File.WriteAllText(System.IO.Path.Combine(crashDir, "crash.txt"), ex.ToString() + "\nInner: " + ex.InnerException?.ToString()); } catch { } throw; }
         Loaded += OnLoaded;
     }
 

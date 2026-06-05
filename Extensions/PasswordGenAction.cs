@@ -9,6 +9,9 @@ namespace Spur.Extensions;
 public sealed class PasswordGenAction : IAction
 {
     public string Id => "pw";
+    public string Name => "Password";
+    public string IconGlyph => "\ue8d7";
+    public bool IsGlobal => false;
 
     private const int DefaultLength = 16;
     private const int MaxLength = 128;
@@ -17,6 +20,53 @@ public sealed class PasswordGenAction : IAction
     private static readonly Regex _trigger = new(
         @"^pw(?:\s+(\d{1,3}))?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    // ── Keyword-scoped ────────────────────────────────────────────
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        var text = subQuery.Trim();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield return new SearchResult
+            {
+                Id         = $"action:pw:{DefaultLength}",
+                Type       = ResultType.Action,
+                Name       = $"Generate Password · {DefaultLength} chars",
+                Subtitle   = "Press ↵ to generate and copy",
+                IconGlyph  = "\ue8d7",
+                ActionId   = Id,
+            };
+            yield break;
+        }
+
+        if (int.TryParse(text, out var length) && length > 0)
+        {
+            length = Math.Min(length, MaxLength);
+            yield return new SearchResult
+            {
+                Id         = $"action:pw:{length}",
+                Type       = ResultType.Action,
+                Name       = $"Generate Password · {length} chars",
+                Subtitle   = "Press ↵ to generate and copy",
+                IconGlyph  = "\ue8d7",
+                ActionId   = Id,
+            };
+        }
+        else
+        {
+            yield return new SearchResult
+            {
+                Id         = $"action:pw:{DefaultLength}",
+                Type       = ResultType.Action,
+                Name       = $"Generate Password · {DefaultLength} chars",
+                Subtitle   = "Invalid length, press ↵ for default",
+                IconGlyph  = "\ue8d7",
+                ActionId   = Id,
+            };
+        }
+    }
+
+    // ── Legacy (global) ───────────────────────────────────────────
     public bool CanHandle(string query)
         => !string.IsNullOrWhiteSpace(query) && _trigger.IsMatch(query.Trim());
 

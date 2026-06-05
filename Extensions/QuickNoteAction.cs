@@ -9,6 +9,9 @@ namespace Spur.Extensions;
 public sealed class QuickNoteAction : IAction
 {
     public string Id => "note";
+    public string Name => "Note";
+    public string IconGlyph => "\ue8a5";
+    public bool IsGlobal => false;
 
     private static readonly Regex _trigger = new(
         @"^note\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -17,6 +20,36 @@ public sealed class QuickNoteAction : IAction
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Spur");
     private static readonly string _notesFile = Path.Combine(_notesDir, "notes.txt");
 
+    // ── Keyword-scoped ────────────────────────────────────────────
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        var text = subQuery.Trim();
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield return new SearchResult
+            {
+                Id         = "action:note",
+                Type       = ResultType.Action,
+                Name       = "Quick Note",
+                Subtitle   = "Type your note text…",
+                IconGlyph  = "\ue8a5",
+                ActionId   = Id,
+            };
+            yield break;
+        }
+        var preview = text is { Length: > 40 } ? text[..40] + "…" : text;
+        yield return new SearchResult
+        {
+            Id         = "action:note",
+            Type       = ResultType.Action,
+            Name       = "Save Quick Note",
+            Subtitle   = $"\"{preview}\"",
+            IconGlyph  = "\ue8a5",
+            ActionId   = Id,
+        };
+    }
+
+    // ── Legacy (global) ───────────────────────────────────────────
     public bool CanHandle(string query)
         => !string.IsNullOrWhiteSpace(query) && _trigger.IsMatch(query.Trim());
 
@@ -60,4 +93,3 @@ public sealed class QuickNoteAction : IAction
         }
     }
 }
-

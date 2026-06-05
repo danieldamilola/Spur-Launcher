@@ -1,67 +1,61 @@
-using System.Data;
-using Spur.Extensions;
+using System.Text.RegularExpressions;
+using Spur.Models;
 
 namespace Spur.Extensions;
 
-/// <summary>
-/// Evaluates math expressions. Triggered when the entire query looks like a math expression.
-/// Uses DataTable.Compute for safe, sandboxed evaluation.
-/// </summary>
-public sealed class CalculatorAction : IAction
+public sealed partial class CalculatorAction : IAction
 {
     public string Id => "calc";
+    public string Name => "Calculator";
+    public string IconGlyph => "\ue1d0";
+    public bool IsGlobal => true;
 
-    // Must contain at least one digit and one operator, no letters
-    private static readonly Regex _trigger = new(
-        @"^[\d\s\+\-\*\/\%\(\)\.\,\^]+$", RegexOptions.Compiled);
+    [GeneratedRegex(@"^[\d+\-*/\s().^%e]+$")]
+    private static partial Regex ExpressionPattern();
 
-    // Must have at least one operator to distinguish from plain numbers
-    private static readonly Regex _hasOp = new(
-        @"[\+\-\*\/\%\^]", RegexOptions.Compiled);
-
-    public bool CanHandle(string query)
-    {
-        if (string.IsNullOrWhiteSpace(query)) return false;
-        var q = query.Trim();
-        return q.Any(char.IsDigit) && _trigger.IsMatch(q) && _hasOp.IsMatch(q);
-    }
+    public bool CanHandle(string query) =>
+        !string.IsNullOrWhiteSpace(query) && ExpressionPattern().IsMatch(query.Trim());
 
     public SearchResult BuildResult(string query)
     {
-        var expression = query.Trim();
-        var resultText = Evaluate(expression);
-
-        return new SearchResult
-        {
-            Id       = "action:calc",
-            Type     = ResultType.Action,
-            Name     = resultText,
-            Subtitle = expression,
-            IconGlyph = "\ue1d0",
-            ActionId = Id,
-        };
-    }
-
-    public static string Evaluate(string expression)
-    {
         try
         {
-            // DataTable.Compute doesn't support ^ — strip it
-            var safe = Regex.Replace(expression, @"[^\d\s\+\-\*\/\%\(\)\.]", "").Trim();
-            if (string.IsNullOrEmpty(safe)) return "Invalid expression";
-
-            var result = new DataTable().Compute(safe, null);
-
-            if (result is double d)
+            var expr = query.Trim();
+            var result = Evaluate(expr);
+            return new SearchResult
             {
-                return d == Math.Floor(d) && !double.IsInfinity(d) && !double.IsNaN(d)
-                    ? $"= {d:N0}"
-                    : $"= {d:G10}";
-            }
-            return $"= {result}";
+                Id = $"calc:{expr}",
+                Type = ResultType.Action,
+                Name = $"= {result}",
+                Subtitle = expr,
+                IconGlyph = "\ue1d0",
+                ActionId = Id,
+                Score = 1000,
+            };
         }
-        catch { return "Invalid expression"; }
+        catch
+        {
+            return new SearchResult
+            {
+                Id = "calc:error",
+                Type = ResultType.Action,
+                Name = "Invalid expression",
+                Subtitle = query,
+                IconGlyph = "\ue1d0",
+                ActionId = Id,
+            };
+        }
+    }
+
+    public IEnumerable<SearchResult> GetResults(string subQuery)
+    {
+        if (CanHandle(subQuery))
+            yield return BuildResult(subQuery);
+    }
+
+    private static double Evaluate(string expression)
+    {
+        var dt = new System.Data.DataTable();
+        return Convert.ToDouble(dt.Compute(expression, null));
     }
 }
-
-
