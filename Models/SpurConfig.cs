@@ -101,6 +101,24 @@ public sealed class SpurConfig
     public bool ActionScreenshot { get; set; } = false;
 
     // ═══════════════════════════════════════════════════════════════
+    // Per-action settings (Flow Launcher-style)
+    // Each action gets its own settings object with keyword, enabled,
+    // and action-specific options. These are the canonical source;
+    // the ActionXxx / KeywordXxx properties above are kept for
+    // backward compatibility and sync to/from these objects on load/save.
+    // ═══════════════════════════════════════════════════════════════
+    public SystemActionSettings       System       { get; set; } = new();
+    public TimerActionSettings        Timer        { get; set; } = new();
+    public KillProcessActionSettings  KillProcess  { get; set; } = new();
+    public PasswordGenActionSettings  PasswordGen  { get; set; } = new();
+    public ScreenshotActionSettings   Screenshot   { get; set; } = new();
+    public QuickNoteActionSettings    QuickNote    { get; set; } = new();
+    public CurrencyActionSettings     Currency     { get; set; } = new();
+    public ColorActionSettings        Color        { get; set; } = new();
+    public IpActionSettings           Ip           { get; set; } = new();
+    public AiActionSettings           Ai           { get; set; } = new();
+
+    // ═══════════════════════════════════════════════════════════════
     // Action Keywords (Flow Launcher-style)
     // Type "keyword " (with space) to enter that action's scope.
     // ═══════════════════════════════════════════════════════════════

@@ -632,6 +632,173 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // Per-action settings (canonical)
+    // Each action's settings object is exposed directly for binding.
+    // The toggle + keyword sync down into the config on change.
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── System ────────────────────────────────────────────────────
+    public bool SystemEnabled
+    {
+        get => _config.System.Enabled;
+        set { _config.System.Enabled = value; _config.IndexSystemCommands = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string SystemKeyword
+    {
+        get => _config.System.Keyword;
+        set { _config.System.Keyword = value; _config.KeywordSystem = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Timer ─────────────────────────────────────────────────────
+    public bool TimerEnabled
+    {
+        get => _config.Timer.Enabled;
+        set { _config.Timer.Enabled = value; _config.ActionTimer = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string TimerKeyword
+    {
+        get => _config.Timer.Keyword;
+        set { _config.Timer.Keyword = value; _config.KeywordTimer = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string TimerPresets
+    {
+        get => _config.Timer.DefaultPresets;
+        set { _config.Timer.DefaultPresets = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Kill Process ──────────────────────────────────────────────
+    public bool KillProcessEnabled
+    {
+        get => _config.KillProcess.Enabled;
+        set { _config.KillProcess.Enabled = value; _config.ActionKillProcess = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string KillProcessKeyword
+    {
+        get => _config.KillProcess.Keyword;
+        set { _config.KillProcess.Keyword = value; _config.KeywordKill = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool KillProcessShowWindowTitles
+    {
+        get => _config.KillProcess.ShowWindowTitles;
+        set { _config.KillProcess.ShowWindowTitles = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool KillProcessPrioritizeVisibleWindows
+    {
+        get => _config.KillProcess.PrioritizeVisibleWindows;
+        set { _config.KillProcess.PrioritizeVisibleWindows = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Password Generator ────────────────────────────────────────
+    public bool PasswordGenEnabled
+    {
+        get => _config.PasswordGen.Enabled;
+        set { _config.PasswordGen.Enabled = value; _config.ActionPasswordGen = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string PasswordGenKeyword
+    {
+        get => _config.PasswordGen.Keyword;
+        set { _config.PasswordGen.Keyword = value; _config.KeywordPassword = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public int PasswordGenLength
+    {
+        get => _config.PasswordGen.DefaultLength;
+        set { _config.PasswordGen.DefaultLength = Math.Clamp(value, 4, 128); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool PasswordGenSymbols
+    {
+        get => _config.PasswordGen.IncludeSymbols;
+        set { _config.PasswordGen.IncludeSymbols = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool PasswordGenNumbers
+    {
+        get => _config.PasswordGen.IncludeNumbers;
+        set { _config.PasswordGen.IncludeNumbers = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool PasswordGenUppercase
+    {
+        get => _config.PasswordGen.IncludeUppercase;
+        set { _config.PasswordGen.IncludeUppercase = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Screenshot ────────────────────────────────────────────────
+    public bool ScreenshotEnabled
+    {
+        get => _config.Screenshot.Enabled;
+        set { _config.Screenshot.Enabled = value; _config.ActionScreenshot = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string ScreenshotKeyword
+    {
+        get => _config.Screenshot.Keyword;
+        set { _config.Screenshot.Keyword = value; _config.KeywordScreenshot = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string ScreenshotFormat
+    {
+        get => _config.Screenshot.SaveFormat;
+        set { _config.Screenshot.SaveFormat = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string[] ScreenshotFormatOptions { get; } = ["png", "jpg", "bmp"];
+
+    // ── Quick Note ────────────────────────────────────────────────
+    public bool QuickNoteEnabled
+    {
+        get => _config.QuickNote.Enabled;
+        set { _config.QuickNote.Enabled = value; _config.ActionQuickNote = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string QuickNoteKeyword
+    {
+        get => _config.QuickNote.Keyword;
+        set { _config.QuickNote.Keyword = value; _config.KeywordNote = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Currency ──────────────────────────────────────────────────
+    public bool CurrencyEnabled
+    {
+        get => _config.Currency.Enabled;
+        set { _config.Currency.Enabled = value; _config.ActionCurrency = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string CurrencyKeyword
+    {
+        get => _config.Currency.Keyword;
+        set { _config.Currency.Keyword = value; _config.KeywordCurrency = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── Color ─────────────────────────────────────────────────────
+    public bool ColorEnabled
+    {
+        get => _config.Color.Enabled;
+        set { _config.Color.Enabled = value; _config.ActionColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string ColorKeyword
+    {
+        get => _config.Color.Keyword;
+        set { _config.Color.Keyword = value; _config.KeywordColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── IP ────────────────────────────────────────────────────────
+    public bool IpEnabled
+    {
+        get => _config.Ip.Enabled;
+        set { _config.Ip.Enabled = value; _config.ActionIp = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string IpKeyword
+    {
+        get => _config.Ip.Keyword;
+        set { _config.Ip.Keyword = value; _config.KeywordIp = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── AI ────────────────────────────────────────────────────────
+    public bool AiEnabled
+    {
+        get => _config.Ai.Enabled;
+        set { _config.Ai.Enabled = value; _config.ActionAi = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string AiKeyword
+    {
+        get => _config.Ai.Keyword;
+        set { _config.Ai.Keyword = value; _config.KeywordAi = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // AI Assistant
     // ═══════════════════════════════════════════════════════════════
 
