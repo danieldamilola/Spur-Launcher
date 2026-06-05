@@ -46,6 +46,9 @@ public sealed partial class MainViewModel : ObservableObject
     // ── Search debounce ──────────────────────────────────────────────
     private CancellationTokenSource? _searchCts;
 
+    // ── Keyword mapping cache ──────────────────────────────────────
+    private Dictionary<string, (string actionId, string icon)>? _keywordMap;
+
     // ── Constructor ──────────────────────────────────────────────────
     public MainViewModel(
         SpurConfig             config,
@@ -118,6 +121,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _files.MaxDepth     = value.MaxFileDepth;
         _clipboard.MaxItems = value.ClipboardHistorySize;
+        _keywordMap = null; // Rebuild on next use — keyword configs may have changed
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -249,17 +253,22 @@ public sealed partial class MainViewModel : ObservableObject
 
             ActiveScopeId = "all";
 
-            var delay = Task.Delay(150, ct);
-            delay.ContinueWith(_ =>
-            {
-                if (!ct.IsCancellationRequested)
-                    Application.Current?.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
-            }, TaskScheduler.Default);
+            _ = DebouncedSearchAsync(effectiveQuery, ct);
         }
         catch (Exception ex)
         {
             _log.Warning("OnQueryChanged error", ex);
         }
+    }
+
+    private async Task DebouncedSearchAsync(string effectiveQuery, CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(150, ct);
+            await Application.Current!.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
+        }
+        catch (OperationCanceledException) { /* expected on new keystroke */ }
     }
 partial void OnActiveCategoryChanged(string? value)
     {
@@ -483,24 +492,28 @@ partial void OnActiveCategoryChanged(string? value)
     {
         if (string.IsNullOrEmpty(query)) return null;
 
-        var mapping = new Dictionary<string, (string actionId, string icon)>
+        // Use cached keyword map — rebuilt only when config changes (see OnConfigChanged)
+        if (_keywordMap is null)
         {
-            [Config.KeywordSystem]     = ("system",     "power"),
-            [Config.KeywordColor]      = ("color",      "\ue790"),
-            [Config.KeywordTimer]      = ("timer",      "\ue121"),
-            [Config.KeywordIp]         = ("ip",         "\ue701"),
-            [Config.KeywordAi]         = ("ai",         "\ue113"),
-            [Config.KeywordCurrency]   = ("currency",   "\ue825"),
-            [Config.KeywordPassword]   = ("pw",         "\ue722"),
-            [Config.KeywordNote]       = ("note",       "\ue727"),
-            [Config.KeywordKill]       = ("kill",       "\ue747"),
-            [Config.KeywordScreenshot] = ("screenshot", "\ue74c"),
-            [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
-            [Config.KeywordFiles]      = ("files",      "\ue70a"),
-            [Config.KeywordApps]       = ("apps",       "\ue71d"),
-        };
+            _keywordMap = new()
+            {
+                [Config.KeywordSystem]     = ("system",     "power"),
+                [Config.KeywordColor]      = ("color",      "\ue790"),
+                [Config.KeywordTimer]      = ("timer",      "\ue121"),
+                [Config.KeywordIp]         = ("ip",         "\ue701"),
+                [Config.KeywordAi]         = ("ai",         "\ue113"),
+                [Config.KeywordCurrency]   = ("currency",   "\ue825"),
+                [Config.KeywordPassword]   = ("pw",         "\ue722"),
+                [Config.KeywordNote]       = ("note",       "\ue727"),
+                [Config.KeywordKill]       = ("kill",       "\ue747"),
+                [Config.KeywordScreenshot] = ("screenshot", "\ue74c"),
+                [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
+                [Config.KeywordFiles]      = ("files",      "\ue70a"),
+                [Config.KeywordApps]       = ("apps",       "\ue71d"),
+            };
+        }
 
-        foreach (var (keyword, (actionId, icon)) in mapping)
+        foreach (var (keyword, (actionId, icon)) in _keywordMap)
         {
             if (string.IsNullOrEmpty(keyword)) continue;
             var prefix = keyword + " ";

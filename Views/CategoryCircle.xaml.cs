@@ -63,7 +63,7 @@ public partial class CategoryCircle : UserControl
 
         var delay = TimeSpan.FromMilliseconds(SpurMotion.AnchorStaggerMs * index);
         var duration = TimeSpan.FromMilliseconds(SpurMotion.AnchorRevealDurationMs);
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var ease = SpurMotion.EaseOut();
 
         BeginAnimation(OpacityProperty, null);
         BeginAnimation(OpacityProperty,
@@ -87,7 +87,7 @@ public partial class CategoryCircle : UserControl
         }
 
         var duration = TimeSpan.FromMilliseconds(durationMs);
-        var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+        var ease = SpurMotion.EaseIn();
 
         var fade = new DoubleAnimation(Opacity, 0, duration) { EasingFunction = ease };
         fade.Completed += (_, _) => IsHitTestVisible = false;

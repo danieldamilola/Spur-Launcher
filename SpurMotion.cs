@@ -200,9 +200,11 @@ public static class SpurMotion
 
     private static Duration Ms(int ms) => TimeSpan.FromMilliseconds(ms);
 
-    private static CubicEase EaseOut() => new() { EasingMode = EasingMode.EaseOut };
+    private static readonly CubicEase EaseOutInstance = new() { EasingMode = EasingMode.EaseOut };
+    private static readonly CubicEase EaseInInstance = new() { EasingMode = EasingMode.EaseIn };
 
-    private static CubicEase EaseIn() => new() { EasingMode = EasingMode.EaseIn };
+    public static CubicEase EaseOut() => EaseOutInstance;
+    public static CubicEase EaseIn() => EaseInInstance;
 }
 
 /// <summary>Animates <see cref="ColumnDefinition.Width"/> between grid length values.</summary>

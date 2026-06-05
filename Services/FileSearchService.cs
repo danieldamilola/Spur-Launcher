@@ -130,7 +130,7 @@ public sealed class FileSearchService : IFileSearchService
 
         try
         {
-            var newCache = new List<CachedItem>(10_000);
+            var newCache = new List<CachedItem>(5_000);
             foreach (var root in SearchRoots)
             {
                 if (!Directory.Exists(root)) continue;
@@ -142,6 +142,9 @@ public sealed class FileSearchService : IFileSearchService
                 _cache = newCache;
                 _lastIndexTime = DateTime.Now;
             }
+
+            // Release Gen2 memory after the one-time startup index build
+            GC.Collect(2, GCCollectionMode.Optimized, false);
         }
         catch { /* ignore background index errors */ }
         finally
@@ -152,7 +155,7 @@ public sealed class FileSearchService : IFileSearchService
 
     private void IndexDirectory(string dir, int depth, List<CachedItem> results)
     {
-        if (depth > MaxDepth || results.Count >= 50_000) return; // Cap at 50k items to save RAM
+        if (depth > MaxDepth || results.Count >= 20_000) return; // Cap at 20k items to save RAM
 
         try
         {
@@ -247,11 +250,11 @@ public sealed class FileSearchService : IFileSearchService
             }));
         }
 
-        return results
-            .OrderByDescending(x => x.Score)
-            .Take(maxReturn)
-            .Select(x => x.Result)
-            .ToList();
+        results.Sort((a, b) => b.Score.CompareTo(a.Score));
+        var final = new List<SearchResult>(maxReturn);
+        for (int i = 0; i < results.Count && i < maxReturn; i++)
+            final.Add(results[i].Result);
+        return final;
     }
 
     // ═══════════════════════════════════════════════════════════════

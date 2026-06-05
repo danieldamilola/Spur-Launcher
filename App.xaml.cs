@@ -1,3 +1,4 @@
+using System.Runtime;
 using System.Windows.Interop;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.DependencyInjection;
@@ -262,8 +263,18 @@ public partial class App : Application
         if (_window is null) return;
         Dispatcher.InvokeAsync(() =>
         {
-            if (_window.IsVisible) _window.HideWindow();
-            else _window.ShowWindow();
+            if (_window.IsVisible)
+            {
+                _window.HideWindow();
+                // Revert to throughput-optimized GC when launcher is hidden
+                GCSettings.LatencyMode = GCLatencyMode.Interactive;
+            }
+            else
+            {
+                // Low-latency GC while launcher is visible — reduces pause time during typing
+                GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+                _window.ShowWindow();
+            }
         });
     }
 

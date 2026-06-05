@@ -64,7 +64,7 @@ public partial class OnboardingWindow : Window
 
         var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120))
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            EasingFunction = SpurMotion.EaseIn()
         };
         fadeOut.Completed += (_, _) => current.Visibility = Visibility.Collapsed;
         current.BeginAnimation(OpacityProperty, fadeOut);
@@ -75,7 +75,7 @@ public partial class OnboardingWindow : Window
         next.BeginAnimation(OpacityProperty,
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180))
             {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                EasingFunction = SpurMotion.EaseOut()
             });
 
         UpdateDots();

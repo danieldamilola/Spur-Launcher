@@ -49,7 +49,7 @@ public partial class UnifiedResultsView : UserControl
                         container.RenderTransform = tt;
                         container.Opacity = 0;
 
-                        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+                        var ease = SpurMotion.EaseOut();
                         var delay = TimeSpan.FromMilliseconds(i * 16);
                         
                         var yAnim = new DoubleAnimation(4, 0, TimeSpan.FromMilliseconds(120)) { EasingFunction = ease, BeginTime = delay };

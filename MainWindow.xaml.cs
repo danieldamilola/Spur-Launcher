@@ -270,10 +270,10 @@ public partial class MainWindow : Window
                     FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                    { EasingFunction = SpurMotion.EaseOut() };
                     
                     var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+                    { EasingFunction = SpurMotion.EaseOut() };
 
                     ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
                     ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
@@ -304,10 +304,10 @@ public partial class MainWindow : Window
                 if (animEnabled)
                 {
                     var anim = new DoubleAnimation(ExpandedScale.ScaleY, 0, TimeSpan.FromMilliseconds(120))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+                    { EasingFunction = SpurMotion.EaseIn() };
                     
                     var fadeAnim = new DoubleAnimation(ContentArea.Opacity, 0, TimeSpan.FromMilliseconds(120))
-                    { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+                    { EasingFunction = SpurMotion.EaseIn() };
 
                     anim.Completed += (s, e) => 
                     { 
@@ -363,18 +363,19 @@ public partial class MainWindow : Window
             ApplySpotlightLayout(animate: true);
     }
 
-    private void OnWindowMouseLeave(object sender, MouseEventArgs e)
+    private async void OnWindowMouseLeave(object sender, MouseEventArgs e)
     {
         _isPointerInside = false;
         _hoverHideCts?.Cancel();
         _hoverHideCts = new CancellationTokenSource();
         var token = _hoverHideCts.Token;
 
-        System.Threading.Tasks.Task.Delay(150, token).ContinueWith(t =>
+        try
         {
-            if (t.IsCanceled) return;
-            Dispatcher.InvokeAsync(() => ApplySpotlightLayout(animate: true));
-        });
+            await System.Threading.Tasks.Task.Delay(150, token);
+            await Dispatcher.InvokeAsync(() => ApplySpotlightLayout(animate: true));
+        }
+        catch (OperationCanceledException) { /* expected if mouse re-enters */ }
     }
 
     private void SyncPointerHoverState()

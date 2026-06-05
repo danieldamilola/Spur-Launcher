@@ -89,27 +89,25 @@ public sealed class SearchEngineService : ISearchEngineService
         bool showApps = _config.IndexApps && (activeCategory is null or "apps");
         if (showApps && _appCatalog is not null)
         {
-            var appMatches = _appCatalog
-                .Select(a =>
+            var appMatches = new List<SearchResult>(_appCatalog.Count);
+            foreach (var a in _appCatalog)
+            {
+                var score = MatchScore(query, a.Name);
+                if (score < 0) continue;
+                var clone = Clone(a);
+                var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
+                clone.Score = score + freqBoost;
+                if (_config.PinnedItems.Contains(a.Id))
                 {
-                    var score = MatchScore(query, a.Name);
-                    if (score < 0) return null;
-                    var clone = Clone(a);
-                    var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
-                    clone.Score = score + freqBoost;
-                    if (_config.PinnedItems.Contains(a.Id))
-                    {
-                        clone.IsPinned = true;
-                        clone.Score += 10000;
-                    }
-                    return clone;
-                })
-                .Where(a => a is not null)
-                .Cast<SearchResult>()
-                .OrderByDescending(a => a.Score);
+                    clone.IsPinned = true;
+                    clone.Score += 10000;
+                }
+                appMatches.Add(clone);
+            }
+            appMatches.Sort((x, y) => y.Score.CompareTo(x.Score));
 
             var appList = isBrowseMode
-                ? appMatches.ToList()
+                ? appMatches
                 : appMatches.Take(_config.ResultsCount).ToList();
 
             if (appList.Count > 0)
@@ -157,10 +155,13 @@ public sealed class SearchEngineService : ISearchEngineService
         if (showClip)
         {
             int limit = isBrowseMode ? 50 : _config.ResultsCount;
-            var clips = _clipboard.GetHistory()
-                .Where(c => string.IsNullOrEmpty(query) || MatchScore(query, c.Preview) >= 0)
-                .Take(limit)
-                .Select(c => new SearchResult
+            var clips = new List<SearchResult>(limit);
+            foreach (var c in _clipboard.GetHistory())
+            {
+                if (clips.Count >= limit) break;
+                if (!string.IsNullOrEmpty(query) && MatchScore(query, c.Preview) < 0) continue;
+
+                var sr = new SearchResult
                 {
                     Id         = $"clip:{c.Timestamp.Ticks}",
                     Type       = ResultType.Clipboard,
@@ -170,18 +171,15 @@ public sealed class SearchEngineService : ISearchEngineService
                     ClipContent = c.Content,
                     ClipTimestamp = c.Timestamp,
                     ClipImage = c.Image,
-                })
-                .Select(c =>
+                };
+                if (_config.PinnedItems.Contains(sr.Id))
                 {
-                    if (_config.PinnedItems.Contains(c.Id))
-                    {
-                        c.IsPinned = true;
-                        c.Score = 10000;
-                    }
-                    return c;
-                })
-                .OrderByDescending(c => c.IsPinned)
-                .ToList();
+                    sr.IsPinned = true;
+                    sr.Score = 10000;
+                }
+                clips.Add(sr);
+            }
+            clips.Sort((x, y) => y.IsPinned.CompareTo(x.IsPinned));
 
             if (clips.Count > 0)
             {
@@ -195,8 +193,9 @@ public sealed class SearchEngineService : ISearchEngineService
         {
             var globalActionResults = new List<SearchResult>();
 
-            foreach (var action in Actions.Where(a => a.IsGlobal && IsActionEnabled(a.Id) && a.CanHandle(query)))
+            foreach (var action in Actions)
             {
+                if (!action.IsGlobal || !IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
                 var r = action.BuildResult(query);
                 r.Score = MatchScore(query, r.Name);
                 globalActionResults.Add(r);
@@ -208,7 +207,7 @@ public sealed class SearchEngineService : ISearchEngineService
             var shell = BuildShellAction(query);
             if (shell is not null) globalActionResults.Add(shell);
 
-            globalActionResults = globalActionResults.OrderByDescending(r => r.Score).ToList();
+            globalActionResults.Sort((x, y) => y.Score.CompareTo(x.Score));
 
             if (globalActionResults.Count > 0)
             {
@@ -220,18 +219,17 @@ public sealed class SearchEngineService : ISearchEngineService
         // -- Windows Settings --------------------------------------
         if (_config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (activeCategory is null or "apps"))
         {
-            var settingsMatches = SpurConstants.WindowsSettings
-                .Select(s =>
-                {
-                    var sc = MatchScore(query, s.Name);
-                    if (sc < 0) return null;
-                    var c = Clone(s); c.Score = sc; return c;
-                })
-                .Where(s => s is not null)
-                .Cast<SearchResult>()
-                .OrderByDescending(s => s.Score)
-                .Take(4)
-                .ToList();
+            var settingsMatches = new List<SearchResult>(SpurConstants.WindowsSettings.Length);
+            foreach (var s in SpurConstants.WindowsSettings)
+            {
+                var sc = MatchScore(query, s.Name);
+                if (sc < 0) continue;
+                var c = Clone(s); c.Score = sc;
+                settingsMatches.Add(c);
+            }
+            settingsMatches.Sort((x, y) => y.Score.CompareTo(x.Score));
+            if (settingsMatches.Count > 4)
+                settingsMatches.RemoveRange(4, settingsMatches.Count - 4);
 
             if (settingsMatches.Count > 0)
             {
@@ -351,8 +349,11 @@ public sealed class SearchEngineService : ISearchEngineService
 
     private IEnumerable<SearchResult> BuildInlineResults(string query)
     {
-        foreach (var action in Actions.Where(a => a.IsGlobal && IsActionEnabled(a.Id) && a.CanHandle(query)))
+        foreach (var action in Actions)
+        {
+            if (!action.IsGlobal || !IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
             yield return action.BuildResult(query);
+        }
 
         var url = BuildUrlAction(query);
         if (url is not null)
@@ -362,7 +363,11 @@ public sealed class SearchEngineService : ISearchEngineService
     private static bool ShouldOfferWebFallback(string query, List<object> results)
     {
         if (string.IsNullOrWhiteSpace(query)) return false;
-        var localCount = results.OfType<SearchResult>().Count();
+        int localCount = 0;
+        foreach (var r in results)
+        {
+            if (r is SearchResult) localCount++;
+        }
         return localCount < 3;
     }
 
