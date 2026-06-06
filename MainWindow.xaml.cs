@@ -205,6 +205,7 @@ public partial class MainWindow : Window
             nameof(MainViewModel.Query),
             nameof(MainViewModel.IsScopeBarVisible),
             nameof(MainViewModel.FooterHint),
+            nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
         };
 
@@ -267,6 +268,7 @@ public partial class MainWindow : Window
                     if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
                     
                     ContentArea.Visibility = Visibility.Visible;
+                    ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                     FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
@@ -288,12 +290,14 @@ public partial class MainWindow : Window
                     ContentArea.Opacity = 1;
                     FooterArea.Opacity = 1;
                     ContentArea.Visibility = Visibility.Visible;
+                    ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                     FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
             else
             {
                 FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                 FooterArea.Opacity = 1;
             }
         }
@@ -312,6 +316,7 @@ public partial class MainWindow : Window
                     anim.Completed += (s, e) => 
                     { 
                         ContentArea.Visibility = Visibility.Collapsed; 
+                        ActionPreviewPanel.Visibility = Visibility.Collapsed;
                         FooterArea.Visibility = Visibility.Collapsed; 
                     };
                     
@@ -349,6 +354,13 @@ public partial class MainWindow : Window
                 AnchorCircles,
                 animEnabled,
                 fastForTyping: fastAnchorHide);
+
+        // Set color swatch background when the color action panel is active
+        if (_vm.ActiveActionPanel == "color" && !string.IsNullOrEmpty(_vm.ActionResultText))
+        {
+            try { ColorSwatch.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_vm.ActionResultText)); }
+            catch { ColorSwatch.Background = Brushes.Transparent; }
+        }
 
         _categoryExpanded = expandRail;
     }
@@ -524,5 +536,24 @@ public partial class MainWindow : Window
         if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
         try { DragMove(); } catch { }
     }
-}
 
+    private void OnActionCopyClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is null) return;
+        var text = _vm.ActiveActionPanel switch
+        {
+            "ai" => _vm.AiChat.AiText,
+            "color" => _vm.ActionResultText,
+            "pw" => _vm.ActionResultText,
+            "ip" => _vm.ActionResultText,
+            _ => _vm.ActionResultText
+        };
+        if (!string.IsNullOrEmpty(text))
+            System.Windows.Clipboard.SetText(text);
+    }
+
+    private void OnCloseActionPanelClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.CloseActionPanel();
+    }
+}

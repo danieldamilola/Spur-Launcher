@@ -37,7 +37,7 @@ public sealed class ScreenshotAction : IAction
         ActionId   = Id,
     };
 
-    public static void Execute()
+    public static string? Execute()
     {
         try
         {
@@ -51,10 +51,12 @@ public sealed class ScreenshotAction : IAction
             bmp.Save(file, ImageFormat.Png);
 
             Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
+            return file;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[Screenshot] Failed: {ex.Message}");
+            return null;
         }
     }
 }

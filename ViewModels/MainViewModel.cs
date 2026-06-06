@@ -176,6 +176,41 @@ public sealed partial class MainViewModel : ObservableObject
     public AiChatViewModel     AiChat     => _ai;
     public ClipboardViewModel  Clipboard  => _clipboardVm;
 
+    /// <summary>Which action preview panel to show (timer / ai / color / ip / …).</summary>
+    private string? _activeActionPanel;
+    public string? ActiveActionPanel
+    {
+        get => _activeActionPanel;
+        set
+        {
+            if (SetProperty(ref _activeActionPanel, value))
+                OnPropertyChanged(nameof(IsActionPanelVisible));
+        }
+    }
+    public bool IsActionPanelVisible => _activeActionPanel is not null;
+
+    private string _actionResultText = string.Empty;
+    public string ActionResultText
+    {
+        get => _actionResultText;
+        set => SetProperty(ref _actionResultText, value);
+    }
+
+    private string _actionResultSubText = string.Empty;
+    public string ActionResultSubText
+    {
+        get => _actionResultSubText;
+        set => SetProperty(ref _actionResultSubText, value);
+    }
+
+    private string _ipPreviewText = string.Empty;
+    public string IpPreviewText
+    {
+        get => _ipPreviewText;
+        set => SetProperty(ref _ipPreviewText, value);
+    }
+    private bool _ipPreviewLoading;
+
     public void CancelSearch() => _searchCts?.Cancel();
 
     // ═══════════════════════════════════════════════════════════════
@@ -294,7 +329,11 @@ partial void OnActiveCategoryChanged(string? value)
         });
     }
 
-    partial void OnSelectedIndexChanged(int value) => UpdateFooterHint();
+    partial void OnSelectedIndexChanged(int value)
+    {
+        UpdateFooterHint();
+        UpdateActionPreview();
+    }
 
     partial void OnActiveScopeIdChanged(string value)
     {
@@ -428,6 +467,64 @@ partial void OnActiveCategoryChanged(string? value)
             },
             _ => "↵ Open",
         };
+    }
+
+    private void UpdateActionPreview()
+    {
+        var result = SelectedResult;
+        if (result?.Type != ResultType.Action || result.ActionId is null)
+        {
+            // Only clear if no action is currently executing (timer running / AI streaming)
+            if (ActiveActionPanel is "timer" && _timer.TimerRunning) return;
+            if (ActiveActionPanel is "ai" && !string.IsNullOrEmpty(_ai.AiText)) return;
+            ActiveActionPanel = null;
+            return;
+        }
+
+        ActiveActionPanel = result.ActionId;
+
+        switch (result.ActionId)
+        {
+            case "timer":
+                _timer.StartTimerPreview(Query);
+                break;
+            case "ip":
+                _ = FetchIpPreviewAsync();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task FetchIpPreviewAsync()
+    {
+        if (_ipPreviewLoading) return;
+        _ipPreviewLoading = true;
+
+        var local = IpAction.GetLocalIp();
+        IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: fetching…";
+
+        try
+        {
+            var pub = await IpAction.GetPublicIpAsync();
+            IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: {pub ?? "Unavailable"}";
+        }
+        catch
+        {
+            IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: unavailable";
+        }
+        finally
+        {
+            _ipPreviewLoading = false;
+        }
+    }
+
+    /// <summary>Close the action preview panel (called from XAML close button or Escape).</summary>
+    public void CloseActionPanel()
+    {
+        ActiveActionPanel = null;
+        ActionResultText = string.Empty;
+        ActionResultSubText = string.Empty;
     }
 
     private void UpdateScopeFilters()
@@ -607,40 +704,45 @@ partial void OnActiveCategoryChanged(string? value)
                 }
                 if (result.ActionId == "timer")
                 {
+                    _timer.StartTimerPreview(Query);
                     Timer.StartCommand.Execute(null);
-                    _notification.Show("Timer", Timer.TimerDisplay);
-                    HideAfterLaunch();
+                    ActiveActionPanel = "timer";
+                    // panel stays visible so the user sees the countdown
                 }
                 else if (result.ActionId == "ai")
                 {
                     try
                     {
+                        ActiveActionPanel = "ai";
                         await _ai.StartAiAsync(Query);
-                        if (!string.IsNullOrEmpty(_ai.AiText))
-                            _clipboard.CopyToSystem(_ai.AiText);
-                        _notification.Show("AI", string.IsNullOrEmpty(_ai.AiError) ? "Response copied" : _ai.AiError);
+                        // response streams into AiChat.AiText — panel stays visible
                     }
                     catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
-                    HideAfterLaunch();
                 }
                 // Calc/Color/IP: Enter copies result to clipboard
                 else if (result.ActionId == "calc")
                 {
-                    _clipboard.CopyToSystem(result.Name.TrimStart('=', ' '));
-                    HideAfterLaunch();
+                    var calcResult = result.Name.TrimStart('=', ' ');
+                    _clipboard.CopyToSystem(calcResult);
+                    ActionResultText = calcResult;
+                    ActionResultSubText = "Copied to clipboard";
+                    ActiveActionPanel = "calc";
                 }
                 else if (result.ActionId == "color")
                 {
                     _clipboard.CopyToSystem(result.Name);
-                    HideAfterLaunch();
+                    ActionResultText = result.Name;
+                    ActionResultSubText = "Copied to clipboard";
+                    ActiveActionPanel = "color";
                 }
                 else if (result.ActionId == "ip")
                 {
                     var local = IpAction.GetLocalIp() ?? "Not connected";
                     var pub = await IpAction.GetPublicIpAsync();
-                    _clipboard.CopyToSystem($"{local} / {pub ?? "Unavailable"}");
-                    _notification.Show("IP Address", $"{local} · {pub ?? "Unavailable"}");
-                    HideAfterLaunch();
+                    var text = $"{local} · {pub ?? "Unavailable"}";
+                    _clipboard.CopyToSystem(text);
+                    ActionResultText = text;
+                    ActiveActionPanel = "ip";
                 }
                 // Settings: open settings panel when clicked
                 else if (result.ActionId == "settings")
@@ -669,30 +771,34 @@ partial void OnActiveCategoryChanged(string? value)
                 // Screenshot: capture and save
                 else if (result.ActionId == "screenshot")
                 {
-                    ScreenshotAction.Execute();
-                    HideAfterLaunch();
+                    var path = ScreenshotAction.Execute();
+                    ActionResultText = "Screenshot saved";
+                    ActionResultSubText = path ?? "Pictures folder";
+                    ActiveActionPanel = "screenshot";
                 }
                 // Kill Process: force-close by name
                 else if (result.ActionId == "kill")
                 {
                     var killed = KillProcessAction.Execute(Query);
-                    _notification.Show($"Killed {killed} process(es)", "");
-                    HideAfterLaunch();
+                    ActionResultText = $"Killed {killed} process(es)";
+                    ActiveActionPanel = "kill";
                 }
                 // Password Gen: generate and copy
                 else if (result.ActionId == "pw")
                 {
                     var pw = PasswordGenAction.Generate(Query);
                     _clipboard.CopyToSystem(pw);
-                    _notification.Show("Password copied", $"{pw.Length} characters");
-                    HideAfterLaunch();
+                    ActionResultText = pw;
+                    ActionResultSubText = "Password copied to clipboard";
+                    ActiveActionPanel = "pw";
                 }
                 // Quick Note: save and open
                 else if (result.ActionId == "note")
                 {
-                    QuickNoteAction.Execute(Query);
-                    _notification.Show("Note saved", "Documents\\Spur\\notes.txt");
-                    HideAfterLaunch();
+                    var path = QuickNoteAction.Execute(Query);
+                    ActionResultText = "Note saved";
+                    ActionResultSubText = path ?? "Documents\\Spur\\notes.txt";
+                    ActiveActionPanel = "note";
                 }
                 // Currency: fetch conversion and copy
                 else if (result.ActionId == "currency")
@@ -703,11 +809,11 @@ partial void OnActiveCategoryChanged(string? value)
                         if (result2 is not null)
                         {
                             _clipboard.CopyToSystem(result2);
-                            _notification.Show("Currency", result2);
+                            ActionResultText = result2;
+                            ActiveActionPanel = "currency";
                         }
                     }
                     catch (Exception ex) { _log.Warning("Currency error", ex); }
-                    HideAfterLaunch();
                 }
                 break;
         }

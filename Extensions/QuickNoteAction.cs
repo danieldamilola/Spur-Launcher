@@ -74,10 +74,10 @@ public sealed class QuickNoteAction : IAction
         return m.Success ? m.Groups[1].Value.Trim() : null;
     }
 
-    public static void Execute(string query)
+    public static string? Execute(string query)
     {
         var text = ExtractText(query);
-        if (string.IsNullOrWhiteSpace(text)) return;
+        if (string.IsNullOrWhiteSpace(text)) return null;
 
         try
         {
@@ -86,10 +86,12 @@ public sealed class QuickNoteAction : IAction
             File.AppendAllText(_notesFile, entry);
 
             Process.Start(new ProcessStartInfo(_notesFile) { UseShellExecute = true });
+            return _notesFile;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[QuickNote] Failed: {ex.Message}");
+            return null;
         }
     }
 }
