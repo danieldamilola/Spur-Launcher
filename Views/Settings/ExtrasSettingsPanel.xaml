@@ -4,122 +4,91 @@
              xmlns:local="clr-namespace:Spur.Views"
              xmlns:conv="clr-namespace:Spur.Converters"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+    <UserControl.Resources>
+        <conv:ExtraSettingsViewConverter x:Key="ExtraSettingsViewConv"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <StackPanel>
-        <TextBlock Text="Optional tools" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
-            <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+        <TextBlock Text="Installed Plugins" Style="{StaticResource SettingsKicker}"/>
+        
+        <ItemsControl ItemsSource="{Binding AllExtras}" Margin="0,10,0,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource Panel}" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="AI assistant" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Enable only if you want AI commands inside Spur." Style="{StaticResource SettingsHint}"/>
-                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
-                                               Foreground="{DynamicResource TextTertiary}"
-                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
-                                    <TextBox Grid.Column="1" Text="{Binding AiKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
-                                             Background="Transparent" BorderThickness="0"
-                                             VerticalContentAlignment="Center" Padding="2,4"/>
-                                </Grid>
+                            <!-- Header Row -->
+                            <Grid Margin="16,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Icon -->
+                                <ui:FontIcon Grid.Column="0" Glyph="{Binding IconGlyph}" FontSize="24" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SettingsTitle}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource SettingsHint}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                
+                                <!-- Controls (Toggle + Expand Button) -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="On" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}"/>
+                                    <ui:ToggleSwitch IsOn="{Binding IsEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,8,0" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                                    <ToggleButton x:Name="ExpandButton" Background="Transparent" BorderThickness="0" Padding="8,4" VerticalAlignment="Center">
+                                        <ui:FontIcon x:Name="ExpandIcon" Glyph="&#xE70D;" FontSize="12"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Expanded Content -->
+                            <Border Visibility="{Binding IsChecked, ElementName=ExpandButton, Converter={StaticResource BoolToVis}}" 
+                                    BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+                                <StackPanel Margin="16,16,16,12">
+                                    <!-- Action Keyword -->
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                                            <ui:FontIcon Glyph="&#xE73A;" FontSize="16" Foreground="{DynamicResource TextSecondary}" Margin="0,0,12,0"/>
+                                            <TextBlock Text="Action keyword" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Style="{StaticResource SettingsInputFrame}" MinWidth="80">
+                                            <TextBox Text="{Binding Keyword, Mode=TwoWay}" HorizontalContentAlignment="Center" VerticalAlignment="Center" BorderThickness="0" Background="Transparent" Padding="0,0,0,0"/>
+                                        </Border>
+                                    </Grid>
+                                    
+                                    <!-- Custom Settings Block -->
+                                    <StackPanel Visibility="{Binding Converter={StaticResource ExtraSettingsViewConv}, ConverterParameter=Visibility}">
+                                        <ContentControl Content="{Binding Converter={StaticResource ExtraSettingsViewConv}}" Margin="0,0,0,16"/>
+                                    </StackPanel>
+                                    
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,12"/>
+                                    
+                                    <!-- Footer (Author, Version) -->
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Author, StringFormat='by {0}  |'}" FontSize="11" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Version, StringFormat='  Version {0}'}" FontSize="11" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="4" Padding="4,2" Margin="4,0,0,0"
+                                                Visibility="{Binding IsBuiltIn, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Built-in" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding AiEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Timer" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Small countdown commands from the launcher." Style="{StaticResource SettingsHint}"/>
-                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
-                                               Foreground="{DynamicResource TextTertiary}"
-                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
-                                    <TextBox Grid.Column="1" Text="{Binding TimerKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
-                                             Background="Transparent" BorderThickness="0"
-                                             VerticalContentAlignment="Center" Padding="2,4"/>
-                                </Grid>
-                            </Border>
-                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,6,0,0" MaxWidth="300">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Presets" FontSize="11"
-                                               Foreground="{DynamicResource TextTertiary}"
-                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
-                                    <TextBox Grid.Column="1" Text="{Binding TimerPresets, UpdateSourceTrigger=PropertyChanged}"
-                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
-                                             Background="Transparent" BorderThickness="0"
-                                             VerticalContentAlignment="Center" Padding="2,4"/>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding TimerEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                    </Grid>
-                </Border>
-            </StackPanel>
-        </Border>
-
-        <TextBlock Text="AI provider" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
-            <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Provider and model" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Stored locally. Spur only uses this when AI is enabled." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding AiProvider, Mode=TwoWay}" Width="120"/>
-                            <ComboBox ItemsSource="{Binding CurrentModels}" SelectedItem="{Binding AiModel, Mode=TwoWay}" Width="180" Margin="8,0,0,0"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <StackPanel>
-                        <TextBlock Text="API key" Style="{StaticResource SettingsTitle}"/>
-                        <TextBlock Text="Protected with Windows user encryption." Style="{StaticResource SettingsHint}"/>
-                        <Border Style="{StaticResource SettingsInputFrame}" Margin="0,10,0,0">
-                            <PasswordBox x:Name="AiApiKeyBox"
-                                         PasswordChanged="OnAiApiKeyChanged"
-                                         FontFamily="{DynamicResource Token.Font.Primary}"
-                                         FontSize="12"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         VerticalContentAlignment="Center"/>
-                        </Border>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Border>
+                    </Border>
+                    <DataTemplate.Triggers>
+                        <Trigger Property="IsChecked" SourceName="ExpandButton" Value="True">
+                            <Setter TargetName="ExpandIcon" Property="Glyph" Value="&#xE70E;"/>
+                        </Trigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </StackPanel>
 </UserControl>
-

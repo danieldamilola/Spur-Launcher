@@ -29,7 +29,7 @@ public sealed partial class TimerViewModel : ObservableObject
 
     public bool StartTimerPreview(string query)
     {
-        if (!TimerAction.TryParse(query, out var duration))
+        if (!Spur.Extensions.Extras.Timer.TimerExtra.TryParseDuration(query, out var durationSec))
         {
             _timerTotal = TimeSpan.Zero;
             _timerRemaining = TimeSpan.Zero;
@@ -39,6 +39,7 @@ public sealed partial class TimerViewModel : ObservableObject
             TimerRunning = false;
             return false;
         }
+        var duration = TimeSpan.FromSeconds(durationSec);
         _timerTotal     = duration;
         _timerRemaining = duration;
         UpdateTimerDisplay();
@@ -56,6 +57,7 @@ public sealed partial class TimerViewModel : ObservableObject
 
         _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _timerTick.Tick += OnTimerTick;
+        _timerTick.Tick += OnTimerTick;
         _timerTick.Start();
     }
 
@@ -71,6 +73,10 @@ public sealed partial class TimerViewModel : ObservableObject
             _notification.Show("Spur Timer", "Your timer has finished!");
         }
         UpdateTimerDisplay();
+
+        TimerProgress = _timerTotal > TimeSpan.Zero
+            ? _timerRemaining.TotalMilliseconds / _timerTotal.TotalMilliseconds * 100.0
+            : 0;
     }
 
     private void UpdateTimerDisplay()
@@ -78,10 +84,6 @@ public sealed partial class TimerViewModel : ObservableObject
         TimerDisplay = _timerRemaining.TotalHours >= 1
             ? _timerRemaining.ToString(@"hh\:mm\:ss")
             : _timerRemaining.ToString(@"mm\:ss");
-
-        TimerProgress = _timerTotal > TimeSpan.Zero
-            ? _timerRemaining.TotalMilliseconds / _timerTotal.TotalMilliseconds * 100.0
-            : 0;
     }
 
     private void Cancel()

@@ -1,4 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
@@ -30,6 +35,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICommandRegistry     _registry;
     private readonly ISearchEngineService _searchEngine;
     private readonly ISecureStorageService _secureStorage;
+    private readonly ExtrasRegistry       _extras;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel    _ai;
@@ -65,7 +71,9 @@ public sealed partial class MainViewModel : ObservableObject
         ICommandRegistry      registry,
         CommandPaletteViewModel commandPalette,
         ISearchEngineService  searchEngine,
-        ISecureStorageService secureStorage)
+        ISecureStorageService secureStorage,
+        ExtrasRegistry        extras,
+        Spur.Services.ExtrasStoreService storeService)
     {
         _log          = log;
         _apps         = apps;
@@ -80,9 +88,10 @@ public sealed partial class MainViewModel : ObservableObject
         _registry = registry;
         _searchEngine = searchEngine;
         _secureStorage = secureStorage;
+        _extras = extras;
 
         Config   = config;
-        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage);
+        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _extras, storeService);
 
         // Push initial config to services
         _files.MaxDepth     = Config.MaxFileDepth;
@@ -224,13 +233,6 @@ public sealed partial class MainViewModel : ObservableObject
         set => SetProperty(ref _actionPreviewState, value);
     }
 
-    private string _ipPreviewText = string.Empty;
-    public string IpPreviewText
-    {
-        get => _ipPreviewText;
-        set => SetProperty(ref _ipPreviewText, value);
-    }
-
     /// <summary>The original query that triggered the action (shown in calc/system previews).</summary>
     private string _actionPreviewQuery = string.Empty;
     public string ActionPreviewQuery
@@ -238,7 +240,6 @@ public sealed partial class MainViewModel : ObservableObject
         get => _actionPreviewQuery;
         set => SetProperty(ref _actionPreviewQuery, value);
     }
-    private bool _ipPreviewLoading;
 
     public void CancelSearch() => _searchCts?.Cancel();
 
@@ -535,41 +536,11 @@ partial void OnActiveCategoryChanged(string? value)
             case "timer":
                 _timer.StartTimerPreview(subQuery);
                 break;
-            case "ip":
-                ActionPreviewState = "Fetching";
-                _ = FetchIpPreviewAsync();
-                break;
             default:
                 ActiveActionPanel = null;
                 break;
         }
     }
-
-    private async Task FetchIpPreviewAsync()
-    {
-        if (_ipPreviewLoading) return;
-        _ipPreviewLoading = true;
-
-        var local = IpAction.GetLocalIp();
-        IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: fetching…";
-
-        try
-        {
-            var pub = await IpAction.GetPublicIpAsync();
-            IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: {pub ?? "Unavailable"}";
-        }
-        catch
-        {
-            IpPreviewText = $"Local: {local ?? "Not connected"}  ·  Public: unavailable";
-        }
-        finally
-        {
-            _ipPreviewLoading = false;
-        }
-    }
-
-    /// <summary>The sub-query after the keyword prefix, e.g. "5m" from "timer 5m".</summary>
-    private string _activeActionSubQuery = string.Empty;
 
     /// <summary>Close the action preview panel (called from XAML close button or Escape).</summary>
     public void CloseActionPanel()
@@ -651,9 +622,7 @@ partial void OnActiveCategoryChanged(string? value)
             _keywordMap = new()
             {
                 [Config.KeywordSystem]     = ("system",     "power"),
-                [Config.KeywordColor]      = ("color",      "\ue790"),
                 [Config.KeywordTimer]      = ("timer",      "\ue121"),
-                [Config.KeywordIp]         = ("ip",         "\ue701"),
                 [Config.KeywordAi]         = ("ai",         "AI"),
                 [Config.KeywordCurrency]   = ("currency",   "\ue825"),
                 [Config.KeywordPassword]   = ("pw",         "\ue722"),
@@ -772,180 +741,94 @@ partial void OnActiveCategoryChanged(string? value)
                     return;
                 }
 
-                // System commands: shutdown / restart / sleep / lock etc.
-                if (result.ActionId == "system")
-                {
-                    SystemAction.Execute(actionInput);
-                    ActionPreviewTitle = result.Name;
-                    ActionPreviewSubtitle = actionInput;
-                    ActionPreviewState = "Sent";
-                    ActionResultText = "System command sent";
-                    ActionResultSubText = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
-                    ActiveActionPanel = "system";
-                    return;
-                }
-                if (result.ActionId == "timer")
-                {
-                    if (_timer.StartTimerPreview(actionInput))
-                        Timer.StartCommand.Execute(null);
-                    ActionPreviewTitle = result.Name;
-                    ActionPreviewSubtitle = actionInput;
-                    ActionPreviewState = Timer.TimerRunning ? "Running" : "Check input";
-                    ActiveActionPanel = "timer";
-                    // panel stays visible so the user sees the countdown
-                }
-                else if (result.ActionId == "ai")
-                {
-                    try
-                    {
-                        ActiveActionPanel = "ai";
-                        ActionPreviewTitle = result.Name;
-                        ActionPreviewSubtitle = actionInput;
-                        ActionPreviewState = "Thinking";
-                        await _ai.StartAiAsync(actionInput);
-                        ActionPreviewState = string.IsNullOrWhiteSpace(_ai.AiError) ? "Answered" : "Needs setup";
-                        // response streams into AiChat.AiText — panel stays visible
-                    }
-                    catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
-                }
-                // Calc/Color/IP: Enter copies result to clipboard
-                else if (result.ActionId == "calc")
-                {
-                    var calcResult = result.Name.TrimStart('=', ' ');
-                    _clipboard.CopyToSystem(calcResult);
-                    ActionPreviewTitle = "Calculator";
-                    ActionPreviewSubtitle = result.Subtitle ?? Query;
-                    ActionPreviewState = "Copied";
-                    ActionResultText = calcResult;
-                    ActionResultSubText = "Copied to clipboard";
-                    ActiveActionPanel = "calc";
-                }
-                else if (result.ActionId == "color")
-                {
-                    _clipboard.CopyToSystem(result.Name);
-                    ActionPreviewTitle = "Color";
-                    ActionPreviewSubtitle = result.Name;
-                    ActionPreviewState = "Copied";
-                    ActionResultText = result.Name;
-                    ActionResultSubText = "Copied to clipboard";
-                    ActiveActionPanel = "color";
-                }
-                else if (result.ActionId == "ip")
-                {
-                    var local = IpAction.GetLocalIp() ?? "Not connected";
-                    var pub = await IpAction.GetPublicIpAsync();
-                    var text = $"{local} · {pub ?? "Unavailable"}";
-                    _clipboard.CopyToSystem(text);
-                    ActionPreviewTitle = "IP Address";
-                    ActionPreviewSubtitle = "Copied local and public addresses";
-                    ActionPreviewState = "Copied";
-                    ActionResultText = text;
-                    ActionResultSubText = "Copied to clipboard";
-                    ActiveActionPanel = "ip";
-                }
-                // Settings: open settings panel when clicked
-                else if (result.ActionId == "settings")
-                {
-                    OpenSettingsRequested?.Invoke();
-                    return;
-                }
-                else if (result.ActionId == "url")
+                if (result.ActionId == "url")
                 {
                     Launch(NormalizeUrl(Query));
                     HideAfterLaunch();
+                    return;
                 }
                 else if (result.ActionId == "web")
                 {
                     var q = NormalizeWebQuery(Query);
                     Launch($"https://www.google.com/search?q={Uri.EscapeDataString(q)}");
                     HideAfterLaunch();
+                    return;
                 }
-                else if (result.ActionId == "shell")
+                
+                var extra = _extras.FindById(result.ActionId);
+                if (extra is not null)
                 {
-                    var command = actionInput.Trim();
-                    if (!string.IsNullOrWhiteSpace(command))
+                    // Special case for timer to wire up the VM
+                    if (result.ActionId == "timer")
                     {
-                        RunShellCommand(command);
-                        ActionPreviewTitle = "Shell command";
-                        ActionPreviewSubtitle = command;
-                        ActionPreviewState = "Started";
-                        ActionResultText = "Command started";
-                        ActionResultSubText = command;
-                        ActiveActionPanel = "shell";
+                        if (_timer.StartTimerPreview(actionInput))
+                            Timer.StartCommand.Execute(null);
+                        ActionPreviewTitle = result.Name;
+                        ActionPreviewSubtitle = actionInput;
+                        ActionPreviewState = Timer.TimerRunning ? "Running" : "Check input";
+                        ActiveActionPanel = "timer";
+                        return;
                     }
-                }
-                // Screenshot: capture and save
-                else if (result.ActionId == "screenshot")
-                {
-                    var path = ScreenshotAction.Execute(Config.Screenshot.SaveFormat, Config.Screenshot.SaveFolder);
-                    ActionPreviewTitle = "Screenshot";
-                    ActionPreviewSubtitle = path ?? "Capture failed";
-                    ActionPreviewState = path is null ? "Error" : "Saved";
-                    ActionResultText = path is null ? "Screenshot failed" : "Screenshot saved";
-                    ActionResultSubText = path ?? "Check screenshot settings";
-                    ActiveActionPanel = "screenshot";
-                }
-                // Kill Process: force-close by name
-                else if (result.ActionId == "kill")
-                {
-                    var killed = KillProcessAction.Execute(actionInput);
-                    ActionPreviewTitle = "Kill process";
-                    ActionPreviewSubtitle = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
-                    ActionPreviewState = killed > 0 ? "Completed" : "No match";
-                    ActionResultText = $"Killed {killed} process(es)";
-                    ActionResultSubText = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
-                    ActiveActionPanel = "kill";
-                }
-                // Password Gen: generate and copy
-                else if (result.ActionId == "pw")
-                {
-                    var pw = PasswordGenAction.Generate(actionInput, Config.PasswordGen);
-                    _clipboard.CopyToSystem(pw);
-                    ActionPreviewTitle = "Password";
-                    ActionPreviewSubtitle = "Generated and copied";
-                    ActionPreviewState = "Copied";
-                    ActionResultText = pw;
-                    ActionResultSubText = "Password copied to clipboard";
-                    ActiveActionPanel = "pw";
-                }
-                // Quick Note: save and open
-                else if (result.ActionId == "note")
-                {
-                    var path = QuickNoteAction.Execute(actionInput, Config.QuickNote.SaveFolder);
-                    ActionPreviewTitle = "Quick note";
-                    ActionPreviewSubtitle = path ?? "No note text";
-                    ActionPreviewState = path is null ? "Needs text" : "Saved";
-                    ActionResultText = path is null ? "Nothing to save" : "Note saved";
-                    ActionResultSubText = path ?? "Type note text after the keyword";
-                    ActiveActionPanel = "note";
-                }
-                // Currency: fetch conversion and copy
-                else if (result.ActionId == "currency")
-                {
-                    try
+                    else if (result.ActionId == "ai")
                     {
-                        var result2 = await CurrencyAction.ConvertAsync(actionInput);
-                        if (result2 is not null)
+                        try
                         {
-                            _clipboard.CopyToSystem(result2);
-                            ActionPreviewTitle = "Currency";
+                            ActiveActionPanel = "ai";
+                            ActionPreviewTitle = result.Name;
                             ActionPreviewSubtitle = actionInput;
-                            ActionPreviewState = "Copied";
-                            ActionResultText = result2;
-                            ActionResultSubText = "Copied to clipboard";
-                            ActiveActionPanel = "currency";
+                            ActionPreviewState = "Thinking";
+                            await _ai.StartAiAsync(actionInput);
+                            ActionPreviewState = string.IsNullOrWhiteSpace(_ai.AiError) ? "Answered" : "Needs setup";
                         }
-                        else
-                        {
-                            ActionPreviewTitle = "Currency";
-                            ActionPreviewSubtitle = actionInput;
-                            ActionPreviewState = "Invalid";
-                            ActionResultText = "Invalid conversion";
-                            ActionResultSubText = "Use a format like 100 usd to eur";
-                            ActiveActionPanel = "currency";
-                        }
+                        catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
+                        return;
                     }
-                    catch (Exception ex) { _log.Warning("Currency error", ex); }
+                    else if (result.ActionId == "settings")
+                    {
+                        OpenSettingsRequested?.Invoke();
+                        return;
+                    }
+                    else if (result.ActionId == "shell")
+                    {
+                        var command = actionInput.Trim();
+                        if (!string.IsNullOrWhiteSpace(command))
+                        {
+                            ActionPreviewTitle = "Shell command";
+                            ActionPreviewSubtitle = command;
+                            ActionPreviewState = "Started";
+                            ActionResultText = "Command started";
+                            ActionResultSubText = command;
+                            ActiveActionPanel = "shell";
+                            // Run the shell extra directly
+                            var shExtra = _extras.FindById("shell");
+                            if (shExtra is not null) await shExtra.ExecuteAsync(command);
+                        }
+                        return;
+                    }
+
+                    var extraResult = await extra.ExecuteAsync(actionInput);
+                    
+                    if (extraResult.Success)
+                    {
+                        if (!string.IsNullOrEmpty(extraResult.CopyText))
+                            _clipboard.CopyToSystem(extraResult.CopyText);
+                        
+                        ActionPreviewTitle = extraResult.Title;
+                        ActionPreviewSubtitle = actionInput;
+                        ActionPreviewState = !string.IsNullOrEmpty(extraResult.CopyText) ? "Copied" : "Completed";
+                        ActionResultText = extraResult.Detail;
+                        ActionResultSubText = extraResult.SubText;
+                        ActiveActionPanel = extraResult.PanelId;
+                    }
+                    else
+                    {
+                        ActionPreviewTitle = extraResult.Title;
+                        ActionPreviewSubtitle = actionInput;
+                        ActionPreviewState = "Error";
+                        ActionResultText = string.IsNullOrEmpty(extraResult.Detail) ? "Failed" : extraResult.Detail;
+                        ActionResultSubText = extraResult.SubText;
+                        ActiveActionPanel = extraResult.PanelId;
+                    }
                 }
                 break;
         }
@@ -972,69 +855,23 @@ partial void OnActiveCategoryChanged(string? value)
         }
 
         if (result.ActionId == "shell")
-            return ExtractShellCommand(Query);
+        {
+            var extra = _extras.FindByKeyword(result.ActionId);
+            var keyword = extra?.Keyword ?? string.Empty;
+            var trimmed = Query.Trim();
+            if (string.IsNullOrWhiteSpace(keyword)) return trimmed;
+
+            if (keyword == ">" && trimmed.StartsWith(">", StringComparison.Ordinal))
+                return trimmed[1..].Trim();
+
+            var prefix = keyword + " ";
+            return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? trimmed[prefix.Length..].Trim()
+                : trimmed;
+        }
 
         return string.IsNullOrWhiteSpace(subQuery) ? Query.Trim() : subQuery;
     }
-
-    private string ExtractShellCommand(string query)
-    {
-        var keyword = Config.KeywordShell;
-        var trimmed = query.Trim();
-        if (string.IsNullOrWhiteSpace(keyword)) return trimmed;
-
-        if (keyword == ">" && trimmed.StartsWith(">", StringComparison.Ordinal))
-            return trimmed[1..].Trim();
-
-        var prefix = keyword + " ";
-        return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? trimmed[prefix.Length..].Trim()
-            : trimmed;
-    }
-
-    private void RunShellCommand(string command)
-    {
-        var terminal = Config.Shell.Terminal.ToLowerInvariant();
-        var close = Config.Shell.CloseAfterExecution;
-        var useWindowsTerminal = Config.Shell.UseWindowsTerminal;
-
-        var (exe, args) = BuildShellProcess(terminal, command, close, useWindowsTerminal);
-        var psi = new ProcessStartInfo(exe, args)
-        {
-            UseShellExecute = Config.Shell.AlwaysRunAsAdministrator,
-            CreateNoWindow = false,
-        };
-
-        if (Config.Shell.AlwaysRunAsAdministrator)
-            psi.Verb = "runas";
-
-        Process.Start(psi);
-    }
-
-    private static (string Exe, string Args) BuildShellProcess(string terminal, string command, bool closeAfterExecution, bool useWindowsTerminal)
-    {
-        var shellExe = terminal switch
-        {
-            "powershell" => "powershell.exe",
-            "pwsh" => "pwsh.exe",
-            _ => "cmd.exe",
-        };
-
-        var shellArgs = terminal switch
-        {
-            "powershell" or "pwsh" => closeAfterExecution
-                ? $"-NoProfile -Command \"{EscapeForQuotedArgument(command)}\""
-                : $"-NoProfile -NoExit -Command \"{EscapeForQuotedArgument(command)}\"",
-            _ => closeAfterExecution ? $"/c {command}" : $"/k {command}",
-        };
-
-        return useWindowsTerminal
-            ? ("wt.exe", $"{shellExe} {shellArgs}")
-            : (shellExe, shellArgs);
-    }
-
-    private static string EscapeForQuotedArgument(string value)
-        => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
     [RelayCommand]
     public void OpenFolder()
@@ -1318,8 +1155,6 @@ partial void OnActiveCategoryChanged(string? value)
         _ai.CancelPending();
         _timer.Stop();
     }
-
-    public void OnWindowShown() { }
 
     public void Reset()
     {

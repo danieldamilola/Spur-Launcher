@@ -117,12 +117,13 @@ public class MainViewModelTests
         var files = new FakeFiles();
         var freq = new FakeFreq();
         var clip = new FakeClip();
-        var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq);
+        var extras = new Spur.Extensions.ExtrasRegistry(NullLogger.Instance);
+        var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq, extras);
 
         return new MainViewModel(cfg, NullLogger.Instance,
             apps, files, freq, new FakeConfigSvc(cfg),
             clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
-            registry, commandPalette, searchEngine, new FakeSecureStorage());
+            registry, commandPalette, searchEngine, new FakeSecureStorage(), extras, new Spur.Services.ExtrasStoreService(NullLogger.Instance));
     }
 
     [Fact]
@@ -146,13 +147,8 @@ public class MainViewModelTests
     {
         var cfg = new SpurConfig
         {
-            ActionTimer = true,
-            ActionPasswordGen = true,
             IndexSystemCommands = true,
         };
-        cfg.Timer.Enabled = true;
-        cfg.PasswordGen.Enabled = true;
-        cfg.System.Enabled = true;
 
         var vm = CreateViewModel(cfg);
 
@@ -168,8 +164,7 @@ public class MainViewModelTests
     [Fact]
     public async Task AiCategoryProducesAiPreviewRowEvenWhenDisabled()
     {
-        var cfg = new SpurConfig { ActionAi = false };
-        cfg.Ai.Enabled = false;
+        var cfg = new SpurConfig();
         var vm = CreateViewModel(cfg);
 
         vm.ActiveCategory = "ai";

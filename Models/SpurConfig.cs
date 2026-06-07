@@ -89,51 +89,35 @@ public sealed class SpurConfig
     /// <summary>Enable Windows Settings search results.</summary>
     public bool IndexWindowsSettings { get; set; } = true;
 
-    // Per-action toggles — each action can be individually disabled in Settings → Actions
-    public bool ActionColor      { get; set; } = true;
-    public bool ActionTimer      { get; set; } = false;
-    public bool ActionIp         { get; set; } = false;
-    public bool ActionAi         { get; set; } = false;
-    public bool ActionCurrency   { get; set; } = true;
-    public bool ActionPasswordGen { get; set; } = false;
-    public bool ActionQuickNote  { get; set; } = false;
-    public bool ActionKillProcess { get; set; } = false;
-    public bool ActionScreenshot { get; set; } = false;
+    // Legacy action toggles
+    [JsonIgnore] public bool ActionColor      { get; set; } = true;
+    [JsonIgnore] public bool ActionTimer      { get; set; } = false;
+    [JsonIgnore] public bool ActionIp         { get; set; } = false;
+    [JsonIgnore] public bool ActionAi         { get; set; } = false;
+    [JsonIgnore] public bool ActionCurrency   { get; set; } = true;
+    [JsonIgnore] public bool ActionPasswordGen { get; set; } = false;
+    [JsonIgnore] public bool ActionQuickNote  { get; set; } = false;
+    [JsonIgnore] public bool ActionKillProcess { get; set; } = false;
+    [JsonIgnore] public bool ActionScreenshot { get; set; } = false;
+
+    // Per-action settings have been moved to individual extra folders
+    // and are stored in the new Extras dictionary below.
 
     // ═══════════════════════════════════════════════════════════════
-    // Per-action settings (Flow Launcher-style)
-    // Each action gets its own settings object with keyword, enabled,
-    // and action-specific options. These are the canonical source;
-    // the ActionXxx / KeywordXxx properties above are kept for
-    // backward compatibility and sync to/from these objects on load/save.
+    // Action Keywords (Legacy Flow Launcher-style, kept for compat)
     // ═══════════════════════════════════════════════════════════════
-    public SystemActionSettings       System       { get; set; } = new();
-    public TimerActionSettings        Timer        { get; set; } = new();
-    public KillProcessActionSettings  KillProcess  { get; set; } = new();
-    public PasswordGenActionSettings  PasswordGen  { get; set; } = new();
-    public ScreenshotActionSettings   Screenshot   { get; set; } = new();
-    public QuickNoteActionSettings    QuickNote    { get; set; } = new();
-    public CurrencyActionSettings     Currency     { get; set; } = new();
-    public ColorActionSettings        Color        { get; set; } = new();
-    public IpActionSettings           Ip           { get; set; } = new();
-    public AiActionSettings           Ai           { get; set; } = new();
-    public ShellActionSettings        Shell        { get; set; } = new();
-
-    // ═══════════════════════════════════════════════════════════════
-    // Action Keywords (Flow Launcher-style)
-    // Type "keyword " (with space) to enter that action's scope.
-    // ═══════════════════════════════════════════════════════════════
-    public string KeywordSystem    { get; set; } = "sys";
-    public string KeywordColor     { get; set; } = "color";
-    public string KeywordTimer     { get; set; } = "timer";
-    public string KeywordIp        { get; set; } = "ip";
-    public string KeywordAi        { get; set; } = "ai";
-    public string KeywordCurrency  { get; set; } = "cur";
-    public string KeywordPassword  { get; set; } = "pw";
-    public string KeywordNote      { get; set; } = "note";
-    public string KeywordKill      { get; set; } = "kill";
-    public string KeywordScreenshot { get; set; } = "ss";
-    public string KeywordShell      { get; set; } = ">";
+    [JsonIgnore] public string KeywordSystem    { get; set; } = "sys";
+    [JsonIgnore] public string KeywordColor     { get; set; } = "color";
+    [JsonIgnore] public string KeywordTimer     { get; set; } = "timer";
+    [JsonIgnore] public string KeywordIp        { get; set; } = "ip";
+    [JsonIgnore] public string KeywordAi        { get; set; } = "ai";
+    [JsonIgnore] public string KeywordCurrency  { get; set; } = "cur";
+    [JsonIgnore] public string KeywordPassword  { get; set; } = "pw";
+    [JsonIgnore] public string KeywordNote      { get; set; } = "note";
+    [JsonIgnore] public string KeywordKill      { get; set; } = "kill";
+    [JsonIgnore] public string KeywordScreenshot { get; set; } = "ss";
+    [JsonIgnore] public string KeywordShell      { get; set; } = ">";
+    
     public string KeywordClipboard { get; set; } = "c";
     public string KeywordFiles     { get; set; } = "files";
     public string KeywordApps      { get; set; } = "apps";
@@ -250,7 +234,11 @@ public sealed class SpurConfig
     public List<PinnedClipboardItem> PinnedClipboard { get; set; } = [];
 
     // ═══════════════════════════════════════════════════════════════
+    // Extras Store
+    // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>Canonical storage for all extras (built-in and community).</summary>
+    public Dictionary<string, ExtrasEntryConfig> Extras { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // ═══════════════════════════════════════════════════════════════
     // Clone

@@ -1,0 +1,23 @@
+<UserControl x:Class="Spur.Extensions.Extras.Shell.ShellSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+    <StackPanel Margin="0,8">
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Terminal Executor" VerticalAlignment="Center" Style="{StaticResource SettingsHint}"/>
+            <ComboBox Grid.Column="1" SelectedItem="{Binding Terminal, Mode=TwoWay}" Width="100">
+                <sys:String>cmd</sys:String>
+                <sys:String>powershell</sys:String>
+            </ComboBox>
+        </Grid>
+        
+        <ui:ToggleSwitch IsOn="{Binding CloseAfterExecution, Mode=TwoWay}" Header="Close terminal after execution" Margin="0,0,0,12" OnContent="{x:Null}" OffContent="{x:Null}"/>
+        <ui:ToggleSwitch IsOn="{Binding AlwaysRunAsAdministrator, Mode=TwoWay}" Header="Always run as Administrator" Margin="0,0,0,12" OnContent="{x:Null}" OffContent="{x:Null}"/>
+        <ui:ToggleSwitch IsOn="{Binding UseWindowsTerminal, Mode=TwoWay}" Header="Use Windows Terminal (wt.exe)" OnContent="{x:Null}" OffContent="{x:Null}"/>
+    </StackPanel>
+</UserControl>

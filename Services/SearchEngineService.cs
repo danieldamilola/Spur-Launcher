@@ -17,25 +17,9 @@ public sealed class SearchEngineService : ISearchEngineService
     private readonly IClipboardService _clipboard;
     private readonly SpurConfig _config;
     private readonly IFrequencyService _freq;
+    private readonly ExtrasRegistry _extras;
 
     private volatile IReadOnlyList<SearchResult> _appCatalog = [];
-
-    private static readonly IAction[] Actions =
-    [
-        new CalculatorAction(),
-        new ColorAction(),
-        new TimerAction(),
-        new IpAction(),
-        new AiAction(),
-        new SettingsAction(),
-        new SystemAction(),
-        new CurrencyAction(),
-        new PasswordGenAction(),
-        new QuickNoteAction(),
-        new KillProcessAction(),
-        new ScreenshotAction(),
-        new ShellAction(),
-    ];
 
     public SearchEngineService(
         ILogger log,
@@ -43,7 +27,8 @@ public sealed class SearchEngineService : ISearchEngineService
         IFileSearchService files,
         IClipboardService clipboard,
         SpurConfig config,
-        IFrequencyService freq)
+        IFrequencyService freq,
+        ExtrasRegistry extras)
     {
         _log = log;
         _apps = apps;
@@ -51,6 +36,9 @@ public sealed class SearchEngineService : ISearchEngineService
         _clipboard = clipboard;
         _config = config;
         _freq = freq;
+        _extras = extras;
+
+        _extras.LoadSettings(_config);
 
         _apps.CatalogRefreshed += HandleCatalogRefreshed;
     }
@@ -84,15 +72,13 @@ public sealed class SearchEngineService : ISearchEngineService
                 return newResults;
             }
 
-            var scopedAction = Actions.FirstOrDefault(a => a.Id == activeCategory && !a.IsGlobal);
-            if (scopedAction is not null)
+            var scopedExtra = _extras.FindByKeyword(activeCategory);
+            if (scopedExtra is not null)
             {
-                if (scopedAction.Id != "ai" && !IsActionEnabled(scopedAction.Id)) return newResults;
-                ApplyActionSettings(scopedAction.Id);
-                var actionResults = scopedAction.GetResults(query).ToList();
+                var actionResults = scopedExtra.GetResults(query).ToList();
                 if (actionResults.Count > 0)
                 {
-                    newResults.Add(new SectionLabel(scopedAction.Name));
+                    newResults.Add(new SectionLabel(scopedExtra.Name));
                     newResults.AddRange(actionResults);
                 }
                 return newResults;
@@ -136,8 +122,15 @@ public sealed class SearchEngineService : ISearchEngineService
         // -- Inline answers (global search only) --------------------
         if (activeCategory is null)
         {
-            foreach (var inline in BuildInlineResults(query))
-                newResults.Add(inline);
+            foreach (var extra in _extras.GetGlobalEnabled())
+            {
+                if (extra.CanHandle(query))
+                    newResults.Add(extra.BuildResult(query));
+            }
+
+            var url = BuildUrlAction(query);
+            if (url is not null)
+                newResults.Add(url);
         }
 
         // -- Files -------------------------------------------------
@@ -207,19 +200,16 @@ public sealed class SearchEngineService : ISearchEngineService
         {
             var globalActionResults = new List<SearchResult>();
 
-            foreach (var action in Actions)
+            foreach (var extra in _extras.GetGlobalEnabled())
             {
-                if (!action.IsGlobal || !IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
-                var r = action.BuildResult(query);
+                if (!extra.CanHandle(query)) continue;
+                var r = extra.BuildResult(query);
                 r.Score = MatchScore(query, r.Name);
                 globalActionResults.Add(r);
             }
 
             var url = BuildUrlAction(query);
             if (url is not null) globalActionResults.Add(url);
-
-            var shell = BuildShellAction(query);
-            if (shell is not null) globalActionResults.Add(shell);
 
             globalActionResults.Sort((x, y) => y.Score.CompareTo(x.Score));
 
@@ -269,53 +259,28 @@ public sealed class SearchEngineService : ISearchEngineService
 
     private IEnumerable<SearchResult> BuildActionCatalog(string query)
     {
-        var entries = new[]
+        foreach (var extra in _extras.GetEnabled())
         {
-            ("system", "System commands", _config.KeywordSystem, "Shutdown, restart, sleep, lock, sign out.", "power"),
-            ("color", "Color tools", _config.KeywordColor, "Convert and copy hex colors.", "\ue790"),
-            ("currency", "Currency converter", _config.KeywordCurrency, "Convert an amount between currencies.", "\ue825"),
-            ("timer", "Timer", _config.KeywordTimer, "Start a countdown from Spur.", "\ue121"),
-            ("ai", "AI assistant", _config.KeywordAi, "Ask the configured AI provider.", "AI"),
-            ("ip", "IP tools", _config.KeywordIp, "Show local and public IP addresses.", "\ue701"),
-            ("pw", "Password generator", _config.KeywordPassword, "Generate and copy a password.", "\ue722"),
-            ("note", "Quick note", _config.KeywordNote, "Save a short note.", "\ue727"),
-            ("kill", "Kill process", _config.KeywordKill, "Find and terminate running processes.", "\ue747"),
-            ("screenshot", "Screenshot", _config.KeywordScreenshot, "Capture and save the screen.", "\ue74c"),
-            ("shell", "Shell commands", _config.KeywordShell, "Run a command through the configured terminal.", "\ue765"),
-        };
+            if (extra.IsGlobal) continue; // Global extras don't have a keyword-scoped entry in the catalog usually, though calc is an exception. Actually calc has IsGlobal=true but shouldn't show up here normally. We'll skip globals.
 
-        foreach (var (id, name, keyword, description, icon) in entries)
-        {
-            if (!IsActionEnabled(id)) continue;
             if (!string.IsNullOrWhiteSpace(query)
-                && !name.Contains(query, StringComparison.OrdinalIgnoreCase)
-                && !keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
-                && !description.Contains(query, StringComparison.OrdinalIgnoreCase))
+                && !extra.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !extra.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !extra.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
             yield return new SearchResult
             {
-                Id = $"action-catalog:{id}",
+                Id = $"action-catalog:{extra.Id}",
                 Type = ResultType.Action,
-                Name = name,
-                Subtitle = string.IsNullOrWhiteSpace(keyword) ? description : $"{keyword}  ·  {description}",
-                IconGlyph = icon,
-                ActionId = id,
+                Name = extra.Name,
+                Subtitle = string.IsNullOrWhiteSpace(extra.Keyword) ? extra.Description : $"{extra.Keyword}  ·  {extra.Description}",
+                IconGlyph = extra.IconGlyph,
+                ActionId = extra.Keyword, // Set ActionId to keyword so MainViewModel can use it
                 Score = 500,
             };
-        }
-    }
-
-    private void ApplyActionSettings(string actionId)
-    {
-        if (actionId == "timer")
-            TimerAction.PresetText = _config.Timer.DefaultPresets;
-        else if (actionId == "kill")
-        {
-            KillProcessAction.ShowWindowTitles = _config.KillProcess.ShowWindowTitles;
-            KillProcessAction.PrioritizeVisibleWindows = _config.KillProcess.PrioritizeVisibleWindows;
         }
     }
 
@@ -333,26 +298,6 @@ public sealed class SearchEngineService : ISearchEngineService
         "low" => 0,
         "strict" => 1.2,
         _ => 0.35,
-    };
-
-    private bool IsActionEnabled(string? id) => id switch
-    {
-        "calc"       => _config.IndexCalculator,
-        "color"      => _config.ActionColor,
-        "timer"      => _config.ActionTimer,
-        "ip"         => _config.ActionIp,
-        "ai"         => _config.ActionAi,
-        "currency"   => _config.ActionCurrency,
-        "pw"         => _config.ActionPasswordGen,
-        "note"       => _config.ActionQuickNote,
-        "kill"       => _config.ActionKillProcess,
-        "screenshot" => _config.ActionScreenshot,
-        "system"     => _config.IndexSystemCommands,
-        "settings"   => _config.IndexWindowsSettings,
-        "url"        => _config.IndexUrls,
-        "web"        => _config.IndexWebSearches,
-        "shell"      => _config.IndexShell,
-        _            => true,
     };
 
     private SearchResult? BuildUrlAction(string query)
@@ -386,38 +331,6 @@ public sealed class SearchEngineService : ISearchEngineService
         };
     }
 
-    private SearchResult? BuildShellAction(string query)
-    {
-        if (!_config.IndexShell) return null;
-        var command = ExtractShellCommand(query);
-        if (command.Length == 0) return null;
-        return new SearchResult
-        {
-            Id = $"shell:{command}",
-            Type = ResultType.Action,
-            Name = $"Run {command}",
-            Subtitle = "Shell command",
-            IconGlyph = "\ue765",
-            ActionId = "shell",
-            Score = 600,
-        };
-    }
-
-    private string ExtractShellCommand(string query)
-    {
-        var keyword = _config.KeywordShell;
-        var trimmed = query.Trim();
-        if (string.IsNullOrWhiteSpace(keyword)) return string.Empty;
-
-        if (keyword == ">" && trimmed.StartsWith(">", StringComparison.Ordinal))
-            return trimmed[1..].Trim();
-
-        var prefix = keyword + " ";
-        return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? trimmed[prefix.Length..].Trim()
-            : string.Empty;
-    }
-
     private static bool LooksLikeUrl(string query)
         => Uri.TryCreate(NormalizeUrl(query), UriKind.Absolute, out var uri)
            && uri.Scheme is "http" or "https";
@@ -426,19 +339,6 @@ public sealed class SearchEngineService : ISearchEngineService
     {
         var q = query.Trim();
         return q.StartsWith('?') ? q[1..].Trim() : q;
-    }
-
-    private IEnumerable<SearchResult> BuildInlineResults(string query)
-    {
-        foreach (var action in Actions)
-        {
-            if (!action.IsGlobal || !IsActionEnabled(action.Id) || !action.CanHandle(query)) continue;
-            yield return action.BuildResult(query);
-        }
-
-        var url = BuildUrlAction(query);
-        if (url is not null)
-            yield return url;
     }
 
     private static bool ShouldOfferWebFallback(string query, List<object> results)

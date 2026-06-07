@@ -1,0 +1,11 @@
+<UserControl x:Class="Spur.Extensions.Extras.QuickNote.QuickNoteSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+    <StackPanel Margin="0,8">
+        <TextBlock Text="Save Folder" Style="{StaticResource SettingsHint}" Margin="0,0,0,8"/>
+        <Border Style="{StaticResource SettingsInputFrame}" HorizontalAlignment="Left" MinWidth="200" MaxWidth="300">
+            <TextBox Text="{Binding SaveFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ui:ControlHelper.PlaceholderText="e.g. C:\Users\Documents\Notes" BorderThickness="0" Background="Transparent" Padding="0,0,0,0"/>
+        </Border>
+    </StackPanel>
+</UserControl>

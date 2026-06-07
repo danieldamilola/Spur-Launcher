@@ -215,8 +215,8 @@
             <Grid Margin="32,20,32,28">
                 <settings:GeneralSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}"/>
                 <settings:SearchSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Search}"/>
-                <settings:ActionsSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Actions}"/>
                 <settings:ExtrasSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Extras}"/>
+                <settings:ExtrasStoreView Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Store}"/>
                 <settings:AboutSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=About}"/>
             </Grid>
         </ScrollViewer>

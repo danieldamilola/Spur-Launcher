@@ -6,6 +6,7 @@ using Spur.ViewModels;
 using Spur.Views;
 using Spur.Services;
 using Spur.Converters;
+using Spur.Extensions;
 
 namespace Spur;
 
@@ -76,6 +77,8 @@ public partial class App : Application
         services.AddSingleton<IFileSearchService, FileSearchService>();
         services.AddSingleton<IAiService, AiService>();
         services.AddSingleton<IFrequencyService, FrequencyService>();
+        services.AddSingleton<ExtrasRegistry>();
+        services.AddSingleton<ExtrasStoreService>();
         services.AddSingleton<ISearchEngineService, SearchEngineService>();
         services.AddSingleton<ISecureStorageService, SecureStorageService>();
 

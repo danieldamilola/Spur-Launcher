@@ -66,12 +66,14 @@ public sealed partial class AiChatViewModel : ObservableObject
         _aiCts = new CancellationTokenSource();
         var ct = _aiCts.Token;
 
-        var question = AiAction.ExtractQuestion(query);
+        var trimmed = query.Trim();
+        var question = trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ? trimmed[3..].Trim() : trimmed;
         AiText    = string.Empty;
         AiError   = string.Empty;
         AiLoading = true;
 
         _aiConversation.Clear();
+        _aiConversation.Add(("system", "You are a helpful assistant."));
         _aiConversation.Add(("user", question));
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
@@ -141,7 +143,7 @@ public sealed partial class AiChatViewModel : ObservableObject
             string? newResponse = null;
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
-                Application.Current?.Dispatcher.InvokeAsync(() =>
+                Application.Current?.Dispatcher.InvokeAsync(async () =>
                 {
                     if (newResponse is null)
                     {

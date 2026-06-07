@@ -17,10 +17,18 @@ public partial class SearchBar : UserControl
     public void FocusInput()
     {
         SearchInput.Focus();
-        if (_vm?.Config.LastQueryStyle == "select")
-            SearchInput.SelectAll();
-        else
-            SearchInput.CaretIndex = SearchInput.Text.Length;
+        
+        System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            if (_vm?.Config.LastQueryStyle is "select" or "keep")
+            {
+                SearchInput.SelectAll();
+            }
+            else
+            {
+                SearchInput.CaretIndex = SearchInput.Text.Length;
+            }
+        });
     }
 
     private void OnTextChanged(object sender, TextChangedEventArgs e)
