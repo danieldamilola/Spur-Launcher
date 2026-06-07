@@ -3,8 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel Margin="0,8">
-        <TextBlock Text="AI provider" Foreground="{DynamicResource Token.Color.Foreground.Muted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,8"/>
-        <Border Background="{DynamicResource Token.Color.Background.Secondary}" CornerRadius="6" Padding="16">
+        <TextBlock Text="Al provider" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,8"/>
+        <Border Background="Transparent" CornerRadius="6" Padding="0">
             <StackPanel>
                 <Grid Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
@@ -12,8 +12,8 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Provider and model" Foreground="{DynamicResource Token.Color.Foreground.Base}" FontWeight="Medium" FontSize="14"/>
-                        <TextBlock Text="Stored locally. Spur only uses this when AI is enabled." Foreground="{DynamicResource Token.Color.Foreground.Muted}" FontSize="12" Margin="0,4,0,0"/>
+                        <TextBlock Text="Provider and model" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"/>
+                        <TextBlock Text="Stored locally. Spur only uses this when AI is enabled." Foreground="{DynamicResource TextMuted}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding AiProvider, Mode=TwoWay}" Width="120"/>
@@ -27,18 +27,18 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="API key" Foreground="{DynamicResource Token.Color.Foreground.Base}" FontWeight="Medium" FontSize="14"/>
-                        <TextBlock Text="Protected with Windows user encryption." Foreground="{DynamicResource Token.Color.Foreground.Muted}" FontSize="12" Margin="0,4,0,0"/>
+                        <TextBlock Text="API key" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"/>
+                        <TextBlock Text="Protected with Windows user encryption." Foreground="{DynamicResource TextMuted}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{DynamicResource Token.Color.Background.Input}" BorderBrush="{DynamicResource Token.Color.Border.Input}" BorderThickness="1" CornerRadius="4" Width="308">
+                    <Border Grid.Column="1" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="6" Width="308">
                         <PasswordBox x:Name="AiApiKeyBox"
                                      PasswordChanged="OnAiApiKeyChanged"
                                      FontFamily="{DynamicResource Token.Font.Primary}"
                                      FontSize="12"
                                      Background="Transparent"
                                      BorderThickness="0"
-                                     Foreground="{DynamicResource Token.Color.Foreground.Base}"
-                                     Padding="8,6"
+                                     Foreground="{DynamicResource TextPrimary}"
+                                     Padding="10,6"
                                      VerticalContentAlignment="Center"/>
                     </Border>
                 </Grid>

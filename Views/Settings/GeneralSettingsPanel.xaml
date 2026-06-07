@@ -110,7 +110,7 @@
                         <TextBlock Text="{Binding Shortcut}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
-                        <ui:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" OnContent="{x:Null}" OffContent="{x:Null}" AutomationProperties.Name="Enable hotkey"/>
+                        <local:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" AutomationProperties.Name="Enable hotkey"/>
                         <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit shortcut"/>
                     </StackPanel>
                 </Grid>
@@ -189,7 +189,7 @@
                         <TextBlock Text="Launch with Windows" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Make Spur available as soon as you sign in." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="#12FFFFFF" Margin="0"/>
@@ -204,7 +204,7 @@
                         <TextBlock Text="Tray icon" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Keep Spur reachable without cluttering the taskbar." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>
