@@ -80,12 +80,14 @@ public sealed class IconServiceImpl : IIconService
         if (parts.Length < 2) return null;
 
         var packageFamilyName = parts[0];
-        var windowsAppsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
 
         try
         {
-            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*").FirstOrDefault();
-            if (packageDir == null) return null;
+            var pm = new Windows.Management.Deployment.PackageManager();
+            var package = pm.FindPackagesForUser(string.Empty, packageFamilyName).FirstOrDefault();
+            if (package == null) return null;
+            
+            var packageDir = package.InstalledLocation.Path;
 
             // 1. Look for explicit unplated icons first
             try
@@ -118,7 +120,7 @@ public sealed class IconServiceImpl : IIconService
             catch { }
 
             // 4. Fallback to the executable
-            return ResolveUwpAppToExe(appUserModelId);
+            return ResolveUwpAppToExe(appUserModelId, packageDir);
         }
         catch { return null; }
     }
@@ -126,16 +128,21 @@ public sealed class IconServiceImpl : IIconService
     /// <summary>
     /// Resolves a UWP AppUserModelId to the actual .exe path for icon extraction.
     /// </summary>
-    private static string? ResolveUwpAppToExe(string appUserModelId)
+    private static string? ResolveUwpAppToExe(string appUserModelId, string? packageDir = null)
     {
         try
         {
             var parts = appUserModelId.Split('!');
             if (parts.Length < 2) return null;
             var packageFamilyName = parts[0];
-            var windowsAppsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
-            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*").FirstOrDefault();
-            if (packageDir == null) return null;
+
+            if (packageDir == null)
+            {
+                var pm = new Windows.Management.Deployment.PackageManager();
+                var package = pm.FindPackagesForUser(string.Empty, packageFamilyName).FirstOrDefault();
+                if (package == null) return null;
+                packageDir = package.InstalledLocation.Path;
+            }
 
             var exeName = parts[1];
             if (exeName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
