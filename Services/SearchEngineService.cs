@@ -72,7 +72,7 @@ public sealed class SearchEngineService : ISearchEngineService
                 return newResults;
             }
 
-            var scopedExtra = _extras.FindByKeyword(activeCategory);
+            var scopedExtra = _extras.FindById(activeCategory);
             if (scopedExtra is not null)
             {
                 var actionResults = scopedExtra.GetResults(query).ToList();

@@ -126,7 +126,7 @@
                 <Border Grid.Column="0"
                         Width="32" Height="32"
                         CornerRadius="8"
-                        Background="{DynamicResource Depth3}"
+                        Background="Transparent"
                         VerticalAlignment="Center">
                     <Grid>
                         <!-- File/app image icon -->
@@ -392,7 +392,7 @@
                 <Border Grid.Column="0"
                         Width="32" Height="32"
                         CornerRadius="8"
-                        Background="{DynamicResource Depth3}"
+                        Background="Transparent"
                         VerticalAlignment="Center">
                     <Grid>
                         <Image x:Name="AppIcon"

@@ -652,7 +652,7 @@ partial void OnActiveCategoryChanged(string? value)
                 return (actionId, icon, subQuery);
             }
             
-            if (query.Equals(keyword, StringComparison.OrdinalIgnoreCase))
+            if (keyword.Length > 1 && query.Equals(keyword, StringComparison.OrdinalIgnoreCase))
             {
                 return (actionId, icon, string.Empty);
             }
