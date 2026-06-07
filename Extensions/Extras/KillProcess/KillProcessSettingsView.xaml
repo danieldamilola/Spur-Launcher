@@ -1,9 +1,29 @@
 <UserControl x:Class="Spur.Extensions.Extras.KillProcess.KillProcessSettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Spur.Views"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel Margin="0,8">
-        <ui:ToggleSwitch IsOn="{Binding ShowWindowTitles, Mode=TwoWay}" Header="Show window titles in results" Margin="0,0,0,12" OnContent="{x:Null}" OffContent="{x:Null}"/>
-        <ui:ToggleSwitch IsOn="{Binding PrioritizeVisibleWindows, Mode=TwoWay}" Header="Prioritize processes with visible windows" OnContent="{x:Null}" OffContent="{x:Null}"/>
+        <Border Background="Transparent" CornerRadius="6" Padding="0">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Show window titles in results" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
+                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowWindowTitles, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Prioritize processes with visible windows" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
+                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding PrioritizeVisibleWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

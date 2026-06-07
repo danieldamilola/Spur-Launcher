@@ -49,7 +49,7 @@
                         <TextBlock Text="Fuzzy matching" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Find things even when the spelling or order is not exact." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="#12FFFFFF" Margin="0"/>
