@@ -5,201 +5,208 @@
              xmlns:conv="clr-namespace:Spur.Converters"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel>
-        <TextBlock Text="Look and feel" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- Page heading -->
+        <TextBlock Text="General"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="22" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimary}"
+                   Margin="0,0,0,20"/>
+
+        <!-- ── Look & Feel ── -->
+        <TextBlock Text="LOOK AND FEEL"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium"
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
             <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Theme" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Choose a quiet surface or follow Windows." Style="{StaticResource SettingsHint}"/>
+                <!-- Theme -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Theme" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Choose a quiet surface or follow Windows." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="3" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="Dark"   IsChecked="{Binding ThemeDark}"   Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="Dark theme"/>
+                            <RadioButton Content="Light"  IsChecked="{Binding ThemeLight}"  Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="Light theme"/>
+                            <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="System theme"/>
                         </StackPanel>
-                        <Border Grid.Column="2" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton Content="Dark" IsChecked="{Binding ThemeDark}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
-                                                            AutomationProperties.Name="Dark theme"/>
-                                <RadioButton Content="Light" IsChecked="{Binding ThemeLight}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
-                                                             AutomationProperties.Name="Light theme"/>
-                                <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"
-                                                              AutomationProperties.Name="System theme"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="130"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE294;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Window opacity" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="A little glass, without making text hard to read." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <Slider Grid.Column="2" Minimum="0.5" Maximum="1.0"
-                                Value="{Binding WindowOpacity, Mode=TwoWay}"
-                                TickFrequency="0.05"
-                                IsSnapToTickEnabled="True"
-                                VerticalAlignment="Center"
-                                AutomationProperties.Name="Window opacity"/>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="130"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE89F;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Bar width" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Adjust the width of the search bar." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <Slider Grid.Column="2" Minimum="400" Maximum="1000"
-                                Value="{Binding BarWidth, Mode=TwoWay}"
-                                TickFrequency="10"
-                                IsSnapToTickEnabled="True"
-                                VerticalAlignment="Center"
-                                AutomationProperties.Name="Bar width"/>
-                    </Grid>
-                </Border>
+                    </Border>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Window opacity -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="130"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE294;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Window opacity" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="A little glass, without making text hard to read." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Slider Grid.Column="3" Minimum="0.5" Maximum="1.0" Value="{Binding WindowOpacity, Mode=TwoWay}" TickFrequency="0.05" IsSnapToTickEnabled="True" VerticalAlignment="Center" AutomationProperties.Name="Window opacity"/>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Bar width -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="130"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE89F;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Bar width" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Adjust the width of the search bar." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Slider Grid.Column="3" Minimum="400" Maximum="1000" Value="{Binding BarWidth, Mode=TwoWay}" TickFrequency="10" IsSnapToTickEnabled="True" VerticalAlignment="Center" AutomationProperties.Name="Bar width"/>
+                </Grid>
             </StackPanel>
         </Border>
 
-        <TextBlock Text="Behavior" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- ── Behavior ── -->
+        <TextBlock Text="BEHAVIOR"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
             <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE765;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Shortcut" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="{Binding Shortcut}" Style="{StaticResource SettingsHint}"/>
+                <!-- Shortcut -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE765;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Shortcut" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="{Binding Shortcut}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                        <ui:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" OnContent="{x:Null}" OffContent="{x:Null}" AutomationProperties.Name="Enable hotkey"/>
+                        <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit shortcut"/>
+                    </StackPanel>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Position -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE707;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Position" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Where Spur opens on screen." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="3" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="Center" IsChecked="{Binding PositionCenter}" Style="{StaticResource SegmentedRadio}" GroupName="Position" AutomationProperties.Name="Center position"/>
+                            <RadioButton Content="Top"    IsChecked="{Binding PositionTop}"    Style="{StaticResource SegmentedRadio}" GroupName="Position" AutomationProperties.Name="Top position"/>
+                            <RadioButton Content="Left"   IsChecked="{Binding PositionLeft}"   Style="{StaticResource SegmentedRadio}" GroupName="Position" AutomationProperties.Name="Left position"/>
+                            <RadioButton Content="Right"  IsChecked="{Binding PositionRight}"  Style="{StaticResource SegmentedRadio}" GroupName="Position" AutomationProperties.Name="Right position"/>
+                            <RadioButton Content="Custom" IsChecked="{Binding PositionCustom}" Style="{StaticResource SegmentedRadio}" GroupName="Position" AutomationProperties.Name="Custom position"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" OnContent="{x:Null}" OffContent="{x:Null}"
-                                                                    AutomationProperties.Name="Enable hotkey"/>
-                            <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}"
-                                                                    AutomationProperties.Name="Edit shortcut"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE707;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Position" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Where Spur opens on screen." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <Border Grid.Column="2" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton Content="Center" IsChecked="{Binding PositionCenter}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
-                                                                                                              AutomationProperties.Name="Center position"/>
-                                <RadioButton Content="Top" IsChecked="{Binding PositionTop}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
-                                                                                                           AutomationProperties.Name="Top position"/>
-                                <RadioButton Content="Left" IsChecked="{Binding PositionLeft}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
-                                                                                                            AutomationProperties.Name="Left position"/>
-                                <RadioButton Content="Right" IsChecked="{Binding PositionRight}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
-                                                                                                             AutomationProperties.Name="Right position"/>
-                                <RadioButton Content="Custom" IsChecked="{Binding PositionCustom}" Style="{StaticResource SegmentedRadio}" GroupName="Position"
-                                                                                                             AutomationProperties.Name="Custom position"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Style="{StaticResource SettingsIconBox}">
-                            <ui:FontIcon Glyph="&#xE945;" FontSize="14" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Polish" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Motion and sound feedback." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Motion" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <ui:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                            <TextBlock Text="Sound" Style="{StaticResource SettingsHint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <ui:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    </Border>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Polish -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="#2C2C30" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE945;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Polish" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Motion and sound feedback." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <TextBlock Text="Motion" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <local:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                        <TextBlock Text="Sound" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <local:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
             </StackPanel>
         </Border>
 
-        <TextBlock Text="Startup" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- ── Startup ── -->
+        <TextBlock Text="STARTUP"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1">
             <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Launch with Windows" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Make Spur available as soon as you sign in." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Tray icon" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Keep Spur reachable without cluttering the taskbar." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                    </Grid>
-                </Border>
+                <!-- Launch with Windows -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Launch with Windows" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Make Spur available as soon as you sign in." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Tray icon -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Tray icon" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Keep Spur reachable without cluttering the taskbar." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                </Grid>
             </StackPanel>
         </Border>
     </StackPanel>
 </UserControl>
-
-
-
-

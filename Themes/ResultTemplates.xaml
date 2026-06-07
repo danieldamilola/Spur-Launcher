@@ -7,14 +7,10 @@
     xmlns:views="clr-namespace:Spur.Views">
 
     <!-- ═══════════════════════════════════════════════════════════
-         RESULT TEMPLATES — Spur Design System
-         Single unified result row template replaces the previous
-         three divergent templates (ResultRow, ClipResult, Action).
-         All spacing follows 4px grid. FontWeight Medium only.
-         Hover: 100ms. Selection: 50ms.
+         RESULT TEMPLATES — Spur Design System v3
+         Clean, badge-free rows. Icon · Name · Subtitle. Nothing else.
+         Hover: 80ms. Selection rail on left edge only.
          ═══════════════════════════════════════════════════════════ -->
-
-    <!-- ── AnimEaseOut/In are provided by Animations.xaml ── -->
 
     <!-- Section header (e.g. "Apps", "Files", "Clipboard") -->
     <DataTemplate x:Key="SectionHeaderTemplate" DataType="{x:Type models:SectionLabel}">
@@ -69,8 +65,9 @@
     </DataTemplate>
 
     <!-- ═══════════════════════════════════════════════════════════
-         UNIFIED RESULT ROW — used by all result types
-         Used as: ResultTemplate (full-featured), ResultRowTemplate (light)
+         UNIFIED RESULT ROW
+         Layout: [3px rail] [48px icon zone] [* text zone] [auto hint]
+         No type badges. File extension shown inline as muted text only.
          ═══════════════════════════════════════════════════════════ -->
     <DataTemplate x:Key="ResultTemplate" DataType="{x:Type models:SearchResult}">
         <Grid x:Name="RowRoot"
@@ -95,57 +92,50 @@
             </Grid.ContextMenu>
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="2"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="3"/>   <!-- accent rail -->
+                <ColumnDefinition Width="*"/>   <!-- content -->
             </Grid.ColumnDefinitions>
 
             <!-- Selection rail -->
             <Border x:Name="SelectionRail"
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Background="Transparent"
-                    CornerRadius="2"
-                    Margin="0,8,0,8"/>
+                    CornerRadius="0,2,2,0"/>
 
-            <!-- Row background base -->
-            <Border x:Name="RowBg"
-                    Grid.Column="2"
-                    Background="Transparent"
-                    CornerRadius="{DynamicResource RadiusRow}"/>
-            <!-- Hover overlay (animated) -->
+            <!-- Hover overlay -->
             <Border x:Name="HoverOverlay"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Background="{DynamicResource HoverBg}"
-                    CornerRadius="{DynamicResource RadiusRow}"
                     Opacity="0"/>
-            <!-- Selected overlay (animated) -->
+            <!-- Selected overlay -->
             <Border x:Name="SelectedOverlay"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Background="{DynamicResource SelectedBg}"
-                    CornerRadius="{DynamicResource RadiusRow}"
                     Opacity="0"/>
 
-            <Grid Grid.Column="2" Margin="12,0,12,0">
+            <!-- Content row -->
+            <Grid Grid.Column="1" Margin="10,0,14,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="32"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="36"/>    <!-- icon -->
+                    <ColumnDefinition Width="12"/>    <!-- gap -->
+                    <ColumnDefinition Width="*"/>     <!-- name + subtitle -->
+                    <ColumnDefinition Width="Auto"/>  <!-- right slot -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Icon container -->
+                <!-- Icon container — no background pill, just the icon itself -->
                 <Border Grid.Column="0"
                         Width="32" Height="32"
                         CornerRadius="8"
-                        Background="{DynamicResource SurfaceLow}"
+                        Background="{DynamicResource Depth3}"
                         VerticalAlignment="Center">
                     <Grid>
+                        <!-- File/app image icon -->
                         <Image x:Name="AppIcon"
-                               Width="24" Height="24"
+                               Width="20" Height="20"
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="LowQuality"
+                               RenderOptions.BitmapScalingMode="HighQuality"
                                RenderOptions.CachingHint="Cache">
                             <Image.Source>
                                 <Binding Path="IconPath">
@@ -155,21 +145,19 @@
                                 </Binding>
                             </Image.Source>
                         </Image>
-                        <Path x:Name="LucideIcon"
-                              Width="15" Height="15"
-                              Stretch="Uniform"
-                              Stroke="{DynamicResource TextSecondary}"
-                              StrokeThickness="1.5"
-                              StrokeLineJoin="Round"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              Fill="Transparent"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              Visibility="Collapsed"/>
-                        <!-- Clipboard image icon -->
+
+                        <!-- Segoe MDL2 glyph fallback -->
+                        <ui:FontIcon x:Name="GlyphIcon"
+                                     Glyph="{Binding IconGlyph}"
+                                     FontSize="15"
+                                     Foreground="{DynamicResource TextSecondary}"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Visibility="Collapsed"/>
+
+                        <!-- Clipboard image overlay -->
                         <Image x:Name="ClipImage"
-                               Width="28" Height="28"
+                               Width="32" Height="32"
                                Stretch="UniformToFill"
                                RenderOptions.BitmapScalingMode="LowQuality"
                                RenderOptions.CachingHint="Cache"
@@ -178,7 +166,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Name + subtitle -->
+                <!-- Name + subtitle text block -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                     <TextBlock x:Name="NameText"
                                Text="{Binding Name}"
@@ -187,98 +175,110 @@
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
+                    <!-- Subtitle — only shown when non-empty. No badge, just muted text -->
                     <TextBlock x:Name="SubtitleText"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontMeta}"
-                               Foreground="{DynamicResource TextSecondary}"
+                               Foreground="{DynamicResource TextTertiary}"
                                TextTrimming="CharacterEllipsis"
-                               Text="{Binding DisplaySubtitle}"/>
+                               Text="{Binding DisplaySubtitle}"
+                               Margin="0,1,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DisplaySubtitle}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
-                <!-- Enter hint -->
-                <Border x:Name="EnterHint"
-                        Grid.Column="3"
-                        CornerRadius="6"
-                        Background="{DynamicResource SurfaceRaised}"
-                        Padding="8,4"
-                        Margin="8,0,0,0"
-                        Visibility="Collapsed"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="↵"
-                               FontFamily="{DynamicResource Token.Font.Mono}"
-                               FontSize="10"
-                               Foreground="{DynamicResource TextTertiary}"/>
-                </Border>
-
-                <!-- Clipboard actions -->
-                <StackPanel x:Name="ClipActions"
+                <!-- Right slot: keyboard hint (selected only) -->
+                <StackPanel x:Name="RightSlot"
                             Grid.Column="3"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
-                            Margin="4,0,0,0"
+                            Margin="6,0,0,0"
                             Visibility="Collapsed">
-                    <Button x:Name="PinBtn"
-                            Width="26" Height="26"
-                            Background="Transparent" BorderThickness="0"
-                            Cursor="Hand"
-                            ToolTip="Pin"
-                            Tag="{Binding IsPinned}"
-                            Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
-                                    <ui:FontIcon x:Name="PinPath" Glyph="&#xE718;" FontSize="11">
-                                        <ui:FontIcon.Style>
-                                            <Style TargetType="ui:FontIcon">
-                                                <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Tag}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ui:FontIcon.Style>
-                                    </ui:FontIcon>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                    <Button Width="26" Height="26"
-                            Background="Transparent" BorderThickness="0"
-                            Cursor="Hand"
-                            ToolTip="Remove"
-                            Command="{Binding DataContext.RemoveClipboardItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
-                                    <Path Width="11" Height="11" Stretch="Uniform"
-                                          Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
-                                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Fill="Transparent"
-                                          Data="M3 6h18M19 6l-1 14H6L5 6M9 6V4h6v2"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                    <!-- ↵ Enter hint — no pill border, just the glyph -->
+                    <TextBlock x:Name="EnterHint"
+                               Text="↵"
+                               FontFamily="{DynamicResource Token.Font.Mono}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextTertiary}"
+                               VerticalAlignment="Center"
+                               Visibility="Collapsed"/>
+
+                    <!-- Clipboard hover actions -->
+                    <StackPanel x:Name="ClipActions"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                        <!-- Pin -->
+                        <Button Width="26" Height="26"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" ToolTip="Pin"
+                                Tag="{Binding IsPinned}"
+                                Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
+                                        <ui:FontIcon x:Name="PinIcon" Glyph="&#xE718;" FontSize="11">
+                                            <ui:FontIcon.Style>
+                                                <Style TargetType="ui:FontIcon">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Tag}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ui:FontIcon.Style>
+                                        </ui:FontIcon>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <!-- Remove -->
+                        <Button Width="26" Height="26"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" ToolTip="Remove"
+                                Command="{Binding DataContext.RemoveClipboardItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
+                                        <Path Width="11" Height="11" Stretch="Uniform"
+                                              Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
+                                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Fill="Transparent"
+                                              Data="M3 6h18M19 6l-1 14H6L5 6M9 6V4h6v2"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Depth3}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>
 
         <DataTemplate.Triggers>
-            <!-- Hover animation (unselected) — 100ms enter/exit -->
+            <!-- Hover animation (unselected) -->
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
@@ -289,7 +289,7 @@
                         <Storyboard>
                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                              Storyboard.TargetProperty="Opacity"
-                                             To="1" Duration="0:0:0.1"
+                                             To="1" Duration="0:0:0.08"
                                              EasingFunction="{StaticResource AnimEaseOut}"/>
                         </Storyboard>
                     </BeginStoryboard>
@@ -299,17 +299,18 @@
                         <Storyboard>
                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                              Storyboard.TargetProperty="Opacity"
-                                             To="0" Duration="0:0:0.1"
+                                             To="0" Duration="0:0:0.08"
                                              EasingFunction="{StaticResource AnimEaseIn}"/>
                         </Storyboard>
                     </BeginStoryboard>
                 </MultiDataTrigger.ExitActions>
             </MultiDataTrigger>
 
-            <!-- Selected — 50ms -->
+            <!-- Selected state -->
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
-                <Setter TargetName="EnterHint" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="SelectionRail"  Property="Background" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="RightSlot"      Property="Visibility" Value="Visible"/>
+                <Setter TargetName="EnterHint"      Property="Visibility" Value="Visible"/>
                 <DataTrigger.EnterActions>
                     <BeginStoryboard>
                         <Storyboard>
@@ -330,32 +331,33 @@
                 </DataTrigger.ExitActions>
             </DataTrigger>
 
-            <!-- No icon path → Lucide fallback -->
+            <!-- No icon path → glyph fallback -->
             <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
-                <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed"/>
-                <Setter TargetName="LucideIcon" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="AppIcon"   Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="GlyphIcon" Property="Visibility" Value="Visible"/>
             </DataTrigger>
 
             <!-- Clipboard image overlay -->
             <DataTrigger Binding="{Binding IsClipImage}" Value="True">
-                <Setter TargetName="ClipImage" Property="Visibility" Value="Visible"/>
-                <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed"/>
-                <Setter TargetName="LucideIcon" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="ClipImage"  Property="Visibility" Value="Visible"/>
+                <Setter TargetName="AppIcon"    Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="GlyphIcon"  Property="Visibility" Value="Collapsed"/>
             </DataTrigger>
 
-            <!-- Clipboard actions on hover -->
+            <!-- Clipboard hover actions — replace ↵ with pin+remove -->
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                     <Condition Binding="{Binding Type}" Value="Clipboard"/>
                 </MultiDataTrigger.Conditions>
+                <Setter TargetName="RightSlot"   Property="Visibility" Value="Visible"/>
                 <Setter TargetName="ClipActions" Property="Visibility" Value="Visible"/>
-                <Setter TargetName="EnterHint" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="EnterHint"   Property="Visibility" Value="Collapsed"/>
             </MultiDataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- Lightweight result row (no context menu, used where menus aren't needed) -->
+    <!-- Lightweight result row (browse panels, no context menu) -->
     <DataTemplate x:Key="ResultRowTemplate" DataType="{x:Type models:SearchResult}">
         <Grid x:Name="RowRoot"
               Height="{DynamicResource RowHeight}"
@@ -365,29 +367,23 @@
               AutomationProperties.Name="{Binding Name}">
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="2"/>
+                <ColumnDefinition Width="3"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <Border x:Name="SelectionRail"
-                    Grid.Column="1"
+                    Grid.Column="0"
                     Background="Transparent"
-                    CornerRadius="2"/>
+                    CornerRadius="0,2,2,0"/>
 
-            <Border x:Name="RowBg"
-                    Grid.Column="2"
-                    Background="Transparent"
-                    CornerRadius="{DynamicResource RadiusRow}"/>
             <Border x:Name="HoverOverlay"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Background="{DynamicResource HoverBg}"
-                    CornerRadius="{DynamicResource RadiusRow}"
                     Opacity="0"/>
 
-            <Grid Grid.Column="2" Margin="12,0,12,0">
+            <Grid Grid.Column="1" Margin="10,0,14,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="36"/>
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -396,15 +392,15 @@
                 <Border Grid.Column="0"
                         Width="32" Height="32"
                         CornerRadius="8"
-                        Background="{DynamicResource SurfaceLow}"
+                        Background="{DynamicResource Depth3}"
                         VerticalAlignment="Center">
                     <Grid>
                         <Image x:Name="AppIcon"
-                               Width="24" Height="24"
+                               Width="20" Height="20"
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="LowQuality"
+                               RenderOptions.BitmapScalingMode="HighQuality"
                                RenderOptions.CachingHint="Cache">
                             <Image.Source>
                                 <Binding Path="IconPath">
@@ -414,19 +410,18 @@
                                 </Binding>
                             </Image.Source>
                         </Image>
-                        <ui:FontIcon x:Name="LucideIcon"
-                                       Glyph="{Binding IconGlyph}"
-                                       FontSize="16"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Visibility="Collapsed"/>
+                        <ui:FontIcon x:Name="GlyphIcon"
+                                     Glyph="{Binding IconGlyph}"
+                                     FontSize="15"
+                                     Foreground="{DynamicResource TextSecondary}"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                    <TextBlock x:Name="NameText"
-                               Text="{Binding Name}"
+                    <TextBlock Text="{Binding Name}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontResult}"
                                FontWeight="Medium"
@@ -435,24 +430,33 @@
                     <TextBlock x:Name="SubtitleText"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontMeta}"
-                               Foreground="{DynamicResource TextSecondary}"
+                               Foreground="{DynamicResource TextTertiary}"
                                TextTrimming="CharacterEllipsis"
-                               Text="{Binding DisplaySubtitle}"/>
+                               Text="{Binding DisplaySubtitle}"
+                               Margin="0,1,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DisplaySubtitle}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
-                <Border x:Name="EnterHint"
-                        Grid.Column="3"
-                        CornerRadius="6"
-                        Background="{DynamicResource SurfaceRaised}"
-                        Padding="8,4"
-                        Margin="8,0,0,0"
-                        Visibility="Collapsed"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="↵"
-                               FontFamily="{DynamicResource Token.Font.Mono}"
-                               FontSize="10"
-                               Foreground="{DynamicResource TextTertiary}"/>
-                </Border>
+                <!-- Selected: show ↵ glyph, no pill -->
+                <TextBlock x:Name="EnterHint"
+                           Grid.Column="3"
+                           Text="↵"
+                           FontFamily="{DynamicResource Token.Font.Mono}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextTertiary}"
+                           VerticalAlignment="Center"
+                           Margin="6,0,0,0"
+                           Visibility="Collapsed"/>
             </Grid>
         </Grid>
 
@@ -467,7 +471,7 @@
                         <Storyboard>
                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                              Storyboard.TargetProperty="Opacity"
-                                             To="1" Duration="0:0:0.1"
+                                             To="1" Duration="0:0:0.08"
                                              EasingFunction="{StaticResource AnimEaseOut}"/>
                         </Storyboard>
                     </BeginStoryboard>
@@ -477,7 +481,7 @@
                         <Storyboard>
                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                              Storyboard.TargetProperty="Opacity"
-                                             To="0" Duration="0:0:0.1"
+                                             To="0" Duration="0:0:0.08"
                                              EasingFunction="{StaticResource AnimEaseIn}"/>
                         </Storyboard>
                     </BeginStoryboard>
@@ -486,12 +490,12 @@
 
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                 <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
-                <Setter TargetName="EnterHint" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="EnterHint"     Property="Visibility" Value="Visible"/>
             </DataTrigger>
 
             <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
-                <Setter TargetName="AppIcon" Property="Visibility" Value="Collapsed"/>
-                <Setter TargetName="LucideIcon" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="AppIcon"   Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="GlyphIcon" Property="Visibility" Value="Visible"/>
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
@@ -542,7 +546,7 @@
         <Setter Property="Padding" Value="16,8,16,4"/>
     </Style>
 
-    <!-- ResultTemplateSelector — maps data types to templates -->
+    <!-- ResultTemplateSelector -->
     <views:ResultTemplateSelector x:Key="SharedResultTemplateSelector"
                                   SectionTemplate="{StaticResource SectionHeaderTemplate}"
                                   ResultTemplate="{StaticResource ResultRowTemplate}"/>

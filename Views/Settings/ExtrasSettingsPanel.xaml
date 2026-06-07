@@ -8,87 +8,200 @@
         <conv:ExtraSettingsViewConverter x:Key="ExtraSettingsViewConv"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
+
     <StackPanel>
-        <TextBlock Text="Installed Plugins" Style="{StaticResource SettingsKicker}"/>
-        
-        <ItemsControl ItemsSource="{Binding AllExtras}" Margin="0,10,0,0">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Style="{StaticResource Panel}" Margin="0,0,0,10">
+        <!-- Page heading -->
+        <TextBlock Text="Extras"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="22" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimary}"
+                   Margin="0,0,0,20"/>
+
+        <!-- Plugin list card (single rounded card, rows divided by hairlines) -->
+        <Border Background="#1C1C1F"
+                CornerRadius="10"
+                BorderBrush="#1AFFFFFF"
+                BorderThickness="1">
+            <ItemsControl ItemsSource="{Binding AllExtras}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
                         <StackPanel>
-                            <!-- Header Row -->
-                            <Grid Margin="16,12">
+                            <!-- ── Header row ── -->
+                            <Grid Background="Transparent" MinHeight="64">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="20"/>           <!-- left pad -->
+                                    <ColumnDefinition Width="42"/>           <!-- icon box -->
+                                    <ColumnDefinition Width="14"/>           <!-- gap -->
+                                    <ColumnDefinition Width="*"/>            <!-- name + desc -->
+                                    <ColumnDefinition Width="Auto"/>         <!-- "On" label -->
+                                    <ColumnDefinition Width="54"/>          <!-- toggle -->
+                                    <ColumnDefinition Width="36"/>           <!-- chevron -->
+                                    <ColumnDefinition Width="8"/>            <!-- right pad -->
                                 </Grid.ColumnDefinitions>
-                                
-                                <!-- Icon -->
-                                <ui:FontIcon Grid.Column="0" Glyph="{Binding IconGlyph}" FontSize="24" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                                
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SettingsTitle}" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding Description}" Style="{StaticResource SettingsHint}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+
+                                <!-- Icon square -->
+                                <Border Grid.Column="1"
+                                        Width="36" Height="36"
+                                        CornerRadius="9"
+                                        Background="#2C2C30"
+                                        VerticalAlignment="Center">
+                                    <ui:FontIcon Glyph="{Binding IconGlyph}"
+                                                 FontSize="16"
+                                                 Foreground="{DynamicResource Accent}"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Name + Description -->
+                                <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,2,12,2">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontFamily="{DynamicResource Token.Font.Primary}"
+                                               FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimary}"/>
+                                    <TextBlock Text="{Binding Description}"
+                                               FontFamily="{DynamicResource Token.Font.Primary}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextMuted}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,3,0,0"/>
                                 </StackPanel>
-                                
-                                <!-- Controls (Toggle + Expand Button) -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="On" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}"/>
-                                    <ui:ToggleSwitch IsOn="{Binding IsEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,8,0" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                                    <ToggleButton x:Name="ExpandButton" Background="Transparent" BorderThickness="0" Padding="8,4" VerticalAlignment="Center">
-                                        <ui:FontIcon x:Name="ExpandIcon" Glyph="&#xE70D;" FontSize="12"/>
-                                    </ToggleButton>
-                                </StackPanel>
+
+                                <!-- "On" / "Off" label -->
+                                <TextBlock Grid.Column="4"
+                                           VerticalAlignment="Center"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
+                                           FontSize="12"
+                                           Margin="0,0,6,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Off"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEnabled}" Value="True">
+                                                    <Setter Property="Text" Value="On"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Toggle switch -->
+                                <ui:ToggleSwitch Grid.Column="5"
+                                                 IsOn="{Binding IsEnabled, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 OnContent="{x:Null}"
+                                                 OffContent="{x:Null}"/>
+
+                                <!-- Chevron expand button -->
+                                <ToggleButton x:Name="ExpandBtn"
+                                              Grid.Column="6"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Center"
+                                              Width="28" Height="28"
+                                              Cursor="Hand"
+                                              Padding="0">
+                                    <ui:FontIcon x:Name="ChevronIcon"
+                                                 Glyph="&#xE70D;"
+                                                 FontSize="11"
+                                                 Foreground="{DynamicResource TextMuted}"/>
+                                </ToggleButton>
                             </Grid>
-                            
-                            <!-- Expanded Content -->
-                            <Border Visibility="{Binding IsChecked, ElementName=ExpandButton, Converter={StaticResource BoolToVis}}" 
-                                    BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
-                                <StackPanel Margin="16,16,16,12">
-                                    <!-- Action Keyword -->
-                                    <Grid Margin="0,0,0,16">
+
+                            <!-- ── Expanded settings area ── -->
+                            <Border x:Name="ExpandedArea"
+                                    Visibility="{Binding IsChecked, ElementName=ExpandBtn, Converter={StaticResource BoolToVis}}"
+                                    Background="#16161A"
+                                    BorderBrush="#14FFFFFF"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="20,14,20,16">
+                                <StackPanel>
+                                    <!-- Action keyword row -->
+                                    <Grid Margin="0,0,0,10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                            <ui:FontIcon Glyph="&#xE73A;" FontSize="16" Foreground="{DynamicResource TextSecondary}" Margin="0,0,12,0"/>
-                                            <TextBlock Text="Action keyword" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ui:FontIcon Glyph="&#xE73A;"
+                                                         FontSize="14"
+                                                         Foreground="{DynamicResource TextMuted}"
+                                                         Margin="0,0,10,0"/>
+                                            <TextBlock Text="Action keyword"
+                                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondary}"
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <Border Grid.Column="2" Style="{StaticResource SettingsInputFrame}" MinWidth="80">
-                                            <TextBox Text="{Binding Keyword, Mode=TwoWay}" HorizontalContentAlignment="Center" VerticalAlignment="Center" BorderThickness="0" Background="Transparent" Padding="0,0,0,0"/>
+                                        <!-- Keyword input pill -->
+                                        <Border Grid.Column="2"
+                                                Background="#252529"
+                                                BorderBrush="#1AFFFFFF"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Height="28"
+                                                MinWidth="72"
+                                                Padding="10,0">
+                                            <TextBox Text="{Binding Keyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalContentAlignment="Center"
+                                                     VerticalContentAlignment="Center"
+                                                     FontSize="12"
+                                                     Foreground="{DynamicResource TextPrimary}"/>
                                         </Border>
                                     </Grid>
-                                    
-                                    <!-- Custom Settings Block -->
-                                    <StackPanel Visibility="{Binding Converter={StaticResource ExtraSettingsViewConv}, ConverterParameter=Visibility}">
-                                        <ContentControl Content="{Binding Converter={StaticResource ExtraSettingsViewConv}}" Margin="0,0,0,16"/>
-                                    </StackPanel>
-                                    
-                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,12"/>
-                                    
-                                    <!-- Footer (Author, Version) -->
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding Author, StringFormat='by {0}  |'}" FontSize="11" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Version, StringFormat='  Version {0}'}" FontSize="11" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <Border Background="{DynamicResource SurfaceHigh}" CornerRadius="4" Padding="4,2" Margin="4,0,0,0"
+
+                                    <!-- Custom settings (if any) -->
+                                    <ContentControl Content="{Binding Converter={StaticResource ExtraSettingsViewConv}}"
+                                                    Visibility="{Binding Converter={StaticResource ExtraSettingsViewConv}, ConverterParameter=Visibility}"
+                                                    Margin="0,4,0,0"/>
+
+                                    <!-- Footer: author / version / built-in badge -->
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,12,0,0">
+                                        <TextBlock Text="{Binding Author, StringFormat='by {0}'}"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="  |  "
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Version, StringFormat='Version {0}'}"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                                        <Border Background="#252529"
+                                                CornerRadius="4"
+                                                Padding="6,2"
                                                 Visibility="{Binding IsBuiltIn, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="Built-in" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                                            <TextBlock Text="Built-in"
+                                                       FontSize="10"
+                                                       Foreground="{DynamicResource TextMuted}"/>
                                         </Border>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Hairline divider (hidden on last item via triggers) -->
+                            <Border x:Name="Divider"
+                                    Height="1"
+                                    Background="#12FFFFFF"
+                                    Margin="0"/>
                         </StackPanel>
-                    </Border>
-                    <DataTemplate.Triggers>
-                        <Trigger Property="IsChecked" SourceName="ExpandButton" Value="True">
-                            <Setter TargetName="ExpandIcon" Property="Glyph" Value="&#xE70E;"/>
-                        </Trigger>
-                    </DataTemplate.Triggers>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+
+                        <DataTemplate.Triggers>
+                            <Trigger SourceName="ExpandBtn" Property="IsChecked" Value="True">
+                                <Setter TargetName="ChevronIcon" Property="Glyph" Value="&#xE70E;"/>
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
     </StackPanel>
 </UserControl>

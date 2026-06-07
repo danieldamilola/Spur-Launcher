@@ -3,18 +3,150 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:Spur.Views"
         xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Spur Settings"
         Icon="pack://application:,,,/Icons/spur-launcher-32x32.ico"
-        Width="900"
-        Height="640"
-        MinWidth="800"
-        MinHeight="540"
+        Width="920"
+        Height="660"
+        MinWidth="820"
+        MinHeight="560"
         WindowStartupLocation="CenterScreen"
-        WindowStyle="SingleBorderWindow"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanResize"
         Closing="OnClosing"
-        Background="{DynamicResource SurfaceLow}">
+        Background="#111113">
 
-    <views:SettingsView x:Name="SettingsViewControl"/>
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="40"
+                            ResizeBorderThickness="5"
+                            GlassFrameThickness="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>   <!-- custom title bar -->
+            <RowDefinition Height="*"/>    <!-- settings content -->
+        </Grid.RowDefinitions>
+
+        <!-- ════════════════════════════════════════
+             CUSTOM TITLE BAR
+             ════════════════════════════════════════ -->
+        <Grid Grid.Row="0" Background="#111113"
+              shell:WindowChrome.IsHitTestVisibleInChrome="False">
+
+            <!-- App title (drag area) -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0"
+                        IsHitTestVisible="False">
+                <Image Source="pack://application:,,,/Icons/spur-launcher-16x16.ico"
+                       Width="16" Height="16" Margin="0,0,8,0"
+                       VerticalAlignment="Center"/>
+                <TextBlock Text="Spur Settings"
+                           FontFamily="{DynamicResource Token.Font.Primary}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondary}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Window controls (right side) -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+
+                <!-- Minimise -->
+                <Button x:Name="MinBtn" Click="OnMinimiseClick"
+                        Width="46" Height="40"
+                        Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="Minimise"
+                        AutomationProperties.Name="Minimise">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" Width="46" Height="40">
+                                            <Path Data="M 18,20 H 28" Stroke="{DynamicResource TextMuted}" StrokeThickness="1.2"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#1AFFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Maximise / Restore -->
+                <Button x:Name="MaxBtn" Click="OnMaximiseClick"
+                        Width="46" Height="40"
+                        Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="Maximise"
+                        AutomationProperties.Name="Maximise">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" Width="46" Height="40">
+                                            <Rectangle x:Name="MaxIcon"
+                                                       Width="10" Height="10"
+                                                       Stroke="{DynamicResource TextMuted}"
+                                                       StrokeThickness="1.2"
+                                                       Fill="Transparent"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#1AFFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Close -->
+                <Button x:Name="CloseBtn" Click="OnCloseButtonClick"
+                        Width="46" Height="40"
+                        Background="Transparent" BorderThickness="0"
+                        Cursor="Hand" ToolTip="Close"
+                        AutomationProperties.Name="Close">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" Width="46" Height="40">
+                                            <Path x:Name="X"
+                                                  Data="M 17,15 L 27,25 M 27,15 L 17,25"
+                                                  Stroke="{DynamicResource TextMuted}"
+                                                  StrokeThickness="1.2"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#C0232323"/>
+                                                <Setter TargetName="X"  Property="Stroke"     Value="#FFF7F3EC"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+
+            <!-- 1px bottom separator -->
+            <Border Height="1" VerticalAlignment="Bottom" Background="#14FFFFFF"/>
+        </Grid>
+
+        <!-- Settings content -->
+        <views:SettingsView Grid.Row="1" x:Name="SettingsViewControl"/>
+    </Grid>
 </Window>
-

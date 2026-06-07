@@ -20,11 +20,14 @@ public class SearchResult
     [System.Text.Json.Serialization.JsonIgnore]
     public string DisplaySubtitle => Type switch
     {
-        ResultType.App => "", // No subtitle — icon + name is sufficient
-        ResultType.File when IsDirectory => "Folder",
-        ResultType.File => string.IsNullOrWhiteSpace(FileExtension) ? "File" : FileExtension.TrimStart('.').ToUpperInvariant(),
+        ResultType.App  => "",                          // name is enough
+        ResultType.File when IsDirectory => Subtitle,   // show path for folders
+        ResultType.File => string.IsNullOrWhiteSpace(FileExtension)
+            ? Subtitle
+            : $"{FileExtension.TrimStart('.').ToLowerInvariant()} file",
         _ => Subtitle,
     };
+
 
     [System.Text.Json.Serialization.JsonIgnore]
     public string DetailText => Type switch

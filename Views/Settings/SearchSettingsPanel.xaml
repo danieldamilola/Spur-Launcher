@@ -5,107 +5,127 @@
              xmlns:conv="clr-namespace:Spur.Converters"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel>
-        <TextBlock Text="What Spur can find" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- Page heading -->
+        <TextBlock Text="Search"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="22" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimary}"
+                   Margin="0,0,0,20"/>
+
+        <!-- ── What Spur can find ── -->
+        <TextBlock Text="WHAT SPUR CAN FIND"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
             <WrapPanel Margin="16,14,10,8">
-                <CheckBox Content="Apps" IsChecked="{Binding IndexApps, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="Files" IsChecked="{Binding IndexFiles, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="Folders" IsChecked="{Binding IndexFolders, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="Clipboard" IsChecked="{Binding IndexClipboard, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="Calculator" IsChecked="{Binding IndexCalculator, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Apps"             IsChecked="{Binding IndexApps,            Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Files"            IsChecked="{Binding IndexFiles,           Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Folders"          IsChecked="{Binding IndexFolders,         Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Clipboard"        IsChecked="{Binding IndexClipboard,       Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Calculator"       IsChecked="{Binding IndexCalculator,      Mode=TwoWay}" Margin="0,0,18,8"/>
                 <CheckBox Content="Windows settings" IsChecked="{Binding IndexWindowsSettings, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="URLs" IsChecked="{Binding IndexUrls, Mode=TwoWay}" Margin="0,0,18,8"/>
-                <CheckBox Content="Web searches" IsChecked="{Binding IndexWebSearches, Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="URLs"             IsChecked="{Binding IndexUrls,            Mode=TwoWay}" Margin="0,0,18,8"/>
+                <CheckBox Content="Web searches"     IsChecked="{Binding IndexWebSearches,     Mode=TwoWay}" Margin="0,0,18,8"/>
             </WrapPanel>
         </Border>
 
-        <TextBlock Text="Search feel" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- ── Search feel ── -->
+        <TextBlock Text="SEARCH FEEL"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
             <StackPanel>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Fuzzy matching" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Find things even when the spelling or order is not exact." Style="{StaticResource SettingsHint}"/>
+                <!-- Fuzzy matching -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Fuzzy matching" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Find things even when the spelling or order is not exact." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Result count -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Result count" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Show enough choices without turning the launcher into a list view." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="5"  IsChecked="{Binding Results5}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
+                            <RadioButton Content="8"  IsChecked="{Binding Results8}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
+                            <RadioButton Content="10" IsChecked="{Binding Results10}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Result count" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Show enough choices without turning the launcher into a list view." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <Border Grid.Column="1" Style="{StaticResource SettingsPillGroup}" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton Content="5" IsChecked="{Binding Results5}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
-                                <RadioButton Content="8" IsChecked="{Binding Results8}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
-                                <RadioButton Content="10" IsChecked="{Binding Results10}" Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="130"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Query Search Precision" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Changes minimum match score required for results." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <ComboBox Grid.Column="1"
-                                  ItemsSource="{Binding QuerySearchPrecisionOptions}"
-                                  SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}"
-                                  VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Divider}"/>
-                <Border Style="{StaticResource SettingsRow}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="150"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Last Query Style" Style="{StaticResource SettingsTitle}"/>
-                            <TextBlock Text="Show/Hide previous results when launcher is reactivated." Style="{StaticResource SettingsHint}"/>
-                        </StackPanel>
-                        <ComboBox Grid.Column="1"
-                                  ItemsSource="{Binding LastQueryStyleOptions}"
-                                  SelectedItem="{Binding LastQueryStyle, Mode=TwoWay}"
-                                  VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
+                    </Border>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Query Search Precision -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="140"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Query search precision" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Changes minimum match score required for results." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding QuerySearchPrecisionOptions}" SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+
+                <!-- Last Query Style -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="160"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Last query style" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Show or hide previous results when launcher is reactivated." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding LastQueryStyleOptions}" SelectedItem="{Binding LastQueryStyle, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
             </StackPanel>
         </Border>
 
-        <TextBlock Text="Folders" Style="{StaticResource SettingsKicker}"/>
-        <Border Style="{StaticResource Panel}">
+        <!-- ── Indexed Folders ── -->
+        <TextBlock Text="INDEXED FOLDERS"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,0,0,8"/>
+        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1">
             <StackPanel Margin="16,14">
+                <!-- Add folder row -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource SettingsInputFrame}">
-                        <TextBox Text="{Binding NewFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12"/>
+                    <Border Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
+                        <TextBox Text="{Binding NewFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12" VerticalContentAlignment="Center"/>
                     </Border>
                     <Button Grid.Column="2" Content="Browse" Click="OnBrowseFolderClick" Style="{StaticResource SettingsSoftButton}"/>
                 </Grid>
+                <!-- Folder list -->
                 <ItemsControl ItemsSource="{Binding IndexedFoldersList}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -114,7 +134,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding}" Style="{StaticResource SettingsHint}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1"
                                         Content="Remove"
                                         Command="{Binding DataContext.RemoveFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -129,5 +149,3 @@
         </Border>
     </StackPanel>
 </UserControl>
-
-

@@ -8,219 +8,155 @@
 
     <UserControl.Resources>
         <local:SectionVisibilityConverter x:Key="SectionVisibility"/>
+
+        <!-- Nav item style: flat, full-width, icon circle -->
+        <Style x:Key="NavItemRow" TargetType="ListBoxItem">
+            <Setter Property="Background"                 Value="Transparent"/>
+            <Setter Property="Foreground"                 Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderThickness"            Value="0"/>
+            <Setter Property="Padding"                    Value="0"/>
+            <Setter Property="Margin"                     Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment"   Value="Center"/>
+            <Setter Property="FocusVisualStyle"           Value="{x:Null}"/>
+            <Setter Property="Cursor"                     Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Background="{DynamicResource SurfaceLow}">
+    <!-- Root: two columns — sidebar (fixed 220) + content (fill) -->
+    <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="210"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ═══════ SIDEBAR ═══════ -->
-        <Grid Grid.Column="0" Background="{DynamicResource Depth2}">
+        <!-- ═══════════════════════════════════════════
+             SIDEBAR
+             ═══════════════════════════════════════════ -->
+        <Grid Grid.Column="0" Background="#1A1A1D">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>   <!-- logo + app name -->
+                <RowDefinition Height="*"/>      <!-- nav items -->
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <StackPanel Grid.Row="0" Margin="16,20,16,6">
-                <TextBlock Text="Settings"
+            <!-- Logo block -->
+            <StackPanel Grid.Row="0" Margin="20,28,20,20" HorizontalAlignment="Left">
+                <!-- App icon -->
+                <Image Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"
+                       Width="52" Height="52"
+                       Margin="0,0,0,10"
+                       HorizontalAlignment="Left"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                <TextBlock Text="Spur"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="17"
-                           FontWeight="Medium"
+                           FontSize="14" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Text="Keep Spur quiet, fast, and tuned to how you work."
+                <TextBlock Text="Settings"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="11"
                            Foreground="{DynamicResource TextTertiary}"
-                           Margin="0,2,0,0"
-                           TextWrapping="Wrap"/>
+                           Margin="0,1,0,0"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Style="{StaticResource SettingsInputFrame}"
-                    Margin="12,2,12,12">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <ui:FontIcon Grid.Column="0" 
-                                   Glyph="&#xE11A;"
-                                   Foreground="{DynamicResource TextTertiary}"
-                                   FontSize="14"
-                                   Margin="8,0,4,0" VerticalAlignment="Center"/>
-                          
-                    <TextBlock Grid.Column="1" Text="Search settings..."
-                               Foreground="{DynamicResource TextTertiary}"
-                               FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="12"
-                               VerticalAlignment="Center"
-                               Margin="8,0,0,0"
-                               IsHitTestVisible="False">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    
-                    <TextBox Grid.Column="1" x:Name="SearchBox"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             FontFamily="{DynamicResource Token.Font.Primary}"
-                             FontSize="12"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             VerticalContentAlignment="Center"
-                             Padding="8,6"
-                             Foreground="{DynamicResource TextPrimary}"
-                             CaretBrush="{DynamicResource Accent}"
-                             AutomationProperties.Name="Search settings"/>
-                </Grid>
-            </Border>
-
-            <!-- Nav -->
-            <ListBox Grid.Row="2"
+            <!-- Nav list -->
+            <ListBox Grid.Row="1"
                      x:Name="NavList"
                      ItemsSource="{Binding FilteredSections}"
                      SelectedItem="{Binding SelectedSection}"
                      Background="Transparent"
                      BorderThickness="0"
                      Padding="0"
-                     Margin="0,4,0,0"
+                     ItemContainerStyle="{StaticResource NavItemRow}"
                      AutomationProperties.Name="Settings navigation">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border x:Name="NavBg"
-                                Background="Transparent"
-                                CornerRadius="6"
-                                Padding="0"
-                                Margin="8,1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                        <Grid x:Name="NavRow" Background="Transparent" Height="40">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3"/>    <!-- accent strip -->
+                                <ColumnDefinition Width="16"/>   <!-- left pad -->
+                                <ColumnDefinition Width="32"/>   <!-- icon circle -->
+                                <ColumnDefinition Width="10"/>   <!-- gap -->
+                                <ColumnDefinition Width="*"/>    <!-- label -->
+                            </Grid.ColumnDefinitions>
 
-                                <!-- Accent bar -->
-                                <Border x:Name="AccentBar"
-                                        Grid.Column="0"
-                                        Width="3"
-                                        Background="Transparent"
-                                        CornerRadius="2"
-                                        Margin="0,4"/>
+                            <!-- Selected accent strip -->
+                            <Border x:Name="AccentStrip"
+                                    Grid.Column="0"
+                                    Background="Transparent"
+                                    CornerRadius="0,2,2,0"/>
 
-                                <!-- Icon -->
+                            <!-- Icon circle -->
+                            <Border x:Name="IconCircle"
+                                    Grid.Column="2"
+                                    Width="28" Height="28"
+                                    CornerRadius="8"
+                                    Background="#252528"
+                                    VerticalAlignment="Center">
                                 <ui:FontIcon x:Name="NavIcon"
-                                               Grid.Column="1"
-                                               Glyph="{Binding IconGlyph}"
-                                               FontSize="16"
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               VerticalAlignment="Center"
-                                               Margin="11,0,10,0"/>
+                                             Glyph="{Binding IconGlyph}"
+                                             FontSize="13"
+                                             Foreground="{DynamicResource TextSecondary}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                            </Border>
 
-                                <!-- Label -->
-                                <TextBlock x:Name="NavLabel"
-                                           Grid.Column="2"
-                                           Text="{Binding Name}"
-                                           FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="13"
-                                           VerticalAlignment="Center"
-                                           Margin="0,10,12,10"/>
-                            </Grid>
-                        </Border>
+                            <!-- Label -->
+                            <TextBlock x:Name="NavLabel"
+                                       Grid.Column="4"
+                                       Text="{Binding Name}"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
 
                         <DataTemplate.Triggers>
-                            <!-- Selected state -->
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
-                                         Value="True">
-                                <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource Accent}"/>
-                                <Setter TargetName="NavLabel"  Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                <Setter TargetName="NavIcon"   Property="Foreground" Value="{DynamicResource Accent}"/>
+                            <!-- Selected -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="NavRow"      Property="Background" Value="#252528"/>
+                                <Setter TargetName="AccentStrip" Property="Background" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="NavLabel"    Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                <Setter TargetName="NavLabel"    Property="FontWeight" Value="Medium"/>
+                                <Setter TargetName="NavIcon"     Property="Foreground" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="IconCircle"  Property="Background" Value="#303033"/>
                             </DataTrigger>
-
-                            <!-- Unselected text color -->
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
-                                         Value="False">
-                                <Setter TargetName="NavLabel" Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-                                <Setter TargetName="NavIcon"  Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-                            </DataTrigger>
-
-                            <!-- Hover (only when NOT selected) -->
+                            <!-- Hover (unselected) -->
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="False"/>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"  Value="False"/>
                                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                                 </MultiDataTrigger.Conditions>
-                                <Setter TargetName="NavBg" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                <Setter TargetName="NavRow" Property="Background" Value="#202023"/>
                             </MultiDataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <!-- Close button -->
-            <Button Grid.Row="3"
-                    Click="OnCloseClick"
-                    Margin="12,12,12,16"
-                    Padding="10,8"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    AutomationProperties.Name="Close settings">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="CloseBg" CornerRadius="6" Background="Transparent"
-                                Padding="10,8">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:FontIcon Glyph="&#xE711;"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextMuted}"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,8,0"/>
-                                <TextBlock Text="Close"
-                                           FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextMuted}"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CloseBg" Property="Background" Value="{DynamicResource HoverBg}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
         </Grid>
 
-        <!-- ═══════ SEPARATOR ═══════ -->
-        <Border Grid.Column="1" Background="{DynamicResource Separator}"/>
 
-        <!-- ═══════ CONTENT ═══════ -->
-        <ScrollViewer Grid.Column="2"
+        <!-- ═══════════════════════════════════════════
+             CONTENT AREA
+             ═══════════════════════════════════════════ -->
+        <ScrollViewer Grid.Column="1"
+                      Background="#111113"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <Grid Margin="32,20,32,28">
-                <settings:GeneralSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}"/>
-                <settings:SearchSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Search}"/>
-                <settings:ExtrasSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Extras}"/>
-                <settings:ExtrasStoreView Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Store}"/>
-                <settings:AboutSettingsPanel Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=About}"/>
+            <Grid Margin="36,28,36,32">
+                <settings:GeneralSettingsPanel  Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}"/>
+                <settings:SearchSettingsPanel   Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Search}"/>
+                <settings:ExtrasSettingsPanel   Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Extras}"/>
+                <settings:ExtrasStoreView       Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Store}"/>
+                <settings:AboutSettingsPanel    Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=About}"/>
             </Grid>
         </ScrollViewer>
     </Grid>
 </UserControl>
-
-
