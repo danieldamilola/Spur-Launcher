@@ -131,7 +131,6 @@
                     <Grid>
                         <!-- File/app image icon -->
                         <Image x:Name="AppIcon"
-                               Width="20" Height="20"
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
@@ -396,7 +395,6 @@
                         VerticalAlignment="Center">
                     <Grid>
                         <Image x:Name="AppIcon"
-                               Width="20" Height="20"
                                Stretch="Uniform"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
