@@ -117,6 +117,7 @@ public sealed class SpurConfig
     public ColorActionSettings        Color        { get; set; } = new();
     public IpActionSettings           Ip           { get; set; } = new();
     public AiActionSettings           Ai           { get; set; } = new();
+    public ShellActionSettings        Shell        { get; set; } = new();
 
     // ═══════════════════════════════════════════════════════════════
     // Action Keywords (Flow Launcher-style)
@@ -132,6 +133,7 @@ public sealed class SpurConfig
     public string KeywordNote      { get; set; } = "note";
     public string KeywordKill      { get; set; } = "kill";
     public string KeywordScreenshot { get; set; } = "ss";
+    public string KeywordShell      { get; set; } = ">";
     public string KeywordClipboard { get; set; } = "c";
     public string KeywordFiles     { get; set; } = "files";
     public string KeywordApps      { get; set; } = "apps";
@@ -265,4 +267,3 @@ public sealed class SpurConfig
         return clone;
     }
 }
-

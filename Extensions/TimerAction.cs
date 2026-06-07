@@ -12,8 +12,9 @@ public sealed class TimerAction : IAction
     public string Name => "Timer";
     public string IconGlyph => "\ue121";
     public bool IsGlobal => false;
+    public static string PresetText { get; set; } = "1m,3m,5m,10m,15m,30m";
 
-    private static readonly (string label, string input, int seconds)[] _presets =
+    private static readonly (string label, string input, int seconds)[] _fallbackPresets =
     {
         ("1 minute",            "1m",   60),
         ("3 minutes",           "3m",   180),
@@ -32,7 +33,7 @@ public sealed class TimerAction : IAction
 
         if (string.IsNullOrWhiteSpace(text))
         {
-            foreach (var (label, input, _) in _presets)
+            foreach (var (label, input, _) in GetPresets())
             {
                 yield return new SearchResult
                 {
@@ -71,6 +72,27 @@ public sealed class TimerAction : IAction
                 IconGlyph  = "\ue121",
                 ActionId   = Id,
             };
+        }
+    }
+
+    private static IEnumerable<(string label, string input, int seconds)> GetPresets()
+    {
+        var yielded = false;
+        foreach (var token in PresetText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!TryParseDuration(token, out var seconds)) continue;
+            yielded = true;
+            yield return (FormatDuration(seconds), token, seconds);
+        }
+
+        if (!yielded)
+        {
+            foreach (var preset in _fallbackPresets)
+                yield return preset;
+        }
+        else
+        {
+            yield return ("Custom...", "", 0);
         }
     }
 

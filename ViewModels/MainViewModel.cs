@@ -203,11 +203,40 @@ public sealed partial class MainViewModel : ObservableObject
         set => SetProperty(ref _actionResultSubText, value);
     }
 
+    private string _actionPreviewTitle = string.Empty;
+    public string ActionPreviewTitle
+    {
+        get => _actionPreviewTitle;
+        set => SetProperty(ref _actionPreviewTitle, value);
+    }
+
+    private string _actionPreviewSubtitle = string.Empty;
+    public string ActionPreviewSubtitle
+    {
+        get => _actionPreviewSubtitle;
+        set => SetProperty(ref _actionPreviewSubtitle, value);
+    }
+
+    private string _actionPreviewState = string.Empty;
+    public string ActionPreviewState
+    {
+        get => _actionPreviewState;
+        set => SetProperty(ref _actionPreviewState, value);
+    }
+
     private string _ipPreviewText = string.Empty;
     public string IpPreviewText
     {
         get => _ipPreviewText;
         set => SetProperty(ref _ipPreviewText, value);
+    }
+
+    /// <summary>The original query that triggered the action (shown in calc/system previews).</summary>
+    private string _actionPreviewQuery = string.Empty;
+    public string ActionPreviewQuery
+    {
+        get => _actionPreviewQuery;
+        set => SetProperty(ref _actionPreviewQuery, value);
     }
     private bool _ipPreviewLoading;
 
@@ -237,6 +266,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         "files"     => "Search files…",
         "actions"   => "Search actions…",
+        "ai"        => "Ask AI…",
         "clipboard" => "Filter clipboard…",
         _           => "Search",
     };
@@ -273,7 +303,7 @@ public sealed partial class MainViewModel : ObservableObject
                 ScopeIconGlyph = iconGlyph;
                 effectiveQuery = subQuery;
             }
-            else if (ActiveCategory is not null && IsActionScope(ActiveCategory))
+            else if (ActiveCategory is not null && IsActionScope(ActiveCategory) && ScopeIconGlyph is not null)
             {
                 // User released the keyword -> exit scope
                 ActiveCategory = null;
@@ -301,7 +331,10 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             await Task.Delay(150, ct);
-            await Application.Current!.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
+            if (Application.Current is not null)
+                await Application.Current.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
+            else
+                RunSearch(effectiveQuery, ct);
         }
         catch (OperationCanceledException) { /* expected on new keystroke */ }
     }
@@ -469,6 +502,13 @@ partial void OnActiveCategoryChanged(string? value)
         };
     }
 
+    /// <summary>Strips known action keyword prefix from Query, returning the sub-query (e.g. "5m" from "timer 5m").</summary>
+    private string GetActionSubQuery()
+    {
+        var detected = DetectActionKeyword(Query);
+        return detected?.subQuery ?? Query;
+    }
+
     private void UpdateActionPreview()
     {
         var result = SelectedResult;
@@ -482,16 +522,25 @@ partial void OnActiveCategoryChanged(string? value)
         }
 
         ActiveActionPanel = result.ActionId;
+        var subQuery = GetActionSubQuery();
+        ActionPreviewTitle = result.Name;
+        ActionPreviewSubtitle = result.Subtitle ?? string.Empty;
+        ActionPreviewState = "Ready";
+        ActionResultText = result.Name;
+        ActionResultSubText = result.Subtitle ?? string.Empty;
+        ActionPreviewQuery = string.IsNullOrWhiteSpace(subQuery) ? Query : subQuery;
 
         switch (result.ActionId)
         {
             case "timer":
-                _timer.StartTimerPreview(Query);
+                _timer.StartTimerPreview(subQuery);
                 break;
             case "ip":
+                ActionPreviewState = "Fetching";
                 _ = FetchIpPreviewAsync();
                 break;
             default:
+                ActiveActionPanel = null;
                 break;
         }
     }
@@ -519,12 +568,19 @@ partial void OnActiveCategoryChanged(string? value)
         }
     }
 
+    /// <summary>The sub-query after the keyword prefix, e.g. "5m" from "timer 5m".</summary>
+    private string _activeActionSubQuery = string.Empty;
+
     /// <summary>Close the action preview panel (called from XAML close button or Escape).</summary>
     public void CloseActionPanel()
     {
         ActiveActionPanel = null;
         ActionResultText = string.Empty;
         ActionResultSubText = string.Empty;
+        ActionPreviewTitle = string.Empty;
+        ActionPreviewSubtitle = string.Empty;
+        ActionPreviewState = string.Empty;
+        ActionPreviewQuery = string.Empty;
     }
 
     private void UpdateScopeFilters()
@@ -598,12 +654,13 @@ partial void OnActiveCategoryChanged(string? value)
                 [Config.KeywordColor]      = ("color",      "\ue790"),
                 [Config.KeywordTimer]      = ("timer",      "\ue121"),
                 [Config.KeywordIp]         = ("ip",         "\ue701"),
-                [Config.KeywordAi]         = ("ai",         "\ue113"),
+                [Config.KeywordAi]         = ("ai",         "AI"),
                 [Config.KeywordCurrency]   = ("currency",   "\ue825"),
                 [Config.KeywordPassword]   = ("pw",         "\ue722"),
                 [Config.KeywordNote]       = ("note",       "\ue727"),
                 [Config.KeywordKill]       = ("kill",       "\ue747"),
                 [Config.KeywordScreenshot] = ("screenshot", "\ue74c"),
+                [Config.KeywordShell]      = ("shell",      "\ue765"),
                 [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
                 [Config.KeywordFiles]      = ("files",      "\ue70a"),
                 [Config.KeywordApps]       = ("apps",       "\ue71d"),
@@ -613,6 +670,12 @@ partial void OnActiveCategoryChanged(string? value)
         foreach (var (keyword, (actionId, icon)) in _keywordMap)
         {
             if (string.IsNullOrEmpty(keyword)) continue;
+            if (keyword == ">" && query.StartsWith(">", StringComparison.Ordinal))
+            {
+                var subQuery = query[1..];
+                return (actionId, icon, subQuery);
+            }
+
             var prefix = keyword + " ";
             if (query.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
@@ -644,7 +707,10 @@ partial void OnActiveCategoryChanged(string? value)
             var newResults = await _searchEngine.SearchAsync(query, ActiveCategory, ct);
             if (ct.IsCancellationRequested) return;
 
-            Application.Current?.Dispatcher.Invoke(() => CommitResults(newResults));
+            if (Application.Current is not null)
+                Application.Current.Dispatcher.Invoke(() => CommitResults(newResults));
+            else
+                CommitResults(newResults);
         }
         catch (Exception ex)
         {
@@ -664,6 +730,7 @@ partial void OnActiveCategoryChanged(string? value)
     {
         var result = SelectedResult;
         if (result is null) return;
+        var actionInput = GetActionExecutionInput(result);
 
         switch (result.Type)
         {
@@ -696,16 +763,34 @@ partial void OnActiveCategoryChanged(string? value)
                 break;
 
             case ResultType.Action:
+                if (result.Id?.StartsWith("action-catalog:", StringComparison.OrdinalIgnoreCase) == true
+                    && !string.IsNullOrWhiteSpace(result.ActionId))
+                {
+                    ActiveCategory = result.ActionId;
+                    ScopeIconGlyph = result.IconGlyph;
+                    Query = string.Empty;
+                    return;
+                }
+
                 // System commands: shutdown / restart / sleep / lock etc.
                 if (result.ActionId == "system")
                 {
-                    SystemAction.Execute(Query);
+                    SystemAction.Execute(actionInput);
+                    ActionPreviewTitle = result.Name;
+                    ActionPreviewSubtitle = actionInput;
+                    ActionPreviewState = "Sent";
+                    ActionResultText = "System command sent";
+                    ActionResultSubText = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
+                    ActiveActionPanel = "system";
                     return;
                 }
                 if (result.ActionId == "timer")
                 {
-                    _timer.StartTimerPreview(Query);
-                    Timer.StartCommand.Execute(null);
+                    if (_timer.StartTimerPreview(actionInput))
+                        Timer.StartCommand.Execute(null);
+                    ActionPreviewTitle = result.Name;
+                    ActionPreviewSubtitle = actionInput;
+                    ActionPreviewState = Timer.TimerRunning ? "Running" : "Check input";
                     ActiveActionPanel = "timer";
                     // panel stays visible so the user sees the countdown
                 }
@@ -714,7 +799,11 @@ partial void OnActiveCategoryChanged(string? value)
                     try
                     {
                         ActiveActionPanel = "ai";
-                        await _ai.StartAiAsync(Query);
+                        ActionPreviewTitle = result.Name;
+                        ActionPreviewSubtitle = actionInput;
+                        ActionPreviewState = "Thinking";
+                        await _ai.StartAiAsync(actionInput);
+                        ActionPreviewState = string.IsNullOrWhiteSpace(_ai.AiError) ? "Answered" : "Needs setup";
                         // response streams into AiChat.AiText — panel stays visible
                     }
                     catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
@@ -724,6 +813,9 @@ partial void OnActiveCategoryChanged(string? value)
                 {
                     var calcResult = result.Name.TrimStart('=', ' ');
                     _clipboard.CopyToSystem(calcResult);
+                    ActionPreviewTitle = "Calculator";
+                    ActionPreviewSubtitle = result.Subtitle ?? Query;
+                    ActionPreviewState = "Copied";
                     ActionResultText = calcResult;
                     ActionResultSubText = "Copied to clipboard";
                     ActiveActionPanel = "calc";
@@ -731,6 +823,9 @@ partial void OnActiveCategoryChanged(string? value)
                 else if (result.ActionId == "color")
                 {
                     _clipboard.CopyToSystem(result.Name);
+                    ActionPreviewTitle = "Color";
+                    ActionPreviewSubtitle = result.Name;
+                    ActionPreviewState = "Copied";
                     ActionResultText = result.Name;
                     ActionResultSubText = "Copied to clipboard";
                     ActiveActionPanel = "color";
@@ -741,7 +836,11 @@ partial void OnActiveCategoryChanged(string? value)
                     var pub = await IpAction.GetPublicIpAsync();
                     var text = $"{local} · {pub ?? "Unavailable"}";
                     _clipboard.CopyToSystem(text);
+                    ActionPreviewTitle = "IP Address";
+                    ActionPreviewSubtitle = "Copied local and public addresses";
+                    ActionPreviewState = "Copied";
                     ActionResultText = text;
+                    ActionResultSubText = "Copied to clipboard";
                     ActiveActionPanel = "ip";
                 }
                 // Settings: open settings panel when clicked
@@ -763,31 +862,48 @@ partial void OnActiveCategoryChanged(string? value)
                 }
                 else if (result.ActionId == "shell")
                 {
-                    var command = Query.StartsWith(">", StringComparison.Ordinal) ? Query[1..].Trim() : Query.Trim();
+                    var command = actionInput.Trim();
                     if (!string.IsNullOrWhiteSpace(command))
-                        Process.Start(new ProcessStartInfo("cmd.exe", $"/c {command}") { UseShellExecute = false, CreateNoWindow = true });
-                    HideAfterLaunch();
+                    {
+                        RunShellCommand(command);
+                        ActionPreviewTitle = "Shell command";
+                        ActionPreviewSubtitle = command;
+                        ActionPreviewState = "Started";
+                        ActionResultText = "Command started";
+                        ActionResultSubText = command;
+                        ActiveActionPanel = "shell";
+                    }
                 }
                 // Screenshot: capture and save
                 else if (result.ActionId == "screenshot")
                 {
-                    var path = ScreenshotAction.Execute();
-                    ActionResultText = "Screenshot saved";
-                    ActionResultSubText = path ?? "Pictures folder";
+                    var path = ScreenshotAction.Execute(Config.Screenshot.SaveFormat, Config.Screenshot.SaveFolder);
+                    ActionPreviewTitle = "Screenshot";
+                    ActionPreviewSubtitle = path ?? "Capture failed";
+                    ActionPreviewState = path is null ? "Error" : "Saved";
+                    ActionResultText = path is null ? "Screenshot failed" : "Screenshot saved";
+                    ActionResultSubText = path ?? "Check screenshot settings";
                     ActiveActionPanel = "screenshot";
                 }
                 // Kill Process: force-close by name
                 else if (result.ActionId == "kill")
                 {
-                    var killed = KillProcessAction.Execute(Query);
+                    var killed = KillProcessAction.Execute(actionInput);
+                    ActionPreviewTitle = "Kill process";
+                    ActionPreviewSubtitle = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
+                    ActionPreviewState = killed > 0 ? "Completed" : "No match";
                     ActionResultText = $"Killed {killed} process(es)";
+                    ActionResultSubText = string.IsNullOrWhiteSpace(actionInput) ? result.Name : actionInput;
                     ActiveActionPanel = "kill";
                 }
                 // Password Gen: generate and copy
                 else if (result.ActionId == "pw")
                 {
-                    var pw = PasswordGenAction.Generate(Query);
+                    var pw = PasswordGenAction.Generate(actionInput, Config.PasswordGen);
                     _clipboard.CopyToSystem(pw);
+                    ActionPreviewTitle = "Password";
+                    ActionPreviewSubtitle = "Generated and copied";
+                    ActionPreviewState = "Copied";
                     ActionResultText = pw;
                     ActionResultSubText = "Password copied to clipboard";
                     ActiveActionPanel = "pw";
@@ -795,9 +911,12 @@ partial void OnActiveCategoryChanged(string? value)
                 // Quick Note: save and open
                 else if (result.ActionId == "note")
                 {
-                    var path = QuickNoteAction.Execute(Query);
-                    ActionResultText = "Note saved";
-                    ActionResultSubText = path ?? "Documents\\Spur\\notes.txt";
+                    var path = QuickNoteAction.Execute(actionInput, Config.QuickNote.SaveFolder);
+                    ActionPreviewTitle = "Quick note";
+                    ActionPreviewSubtitle = path ?? "No note text";
+                    ActionPreviewState = path is null ? "Needs text" : "Saved";
+                    ActionResultText = path is null ? "Nothing to save" : "Note saved";
+                    ActionResultSubText = path ?? "Type note text after the keyword";
                     ActiveActionPanel = "note";
                 }
                 // Currency: fetch conversion and copy
@@ -805,11 +924,24 @@ partial void OnActiveCategoryChanged(string? value)
                 {
                     try
                     {
-                        var result2 = await CurrencyAction.ConvertAsync(Query);
+                        var result2 = await CurrencyAction.ConvertAsync(actionInput);
                         if (result2 is not null)
                         {
                             _clipboard.CopyToSystem(result2);
+                            ActionPreviewTitle = "Currency";
+                            ActionPreviewSubtitle = actionInput;
+                            ActionPreviewState = "Copied";
                             ActionResultText = result2;
+                            ActionResultSubText = "Copied to clipboard";
+                            ActiveActionPanel = "currency";
+                        }
+                        else
+                        {
+                            ActionPreviewTitle = "Currency";
+                            ActionPreviewSubtitle = actionInput;
+                            ActionPreviewState = "Invalid";
+                            ActionResultText = "Invalid conversion";
+                            ActionResultSubText = "Use a format like 100 usd to eur";
                             ActiveActionPanel = "currency";
                         }
                     }
@@ -818,6 +950,91 @@ partial void OnActiveCategoryChanged(string? value)
                 break;
         }
     }
+
+    private string GetActionExecutionInput(SearchResult result)
+    {
+        var subQuery = GetActionSubQuery().Trim();
+        var id = result.Id ?? string.Empty;
+
+        if (result.ActionId == "timer" && id.StartsWith("timer:", StringComparison.OrdinalIgnoreCase))
+            return id["timer:".Length..].Trim();
+
+        if (result.ActionId == "system" && id.StartsWith("system:", StringComparison.OrdinalIgnoreCase))
+            return id["system:".Length..].Trim();
+
+        if (result.ActionId == "pw" && id.StartsWith("action:pw:", StringComparison.OrdinalIgnoreCase))
+            return id["action:pw:".Length..].Trim();
+
+        if (result.ActionId == "kill" && id.StartsWith("kill:", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = id.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2) return parts[1].Trim();
+        }
+
+        if (result.ActionId == "shell")
+            return ExtractShellCommand(Query);
+
+        return string.IsNullOrWhiteSpace(subQuery) ? Query.Trim() : subQuery;
+    }
+
+    private string ExtractShellCommand(string query)
+    {
+        var keyword = Config.KeywordShell;
+        var trimmed = query.Trim();
+        if (string.IsNullOrWhiteSpace(keyword)) return trimmed;
+
+        if (keyword == ">" && trimmed.StartsWith(">", StringComparison.Ordinal))
+            return trimmed[1..].Trim();
+
+        var prefix = keyword + " ";
+        return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[prefix.Length..].Trim()
+            : trimmed;
+    }
+
+    private void RunShellCommand(string command)
+    {
+        var terminal = Config.Shell.Terminal.ToLowerInvariant();
+        var close = Config.Shell.CloseAfterExecution;
+        var useWindowsTerminal = Config.Shell.UseWindowsTerminal;
+
+        var (exe, args) = BuildShellProcess(terminal, command, close, useWindowsTerminal);
+        var psi = new ProcessStartInfo(exe, args)
+        {
+            UseShellExecute = Config.Shell.AlwaysRunAsAdministrator,
+            CreateNoWindow = false,
+        };
+
+        if (Config.Shell.AlwaysRunAsAdministrator)
+            psi.Verb = "runas";
+
+        Process.Start(psi);
+    }
+
+    private static (string Exe, string Args) BuildShellProcess(string terminal, string command, bool closeAfterExecution, bool useWindowsTerminal)
+    {
+        var shellExe = terminal switch
+        {
+            "powershell" => "powershell.exe",
+            "pwsh" => "pwsh.exe",
+            _ => "cmd.exe",
+        };
+
+        var shellArgs = terminal switch
+        {
+            "powershell" or "pwsh" => closeAfterExecution
+                ? $"-NoProfile -Command \"{EscapeForQuotedArgument(command)}\""
+                : $"-NoProfile -NoExit -Command \"{EscapeForQuotedArgument(command)}\"",
+            _ => closeAfterExecution ? $"/c {command}" : $"/k {command}",
+        };
+
+        return useWindowsTerminal
+            ? ("wt.exe", $"{shellExe} {shellArgs}")
+            : (shellExe, shellArgs);
+    }
+
+    private static string EscapeForQuotedArgument(string value)
+        => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
     [RelayCommand]
     public void OpenFolder()
@@ -1194,5 +1411,3 @@ partial void OnActiveCategoryChanged(string? value)
         ActionId = s.ActionId,
     };
 }
-
-

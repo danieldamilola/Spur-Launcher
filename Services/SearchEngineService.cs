@@ -34,6 +34,7 @@ public sealed class SearchEngineService : ISearchEngineService
         new QuickNoteAction(),
         new KillProcessAction(),
         new ScreenshotAction(),
+        new ShellAction(),
     ];
 
     public SearchEngineService(
@@ -72,9 +73,22 @@ public sealed class SearchEngineService : ISearchEngineService
         // -- Keyword-scoped action (e.g. "sys ", "timer ") ----------
         if (activeCategory is not null)
         {
+            if (activeCategory == "actions")
+            {
+                var actionCatalog = BuildActionCatalog(query).ToList();
+                if (actionCatalog.Count > 0)
+                {
+                    newResults.Add(new SectionLabel("Commands"));
+                    newResults.AddRange(actionCatalog);
+                }
+                return newResults;
+            }
+
             var scopedAction = Actions.FirstOrDefault(a => a.Id == activeCategory && !a.IsGlobal);
             if (scopedAction is not null)
             {
+                if (scopedAction.Id != "ai" && !IsActionEnabled(scopedAction.Id)) return newResults;
+                ApplyActionSettings(scopedAction.Id);
                 var actionResults = scopedAction.GetResults(query).ToList();
                 if (actionResults.Count > 0)
                 {
@@ -253,6 +267,58 @@ public sealed class SearchEngineService : ISearchEngineService
         return newResults;
     }
 
+    private IEnumerable<SearchResult> BuildActionCatalog(string query)
+    {
+        var entries = new[]
+        {
+            ("system", "System commands", _config.KeywordSystem, "Shutdown, restart, sleep, lock, sign out.", "power"),
+            ("color", "Color tools", _config.KeywordColor, "Convert and copy hex colors.", "\ue790"),
+            ("currency", "Currency converter", _config.KeywordCurrency, "Convert an amount between currencies.", "\ue825"),
+            ("timer", "Timer", _config.KeywordTimer, "Start a countdown from Spur.", "\ue121"),
+            ("ai", "AI assistant", _config.KeywordAi, "Ask the configured AI provider.", "AI"),
+            ("ip", "IP tools", _config.KeywordIp, "Show local and public IP addresses.", "\ue701"),
+            ("pw", "Password generator", _config.KeywordPassword, "Generate and copy a password.", "\ue722"),
+            ("note", "Quick note", _config.KeywordNote, "Save a short note.", "\ue727"),
+            ("kill", "Kill process", _config.KeywordKill, "Find and terminate running processes.", "\ue747"),
+            ("screenshot", "Screenshot", _config.KeywordScreenshot, "Capture and save the screen.", "\ue74c"),
+            ("shell", "Shell commands", _config.KeywordShell, "Run a command through the configured terminal.", "\ue765"),
+        };
+
+        foreach (var (id, name, keyword, description, icon) in entries)
+        {
+            if (!IsActionEnabled(id)) continue;
+            if (!string.IsNullOrWhiteSpace(query)
+                && !name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !description.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            yield return new SearchResult
+            {
+                Id = $"action-catalog:{id}",
+                Type = ResultType.Action,
+                Name = name,
+                Subtitle = string.IsNullOrWhiteSpace(keyword) ? description : $"{keyword}  ·  {description}",
+                IconGlyph = icon,
+                ActionId = id,
+                Score = 500,
+            };
+        }
+    }
+
+    private void ApplyActionSettings(string actionId)
+    {
+        if (actionId == "timer")
+            TimerAction.PresetText = _config.Timer.DefaultPresets;
+        else if (actionId == "kill")
+        {
+            KillProcessAction.ShowWindowTitles = _config.KillProcess.ShowWindowTitles;
+            KillProcessAction.PrioritizeVisibleWindows = _config.KillProcess.PrioritizeVisibleWindows;
+        }
+    }
+
     private double MatchScore(string query, string target)
     {
         if (string.IsNullOrEmpty(query)) return 0;
@@ -322,8 +388,8 @@ public sealed class SearchEngineService : ISearchEngineService
 
     private SearchResult? BuildShellAction(string query)
     {
-        if (!_config.IndexShell || !query.StartsWith(">", StringComparison.Ordinal)) return null;
-        var command = query[1..].Trim();
+        if (!_config.IndexShell) return null;
+        var command = ExtractShellCommand(query);
         if (command.Length == 0) return null;
         return new SearchResult
         {
@@ -335,6 +401,21 @@ public sealed class SearchEngineService : ISearchEngineService
             ActionId = "shell",
             Score = 600,
         };
+    }
+
+    private string ExtractShellCommand(string query)
+    {
+        var keyword = _config.KeywordShell;
+        var trimmed = query.Trim();
+        if (string.IsNullOrWhiteSpace(keyword)) return string.Empty;
+
+        if (keyword == ">" && trimmed.StartsWith(">", StringComparison.Ordinal))
+            return trimmed[1..].Trim();
+
+        var prefix = keyword + " ";
+        return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[prefix.Length..].Trim()
+            : string.Empty;
     }
 
     private static bool LooksLikeUrl(string query)

@@ -16,9 +16,8 @@ public sealed class QuickNoteAction : IAction
     private static readonly Regex _trigger = new(
         @"^note\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    private static readonly string _notesDir = Path.Combine(
+    private static readonly string _defaultNotesDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Spur");
-    private static readonly string _notesFile = Path.Combine(_notesDir, "notes.txt");
 
     // ── Keyword-scoped ────────────────────────────────────────────
     public IEnumerable<SearchResult> GetResults(string subQuery)
@@ -70,23 +69,26 @@ public sealed class QuickNoteAction : IAction
 
     public static string? ExtractText(string query)
     {
-        var m = _trigger.Match(query.Trim());
-        return m.Success ? m.Groups[1].Value.Trim() : null;
+        var trimmed = query.Trim();
+        var m = _trigger.Match(trimmed);
+        return m.Success ? m.Groups[1].Value.Trim() : trimmed;
     }
 
-    public static string? Execute(string query)
+    public static string? Execute(string query, string saveFolder = "")
     {
         var text = ExtractText(query);
         if (string.IsNullOrWhiteSpace(text)) return null;
 
         try
         {
-            Directory.CreateDirectory(_notesDir);
+            var notesDir = string.IsNullOrWhiteSpace(saveFolder) ? _defaultNotesDir : saveFolder;
+            var notesFile = Path.Combine(notesDir, "notes.txt");
+            Directory.CreateDirectory(notesDir);
             var entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}{Environment.NewLine}";
-            File.AppendAllText(_notesFile, entry);
+            File.AppendAllText(notesFile, entry);
 
-            Process.Start(new ProcessStartInfo(_notesFile) { UseShellExecute = true });
-            return _notesFile;
+            Process.Start(new ProcessStartInfo(notesFile) { UseShellExecute = true });
+            return notesFile;
         }
         catch (Exception ex)
         {

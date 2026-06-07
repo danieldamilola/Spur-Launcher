@@ -152,7 +152,7 @@
                                 <TextBlock Text="{Binding Label}"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
-                                           FontWeight="SemiBold"
+                                           FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding Description}"

@@ -13,7 +13,7 @@
 
         <local:ResultTemplateSelector x:Key="TemplateSelector"
                                       SectionTemplate="{StaticResource SectionTemplate}"
-                                      ResultTemplate="{StaticResource ResultTemplate}"/>
+                                      ResultTemplate="{StaticResource ResultRowTemplate}"/>
     </UserControl.Resources>
 
     <ListBox x:Name="ResultsBox"
@@ -23,7 +23,7 @@
              SelectionChanged="OnSelectionChanged"
              PreviewMouseLeftButtonUp="OnListMouseClick"
              HorizontalContentAlignment="Stretch"
-             Padding="0,2,0,4"
+              Padding="0"
              MaxHeight="352"
              Focusable="False"
              ScrollViewer.VerticalScrollBarVisibility="Auto"

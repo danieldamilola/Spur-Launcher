@@ -12,7 +12,7 @@
     <ItemsControl ItemsSource="{Binding ScopeFilters}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" Margin="16,2,16,7"/>
+                <StackPanel Orientation="Horizontal" Margin="16,4,16,4"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>

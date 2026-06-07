@@ -204,7 +204,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IndexShell
     {
         get => _config.IndexShell;
-        set { _config.IndexShell = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexShell = value; _config.Shell.Enabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
     }
 
     public bool IndexSystemCommands
@@ -737,6 +737,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.Screenshot.SaveFormat = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
     public string[] ScreenshotFormatOptions { get; } = ["png", "jpg", "bmp"];
+    public string ScreenshotSaveFolder
+    {
+        get => _config.Screenshot.SaveFolder;
+        set { _config.Screenshot.SaveFolder = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
 
     // ── Quick Note ────────────────────────────────────────────────
     public bool QuickNoteEnabled
@@ -748,6 +753,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.QuickNote.Keyword;
         set { _config.QuickNote.Keyword = value; _config.KeywordNote = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string QuickNoteSaveFolder
+    {
+        get => _config.QuickNote.SaveFolder;
+        set { _config.QuickNote.SaveFolder = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
 
     // ── Currency ──────────────────────────────────────────────────
@@ -797,6 +807,39 @@ public sealed partial class SettingsViewModel : ObservableObject
         get => _config.Ai.Keyword;
         set { _config.Ai.Keyword = value; _config.KeywordAi = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
     }
+
+    // ── Shell ─────────────────────────────────────────────────────
+    public bool ShellEnabled
+    {
+        get => _config.Shell.Enabled;
+        set { _config.Shell.Enabled = value; _config.IndexShell = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string ShellKeyword
+    {
+        get => _config.Shell.Keyword;
+        set { _config.Shell.Keyword = value; _config.KeywordShell = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ShellCloseAfterExecution
+    {
+        get => _config.Shell.CloseAfterExecution;
+        set { _config.Shell.CloseAfterExecution = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ShellAlwaysRunAsAdministrator
+    {
+        get => _config.Shell.AlwaysRunAsAdministrator;
+        set { _config.Shell.AlwaysRunAsAdministrator = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public bool ShellUseWindowsTerminal
+    {
+        get => _config.Shell.UseWindowsTerminal;
+        set { _config.Shell.UseWindowsTerminal = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string ShellTerminal
+    {
+        get => _config.Shell.Terminal;
+        set { _config.Shell.Terminal = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+    public string[] ShellTerminalOptions { get; } = ["cmd", "powershell", "pwsh"];
 
     // ═══════════════════════════════════════════════════════════════
     // AI Assistant
@@ -939,4 +982,3 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 /// <summary>A single sidebar section in the settings UI.</summary>
 public record SettingsSection(string Name, string IconGlyph);
-

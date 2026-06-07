@@ -246,8 +246,9 @@ public partial class MainWindow : Window
         bool showContent = isBrowse || hasResults;
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
+        bool hideActionChrome = _vm.IsActionPanelVisible && IsActionCategory(_vm.ActiveCategory);
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = isClipboard ? Visibility.Collapsed : Visibility.Visible;
+        UnifiedResultsControl.Visibility = isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -269,7 +270,7 @@ public partial class MainWindow : Window
                     
                     ContentArea.Visibility = Visibility.Visible;
                     ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
                     { EasingFunction = SpurMotion.EaseOut() };
@@ -279,7 +280,7 @@ public partial class MainWindow : Window
 
                     ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
                     ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                    if (_vm.SelectedResult is not null) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                    if (_vm.SelectedResult is not null && !hideActionChrome) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
                 }
                 else
                 {
@@ -291,12 +292,12 @@ public partial class MainWindow : Window
                     FooterArea.Opacity = 1;
                     ContentArea.Visibility = Visibility.Visible;
                     ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
             else
             {
-                FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
                 ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                 FooterArea.Opacity = 1;
             }
@@ -365,6 +366,12 @@ public partial class MainWindow : Window
         _categoryExpanded = expandRail;
     }
 
+    private static bool IsActionCategory(string? category) => category switch
+    {
+        null or "apps" or "files" or "clipboard" or "actions" => false,
+        _ => true,
+    };
+
     private CancellationTokenSource? _hoverHideCts;
 
     private void OnWindowMouseEnter(object sender, MouseEventArgs e)
@@ -423,7 +430,7 @@ public partial class MainWindow : Window
     {
         if (_vm is null) return;
         CircleFiles.IsActive     = _vm.ActiveCategory == "files";
-        CircleCommands.IsActive  = _vm.ActiveCategory == "actions";
+        CircleCommands.IsActive  = _vm.ActiveCategory == "ai";
         CircleClipboard.IsActive = _vm.ActiveCategory == "clipboard";
         CategoryBackButton.Visibility = _vm.ActiveCategory is null ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -504,10 +511,10 @@ public partial class MainWindow : Window
                 _vm.ActiveCategory = _vm.ActiveCategory == "files" ? null : "files";
                 e.Handled = true; break;
             case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActivateClipboardCategory();
+                _vm.ActiveCategory = _vm.ActiveCategory == "ai" ? null : "ai";
                 e.Handled = true; break;
             case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActiveCategory = _vm.ActiveCategory == "actions" ? null : "actions";
+                _vm.ActivateClipboardCategory();
                 e.Handled = true; break;
 
             case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:

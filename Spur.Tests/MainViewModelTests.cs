@@ -60,6 +60,7 @@ public class MainViewModelTests
 
     private sealed class FakeClip : IClipboardService
     {
+        public event Action? ClipboardChanged;
         public int MaxItems { get; set; }
         public IReadOnlyList<ClipboardEntry> GetHistory() => new List<ClipboardEntry>();
         public void Add(string text) { }
@@ -108,26 +109,30 @@ public class MainViewModelTests
         public string Decrypt(string cipher) => cipher;
     }
 
-    [Fact]
-    public async Task QueryProducesAppResults()
+    private static MainViewModel CreateViewModel(SpurConfig cfg)
     {
-        var cfg = new SpurConfig { FuzzySearch = true };
         var registry = new FakeRegistry();
         var commandPalette = new CommandPaletteViewModel(registry);
-        
         var apps = new FakeApps();
         var files = new FakeFiles();
         var freq = new FakeFreq();
         var clip = new FakeClip();
-        
         var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq);
 
-        var vm = new MainViewModel(cfg, NullLogger.Instance,
+        return new MainViewModel(cfg, NullLogger.Instance,
             apps, files, freq, new FakeConfigSvc(cfg),
             clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
             registry, commandPalette, searchEngine, new FakeSecureStorage());
+    }
 
-        // Set query and wait for debounce + async search
+    [Fact]
+    public async Task QueryProducesAppResults()
+    {
+        var cfg = new SpurConfig { FuzzySearch = true };
+        var apps = new FakeApps();
+        var vm = CreateViewModel(cfg);
+
+        // Set query and wait for debounce + async search.
         vm.Query = "note";
         await Task.Delay(300);
 
@@ -135,7 +140,43 @@ public class MainViewModelTests
         var found = vm.Results.OfType<SearchResult>().Any(r => r.Name.Contains("Notepad", StringComparison.OrdinalIgnoreCase));
         Assert.True(found, "Expected Notepad to appear in results");
     }
+
+    [Fact]
+    public async Task CommandsCategoryProducesActionRows()
+    {
+        var cfg = new SpurConfig
+        {
+            ActionTimer = true,
+            ActionPasswordGen = true,
+            IndexSystemCommands = true,
+        };
+        cfg.Timer.Enabled = true;
+        cfg.PasswordGen.Enabled = true;
+        cfg.System.Enabled = true;
+
+        var vm = CreateViewModel(cfg);
+
+        vm.ActiveCategory = "actions";
+        await Task.Delay(300);
+
+        var actions = vm.Results.OfType<SearchResult>().Where(r => r.Type == ResultType.Action).ToList();
+        Assert.NotEmpty(actions);
+        Assert.Contains(actions, r => r.ActionId == "timer");
+        Assert.Contains(actions, r => r.ActionId == "system");
+    }
+
+    [Fact]
+    public async Task AiCategoryProducesAiPreviewRowEvenWhenDisabled()
+    {
+        var cfg = new SpurConfig { ActionAi = false };
+        cfg.Ai.Enabled = false;
+        var vm = CreateViewModel(cfg);
+
+        vm.ActiveCategory = "ai";
+        await Task.Delay(300);
+
+        var ai = vm.Results.OfType<SearchResult>().FirstOrDefault(r => r.ActionId == "ai");
+        Assert.NotNull(ai);
+        Assert.Equal("Ask AI", ai.Name);
+    }
 }
-
-
-

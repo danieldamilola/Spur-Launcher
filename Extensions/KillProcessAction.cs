@@ -12,6 +12,8 @@ public sealed class KillProcessAction : IAction
     public string Name => "Kill";
     public string IconGlyph => "\ue711";
     public bool IsGlobal => false;
+    public static bool ShowWindowTitles { get; set; } = true;
+    public static bool PrioritizeVisibleWindows { get; set; } = true;
 
     private static readonly Regex _trigger = new(
         @"^kill\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -25,7 +27,8 @@ public sealed class KillProcessAction : IAction
         {
             // List top memory-consuming processes
             var procs = Process.GetProcesses()
-                .OrderByDescending(p =>
+                .OrderByDescending(p => PrioritizeVisibleWindows && HasVisibleWindow(p))
+                .ThenByDescending(p =>
                 {
                     try { return p.WorkingSet64; }
                     catch { return 0; }
@@ -38,11 +41,12 @@ public sealed class KillProcessAction : IAction
                 try { pname = p.ProcessName; } catch { continue; }
                 var mb = 0L;
                 try { mb = p.WorkingSet64 / 1024 / 1024; } catch { }
+                var title = GetWindowTitle(p);
                 yield return new SearchResult
                 {
                     Id         = $"kill:{pname.ToLowerInvariant()}",
                     Type       = ResultType.Action,
-                    Name       = pname,
+                    Name       = ShowWindowTitles && !string.IsNullOrWhiteSpace(title) ? $"{pname} - {title}" : pname,
                     Subtitle   = $"{mb} MB  ·  PID {p.Id}",
                     IconGlyph  = "\ue711",
                     ActionId   = Id,
@@ -58,6 +62,7 @@ public sealed class KillProcessAction : IAction
                 try { return p.ProcessName.StartsWith(name, StringComparison.OrdinalIgnoreCase); }
                 catch { return false; }
             })
+            .OrderByDescending(p => PrioritizeVisibleWindows && HasVisibleWindow(p))
             .ToList();
 
         if (matches.Count == 0)
@@ -78,16 +83,32 @@ public sealed class KillProcessAction : IAction
         {
             var mb = 0L;
             try { mb = p.WorkingSet64 / 1024 / 1024; } catch { }
+            var title = GetWindowTitle(p);
+            var label = ShowWindowTitles && !string.IsNullOrWhiteSpace(title)
+                ? $"{p.ProcessName} - {title}"
+                : p.ProcessName;
             yield return new SearchResult
             {
                 Id         = $"kill:{p.ProcessName.ToLowerInvariant()}:{p.Id}",
                 Type       = ResultType.Action,
-                Name       = $"Kill {p.ProcessName}",
+                Name       = $"Kill {label}",
                 Subtitle   = $"{mb} MB  ·  PID {p.Id}  ·  ↵ to kill",
                 IconGlyph  = "\ue711",
                 ActionId   = Id,
             };
         }
+    }
+
+    private static bool HasVisibleWindow(Process process)
+    {
+        try { return process.MainWindowHandle != IntPtr.Zero; }
+        catch { return false; }
+    }
+
+    private static string GetWindowTitle(Process process)
+    {
+        try { return process.MainWindowTitle; }
+        catch { return string.Empty; }
     }
 
     // ── Legacy (global) ───────────────────────────────────────────
@@ -118,13 +139,14 @@ public sealed class KillProcessAction : IAction
 
     public static string? ExtractName(string query)
     {
-        var m = _trigger.Match(query.Trim());
+        var trimmed = query.Trim();
+        var m = _trigger.Match(trimmed);
         return m.Success ? m.Groups[1].Value.Trim() : null;
     }
 
     public static int Execute(string query)
     {
-        var name = ExtractName(query);
+        var name = ExtractName(query) ?? query.Trim();
         if (string.IsNullOrWhiteSpace(name)) return 0;
 
         var procs = Process.GetProcessesByName(name);

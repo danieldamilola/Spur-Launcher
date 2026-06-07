@@ -31,7 +31,7 @@
                 <TextBlock Text="Settings"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="17"
-                           FontWeight="SemiBold"
+                           FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock Text="Keep Spur quiet, fast, and tuned to how you work."
                            FontFamily="{DynamicResource Token.Font.Primary}"

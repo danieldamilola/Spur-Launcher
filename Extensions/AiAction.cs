@@ -6,7 +6,7 @@ public sealed class AiAction : IAction
 {
     public string Id => "ai";
     public string Name => "AI";
-    public string IconGlyph => "\ue113";
+    public string IconGlyph => "AI";
     public bool IsGlobal => false;
 
     public bool CanHandle(string query) =>
@@ -23,7 +23,7 @@ public sealed class AiAction : IAction
             Type = ResultType.Action,
             Name = $"Ask: {prompt}",
             Subtitle = "AI",
-            IconGlyph = "\ue113",
+            IconGlyph = "AI",
             ActionId = Id,
             Score = 600,
         };
@@ -39,7 +39,7 @@ public sealed class AiAction : IAction
                 Type = ResultType.Action,
                 Name = "Ask AI",
                 Subtitle = "Type your question…",
-                IconGlyph = "\ue113",
+                IconGlyph = "AI",
                 ActionId = Id,
             };
             yield break;

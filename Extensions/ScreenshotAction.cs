@@ -37,7 +37,7 @@ public sealed class ScreenshotAction : IAction
         ActionId   = Id,
     };
 
-    public static string? Execute()
+    public static string? Execute(string format = "png", string saveFolder = "")
     {
         try
         {
@@ -46,9 +46,14 @@ public sealed class ScreenshotAction : IAction
             using var g = Graphics.FromImage(bmp);
             g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size);
 
-            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var file = Path.Combine(desktop, $"Screenshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.png");
-            bmp.Save(file, ImageFormat.Png);
+            var folder = string.IsNullOrWhiteSpace(saveFolder)
+                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                : saveFolder;
+            Directory.CreateDirectory(folder);
+
+            var normalizedFormat = NormalizeFormat(format);
+            var file = Path.Combine(folder, $"Screenshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.{normalizedFormat.Extension}");
+            bmp.Save(file, normalizedFormat.ImageFormat);
 
             Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
             return file;
@@ -58,5 +63,15 @@ public sealed class ScreenshotAction : IAction
             Debug.WriteLine($"[Screenshot] Failed: {ex.Message}");
             return null;
         }
+    }
+
+    private static (string Extension, ImageFormat ImageFormat) NormalizeFormat(string format)
+    {
+        return format.Trim().ToLowerInvariant() switch
+        {
+            "jpg" or "jpeg" => ("jpg", ImageFormat.Jpeg),
+            "bmp" => ("bmp", ImageFormat.Bmp),
+            _ => ("png", ImageFormat.Png),
+        };
     }
 }

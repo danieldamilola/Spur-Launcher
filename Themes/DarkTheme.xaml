@@ -4,50 +4,58 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/Themes/DesignTokens/Colors.xaml"/>
-        <ResourceDictionary Source="/Themes/DesignTokens/Typography.xaml"/>
-        <ResourceDictionary Source="/Themes/DesignTokens/Spacing.xaml"/>
-        <ResourceDictionary Source="/Themes/DesignTokens/Radii.xaml"/>
+        <ResourceDictionary Source="/Themes/Tokens.xaml"/>
         <ResourceDictionary Source="/Themes/Animations.xaml"/>
         <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>
         <ResourceDictionary Source="/Themes/ResultTemplates.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         DARK THEME — Semantic aliases
+         Color values are defined directly. All geometry/layout/font
+         values are in Tokens.xaml (shared between themes).
+         This file and LightTheme.xaml have the EXACT same key list.
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- ── Surface colors ── -->
     <SolidColorBrush x:Key="Void"            Color="#09090A"/>
     <SolidColorBrush x:Key="Depth1"          Color="#101012"/>
     <SolidColorBrush x:Key="Depth2"          Color="#171719"/>
     <SolidColorBrush x:Key="Depth3"          Color="#202023"/>
     <SolidColorBrush x:Key="Depth4"          Color="#29292D"/>
-
     <SolidColorBrush x:Key="GlassBg"         Color="#80101012"/>
     <SolidColorBrush x:Key="GlassBorder"     Color="#20FFFFFF"/>
     <SolidColorBrush x:Key="PreviewBg"       Color="#B0101012"/>
-
     <SolidColorBrush x:Key="Surface"         Color="#171719"/>
     <SolidColorBrush x:Key="SurfaceAcrylic"  Color="#FF171719"/>
     <SolidColorBrush x:Key="SurfaceLow"      Color="#101012"/>
     <SolidColorBrush x:Key="SurfaceRaised"   Color="#202023"/>
 
+    <!-- ── Text colors ── -->
     <SolidColorBrush x:Key="TextPrimary"     Color="#F7F3EC"/>
     <SolidColorBrush x:Key="TextSecondary"   Color="#B2ADA4"/>
     <SolidColorBrush x:Key="TextMuted"       Color="#87827A"/>
     <SolidColorBrush x:Key="TextTertiary"    Color="#6B665F"/>
     <SolidColorBrush x:Key="TextInverse"     Color="#101012"/>
 
+    <!-- ── Border colors ── -->
     <SolidColorBrush x:Key="BorderBrush"     Color="#12FFFFFF"/>
     <SolidColorBrush x:Key="BorderStrong"    Color="#22FFFFFF"/>
     <SolidColorBrush x:Key="Separator"       Color="#10FFFFFF"/>
 
+    <!-- ── Selection colors ── -->
     <SolidColorBrush x:Key="SelectedBg"      Color="#252529"/>
     <SolidColorBrush x:Key="SelectedText"    Color="#F4F2EF"/>
     <SolidColorBrush x:Key="SelectedMuted"   Color="#9B9893"/>
     <SolidColorBrush x:Key="HoverBg"         Color="#202023"/>
 
+    <!-- ── Accent colors ── -->
     <SolidColorBrush x:Key="Accent"          Color="#D7CFC2"/>
     <SolidColorBrush x:Key="BrandHighlight"  Color="#F1E9DC"/>
     <SolidColorBrush x:Key="AccentWash"      Color="#24D7CFC2"/>
     <SolidColorBrush x:Key="AccentGhost"     Color="#12D7CFC2"/>
 
+    <!-- ── Category accent colors ── -->
     <SolidColorBrush x:Key="AccentTime"      Color="#9B9893"/>
     <SolidColorBrush x:Key="AccentAi"        Color="#9B9893"/>
     <SolidColorBrush x:Key="AccentMath"      Color="#9B9893"/>
@@ -55,15 +63,14 @@
     <SolidColorBrush x:Key="AccentFiles"     Color="#9B9893"/>
     <SolidColorBrush x:Key="AccentClipboard" Color="#9B9893"/>
 
+    <!-- ── Semantic colors ── -->
     <SolidColorBrush x:Key="Green"           Color="#6B8F71"/>
     <SolidColorBrush x:Key="Orange"          Color="#A8947A"/>
     <SolidColorBrush x:Key="Red"             Color="#C45C5C"/>
-
     <SolidColorBrush x:Key="ToggleKnob"      Color="#F4F2EF"/>
     <SolidColorBrush x:Key="ToggleTrackOff"  Color="#5C5A57"/>
 
-    <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
-
+    <!-- ── Font sizes (legacy aliases — shared values from Tokens.xaml) ── -->
     <sys:Double x:Key="FontNano">10</sys:Double>
     <sys:Double x:Key="FontXxs">10</sys:Double>
     <sys:Double x:Key="FontMicro">11</sys:Double>
@@ -88,16 +95,18 @@
     <sys:Double x:Key="FontHero">48</sys:Double>
     <sys:Double x:Key="FontDisplay">48</sys:Double>
 
+    <!-- ── Radii ── -->
     <CornerRadius x:Key="RadiusSm">6</CornerRadius>
     <CornerRadius x:Key="RadiusMd">8</CornerRadius>
     <CornerRadius x:Key="RadiusLg">12</CornerRadius>
     <CornerRadius x:Key="RadiusXl">16</CornerRadius>
     <CornerRadius x:Key="RadiusPill">16</CornerRadius>
     <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
-    <CornerRadius x:Key="RadiusRow">10</CornerRadius>
+    <CornerRadius x:Key="RadiusRow">8</CornerRadius>
     <CornerRadius x:Key="RadiusButton">6</CornerRadius>
     <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
 
+    <!-- ── Layout ── -->
     <sys:Double x:Key="SearchBarHeight">56</sys:Double>
     <sys:Double x:Key="RowHeight">44</sys:Double>
     <sys:Double x:Key="RowHeightTall">52</sys:Double>
@@ -107,5 +116,7 @@
     <sys:Double x:Key="WindowWidthCompact">640</sys:Double>
     <sys:Double x:Key="WindowWidthExpanded">640</sys:Double>
 
-</ResourceDictionary>
+    <!-- ── Other ── -->
+    <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
 
+</ResourceDictionary>

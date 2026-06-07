@@ -118,3 +118,18 @@ public sealed class AiActionSettings : ActionSettings
 {
     public AiActionSettings() { Keyword = "ai"; Enabled = false; }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Shell — execute a command through the user's preferred terminal
+// ═══════════════════════════════════════════════════════════════════
+public sealed class ShellActionSettings : ActionSettings
+{
+    public bool CloseAfterExecution { get; set; } = true;
+    public bool AlwaysRunAsAdministrator { get; set; } = false;
+    public bool UseWindowsTerminal { get; set; } = false;
+
+    /// <summary>cmd, powershell, or pwsh.</summary>
+    public string Terminal { get; set; } = "cmd";
+
+    public ShellActionSettings() { Keyword = ">"; Enabled = false; }
+}

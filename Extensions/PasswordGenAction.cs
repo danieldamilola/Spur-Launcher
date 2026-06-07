@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Spur.Models;
 
 namespace Spur.Extensions;
 
@@ -15,7 +16,10 @@ public sealed class PasswordGenAction : IAction
 
     private const int DefaultLength = 16;
     private const int MaxLength = 128;
-    private const string Chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+    private const string LowerChars = "abcdefghijklmnopqrstuvwxyz";
+    private const string UpperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private const string NumberChars = "0123456789";
+    private const string SymbolChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
 
     private static readonly Regex _trigger = new(
         @"^pw(?:\s+(\d{1,3}))?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -86,7 +90,11 @@ public sealed class PasswordGenAction : IAction
 
     private static int ParseLength(string query)
     {
-        var m = _trigger.Match(query.Trim());
+        var trimmed = query.Trim();
+        if (int.TryParse(trimmed, out var rawLen) && rawLen > 0)
+            return Math.Min(rawLen, MaxLength);
+
+        var m = _trigger.Match(trimmed);
         return m.Success && int.TryParse(m.Groups[1].Value, out var len) && len > 0
             ? Math.Min(len, MaxLength) : DefaultLength;
     }
@@ -97,17 +105,38 @@ public sealed class PasswordGenAction : IAction
         return Generate(length);
     }
 
+    public static string Generate(string query, PasswordGenActionSettings settings)
+    {
+        var length = string.IsNullOrWhiteSpace(query)
+            ? settings.DefaultLength
+            : ParseLength(query);
+        return Generate(length, settings);
+    }
+
     public static string Generate(int length = DefaultLength)
+        => Generate(length, includeSymbols: true, includeNumbers: true, includeUppercase: true);
+
+    public static string Generate(int length, PasswordGenActionSettings settings)
+        => Generate(length, settings.IncludeSymbols, settings.IncludeNumbers, settings.IncludeUppercase);
+
+    private static string Generate(int length, bool includeSymbols, bool includeNumbers, bool includeUppercase)
     {
         length = Math.Clamp(length, 1, MaxLength);
+        var chars = LowerChars
+            + (includeUppercase ? UpperChars : "")
+            + (includeNumbers ? NumberChars : "")
+            + (includeSymbols ? SymbolChars : "");
+
+        if (string.IsNullOrEmpty(chars))
+            chars = LowerChars;
+
         var bytes = RandomNumberGenerator.GetBytes(length * 4);
-        var chars = new char[length];
+        var password = new char[length];
         for (int i = 0; i < length; i++)
         {
-            var idx = BitConverter.ToUInt32(bytes, i * 4) % (uint)Chars.Length;
-            chars[i] = Chars[(int)idx];
+            var idx = BitConverter.ToUInt32(bytes, i * 4) % (uint)chars.Length;
+            password[i] = chars[(int)idx];
         }
-        return new string(chars);
+        return new string(password);
     }
 }
-

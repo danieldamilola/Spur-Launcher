@@ -58,16 +58,17 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Background Plate for WindowOpacity -->
-            <Border Grid.RowSpan="4" 
+            <Border Grid.RowSpan="5" 
                     CornerRadius="{DynamicResource RadiusWindow}"
                     Background="{DynamicResource SurfaceAcrylic}" 
                     Opacity="{Binding Config.WindowOpacity}"/>
 
             <!-- Liquid glass: subtle top-edge luminosity highlight -->
-            <Border Grid.RowSpan="4"
+            <Border Grid.RowSpan="5"
                     CornerRadius="{DynamicResource RadiusWindow}"
                     IsHitTestVisible="False">
               <Border.Background>
@@ -119,11 +120,41 @@
                     Visibility="Collapsed"
                     BorderBrush="{DynamicResource Separator}"
                     BorderThickness="0,1,0,0"
-                    Padding="12,10">
+                    Padding="12,12">
               <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Background="{DynamicResource Depth2}"
+                        BorderBrush="{DynamicResource Separator}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,8"
+                        Margin="0,0,0,10">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                      <TextBlock Text="{Binding ActionPreviewTitle}"
+                                 FontSize="13"
+                                 FontWeight="Medium"
+                                 Foreground="{DynamicResource TextPrimary}"
+                                 TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Text="{Binding ActionPreviewSubtitle}"
+                                 FontSize="11"
+                                 Foreground="{DynamicResource TextTertiary}"
+                                 TextTrimming="CharacterEllipsis"
+                                 Margin="0,2,0,0"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
 
               <!-- ─── TIMER ──────────────────────────────────────────────── -->
-              <Grid x:Name="TimerPreview">
+              <Grid Grid.Row="1" x:Name="TimerPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -138,19 +169,26 @@
                   <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0"
                            Text="{Binding Timer.TimerDisplay}"
-                           FontSize="28" FontWeight="Bold"
+                           FontSize="28" FontWeight="Medium"
                            FontFamily="{DynamicResource Token.Font.Mono}"
                            HorizontalAlignment="Center"
                            Margin="0,4"/>
-                <ProgressBar Grid.Row="1"
+                <TextBlock Grid.Row="1"
+                           Text="{Binding Timer.TimerStatus}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextTertiary}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,2"/>
+                <ProgressBar Grid.Row="2"
                              Value="{Binding Timer.TimerProgress}"
                              Minimum="0" Maximum="100"
                              Height="4"
                              Margin="0,8"/>
-                <StackPanel Grid.Row="2"
+                <StackPanel Grid.Row="3"
                             Orientation="Horizontal"
                             HorizontalAlignment="Center"
                             Margin="0,4,0,0">
@@ -164,7 +202,7 @@
               </Grid>
 
               <!-- ─── AI ─────────────────────────────────────────────────── -->
-              <Grid x:Name="AiPreview">
+              <Grid Grid.Row="1" x:Name="AiPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -182,16 +220,48 @@
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0"
                            Text="AI Response"
-                           FontWeight="SemiBold"
+                           FontWeight="Medium"
                            Foreground="{DynamicResource TextSecondary}"
                            Margin="0,0,0,4"/>
                 <ScrollViewer Grid.Row="1"
                               MaxHeight="200"
                               VerticalScrollBarVisibility="Auto">
-                  <TextBlock Text="{Binding AiChat.AiText}"
-                             TextWrapping="Wrap"
-                             Foreground="{DynamicResource TextPrimary}"
-                             FontSize="13"/>
+                  <StackPanel>
+                    <TextBlock Text="Thinking..."
+                               Foreground="{DynamicResource TextTertiary}"
+                               FontSize="13">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Visibility" Value="Collapsed"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding AiChat.AiLoading}" Value="True">
+                              <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding AiChat.AiError}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource Red}"
+                               FontSize="13"
+                               Margin="0,0,0,6">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Visibility" Value="Visible"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding AiChat.AiError}" Value="">
+                              <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding AiChat.AiText}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontSize="13"/>
+                  </StackPanel>
                 </ScrollViewer>
                 <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
@@ -205,7 +275,7 @@
               </Grid>
 
               <!-- ─── COLOR ──────────────────────────────────────────────── -->
-              <Grid x:Name="ColorPreview">
+              <Grid Grid.Row="1" x:Name="ColorPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -225,7 +295,7 @@
                   <TextBlock Text="{Binding ActionResultText}"
                              VerticalAlignment="Center"
                              Margin="8,0,0,0"
-                             FontWeight="SemiBold"/>
+                             FontWeight="Medium"/>
                   <TextBlock Text="— copied"
                              VerticalAlignment="Center"
                              Margin="4,0,0,0"
@@ -234,7 +304,7 @@
               </Grid>
 
               <!-- ─── IP ─────────────────────────────────────────────────── -->
-              <Grid x:Name="IpPreview">
+              <Grid Grid.Row="1" x:Name="IpPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -253,7 +323,7 @@
               </Grid>
 
               <!-- ─── CURRENCY ───────────────────────────────────────────── -->
-              <Grid x:Name="CurrencyPreview">
+              <Grid Grid.Row="1" x:Name="CurrencyPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -267,11 +337,11 @@
                 <TextBlock Text="{Binding ActionResultText}"
                            TextWrapping="Wrap"
                            FontSize="13"
-                           FontWeight="SemiBold"/>
+                           FontWeight="Medium"/>
               </Grid>
 
               <!-- ─── PASSWORD ───────────────────────────────────────────── -->
-              <Grid x:Name="PasswordPreview">
+              <Grid Grid.Row="1" x:Name="PasswordPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -294,24 +364,12 @@
                 </StackPanel>
               </Grid>
 
-              <!-- ─── GENERIC (kill / screenshot / note / system / calc) ─── -->
-              <Grid x:Name="GenericPreview">
+              <!-- ─── CALCULATOR ──────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="CalcPreview">
                 <Grid.Style>
                   <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
                     <Style.Triggers>
-                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="kill">
-                        <Setter Property="Visibility" Value="Visible"/>
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="screenshot">
-                        <Setter Property="Visibility" Value="Visible"/>
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="note">
-                        <Setter Property="Visibility" Value="Visible"/>
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="system">
-                        <Setter Property="Visibility" Value="Visible"/>
-                      </DataTrigger>
                       <DataTrigger Binding="{Binding ActiveActionPanel}" Value="calc">
                         <Setter Property="Visibility" Value="Visible"/>
                       </DataTrigger>
@@ -319,15 +377,157 @@
                   </Style>
                 </Grid.Style>
                 <StackPanel>
-                  <TextBlock Text="{Binding ActionResultText}"
-                             TextWrapping="Wrap"
-                             FontSize="13"
-                             FontWeight="SemiBold"/>
-                  <TextBlock Text="{Binding ActionResultSubText}"
-                             TextWrapping="Wrap"
+                  <TextBlock Text="{Binding ActionPreviewQuery}"
                              Foreground="{DynamicResource TextTertiary}"
                              FontSize="11"
-                             Margin="0,2,0,0"/>
+                             Margin="0,0,0,2"/>
+                  <TextBlock Text="{Binding ActionResultText}"
+                             TextWrapping="Wrap"
+                             FontSize="24"
+                             FontFamily="{DynamicResource Token.Font.Mono}"
+                             FontWeight="Medium"
+                             Foreground="{DynamicResource TextPrimary}"/>
+                </StackPanel>
+              </Grid>
+
+              <!-- ─── KILL PROCESS ─────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="KillPreview">
+                <Grid.Style>
+                  <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="kill">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Grid.Style>
+                <StackPanel Orientation="Horizontal">
+                  <ui:FontIcon Glyph="&#xE747;" FontSize="20"
+                                 Foreground="{DynamicResource TextSecondary}"
+                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <StackPanel>
+                    <TextBlock Text="{Binding ActionResultText}"
+                               FontSize="13" FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding ActionResultSubText}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,2,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+
+              <!-- ─── SCREENSHOT ───────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="ScreenshotPreview">
+                <Grid.Style>
+                  <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="screenshot">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Grid.Style>
+                <StackPanel Orientation="Horizontal">
+                  <ui:FontIcon Glyph="&#xE74C;" FontSize="20"
+                                 Foreground="{DynamicResource TextSecondary}"
+                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <StackPanel>
+                    <TextBlock Text="{Binding ActionResultText}"
+                               FontSize="13" FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding ActionResultSubText}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,2,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+
+              <!-- ─── QUICK NOTE ───────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="NotePreview">
+                <Grid.Style>
+                  <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="note">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Grid.Style>
+                <StackPanel Orientation="Horizontal">
+                  <ui:FontIcon Glyph="&#xE727;" FontSize="20"
+                                 Foreground="{DynamicResource TextSecondary}"
+                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <StackPanel>
+                    <TextBlock Text="{Binding ActionResultText}"
+                               FontSize="13" FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding ActionResultSubText}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,2,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+
+              <!-- ─── SYSTEM ───────────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="SystemPreview">
+                <Grid.Style>
+                  <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="system">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Grid.Style>
+                <StackPanel Orientation="Horizontal">
+                  <ui:FontIcon Glyph="&#xE117;" FontSize="20"
+                                 Foreground="{DynamicResource TextSecondary}"
+                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <StackPanel>
+                    <TextBlock Text="{Binding ActionResultText}"
+                               FontSize="13" FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding ActionResultSubText}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,2,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+
+              <!-- ─── SHELL ──────────────────────────────────────────────── -->
+              <Grid Grid.Row="1" x:Name="ShellPreview">
+                <Grid.Style>
+                  <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding ActiveActionPanel}" Value="shell">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Grid.Style>
+                <StackPanel Orientation="Horizontal">
+                  <ui:FontIcon Glyph="&#xE765;" FontSize="20"
+                                 Foreground="{DynamicResource TextSecondary}"
+                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <StackPanel>
+                    <TextBlock Text="{Binding ActionResultText}"
+                               FontSize="13" FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding ActionResultSubText}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,2,0,0"
+                               TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
                 </StackPanel>
               </Grid>
               </Grid>
@@ -342,8 +542,8 @@
               <TextBlock x:Name="FooterText"
                          Margin="16,0"
                          VerticalAlignment="Center"
-                         FontFamily="{DynamicResource UIFont}"
-                         FontSize="{DynamicResource FontHint}"
+                          FontFamily="{DynamicResource Token.Font.Primary}"
+                          FontSize="{DynamicResource FontHint}"
                          Foreground="{DynamicResource TextTertiary}"
                          Text="{Binding FooterHint}"/>
             </Border>
@@ -435,11 +635,11 @@
                                 Click="OnCategoryClick"/>
 
           <views:CategoryCircle x:Name="CircleCommands"
-                                Tag="actions"
-                                Label="Commands"
-                                AutomationProperties.Name="Commands"
+                                Tag="ai"
+                                Label="AI"
+                                AutomationProperties.Name="AI"
                                 Margin="0,0,4,0"
-                                IconGlyph="&#xE756;"
+                                IconGlyph="AI"
                                 Click="OnCategoryClick"/>
 
           <views:CategoryCircle x:Name="CircleClipboard"
@@ -453,10 +653,3 @@
     </Grid>
   </Border>
 </Window>
-
-
-
-
-
-
-

@@ -113,6 +113,86 @@
                                              VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                         </Grid>
                     </Border>
+                    <Border Style="{StaticResource Divider}"/>
+
+                    <!-- ── AI assistant ── -->
+                    <Border Style="{StaticResource SettingsRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="AI assistant" Style="{StaticResource SettingsTitle}"/>
+                                <TextBlock Text="Ask the configured AI provider from the launcher." Style="{StaticResource SettingsHint}"/>
+                                <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding AiKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VerticalContentAlignment="Center" Padding="2,4"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding AiEnabled, Mode=TwoWay}"
+                                             VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource Divider}"/>
+
+                    <!-- ── Shell ── -->
+                    <Border Style="{StaticResource SettingsRow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Shell commands" Style="{StaticResource SettingsTitle}"/>
+                                <TextBlock Text="Run system commands from Spur." Style="{StaticResource SettingsHint}"/>
+                                <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding ShellKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VerticalContentAlignment="Center" Padding="2,4"/>
+                                    </Grid>
+                                </Border>
+                                <WrapPanel Margin="0,8,0,0">
+                                    <CheckBox Content="Close after execution" IsChecked="{Binding ShellCloseAfterExecution, Mode=TwoWay}"
+                                              FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,12,0"/>
+                                    <CheckBox Content="Run as administrator" IsChecked="{Binding ShellAlwaysRunAsAdministrator, Mode=TwoWay}"
+                                              FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,12,0"/>
+                                    <CheckBox Content="Use Windows Terminal" IsChecked="{Binding ShellUseWindowsTerminal, Mode=TwoWay}"
+                                              FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                                </WrapPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <TextBlock Text="Terminal" FontSize="11" Foreground="{DynamicResource TextTertiary}"
+                                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <ComboBox ItemsSource="{Binding ShellTerminalOptions}"
+                                              SelectedItem="{Binding ShellTerminal}"
+                                              FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                              Width="120"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShellEnabled, Mode=TwoWay}"
+                                             VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -285,6 +365,21 @@
                                                  VerticalContentAlignment="Center" Padding="2,4"/>
                                     </Grid>
                                 </Border>
+                                <Border Style="{StaticResource SettingsInputFrame}" Margin="0,6,0,0" MaxWidth="360">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Folder" FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding QuickNoteSaveFolder, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VerticalContentAlignment="Center" Padding="2,4"/>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding QuickNoteEnabled, Mode=TwoWay}"
                                              VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
@@ -325,6 +420,21 @@
                                               FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
                                               Width="80"/>
                                 </StackPanel>
+                                <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="360">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Folder" FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding ScreenshotSaveFolder, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VerticalContentAlignment="Center" Padding="2,4"/>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                             <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ScreenshotEnabled, Mode=TwoWay}"
                                              VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>

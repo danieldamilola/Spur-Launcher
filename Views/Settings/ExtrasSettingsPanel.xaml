@@ -17,8 +17,23 @@
                         <StackPanel>
                             <TextBlock Text="AI assistant" Style="{StaticResource SettingsTitle}"/>
                             <TextBlock Text="Enable only if you want AI commands inside Spur." Style="{StaticResource SettingsHint}"/>
+                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiary}"
+                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding AiKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalContentAlignment="Center" Padding="2,4"/>
+                                </Grid>
+                            </Border>
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ActionAi, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding AiEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource Divider}"/>
@@ -31,8 +46,38 @@
                         <StackPanel>
                             <TextBlock Text="Timer" Style="{StaticResource SettingsTitle}"/>
                             <TextBlock Text="Small countdown commands from the launcher." Style="{StaticResource SettingsHint}"/>
+                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,8,0,0" MaxWidth="200">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Keyword" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiary}"
+                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TimerKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalContentAlignment="Center" Padding="2,4"/>
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource SettingsInputFrame}" Margin="0,6,0,0" MaxWidth="300">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Presets" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiary}"
+                                               VerticalAlignment="Center" Margin="4,0,6,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TimerPresets, UpdateSourceTrigger=PropertyChanged}"
+                                             FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalContentAlignment="Center" Padding="2,4"/>
+                                </Grid>
+                            </Border>
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ActionTimer, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
+                        <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding TimerEnabled, Mode=TwoWay}" VerticalAlignment="Center" OnContent="{x:Null}" OffContent="{x:Null}"/>
                     </Grid>
                 </Border>
             </StackPanel>
@@ -77,5 +122,4 @@
         </Border>
     </StackPanel>
 </UserControl>
-
 

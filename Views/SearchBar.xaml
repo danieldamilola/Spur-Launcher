@@ -5,9 +5,9 @@
              xmlns:conv="clr-namespace:Spur.Converters">
 
     <Border Height="56"
-            Margin="12,0,8,0"
+            Margin="16,0,16,0"
             Background="Transparent"
-            CornerRadius="16">
+            CornerRadius="{DynamicResource RadiusWindow}">
         <Grid Margin="0,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -45,10 +45,10 @@
 
         <Border Grid.Column="2"
                 VerticalAlignment="Center"
-                Margin="12,0,2,0"
-                Padding="7,2"
-                CornerRadius="6"
-                Background="{DynamicResource SurfaceLow}"
+                Margin="12,0,8,0"
+                Padding="8,4"
+                CornerRadius="{DynamicResource RadiusSm}"
+                Background="{DynamicResource SurfaceRaised}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 AutomationProperties.Name="Dismiss (Escape)">
