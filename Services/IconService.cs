@@ -70,19 +70,57 @@ public sealed class IconServiceImpl : IIconService
         return _cache.GetOrAdd(path, p => TryExtract(p));
     }
 
-    /// <summary>
-    /// Resolves a UWP app icon path to a real file path that can be used for icon extraction.
-    /// UWP apps use shell:AppsFolder\AppUserModelId paths.
-    /// </summary>
     private static string? ResolveUwpIconPath(string shellPath)
     {
-        // Handle shell:AppsFolder\AppUserModelId format
-        if (shellPath.StartsWith("shell:AppsFolder\\", StringComparison.OrdinalIgnoreCase))
+        if (!shellPath.StartsWith("shell:AppsFolder\\", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var appUserModelId = shellPath["shell:AppsFolder\\".Length..];
+        var parts = appUserModelId.Split('!');
+        if (parts.Length < 2) return null;
+
+        var packageFamilyName = parts[0];
+        var windowsAppsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
+
+        try
         {
-            var appUserModelId = shellPath["shell:AppsFolder\\".Length..];
+            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*").FirstOrDefault();
+            if (packageDir == null) return null;
+
+            // 1. Look for explicit unplated icons first
+            try
+            {
+                var unplated = Directory.EnumerateFiles(packageDir, "*unplated*.png", SearchOption.AllDirectories).ToList();
+                if (unplated.Count > 0)
+                    return unplated.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
+            }
+            catch { }
+
+            // 2. Look for Square150x150Logo or Square44x44Logo (these are transparent 99% of the time, Windows adds the plate)
+            try
+            {
+                var logos = Directory.EnumerateFiles(packageDir, "*Square150x150Logo*.png", SearchOption.AllDirectories).ToList();
+                if (logos.Count == 0)
+                    logos = Directory.EnumerateFiles(packageDir, "*Square44x44Logo*.png", SearchOption.AllDirectories).ToList();
+                
+                if (logos.Count > 0)
+                    return logos.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
+            }
+            catch { }
+
+            // 3. Fallback to StoreLogo
+            try
+            {
+                var logos = Directory.EnumerateFiles(packageDir, "*StoreLogo*.png", SearchOption.AllDirectories).ToList();
+                if (logos.Count > 0)
+                    return logos.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
+            }
+            catch { }
+
+            // 4. Fallback to the executable
             return ResolveUwpAppToExe(appUserModelId);
         }
-        return null;
+        catch { return null; }
     }
 
     /// <summary>
@@ -92,25 +130,13 @@ public sealed class IconServiceImpl : IIconService
     {
         try
         {
-            // Parse AppUserModelId: "PackageFamilyName!AppId"
-            // e.g., "Microsoft.Windows.Photos_8wekyb3d8bbwe!App"
             var parts = appUserModelId.Split('!');
             if (parts.Length < 2) return null;
-
             var packageFamilyName = parts[0];
-
-            // Find the actual install location in WindowsApps
-            var windowsAppsPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                "WindowsApps");
-
-            // Look for the package directory
-            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*")
-                .FirstOrDefault();
-
+            var windowsAppsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
+            var packageDir = Directory.EnumerateDirectories(windowsAppsPath, $"{packageFamilyName}*").FirstOrDefault();
             if (packageDir == null) return null;
 
-            // Find the main .exe in the package
             var exeName = parts[1];
             if (exeName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 exeName = exeName[..^4];
@@ -118,10 +144,8 @@ public sealed class IconServiceImpl : IIconService
             var exePath = Path.Combine(packageDir, $"{exeName}.exe");
             if (File.Exists(exePath)) return exePath;
 
-            // Try to find any .exe in the package
             var exes = Directory.EnumerateFiles(packageDir, "*.exe", SearchOption.TopDirectoryOnly)
-                .Where(e => !e.Contains("Background") && !e.Contains("Service"))
-                .ToList();
+                .Where(e => !e.Contains("Background") && !e.Contains("Service")).ToList();
 
             return exes.FirstOrDefault();
         }
@@ -136,12 +160,26 @@ public sealed class IconServiceImpl : IIconService
 
     private static BitmapSource? ExtractInternal(string path)
     {
-        // Handle UWP shell: paths by resolving to real file path
         var realPath = path;
         if (path.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
         {
             var resolved = ResolveUwpIconPath(path);
             realPath = resolved ?? path;
+        }
+
+        // If it's a PNG (e.g. from a UWP app package), load it directly.
+        // IShellItemImageFactory with SIIGBF_ICONONLY on a .png returns the default image viewer icon, not the image.
+        if (realPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && File.Exists(realPath))
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            bmp.UriSource = new Uri(realPath);
+            bmp.DecodePixelWidth = DefaultIconSize * 2;
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
         }
 
         if (!File.Exists(realPath) && !Directory.Exists(realPath) && !realPath.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
