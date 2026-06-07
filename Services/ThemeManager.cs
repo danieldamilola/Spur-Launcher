@@ -47,6 +47,10 @@ public sealed class ThemeManagerImpl : IThemeManager
         try
         {
             ThemeManager.Current.ApplicationTheme = resolved == "light" ? ApplicationTheme.Light : ApplicationTheme.Dark;
+            if (newDict["Accent"] is SolidColorBrush accentBrush)
+            {
+                ThemeManager.Current.AccentColor = accentBrush.Color;
+            }
         }
         catch (Exception ex) { _log.Warning("Failed to set iNKORE theme", ex); }
 
