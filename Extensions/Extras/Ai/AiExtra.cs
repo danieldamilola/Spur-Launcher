@@ -22,7 +22,7 @@ public sealed class AiExtra : IExtra
     public bool IsGlobal => false;
 
     public object? Settings { get; set; }
-    public FrameworkElement? CreateSettingsView() => null;
+    public FrameworkElement? CreateSettingsView() => new AiSettingsView();
 
     public IEnumerable<SearchResult> GetResults(string subQuery)
     {
