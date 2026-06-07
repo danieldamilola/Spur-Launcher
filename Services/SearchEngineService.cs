@@ -119,19 +119,7 @@ public sealed class SearchEngineService : ISearchEngineService
 
         if (ct.IsCancellationRequested) return newResults;
 
-        // -- Inline answers (global search only) --------------------
-        if (activeCategory is null)
-        {
-            foreach (var extra in _extras.GetGlobalEnabled())
-            {
-                if (extra.CanHandle(query))
-                    newResults.Add(extra.BuildResult(query));
-            }
 
-            var url = BuildUrlAction(query);
-            if (url is not null)
-                newResults.Add(url);
-        }
 
         // -- Files -------------------------------------------------
         bool showFiles = _config.FileSearchEnabled && (activeCategory is null or "files");
