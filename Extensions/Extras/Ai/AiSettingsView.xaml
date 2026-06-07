@@ -30,7 +30,7 @@
                         <TextBlock Text="API key" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12"/>
                         <TextBlock Text="Protected with Windows user encryption." Foreground="{DynamicResource TextMuted}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="6" Width="308">
+                    <Border Grid.Column="1" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Width="308">
                         <PasswordBox x:Name="AiApiKeyBox"
                                      PasswordChanged="OnAiApiKeyChanged"
                                      FontFamily="{DynamicResource Token.Font.Primary}"

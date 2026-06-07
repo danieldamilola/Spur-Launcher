@@ -226,8 +226,8 @@
         <Setter Property="FontFamily"       Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize"         Value="{DynamicResource FontSm}"/>
         <Setter Property="Foreground"       Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="Background"       Value="#252529"/>
-        <Setter Property="BorderBrush"      Value="#1AFFFFFF"/>
+        <Setter Property="Background"       Value="{DynamicResource SelectedBg}"/>
+        <Setter Property="BorderBrush"      Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness"  Value="1"/>
         <Setter Property="Height"           Value="32"/>
         <Setter Property="Cursor"           Value="Hand"/>
@@ -283,8 +283,8 @@
                                Focusable="False"
                                Placement="Bottom"
                                PopupAnimation="Fade">
-                            <Border Background="#1E1E21"
-                                    BorderBrush="#1AFFFFFF"
+                            <Border Background="{DynamicResource Surface}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
@@ -681,7 +681,7 @@
 
     <!-- Onboarding theme-preview surfaces (static colours; they must show
          the target theme regardless of the current theme) -->
-    <SolidColorBrush x:Key="OnboardingPreviewDark"  Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="OnboardingPreviewDark"  Color="{DynamicResource Depth2}"/>
     <SolidColorBrush x:Key="OnboardingPreviewLight" Color="#F2F2F4"/>
 
     <!-- Shadow plate for MainWindow launcher backdrop (design.md: #000 @ 40 %) -->

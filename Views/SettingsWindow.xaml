@@ -15,7 +15,7 @@
         AllowsTransparency="False"
         ResizeMode="CanResize"
         Closing="OnClosing"
-        Background="#111113">
+        Background="{DynamicResource Depth1}">
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -33,7 +33,7 @@
         <!-- ════════════════════════════════════════
              CUSTOM TITLE BAR
              ════════════════════════════════════════ -->
-        <Grid Grid.Row="0" Background="#111113"
+        <Grid Grid.Row="0" Background="{DynamicResource Depth1}"
               shell:WindowChrome.IsHitTestVisibleInChrome="False">
 
             <!-- App title (drag area) -->
@@ -71,7 +71,7 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Bg" Property="Background" Value="#1AFFFFFF"/>
+                                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource BorderBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -101,7 +101,7 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Bg" Property="Background" Value="#1AFFFFFF"/>
+                                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource BorderBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -130,8 +130,8 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Bg" Property="Background" Value="#C0232323"/>
-                                                <Setter TargetName="X"  Property="Stroke"     Value="#FFF7F3EC"/>
+                                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Red}"/>
+                                                <Setter TargetName="X"  Property="Stroke"     Value="{DynamicResource TextPrimary}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -143,7 +143,7 @@
             </StackPanel>
 
             <!-- 1px bottom separator -->
-            <Border Height="1" VerticalAlignment="Bottom" Background="#14FFFFFF"/>
+            <Border Height="1" VerticalAlignment="Bottom" Background="{DynamicResource BorderBrush}"/>
         </Grid>
 
         <!-- Settings content -->

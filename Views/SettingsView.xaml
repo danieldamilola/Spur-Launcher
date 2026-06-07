@@ -40,7 +40,7 @@
         <!-- ═══════════════════════════════════════════
              SIDEBAR
              ═══════════════════════════════════════════ -->
-        <Grid Grid.Column="0" Background="#1A1A1D">
+        <Grid Grid.Column="0" Background="{DynamicResource Depth2}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>   <!-- logo + app name -->
                 <RowDefinition Height="*"/>      <!-- nav items -->
@@ -97,7 +97,7 @@
                                     Grid.Column="2"
                                     Width="28" Height="28"
                                     CornerRadius="8"
-                                    Background="#252528"
+                                    Background="{DynamicResource SelectedBg}"
                                     VerticalAlignment="Center">
                                 <ui:FontIcon x:Name="NavIcon"
                                              Glyph="{Binding IconGlyph}"
@@ -120,12 +120,12 @@
                         <DataTemplate.Triggers>
                             <!-- Selected -->
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                                <Setter TargetName="NavRow"      Property="Background" Value="#252528"/>
+                                <Setter TargetName="NavRow"      Property="Background" Value="{DynamicResource SelectedBg}"/>
                                 <Setter TargetName="AccentStrip" Property="Background" Value="{DynamicResource Accent}"/>
                                 <Setter TargetName="NavLabel"    Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                                 <Setter TargetName="NavLabel"    Property="FontWeight" Value="Medium"/>
                                 <Setter TargetName="NavIcon"     Property="Foreground" Value="{DynamicResource Accent}"/>
-                                <Setter TargetName="IconCircle"  Property="Background" Value="#303033"/>
+                                <Setter TargetName="IconCircle"  Property="Background" Value="{DynamicResource HoverBg}"/>
                             </DataTrigger>
                             <!-- Hover (unselected) -->
                             <MultiDataTrigger>
@@ -133,7 +133,7 @@
                                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"  Value="False"/>
                                     <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
                                 </MultiDataTrigger.Conditions>
-                                <Setter TargetName="NavRow" Property="Background" Value="#202023"/>
+                                <Setter TargetName="NavRow" Property="Background" Value="{DynamicResource HoverBg}"/>
                             </MultiDataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
@@ -147,7 +147,7 @@
              CONTENT AREA
              ═══════════════════════════════════════════ -->
         <ScrollViewer Grid.Column="1"
-                      Background="#111113"
+                      Background="{DynamicResource Depth1}"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="36,28,36,32">

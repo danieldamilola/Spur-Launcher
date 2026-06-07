@@ -18,7 +18,7 @@
                    FontSize="10" FontWeight="Medium" 
                    Foreground="{DynamicResource TextTertiary}"
                    Margin="4,0,0,8"/>
-        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,20">
             <WrapPanel Margin="16,14,10,8">
                 <CheckBox Content="Apps"             IsChecked="{Binding IndexApps,            Mode=TwoWay}" Margin="0,0,18,8"/>
                 <CheckBox Content="Files"            IsChecked="{Binding IndexFiles,           Mode=TwoWay}" Margin="0,0,18,8"/>
@@ -37,7 +37,7 @@
                    FontSize="10" FontWeight="Medium" 
                    Foreground="{DynamicResource TextTertiary}"
                    Margin="4,0,0,8"/>
-        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1" Margin="0,0,0,20">
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,20">
             <StackPanel>
                 <!-- Fuzzy matching -->
                 <Grid MinHeight="56" Margin="18,0">
@@ -52,7 +52,7 @@
                     <local:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
-                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
 
                 <!-- Result count -->
                 <Grid MinHeight="56" Margin="18,0">
@@ -64,7 +64,7 @@
                         <TextBlock Text="Result count" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Show enough choices without turning the launcher into a list view." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                    <Border Grid.Column="1" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton Content="5"  IsChecked="{Binding Results5}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
                             <RadioButton Content="8"  IsChecked="{Binding Results8}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
@@ -73,7 +73,7 @@
                     </Border>
                 </Grid>
 
-                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
 
                 <!-- Query Search Precision -->
                 <Grid MinHeight="56" Margin="18,0">
@@ -88,7 +88,7 @@
                     <ComboBox Grid.Column="1" ItemsSource="{Binding QuerySearchPrecisionOptions}" SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
-                <Border Height="1" Background="#12FFFFFF" Margin="0"/>
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
 
                 <!-- Last Query Style -->
                 <Grid MinHeight="56" Margin="18,0">
@@ -111,7 +111,7 @@
                    FontSize="10" FontWeight="Medium" 
                    Foreground="{DynamicResource TextTertiary}"
                    Margin="4,0,0,8"/>
-        <Border Background="#1C1C1F" CornerRadius="10" BorderBrush="#1AFFFFFF" BorderThickness="1">
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
             <StackPanel Margin="16,14">
                 <!-- Add folder row -->
                 <Grid Margin="0,0,0,12">
@@ -120,7 +120,7 @@
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#252529" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
+                    <Border Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
                         <TextBox Text="{Binding NewFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12" VerticalContentAlignment="Center"/>
                     </Border>
                     <Button Grid.Column="2" Content="Browse" Click="OnBrowseFolderClick" Style="{StaticResource SettingsSoftButton}"/>

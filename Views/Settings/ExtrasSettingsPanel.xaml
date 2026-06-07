@@ -18,9 +18,9 @@
                    Margin="0,0,0,20"/>
 
         <!-- Plugin list card (single rounded card, rows divided by hairlines) -->
-        <Border Background="#1C1C1F"
+        <Border Background="{DynamicResource Surface}"
                 CornerRadius="10"
-                BorderBrush="#1AFFFFFF"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1">
             <ItemsControl ItemsSource="{Binding AllExtras}">
                 <ItemsControl.ItemTemplate>
@@ -43,7 +43,7 @@
                                 <Border Grid.Column="1"
                                         Width="36" Height="36"
                                         CornerRadius="9"
-                                        Background="#2C2C30"
+                                        Background="{DynamicResource SurfaceRaised}"
                                         VerticalAlignment="Center">
                                     <ui:FontIcon Glyph="{Binding IconGlyph}"
                                                  FontSize="16"
@@ -111,8 +111,8 @@
                             <!-- ── Expanded settings area ── -->
                             <Border x:Name="ExpandedArea"
                                     Visibility="{Binding IsChecked, ElementName=ExpandBtn, Converter={StaticResource BoolToVis}}"
-                                    Background="#16161A"
-                                    BorderBrush="#14FFFFFF"
+                                    Background="{DynamicResource SurfaceLow}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,1,0,0"
                                     Padding="20,14,20,16">
                                 <StackPanel>
@@ -136,8 +136,8 @@
                                         </StackPanel>
                                         <!-- Keyword input pill -->
                                         <Border Grid.Column="2"
-                                                Background="#252529"
-                                                BorderBrush="#1AFFFFFF"
+                                                Background="{DynamicResource SelectedBg}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 Height="28"
@@ -173,7 +173,7 @@
                                                    Foreground="{DynamicResource TextTertiary}"
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,8,0"/>
-                                        <Border Background="#252529"
+                                        <Border Background="{DynamicResource SelectedBg}"
                                                 CornerRadius="4"
                                                 Padding="6,2"
                                                 Visibility="{Binding IsBuiltIn, Converter={StaticResource BoolToVis}}">
@@ -188,7 +188,7 @@
                             <!-- Hairline divider (hidden on last item via triggers) -->
                             <Border x:Name="Divider"
                                     Height="1"
-                                    Background="#12FFFFFF"
+                                    Background="{DynamicResource Separator}"
                                     Margin="0"/>
                         </StackPanel>
 
