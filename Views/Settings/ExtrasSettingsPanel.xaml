@@ -87,11 +87,9 @@
                                 </TextBlock>
 
                                 <!-- Toggle switch -->
-                                <ui:ToggleSwitch Grid.Column="5"
-                                                 IsOn="{Binding IsEnabled, Mode=TwoWay}"
-                                                 VerticalAlignment="Center"
-                                                 OnContent="{x:Null}"
-                                                 OffContent="{x:Null}"/>
+                                <local:ToggleSwitch Grid.Column="5"
+                                                    IsOn="{Binding IsEnabled, Mode=TwoWay}"
+                                                    VerticalAlignment="Center"/>
 
                                 <!-- Chevron expand button -->
                                 <ToggleButton x:Name="ExpandBtn"
