@@ -56,13 +56,16 @@ public sealed class KillProcessExtra : IExtra
                 var mb = 0L;
                 try { mb = p.WorkingSet64 / 1024 / 1024; } catch { }
                 var title = GetWindowTitle(p);
+                string? iconPath = null;
+                try { iconPath = p.MainModule?.FileName; } catch { }
                 yield return new SearchResult
                 {
                     Id         = $"kill:{pname.ToLowerInvariant()}",
                     Type       = ResultType.Action,
                     Name       = settings.ShowWindowTitles && !string.IsNullOrWhiteSpace(title) ? $"{pname} - {title}" : pname,
                     Subtitle   = $"{mb} MB  ·  PID {p.Id}",
-                    IconGlyph  = IconGlyph,
+                    IconGlyph  = string.IsNullOrEmpty(iconPath) ? IconGlyph : null,
+                    IconPath   = iconPath,
                     ActionId   = Id,
                 };
             }
@@ -100,13 +103,18 @@ public sealed class KillProcessExtra : IExtra
             var label = settings.ShowWindowTitles && !string.IsNullOrWhiteSpace(title)
                 ? $"{p.ProcessName} - {title}"
                 : p.ProcessName;
+                
+            string? iconPath = null;
+            try { iconPath = p.MainModule?.FileName; } catch { }
+                
             yield return new SearchResult
             {
                 Id         = $"kill:{p.ProcessName.ToLowerInvariant()}:{p.Id}",
                 Type       = ResultType.Action,
                 Name       = $"Kill {label}",
                 Subtitle   = $"{mb} MB  ·  PID {p.Id}  ·  ↵ to kill",
-                IconGlyph  = IconGlyph,
+                IconGlyph  = string.IsNullOrEmpty(iconPath) ? IconGlyph : null,
+                IconPath   = iconPath,
                 ActionId   = Id,
             };
         }

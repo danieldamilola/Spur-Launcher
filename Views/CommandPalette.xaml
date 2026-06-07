@@ -134,11 +134,9 @@
 
                             <!-- Icon -->
                             <Border Grid.Column="0"
-                                    Width="28"
-                                    Height="28"
+                                    Width="32"
+                                    Height="32"
                                     Margin="0,0,10,0"
-                                    Background="{DynamicResource HoverBg}"
-                                    CornerRadius="6"
                                     VerticalAlignment="Center">
                                 <ui:FontIcon Glyph="{Binding IconGlyph}"
                                                FontSize="16"
@@ -164,18 +162,14 @@
                             </StackPanel>
 
                             <!-- Keyboard hint -->
-                            <Border Grid.Column="2"
-                                    Margin="10,0,0,0"
-                                    Background="{DynamicResource HoverBg}"
-                                    CornerRadius="4"
-                                    Padding="6,2,6,2"
-                                    VerticalAlignment="Center">
-                                <TextBlock x:Name="HintText"
-                                           Text="↵"
-                                           FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource TextTertiary}"/>
-                            </Border>
+                            <TextBlock Grid.Column="2"
+                                       x:Name="HintText"
+                                       Text="↵"
+                                       Margin="10,0,0,0"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextTertiary}"
+                                       VerticalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

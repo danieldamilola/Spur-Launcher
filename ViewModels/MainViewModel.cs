@@ -651,6 +651,11 @@ partial void OnActiveCategoryChanged(string? value)
                 var subQuery = query[prefix.Length..];
                 return (actionId, icon, subQuery);
             }
+            
+            if (query.Equals(keyword, StringComparison.OrdinalIgnoreCase))
+            {
+                return (actionId, icon, string.Empty);
+            }
         }
         return null;
     }
