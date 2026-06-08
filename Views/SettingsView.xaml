@@ -150,13 +150,47 @@
                       Background="{DynamicResource Depth1}"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <Grid Margin="36,28,36,32">
-                <settings:GeneralSettingsPanel  Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=General}"/>
-                <settings:SearchSettingsPanel   Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Search}"/>
-                <settings:ExtrasSettingsPanel   Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Extras}"/>
-                <settings:ExtrasStoreView       Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=Store}"/>
-                <settings:AboutSettingsPanel    Visibility="{Binding SelectedSection, Converter={StaticResource SectionVisibility}, ConverterParameter=About}"/>
-            </Grid>
+            <ContentControl Margin="36,28,36,32">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <settings:GeneralSettingsPanel/>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Search">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:SearchSettingsPanel/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Extras">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:ExtrasSettingsPanel/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Store">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:ExtrasStoreView/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="About">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:AboutSettingsPanel/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
         </ScrollViewer>
     </Grid>
 </UserControl>

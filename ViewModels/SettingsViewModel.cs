@@ -58,6 +58,14 @@ public sealed partial class SettingsViewModel : ObservableObject
                 OnPropertyChanged(nameof(FilteredSections));
             }
         };
+
+        AvailableCategories.Add(new PinnedCategoryOption { Id = "", Name = "None" });
+        AvailableCategories.Add(new PinnedCategoryOption { Id = "files", Name = "Files" });
+        AvailableCategories.Add(new PinnedCategoryOption { Id = "clipboard", Name = "Clipboard" });
+        foreach (var extra in Registry.All)
+        {
+            AvailableCategories.Add(new PinnedCategoryOption { Id = extra.Id, Name = extra.Name });
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -121,6 +129,49 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(ThemeDark));
         OnPropertyChanged(nameof(ThemeLight));
         OnPropertyChanged(nameof(ThemeSystem));
+    }
+
+    public bool AccentModeTheme
+    {
+        get => _config.AccentColorMode == "theme";
+        set { if (value) SetAccentMode("theme"); }
+    }
+    public bool AccentModeSystem
+    {
+        get => _config.AccentColorMode == "system";
+        set { if (value) SetAccentMode("system"); }
+    }
+    public bool AccentModeCustom
+    {
+        get => _config.AccentColorMode == "custom";
+        set { if (value) SetAccentMode("custom"); }
+    }
+
+    private void SetAccentMode(string mode)
+    {
+        if (_config.AccentColorMode == mode) return;
+        _config.AccentColorMode = mode;
+        _themeManager.Apply(_config.Theme); // Reapply theme to trigger accent color update
+        Save();
+        OnPropertyChanged(nameof(AccentModeTheme));
+        OnPropertyChanged(nameof(AccentModeSystem));
+        OnPropertyChanged(nameof(AccentModeCustom));
+    }
+
+    public string CustomAccentColor
+    {
+        get => _config.CustomAccentColor;
+        set
+        {
+            if (_config.CustomAccentColor == value) return;
+            _config.CustomAccentColor = value;
+            if (_config.AccentColorMode == "custom")
+            {
+                _themeManager.Apply(_config.Theme); // Live update
+            }
+            Save();
+            OnPropertyChanged();
+        }
     }
 
 
@@ -765,7 +816,17 @@ public sealed partial class SettingsViewModel : ObservableObject
         $"Spur v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.2.0"}";
 
     public string Credits => "Built with .NET 9 + WPF · Monochrome v2 design system";
-    public string License => "MIT License";
+
+    [ObservableProperty]
+    private bool _isUpdateAvailable;
+
+    [RelayCommand]
+    private async Task CheckForUpdates()
+    {
+        // Mock checking for updates
+        await Task.Delay(1500);
+        IsUpdateAvailable = true;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // Helpers
@@ -777,13 +838,58 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(LaunchOnStartup));
     }
 
-    private void Save() => _configService.Save(_config);
+    public void Save()
+    {
+        Registry.SaveSettings(_config);
+        _configService.Save(_config);
+    }
 
     private static string ToTitle(string value)
         => string.IsNullOrWhiteSpace(value) ? "Regular" : char.ToUpperInvariant(value[0]) + value[1..].ToLowerInvariant();
 
     private static string ToKey(string value)
         => string.IsNullOrWhiteSpace(value) ? "regular" : value.Replace(" ", string.Empty).ToLowerInvariant();
+
+    // ═══════════════════════════════════════════════════════════════
+    // Categories
+    // ═══════════════════════════════════════════════════════════════
+
+    public ObservableCollection<PinnedCategoryOption> AvailableCategories { get; } = new();
+
+    public PinnedCategoryOption? PinnedCategory1
+    {
+        get => AvailableCategories.FirstOrDefault(c => c.Id == (_config.PinnedCategories.ElementAtOrDefault(0) ?? ""));
+        set { SetPinned(0, value?.Id ?? ""); OnPropertyChanged(); }
+    }
+    public PinnedCategoryOption? PinnedCategory2
+    {
+        get => AvailableCategories.FirstOrDefault(c => c.Id == (_config.PinnedCategories.ElementAtOrDefault(1) ?? ""));
+        set { SetPinned(1, value?.Id ?? ""); OnPropertyChanged(); }
+    }
+    public PinnedCategoryOption? PinnedCategory3
+    {
+        get => AvailableCategories.FirstOrDefault(c => c.Id == (_config.PinnedCategories.ElementAtOrDefault(2) ?? ""));
+        set { SetPinned(2, value?.Id ?? ""); OnPropertyChanged(); }
+    }
+    public PinnedCategoryOption? PinnedCategory4
+    {
+        get => AvailableCategories.FirstOrDefault(c => c.Id == (_config.PinnedCategories.ElementAtOrDefault(3) ?? ""));
+        set { SetPinned(3, value?.Id ?? ""); OnPropertyChanged(); }
+    }
+
+    private void SetPinned(int index, string id)
+    {
+        while (_config.PinnedCategories.Count <= index) _config.PinnedCategories.Add("");
+        _config.PinnedCategories[index] = id;
+        Save();
+        _main.UpdatePinnedCategories();
+    }
+}
+
+public class PinnedCategoryOption
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
 
 /// <summary>A single sidebar section in the settings UI.</summary>

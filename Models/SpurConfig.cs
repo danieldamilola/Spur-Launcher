@@ -15,6 +15,12 @@ public sealed class SpurConfig
     /// <summary>"dark" | "light" | "system"</summary>
     public string Theme { get; set; } = "dark";
 
+    /// <summary>"theme" | "system" | "custom"</summary>
+    public string AccentColorMode { get; set; } = "theme";
+
+    /// <summary>Hex code for custom accent color</summary>
+    public string CustomAccentColor { get; set; } = "#D7CFC2";
+
     /// <summary>Window opacity as a fraction (0.0–1.0). Clamped on load.</summary>
     public double WindowOpacity { get; set; } = 0.95;
 
@@ -121,6 +127,9 @@ public sealed class SpurConfig
     public string KeywordClipboard { get; set; } = "c";
     public string KeywordFiles     { get; set; } = "files";
     public string KeywordApps      { get; set; } = "apps";
+
+    /// <summary>Up to 4 category or extra IDs to pin to the launcher UI.</summary>
+    public List<string> PinnedCategories { get; set; } = ["files", "ai", "clipboard", ""];
 
     /// <summary>Maximum directory depth for recursive file search (1–5).</summary>
     public int MaxFileDepth { get; set; } = 3;

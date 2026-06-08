@@ -42,14 +42,19 @@
                 <!-- Fuzzy matching -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE721;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Fuzzy matching" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Find things even when the spelling or order is not exact." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding FuzzySearch, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
@@ -57,14 +62,19 @@
                 <!-- Result count -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE14A;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Result count" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Show enough choices without turning the launcher into a list view." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                    <Border Grid.Column="3" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton Content="5"  IsChecked="{Binding Results5}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
                             <RadioButton Content="8"  IsChecked="{Binding Results8}"  Style="{StaticResource SegmentedRadio}" GroupName="Results"/>
@@ -78,14 +88,19 @@
                 <!-- Query Search Precision -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="140"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE81C;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Query search precision" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Changes minimum match score required for results." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding QuerySearchPrecisionOptions}" SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding QuerySearchPrecisionOptions}" SelectedItem="{Binding QuerySearchPrecision, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
@@ -93,14 +108,19 @@
                 <!-- Last Query Style -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="160"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE81C;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Last query style" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Show or hide previous results when launcher is reactivated." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding LastQueryStyleOptions}" SelectedItem="{Binding LastQueryStyle, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding LastQueryStyleOptions}" SelectedItem="{Binding LastQueryStyle, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -123,7 +143,12 @@
                     <Border Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
                         <TextBox Text="{Binding NewFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12" VerticalContentAlignment="Center"/>
                     </Border>
-                    <Button Grid.Column="2" Content="Browse" Click="OnBrowseFolderClick" Style="{StaticResource SettingsSoftButton}"/>
+                    <Button Grid.Column="2" Click="OnBrowseFolderClick" Style="{StaticResource SettingsSoftButton}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon Glyph="&#xE8E5;" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Browse" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
                 <!-- Folder list -->
                 <ItemsControl ItemsSource="{Binding IndexedFoldersList}">

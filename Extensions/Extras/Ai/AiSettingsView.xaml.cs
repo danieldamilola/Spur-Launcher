@@ -20,7 +20,8 @@ public partial class AiSettingsView : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _vm = Ioc.Default.GetService<SettingsViewModel>();
+        var parent = FindParent<Spur.Views.Settings.ExtrasSettingsPanel>(this);
+        _vm = parent?.DataContext as SettingsViewModel;
         DataContext = _vm;
 
         if (_vm != null)
@@ -30,6 +31,14 @@ public partial class AiSettingsView : UserControl
         }
         
         _isLoaded = true;
+    }
+
+    private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        var parentObject = System.Windows.Media.VisualTreeHelper.GetParent(child);
+        if (parentObject == null) return null;
+        if (parentObject is T parent) return parent;
+        return FindParent<T>(parentObject);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

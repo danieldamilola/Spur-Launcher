@@ -27,9 +27,14 @@
         <!-- ═══ Actions bar ═══ -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,10,12,8">
             <Button Style="{StaticResource SettingsSoftButton}"
-                    Content="Clear all"
                     Command="{Binding ClearAllCommand}"
-                    AutomationProperties.Name="Clear all clipboard entries"/>
+                    AutomationProperties.Name="Clear all clipboard entries"
+                    Padding="10,6">
+                <StackPanel Orientation="Horizontal">
+                    <ui:FontIcon Glyph="&#xE74D;" FontSize="13" Margin="0,0,6,0"/>
+                    <TextBlock Text="Clear all" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
             <TextBlock Text="{Binding StatusText}"
                        FontFamily="{DynamicResource Token.Font.Primary}"
                        FontSize="{DynamicResource FontXs}"
@@ -244,18 +249,28 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-                    <Button Content="Copy"
-                            Style="{StaticResource SettingsSoftButton}"
+                    <Button Style="{StaticResource SettingsSoftButton}"
                             Command="{Binding CopyCommand}"
                             CommandParameter="{Binding SelectedEntry}"
-                            AutomationProperties.Name="Copy selected entry"/>
-                    <Button Content="Delete"
-                            Style="{StaticResource SettingsSoftButton}"
+                            AutomationProperties.Name="Copy selected entry"
+                            Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon Glyph="&#xE8C8;" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Copy" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SettingsSoftButton}"
                             Margin="6,0,0,0"
                             Command="{Binding DeleteCommand}"
                             CommandParameter="{Binding SelectedEntry}"
                             Foreground="{DynamicResource TextMuted}"
-                            AutomationProperties.Name="Delete selected entry"/>
+                            AutomationProperties.Name="Delete selected entry"
+                            Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon Glyph="&#xE74D;" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1"

@@ -13,7 +13,7 @@ public sealed class SystemExtra : IExtra
     public string Id => "system";
     public string Name => "System";
     public string Description => "Shutdown, restart, sleep, lock, sign out.";
-    public string IconGlyph => "power";
+    public string IconGlyph => "\ue7e8";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

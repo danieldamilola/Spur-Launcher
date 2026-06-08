@@ -87,40 +87,13 @@ public sealed class IconServiceImpl : IIconService
             var package = pm.FindPackagesForUser(string.Empty, packageFamilyName).FirstOrDefault();
             if (package == null) return null;
             
-            var packageDir = package.InstalledLocation.Path;
-
-            // 1. Look for explicit unplated icons first
-            try
+            if (package.Logo != null && File.Exists(package.Logo.LocalPath))
             {
-                var unplated = Directory.EnumerateFiles(packageDir, "*unplated*.png", SearchOption.AllDirectories).ToList();
-                if (unplated.Count > 0)
-                    return unplated.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
+                return package.Logo.LocalPath;
             }
-            catch { }
 
-            // 2. Look for Square150x150Logo or Square44x44Logo (these are transparent 99% of the time, Windows adds the plate)
-            try
-            {
-                var logos = Directory.EnumerateFiles(packageDir, "*Square150x150Logo*.png", SearchOption.AllDirectories).ToList();
-                if (logos.Count == 0)
-                    logos = Directory.EnumerateFiles(packageDir, "*Square44x44Logo*.png", SearchOption.AllDirectories).ToList();
-                
-                if (logos.Count > 0)
-                    return logos.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
-            }
-            catch { }
-
-            // 3. Fallback to StoreLogo
-            try
-            {
-                var logos = Directory.EnumerateFiles(packageDir, "*StoreLogo*.png", SearchOption.AllDirectories).ToList();
-                if (logos.Count > 0)
-                    return logos.OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
-            }
-            catch { }
-
-            // 4. Fallback to the executable
-            return ResolveUwpAppToExe(appUserModelId, packageDir);
+            // Fallback to the executable if Logo isn't available
+            return ResolveUwpAppToExe(appUserModelId, package.InstalledLocation.Path);
         }
         catch { return null; }
     }

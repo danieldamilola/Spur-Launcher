@@ -117,8 +117,11 @@ public sealed class FileSearchService : IFileSearchService
         public DateTime LastWriteTime;
     }
 
-    public FileSearchService()
+    private readonly SpurConfig _config;
+
+    public FileSearchService(SpurConfig config)
     {
+        _config = config;
         // Kick off background indexing on startup
         Task.Run(BuildIndexAsync);
     }
@@ -134,7 +137,7 @@ public sealed class FileSearchService : IFileSearchService
             foreach (var root in SearchRoots)
             {
                 if (!Directory.Exists(root)) continue;
-                await Task.Run(() => IndexDirectory(root, 0, newCache));
+                await IndexDirectoryAsync(root, 0, newCache);
             }
 
             lock (_cacheLock)
@@ -153,9 +156,12 @@ public sealed class FileSearchService : IFileSearchService
         }
     }
 
-    private void IndexDirectory(string dir, int depth, List<CachedItem> results)
+    private async Task IndexDirectoryAsync(string dir, int depth, List<CachedItem> results)
     {
         if (depth > MaxDepth || results.Count >= 20_000) return; // Cap at 20k items to save RAM
+
+        // Throttle to prevent 100% CPU lockups during large enumerations
+        await Task.Delay(1);
 
         try
         {
@@ -170,8 +176,8 @@ public sealed class FileSearchService : IFileSearchService
                     Path = file,
                     Name = info.Name,
                     NameNoExt = Path.GetFileNameWithoutExtension(info.Name),
-                    Ext = info.Extension,
-                    DirName = Path.GetDirectoryName(file) ?? "",
+                    Ext = string.Intern(info.Extension.ToLowerInvariant()),
+                    DirName = string.Intern(Path.GetDirectoryName(file) ?? ""),
                     IsDirectory = false,
                     LastWriteTime = info.LastWriteTime
                 });
@@ -191,12 +197,12 @@ public sealed class FileSearchService : IFileSearchService
                     Name = dirName,
                     NameNoExt = dirName,
                     Ext = "",
-                    DirName = Path.GetDirectoryName(sub) ?? "",
+                    DirName = string.Intern(Path.GetDirectoryName(sub) ?? ""),
                     IsDirectory = true,
                     LastWriteTime = dirInfo.LastWriteTime
                 });
 
-                IndexDirectory(sub, depth + 1, results);
+                await IndexDirectoryAsync(sub, depth + 1, results);
             }
         }
         catch { }
@@ -216,8 +222,9 @@ public sealed class FileSearchService : IFileSearchService
 
     private List<SearchResult> BrowseRecentCached(int maxReturn)
     {
-        // Refresh index if it's older than 30 mins
-        if ((DateTime.Now - _lastIndexTime).TotalMinutes > 30)
+        // Refresh index if it's older than config interval
+        var intervalMins = _config.ReIndexIntervalHours * 60;
+        if (intervalMins > 0 && (DateTime.Now - _lastIndexTime).TotalMinutes > intervalMins)
             Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
 
         List<CachedItem> localCache;
@@ -269,8 +276,9 @@ public sealed class FileSearchService : IFileSearchService
         List<CachedItem> localCache;
         lock (_cacheLock) { localCache = _cache; }
 
+        var intervalMins = _config.ReIndexIntervalHours * 60;
         // Refresh index if it's empty or very old
-        if (localCache.Count == 0 || (DateTime.Now - _lastIndexTime).TotalMinutes > 30)
+        if (localCache.Count == 0 || (intervalMins > 0 && (DateTime.Now - _lastIndexTime).TotalMinutes > intervalMins))
             Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
 
         var queryLower = query.ToLowerInvariant();
@@ -282,9 +290,12 @@ public sealed class FileSearchService : IFileSearchService
             // Fast prefix check
             if (!item.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
             {
+                // Skip fuzzy matching entirely if strings are vastly different lengths to save CPU
+                if (Math.Abs(item.Name.Length - query.Length) > 15) continue;
+                
                 // Try fuzzy if contains fails, but skip fuzzy on massive lists unless it's a good candidate to save CPU
                 var fuzzy = FuzzySearch.Score(query, item.Name);
-                if (fuzzy < 10) continue;
+                if (fuzzy < 20) continue; // Raised threshold from 10 to 20 to aggressively trim bad results
             }
 
             double score = ScoreResult(query, item.Name, item.IsDirectory, item.LastWriteTime);

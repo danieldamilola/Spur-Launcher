@@ -17,8 +17,13 @@ public sealed class ThemeManagerImpl : IThemeManager
     private const string DarkUri  = "Themes/DarkTheme.xaml";
     private const string LightUri = "Themes/LightTheme.xaml";
     private readonly ILogger _log;
+    private readonly Spur.Models.SpurConfig _config;
 
-    public ThemeManagerImpl(ILogger log) => _log = log;
+    public ThemeManagerImpl(ILogger log, Spur.Models.SpurConfig config)
+    {
+        _log = log;
+        _config = config;
+    }
 
     public void Apply(string theme)
     {
@@ -34,6 +39,11 @@ public sealed class ThemeManagerImpl : IThemeManager
             Source = new Uri(uri, UriKind.Relative)
         };
 
+        var accentColor = ResolveAccentColor(newDict);
+        var accentBrush = new System.Windows.Media.SolidColorBrush(accentColor);
+        accentBrush.Freeze();
+        newDict["Accent"] = accentBrush;
+
         if (existing is not null)
         {
             var idx = dicts.IndexOf(existing);
@@ -47,14 +57,43 @@ public sealed class ThemeManagerImpl : IThemeManager
         try
         {
             ThemeManager.Current.ApplicationTheme = resolved == "light" ? ApplicationTheme.Light : ApplicationTheme.Dark;
-            if (newDict["Accent"] is SolidColorBrush accentBrush)
-            {
-                ThemeManager.Current.AccentColor = accentBrush.Color;
-            }
+            ThemeManager.Current.AccentColor = accentColor;
         }
         catch (Exception ex) { _log.Warning("Failed to set iNKORE theme", ex); }
 
         _log.Info($"Theme applied: {resolved}");
+    }
+
+    private System.Windows.Media.Color ResolveAccentColor(ResourceDictionary newDict)
+    {
+        if (_config.AccentColorMode == "system")
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
+                if (key?.GetValue("ColorizationColor") is int colorVal)
+                {
+                    byte r = (byte)((colorVal >> 16) & 0xFF);
+                    byte g = (byte)((colorVal >> 8) & 0xFF);
+                    byte b = (byte)(colorVal & 0xFF);
+                    return System.Windows.Media.Color.FromRgb(r, g, b);
+                }
+            }
+            catch { }
+        }
+        else if (_config.AccentColorMode == "custom")
+        {
+            try
+            {
+                return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_config.CustomAccentColor);
+            }
+            catch { }
+        }
+
+        if (newDict["Accent"] is System.Windows.Media.SolidColorBrush brush)
+            return brush.Color;
+
+        return System.Windows.Media.Color.FromRgb(215, 207, 194); // #D7CFC2 fallback
     }
 
     private static string GetSystemTheme()

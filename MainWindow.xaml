@@ -6,8 +6,6 @@
         xmlns:conv="clr-namespace:Spur.Converters"
         Title=""
         Width="{Binding Config.BarWidth, FallbackValue=640}"
-        MinWidth="{Binding Config.BarWidth, FallbackValue=640}"
-        MaxWidth="{Binding Config.BarWidth, FallbackValue=640}"
         MinHeight="56"
         Height="800"
         WindowStyle="None"
@@ -193,12 +191,18 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Center"
                             Margin="0,4,0,0">
-                  <Button Content="Start"
-                          Command="{Binding Timer.StartCommand}"
-                          Width="72" Margin="0,0,8,0"/>
-                  <Button Content="Cancel"
-                          Command="{Binding Timer.CancelCommand}"
-                          Width="72"/>
+                  <Button Command="{Binding Timer.StartCommand}" Margin="0,0,8,0" Padding="12,6">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:FontIcon Glyph="&#xE768;" FontSize="13" Margin="0,0,6,0"/>
+                      <TextBlock Text="Start" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <Button Command="{Binding Timer.CancelCommand}" Padding="12,6">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:FontIcon Glyph="&#xE711;" FontSize="13" Margin="0,0,6,0"/>
+                      <TextBlock Text="Cancel" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
                 </StackPanel>
               </Grid>
 
@@ -268,10 +272,18 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Margin="0,8,0,0">
-                  <Button Content="Copy" Click="OnActionCopyClick"
-                          Width="60" Margin="0,0,8,0"/>
-                  <Button Content="Close" Click="OnCloseActionPanelClick"
-                          Width="60"/>
+                  <Button Click="OnActionCopyClick" Margin="0,0,8,0" Padding="12,6">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:FontIcon Glyph="&#xE8C8;" FontSize="13" Margin="0,0,6,0"/>
+                      <TextBlock Text="Copy" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <Button Click="OnCloseActionPanelClick" Padding="12,6">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:FontIcon Glyph="&#xE711;" FontSize="13" Margin="0,0,6,0"/>
+                      <TextBlock Text="Close" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
                 </StackPanel>
               </Grid>
 
@@ -619,37 +631,27 @@
                 Background="{DynamicResource Separator}"
                 Opacity="0"/>
 
-        <StackPanel x:Name="CategoryButtons"
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Center"
-                    Margin="6,0,0,0"
-                    Opacity="0">
-
-          <views:CategoryCircle x:Name="CircleFiles"
-                                Tag="files"
-                                Label="Files"
-                                AutomationProperties.Name="Files"
-                                Margin="0,0,4,0"
-                                IconGlyph="&#xE8A5;"
-                                Click="OnCategoryClick"/>
-
-          <views:CategoryCircle x:Name="CircleCommands"
-                                Tag="ai"
-                                Label="AI"
-                                AutomationProperties.Name="AI"
-                                Margin="0,0,4,0"
-                                IconGlyph="AI"
-                                Click="OnCategoryClick"/>
-
-          <views:CategoryCircle x:Name="CircleClipboard"
-                                Tag="clipboard"
-                                Label="Clips"
-                                AutomationProperties.Name="Clips"
-                                IconGlyph="&#xE8C8;"
-                                Click="OnCategoryClick"/>
-        </StackPanel>
+        <ItemsControl x:Name="CategoryButtons"
+                      Grid.Column="2"
+                      Margin="6,0,0,0"
+                      Opacity="0"
+                      ItemsSource="{Binding PinnedCategories}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <views:CategoryCircle Tag="{Binding Id}"
+                                    Label="{Binding Label}"
+                                    AutomationProperties.Name="{Binding Label}"
+                                    Margin="0,0,4,0"
+                                    IconGlyph="{Binding IconGlyph}"
+                                    Click="OnCategoryClick"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </Grid>
     </Grid>
   </Border>

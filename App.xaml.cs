@@ -64,7 +64,7 @@ public partial class App : Application
         services.AddSingleton(config); // Register SpurConfig directly
 
         // Theme
-        var themeMgr = new ThemeManagerImpl(_fileLogger);
+        var themeMgr = new ThemeManagerImpl(_fileLogger, config);
         themeMgr.Apply(config.Theme);
         services.AddSingleton<IThemeManager>(themeMgr);
 
@@ -102,7 +102,6 @@ public partial class App : Application
         _window = new MainWindow();
         _window.SetViewModel(_vm);
         _window.Opacity = config.WindowOpacity;
-        _window.Width   = LauncherLayout.WidthCompact;
         _window.Show();
         _window.Hide();
 

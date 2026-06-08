@@ -114,6 +114,23 @@ public sealed partial class MainViewModel : ObservableObject
 
         Helpers.SafeFireAndForget.Run(LoadAppsAsync, _log, "LoadApps");
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
+        UpdatePinnedCategories();
+    }
+
+    public void UpdatePinnedCategories()
+    {
+        PinnedCategories.Clear();
+        foreach (var id in Config.PinnedCategories)
+        {
+            if (string.IsNullOrWhiteSpace(id)) continue;
+            
+            if (id == "files")
+                PinnedCategories.Add(new PinnedCategoryItem { Id = "files", Label = "Files", IconGlyph = "\uE8B7" });
+            else if (id == "clipboard")
+                PinnedCategories.Add(new PinnedCategoryItem { Id = "clipboard", Label = "Clips", IconGlyph = "\uE77F" });
+            else if (_extras.FindById(id) is { } extra)
+                PinnedCategories.Add(new PinnedCategoryItem { Id = extra.Id, Label = extra.Name, IconGlyph = extra.IconGlyph });
+        }
     }
 
     private void HandleCatalogRefreshed(List<SearchResult> freshCatalog)
@@ -165,6 +182,9 @@ public sealed partial class MainViewModel : ObservableObject
     private string _activeScopeId = "all";
 
     [ObservableProperty]
+    private ObservableCollection<PinnedCategoryItem> _pinnedCategories = [];
+
+    [ObservableProperty]
     private ObservableCollection<ScopeFilterItem> _scopeFilters = [];
 
     private List<object> _rawResults = [];
@@ -179,6 +199,14 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isSettingsOpen;
+
+    partial void OnIsSettingsOpenChanged(bool value)
+    {
+        if (!value)
+        {
+            Settings?.Save();
+        }
+    }
 
     // Sub-ViewModels — exposed for direct XAML binding (no pass-throughs)
     public TimerViewModel      Timer      => _timer;
@@ -198,6 +226,19 @@ public sealed partial class MainViewModel : ObservableObject
     }
     public bool IsActionPanelVisible => _activeActionPanel is not null;
 
+public class ScopeFilterItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class PinnedCategoryItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string IconGlyph { get; set; } = string.Empty;
+}
     private string _actionResultText = string.Empty;
     public string ActionResultText
     {
@@ -397,7 +438,31 @@ partial void OnActiveCategoryChanged(string? value)
 
     private void CommitResults(List<object> items)
     {
-        _rawResults = items;
+        var deduped = new List<object>();
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items)
+        {
+            if (item is SearchResult sr)
+            {
+                if (!seenIds.Add(sr.Id)) continue;
+            }
+            deduped.Add(item);
+        }
+
+        // Clean up any empty section labels left over after deduplication
+        var cleaned = new List<object>();
+        for (int i = 0; i < deduped.Count; i++)
+        {
+            if (deduped[i] is SectionLabel)
+            {
+                // If this is the last item, or the next item is also a SectionLabel, skip it
+                if (i == deduped.Count - 1 || deduped[i + 1] is SectionLabel) continue;
+            }
+            cleaned.Add(deduped[i]);
+        }
+
+        _rawResults = cleaned;
         UpdateScopeFilters();
         ApplyScopeFilter();
     }

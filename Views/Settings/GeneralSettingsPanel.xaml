@@ -12,8 +12,8 @@
                    Foreground="{DynamicResource TextPrimary}"
                    Margin="0,0,0,20"/>
 
-        <!-- ── Look & Feel ── -->
-        <TextBlock Text="LOOK AND FEEL"
+        <!-- ── Appearance ── -->
+        <TextBlock Text="APPEARANCE"
                    FontFamily="{DynamicResource Token.Font.Primary}"
                    FontSize="10" FontWeight="Medium"
                    Foreground="{DynamicResource TextTertiary}"
@@ -37,11 +37,57 @@
                     </StackPanel>
                     <Border Grid.Column="3" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton Content="Dark"   IsChecked="{Binding ThemeDark}"   Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="Dark theme"/>
-                            <RadioButton Content="Light"  IsChecked="{Binding ThemeLight}"  Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="Light theme"/>
-                            <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme" AutomationProperties.Name="System theme"/>
+                            <RadioButton Content="Dark"   IsChecked="{Binding ThemeDark}"   Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
+                            <RadioButton Content="Light"  IsChecked="{Binding ThemeLight}"  Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
+                            <RadioButton Content="System" IsChecked="{Binding ThemeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Theme"/>
                         </StackPanel>
                     </Border>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
+
+                <!-- Accent Color Mode -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Accent color" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Change the active color." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="3" Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="Theme"  IsChecked="{Binding AccentModeTheme}"  Style="{StaticResource SegmentedRadio}" GroupName="Accent"/>
+                            <RadioButton Content="System" IsChecked="{Binding AccentModeSystem}" Style="{StaticResource SegmentedRadio}" GroupName="Accent"/>
+                            <RadioButton Content="Custom" IsChecked="{Binding AccentModeCustom}" Style="{StaticResource SegmentedRadio}" GroupName="Accent"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0" Visibility="{Binding AccentModeCustom, Converter={StaticResource BoolToVisibility}}"/>
+
+                <!-- Custom Accent Hex -->
+                <Grid MinHeight="56" Margin="18,0" Visibility="{Binding AccentModeCustom, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Custom hex color" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="e.g. #D7CFC2 or #0078D7" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <TextBox Grid.Column="3" Width="100" Text="{Binding CustomAccentColor, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
@@ -111,7 +157,12 @@
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
                         <local:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" AutomationProperties.Name="Enable hotkey"/>
-                        <Button x:Name="EditShortcutBtn" Content="Edit" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit shortcut"/>
+                        <Button x:Name="EditShortcutBtn" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit shortcut" Padding="12,6">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FontIcon Glyph="&#xE70F;" FontSize="13" Margin="0,0,6,0"/>
+                                <TextBlock Text="Edit" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
 
@@ -182,14 +233,19 @@
                 <!-- Launch with Windows -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE7E8;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Launch with Windows" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Make Spur available as soon as you sign in." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
@@ -197,15 +253,85 @@
                 <!-- Tray icon -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <ui:FontIcon Glyph="&#xE739;" FontSize="14" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Tray icon" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Keep Spur reachable without cluttering the taskbar." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
+            </StackPanel>
+        </Border>
+        <TextBlock Text="PINNED CATEGORIES"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,16,0,8"/>
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <StackPanel>
+
+                <!-- Slot 1 -->
+                <Grid MinHeight="52" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <TextBlock Text="1" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="2" Text="Slot 1" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
+                              SelectedItem="{Binding PinnedCategory1, Mode=TwoWay}"
+                              Width="140" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
+
+                <!-- Slot 2 -->
+                <Grid MinHeight="52" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <TextBlock Text="2" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="2" Text="Slot 2" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
+                              SelectedItem="{Binding PinnedCategory2, Mode=TwoWay}"
+                              Width="140" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
+
+                <!-- Slot 3 -->
+                <Grid MinHeight="52" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <TextBlock Text="3" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="2" Text="Slot 3" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
+                              SelectedItem="{Binding PinnedCategory3, Mode=TwoWay}"
+                              Width="140" VerticalAlignment="Center"/>
+                </Grid>
+
             </StackPanel>
         </Border>
     </StackPanel>

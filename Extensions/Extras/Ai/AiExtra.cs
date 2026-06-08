@@ -12,7 +12,7 @@ public sealed class AiExtra : IExtra
     public string Id => "ai";
     public string Name => "AI Assistant";
     public string Description => "Ask the configured AI provider.";
-    public string IconGlyph => "AI";
+    public string IconGlyph => "\ue270";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

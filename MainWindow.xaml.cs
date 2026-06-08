@@ -16,7 +16,35 @@ public partial class MainWindow : Window
     private bool _queryWasEmpty = true;
     private MainViewModel? _vm;
 
-    private CategoryCircle[] AnchorCircles => [CircleFiles, CircleCommands, CircleClipboard];
+    private CategoryCircle[] AnchorCircles => GetCategoryCircles();
+
+    private CategoryCircle[] GetCategoryCircles()
+    {
+        var circles = new System.Collections.Generic.List<CategoryCircle>();
+        for (int i = 0; i < CategoryButtons.Items.Count; i++)
+        {
+            if (CategoryButtons.ItemContainerGenerator.ContainerFromIndex(i) is ContentPresenter cp)
+            {
+                cp.ApplyTemplate();
+                var circle = cp.ContentTemplate?.FindName("PART_Circle", cp) as CategoryCircle
+                             ?? FindVisualChild<CategoryCircle>(cp);
+                if (circle != null) circles.Add(circle);
+            }
+        }
+        return circles.ToArray();
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T t) return t;
+            var result = FindVisualChild<T>(child);
+            if (result != null) return result;
+        }
+        return null;
+    }
 
     public MainWindow()
     {
@@ -68,27 +96,28 @@ public partial class MainWindow : Window
     {
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         public static extern IntPtr DefWindowProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        public static extern bool SetProcessWorkingSetSize(IntPtr process, nint minimumWorkingSetSize, nint maximumWorkingSetSize);
     }
 
     public void SetViewModel(MainViewModel vm)
     {
+        if (_vm != null)
+        {
+            _vm.PropertyChanged -= OnVmChanged;
+            _vm.RequestHide -= HideWindow;
+        }
+
         _vm = vm;
-        DataContext = vm;
-        vm.PropertyChanged += OnVmChanged;
-        vm.RequestHide += HideWindow;
+        DataContext = _vm;
+        _vm.PropertyChanged += OnVmChanged;
+        _vm.RequestHide += HideWindow;
+        
+        ApplyConfigWidth();
         UpdateCategoryVisuals();
         ApplySpotlightLayout(animate: false);
-    }
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        ApplyConfigWidth();
-        PositionWindow();
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        base.OnClosed(e);
     }
 
     private void ApplyConfigWidth()
@@ -96,15 +125,16 @@ public partial class MainWindow : Window
         if (_vm?.Config != null)
         {
             Width = _vm.Config.BarWidth;
-            MinWidth = _vm.Config.BarWidth;
-            MaxWidth = _vm.Config.BarWidth;
         }
         else
         {
             Width = 640;
-            MinWidth = 640;
-            MaxWidth = 640;
         }
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        PositionWindow();
     }
 
     public void ShowWindow()
@@ -145,7 +175,7 @@ public partial class MainWindow : Window
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
-            return;
+            NativeMethods.SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, -1, -1);
         }
 
         SpurMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
@@ -160,6 +190,7 @@ public partial class MainWindow : Window
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
+            NativeMethods.SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, -1, -1);
         });
     }
 
@@ -429,9 +460,11 @@ public partial class MainWindow : Window
     private void UpdateCategoryVisuals()
     {
         if (_vm is null) return;
-        CircleFiles.IsActive     = _vm.ActiveCategory == "files";
-        CircleCommands.IsActive  = _vm.ActiveCategory == "ai";
-        CircleClipboard.IsActive = _vm.ActiveCategory == "clipboard";
+        foreach (var circle in AnchorCircles)
+        {
+            var id = circle.Tag as string ?? string.Empty;
+            circle.IsActive = id == _vm.ActiveCategory;
+        }
         CategoryBackButton.Visibility = _vm.ActiveCategory is null ? Visibility.Collapsed : Visibility.Visible;
     }
 

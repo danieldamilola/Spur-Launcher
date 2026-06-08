@@ -5,7 +5,7 @@
     <StackPanel Margin="0,8">
         <TextBlock Text="Default Presets" Style="{StaticResource SettingsHint}" Margin="0,0,0,8"/>
         <Border Style="{StaticResource SettingsInputFrame}" HorizontalAlignment="Left" MinWidth="200" MaxWidth="300">
-            <TextBox Text="{Binding DefaultPresets, UpdateSourceTrigger=PropertyChanged}" ui:ControlHelper.PlaceholderText="e.g. 1m,5m,10m" BorderThickness="0" Background="Transparent" Padding="0,0,0,0"/>
+            <TextBox Text="{Binding DefaultPresets, UpdateSourceTrigger=PropertyChanged}" ui:ControlHelper.PlaceholderText="e.g. 1m,5m,10m" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,0"/>
         </Border>
     </StackPanel>
 </UserControl>
