@@ -809,7 +809,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // About
+    // About — Update flow
+    // Single state machine drives the entire row: status, text, and button.
     // ═══════════════════════════════════════════════════════════════
 
     public string Version =>
@@ -817,15 +818,93 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string Credits => "Built with .NET 9 + WPF · Monochrome v2 design system";
 
+    /// <summary>Drives the update section: text, button, and enabled state.</summary>
+    public enum UpdateState
+    {
+        Idle,
+        Checking,
+        NoUpdate,
+        Downloading,
+        Installing,
+        ReadyToRestart,
+        Error,
+    }
+
     [ObservableProperty]
-    private bool _isUpdateAvailable;
+    private UpdateState _updateStatus = UpdateState.Idle;
+
+    /// <summary>Human-readable label for the current state. The UI binds to this directly.</summary>
+    public string UpdateStatusText => UpdateStatus switch
+    {
+        UpdateState.Idle            => "Up to date",
+        UpdateState.Checking        => "Checking for updates…",
+        UpdateState.NoUpdate        => "You're on the latest version",
+        UpdateState.Downloading     => "Downloading update…",
+        UpdateState.Installing      => "Installing update…",
+        UpdateState.ReadyToRestart  => "Update ready — restart Spur to install",
+        UpdateState.Error           => "Update failed. Tap to retry.",
+        _                            => string.Empty,
+    };
+
+    /// <summary>True while Spur is working on an update — disables the primary button.</summary>
+    public bool IsUpdateBusy =>
+        UpdateStatus is UpdateState.Checking or UpdateState.Downloading or UpdateState.Installing;
+
+    /// <summary>Whether the user can trigger a check (i.e. nothing is already in flight).</summary>
+    public bool CanCheckForUpdates => !IsUpdateBusy;
+
+    partial void OnUpdateStatusChanged(UpdateState value)
+    {
+        OnPropertyChanged(nameof(UpdateStatusText));
+        OnPropertyChanged(nameof(IsUpdateBusy));
+        OnPropertyChanged(nameof(CanCheckForUpdates));
+    }
 
     [RelayCommand]
     private async Task CheckForUpdates()
     {
-        // Mock checking for updates
+        if (IsUpdateBusy) return;
+
+        UpdateStatus = UpdateState.Checking;
+        // Mock remote check — replace with real release lookup.
         await Task.Delay(1500);
-        IsUpdateAvailable = true;
+        UpdateStatus = UpdateState.NoUpdate;
+    }
+
+    [RelayCommand]
+    private async Task DownloadUpdate()
+    {
+        if (IsUpdateBusy) return;
+
+        UpdateStatus = UpdateState.Downloading;
+        // Mock download with a short, visible delay.
+        await Task.Delay(1500);
+        await InstallUpdateAsync();
+    }
+
+    [RelayCommand]
+    private async Task InstallUpdateAsync()
+    {
+        if (IsUpdateBusy) return;
+
+        UpdateStatus = UpdateState.Installing;
+        // Mock install.
+        await Task.Delay(800);
+        UpdateStatus = UpdateState.ReadyToRestart;
+    }
+
+    [RelayCommand]
+    private void RestartToUpdate()
+    {
+        // Real flow would spawn the installed update + exit cleanly.
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    [RelayCommand]
+    private void CancelUpdate()
+    {
+        // User chose to keep the current version for now.
+        UpdateStatus = UpdateState.Idle;
     }
 
     // ═══════════════════════════════════════════════════════════════

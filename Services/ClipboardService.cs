@@ -9,18 +9,24 @@ public interface IClipboardService
     IReadOnlyList<ClipboardEntry> GetHistory();
     void Add(string text);
     void AddImage(System.Windows.Media.Imaging.BitmapSource image);
-    void CopyToSystem(string text);
+    /// <summary>Copies the entry to the system clipboard (text or image).</summary>
+    void CopyToSystem(ClipboardEntry entry);
+    /// <summary>Copies a plain string to the system clipboard.</summary>
+    void CopyTextToSystem(string text);
     string? ReadFromSystem();
     System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem();
     void Clear();
+    /// <summary>Removes all entries whose text content is not in the keep set. Images are always removed.</summary>
     void KeepOnly(ISet<string> contentToKeep);
+    /// <summary>Removes the single entry with the given ID.</summary>
+    void RemoveById(Guid id);
     event Action? ClipboardChanged;
 }
 
 /// <summary>
-/// In-memory clipboard text history. Thread-safe. Never persisted.
-/// Deduplicates consecutive identical entries.  Max items is configurable
-/// via <see cref="MaxItems"/> (default 20, settable from settings).
+/// In-memory clipboard history. Thread-safe. Never persisted.
+/// Deduplicates consecutive identical text entries. Max items is configurable
+/// via <see cref="MaxItems"/> (default 10, settable from settings).
 /// </summary>
 public sealed class ClipboardServiceImpl : IClipboardService
 {
@@ -49,7 +55,7 @@ public sealed class ClipboardServiceImpl : IClipboardService
                     changed = true;
                 }
             }
-            if (changed) ClipboardChanged?.Invoke();
+            if (changed) RaiseClipboardChanged();
         }
     }
 
@@ -64,6 +70,9 @@ public sealed class ClipboardServiceImpl : IClipboardService
 
         lock (_lock)
         {
+            // Truncate first, then deduplicate against the (possibly truncated) head.
+            // Previously storedText was computed but the full original text was stored —
+            // the truncation was silently discarded.
             var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
                 ? text[..ClipboardEntry.MaxStoredTextChars]
                 : text;
@@ -72,11 +81,11 @@ public sealed class ClipboardServiceImpl : IClipboardService
                 string.Equals(_history[0].Content, storedText, StringComparison.Ordinal))
                 return;
 
-            _history.Insert(0, new ClipboardEntry(text));
+            _history.Insert(0, new ClipboardEntry(storedText));
             while (_history.Count > _maxItems)
                 _history.RemoveAt(_history.Count - 1);
         }
-        ClipboardChanged?.Invoke();
+        RaiseClipboardChanged();
     }
 
     public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
@@ -91,7 +100,7 @@ public sealed class ClipboardServiceImpl : IClipboardService
             while (_history.Count > _maxItems)
                 _history.RemoveAt(_history.Count - 1);
         }
-        ClipboardChanged?.Invoke();
+        RaiseClipboardChanged();
     }
 
     private void TrimImages()
@@ -109,10 +118,30 @@ public sealed class ClipboardServiceImpl : IClipboardService
         }
     }
 
-    public void CopyToSystem(string text)
+    /// <summary>
+    /// Copies the entry to the system clipboard. Previously only text was
+    /// supported; image entries were silently no-ops.
+    /// </summary>
+    public void CopyToSystem(ClipboardEntry entry)
     {
-        try { Clipboard.SetText(text); }
-        catch (Exception ex) { _log.Warning("Clipboard copy failed", ex); }
+        try
+        {
+            if (entry.IsImage && entry.Image is not null)
+                Clipboard.SetImage(entry.Image);
+            else if (!string.IsNullOrEmpty(entry.Content))
+                Clipboard.SetText(entry.Content);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Clipboard copy failed", ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public void CopyTextToSystem(string text)
+    {
+        if (!string.IsNullOrEmpty(text))
+            CopyToSystem(new ClipboardEntry(text));
     }
 
     public string? ReadFromSystem()
@@ -130,17 +159,46 @@ public sealed class ClipboardServiceImpl : IClipboardService
     public void Clear()
     {
         lock (_lock) _history.Clear();
-        ClipboardChanged?.Invoke();
+        RaiseClipboardChanged();
     }
 
+    /// <summary>
+    /// Retains only text entries whose content appears in <paramref name="contentToKeep"/>.
+    /// Image entries are always removed because they cannot be pinned.
+    /// </summary>
     public void KeepOnly(ISet<string> contentToKeep)
     {
         bool changed = false;
         lock (_lock)
         {
-            int removed = _history.RemoveAll(e => !contentToKeep.Contains(e.Content));
+            int removed = _history.RemoveAll(e =>
+                e.IsImage || !contentToKeep.Contains(e.Content ?? string.Empty));
             changed = removed > 0;
         }
-        if (changed) ClipboardChanged?.Invoke();
+        if (changed) RaiseClipboardChanged();
+    }
+
+    /// <summary>
+    /// Removes the single entry matching <paramref name="id"/>. Previously the
+    /// ViewModel used content-string matching, which deleted every entry sharing
+    /// the same content and was a no-op for image entries.
+    /// </summary>
+    public void RemoveById(Guid id)
+    {
+        bool changed = false;
+        lock (_lock)
+        {
+            int removed = _history.RemoveAll(e => e.Id == id);
+            changed = removed > 0;
+        }
+        if (changed) RaiseClipboardChanged();
+    }
+
+    // Captures the delegate before null-checking to eliminate the race between
+    // the null check and the invocation when a subscriber unregisters concurrently.
+    private void RaiseClipboardChanged()
+    {
+        var handler = ClipboardChanged;
+        handler?.Invoke();
     }
 }

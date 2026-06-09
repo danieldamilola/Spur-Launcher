@@ -105,11 +105,14 @@ public partial class App : Application
         _window.Show();
         _window.Hide();
 
-        // ── Settings window (singleton, independent of launcher bar) ──
-        _settingsWindow = new SettingsWindow();
-        _settingsWindow.SetViewModel(_vm.Settings);
+        // ── Settings window (defer creation for faster startup) ──────
         _vm.OpenSettingsRequested += () =>
         {
+            if (_settingsWindow is null)
+            {
+                _settingsWindow = new SettingsWindow();
+                _settingsWindow.SetViewModel(_vm.Settings);
+            }
             ShowSettingsWindow();
         };
 
@@ -165,10 +168,20 @@ public partial class App : Application
         if (config.ShowTrayIcon)
             BuildTrayIcon();
 
-        // ── Check for updates ─────────────────────────────────────────
-        Helpers.SafeFireAndForget.Run(CheckForUpdatesAsync, _fileLogger, "CheckForUpdates");
-
         _fileLogger.Info("Spur started successfully.");
+
+        // ── Defer non-critical initialization (faster startup) ────────
+        _ = Task.Run(async () =>
+        {
+            // Minimal delay to let UI fully initialize first
+            await Task.Delay(500);
+            
+            // Check for updates after UI is ready
+            await Dispatcher.InvokeAsync(() =>
+            {
+                Helpers.SafeFireAndForget.Run(CheckForUpdatesAsync, _fileLogger, "CheckForUpdates");
+            });
+        });
         }
         catch (Exception ex)
         {

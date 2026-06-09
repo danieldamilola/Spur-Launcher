@@ -1,31 +1,39 @@
-using System.Collections.ObjectModel;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Spur.ViewModels;
 
-public sealed partial class AiChatViewModel : ObservableObject
+public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 {
     private readonly IAiService _aiService;
     private readonly ISecureStorageService _secureStorage;
-    private readonly SpurConfig  _config;
+    private readonly SpurConfig _config;
     private CancellationTokenSource? _aiCts;
+
+    // Contains only "user" and "assistant" turns. The system prompt is owned by
+    // AiService and must not be added here — doing so caused a duplicate system
+    // prompt to be sent with conflicting instructions.
     private readonly List<(string Role, string Content)> _aiConversation = [];
 
     public AiChatViewModel(IAiService aiService, ISecureStorageService secureStorage, SpurConfig config)
     {
-        _aiService = aiService;
-        _secureStorage = secureStorage;
-        _config = config;
-        AiFollowUpCommand = new RelayCommand<string>(OnAiFollowUp);
+        _aiService      = aiService;
+        _secureStorage  = secureStorage;
+        _config         = config;
+
+        // AsyncRelayCommand surfaces exceptions via its error path rather than
+        // crashing the process (previously was async void).
+        AiFollowUpCommand = new AsyncRelayCommand<string>(OnAiFollowUpAsync);
     }
 
     [ObservableProperty] private string _aiText    = string.Empty;
     [ObservableProperty] private bool   _aiLoading = false;
     [ObservableProperty] private string _aiError   = string.Empty;
 
-    public IRelayCommand AiFollowUpCommand { get; }
+    public IAsyncRelayCommand<string> AiFollowUpCommand { get; }
 
     public event EventHandler? ConversationChanged;
 
@@ -42,12 +50,16 @@ public sealed partial class AiChatViewModel : ObservableObject
     {
         CancelPending();
         _aiConversation.Clear();
-        AiText = string.Empty;
+        AiText    = string.Empty;
         AiLoading = false;
-        AiError = string.Empty;
+        AiError   = string.Empty;
         ConversationChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Returns the conversation as plain text. Only user/assistant turns are
+    /// included; the service-level system prompt is not stored in this list.
+    /// </summary>
     public string GetConversationText()
     {
         var sb = new System.Text.StringBuilder();
@@ -66,14 +78,16 @@ public sealed partial class AiChatViewModel : ObservableObject
         _aiCts = new CancellationTokenSource();
         var ct = _aiCts.Token;
 
-        var trimmed = query.Trim();
-        var question = trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase) ? trimmed[3..].Trim() : trimmed;
+        var trimmed  = query.Trim();
+        var question = trimmed.StartsWith("ai ", StringComparison.OrdinalIgnoreCase)
+            ? trimmed[3..].Trim()
+            : trimmed;
+
         AiText    = string.Empty;
         AiError   = string.Empty;
         AiLoading = true;
 
         _aiConversation.Clear();
-        _aiConversation.Add(("system", "You are a helpful assistant."));
         _aiConversation.Add(("user", question));
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
@@ -102,22 +116,17 @@ public sealed partial class AiChatViewModel : ObservableObject
             }, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)
-        {
-            AiError = "Request timed out. Please try again.";
-        }
-        catch (HttpRequestException ex)
-        {
-            AiError = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            AiError = $"Unexpected error: {ex.Message}";
-        }
+        catch (TaskCanceledException)   { AiError = "Request timed out. Please try again."; }
+        catch (HttpRequestException ex) { AiError = ex.Message; }
+        catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
         finally { AiLoading = false; }
     }
 
-    private async void OnAiFollowUp(string? followUp)
+    /// <summary>
+    /// Handles follow-up questions. Returns Task so that exceptions propagate
+    /// through AsyncRelayCommand rather than being swallowed (previously async void).
+    /// </summary>
+    private async Task OnAiFollowUpAsync(string? followUp)
     {
         if (string.IsNullOrWhiteSpace(followUp)) return;
 
@@ -143,7 +152,9 @@ public sealed partial class AiChatViewModel : ObservableObject
             string? newResponse = null;
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
-                Application.Current?.Dispatcher.InvokeAsync(async () =>
+                // Synchronous lambda — no async needed here; removing the spurious
+                // async keyword prevents exceptions from being silently swallowed.
+                Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
                     if (newResponse is null)
                     {
@@ -163,18 +174,9 @@ public sealed partial class AiChatViewModel : ObservableObject
             }, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)
-        {
-            AiError = "Request timed out. Please try again.";
-        }
-        catch (HttpRequestException ex)
-        {
-            AiError = ex.Message;
-        }
-        catch (Exception ex)
-        {
-            AiError = $"Unexpected error: {ex.Message}";
-        }
+        catch (TaskCanceledException)   { AiError = "Request timed out. Please try again."; }
+        catch (HttpRequestException ex) { AiError = ex.Message; }
+        catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
         finally { AiLoading = false; }
     }
 
@@ -185,5 +187,9 @@ public sealed partial class AiChatViewModel : ObservableObject
         "deepseek"   => (_secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),   _config.DeepSeekModel),
         _            => (_secureStorage.Decrypt(_config.EncryptedGroqApiKey),       _config.GroqModel),
     };
-}
 
+    public void Dispose()
+    {
+        CancelPending();
+    }
+}

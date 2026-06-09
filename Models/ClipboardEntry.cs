@@ -10,6 +10,7 @@ public sealed class ClipboardEntry
     /// <summary>Text constructor.</summary>
     public ClipboardEntry(string content)
     {
+        Id          = Guid.NewGuid();
         IsTruncated = content.Length > MaxStoredTextChars;
         Content   = IsTruncated ? content[..MaxStoredTextChars] : content;
         Timestamp = DateTime.Now;
@@ -21,6 +22,7 @@ public sealed class ClipboardEntry
     /// <summary>Image constructor. The BitmapSource must already be frozen.</summary>
     public ClipboardEntry(BitmapSource image)
     {
+        Id        = Guid.NewGuid();
         Content   = string.Empty;
         Timestamp = DateTime.Now;
         IsImage   = true;
@@ -28,6 +30,7 @@ public sealed class ClipboardEntry
         Preview   = $"Image  {image.PixelWidth} × {image.PixelHeight}";
     }
 
+    public Guid        Id        { get; }
     public string      Content   { get; }
     public DateTime    Timestamp { get; }
     public bool        IsImage   { get; }
@@ -48,4 +51,3 @@ public sealed class ClipboardEntry
         }
     }
 }
-

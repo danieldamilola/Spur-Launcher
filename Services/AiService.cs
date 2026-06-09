@@ -17,43 +17,42 @@ public interface IAiService
 /// </summary>
 public sealed class AiService : IAiService
 {
-    private static readonly HttpClient _http = new()
+    // SocketsHttpHandler with PooledConnectionLifetime prevents stale DNS entries
+    // that accumulate when a plain static HttpClient holds connections indefinitely.
+    private static readonly HttpClient _http = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+    })
     {
         Timeout = TimeSpan.FromMinutes(5),
     };
 
     private static readonly Dictionary<string, (string Endpoint, string? DefaultModel)> Providers = new()
     {
-        ["groq"]       = ("https://api.groq.com/openai/v1/chat/completions",                  "llama-3.1-8b-instant"),
-        ["gemini"]     = ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-2.0-flash"),
-        ["openrouter"] = ("https://openrouter.ai/api/v1/chat/completions",                     null),
-        ["deepseek"]   = ("https://api.deepseek.com/v1/chat/completions",                      "deepseek-chat"),
+        ["groq"]       = ("https://api.groq.com/openai/v1/chat/completions",                           "llama-3.1-8b-instant"),
+        ["gemini"]     = ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",   "gemini-2.0-flash"),
+        ["openrouter"] = ("https://openrouter.ai/api/v1/chat/completions",                              null),
+        ["deepseek"]   = ("https://api.deepseek.com/v1/chat/completions",                               "deepseek-chat"),
     };
+
+    // Owned here so callers never need to supply or duplicate it.
+    private const string SystemPrompt =
+        "You are a helpful assistant. Be concise and use plain text — no markdown symbols.";
 
     public string[] SupportedProviders => [.. Providers.Keys];
 
-    /// <summary>
-    /// Instance method for single question (convenience wrapper).
-    /// </summary>
     Task IAiService.StreamAsync(string provider, string model, string apiKey, string question, Action<string> onToken, CancellationToken ct)
-        => StreamAsyncInternal(provider, model, apiKey, question, onToken, ct);
+        => StreamAsyncInternal(provider, model, apiKey, [("user", question)], onToken, ct);
 
-    /// <summary>
-    /// Instance method for full conversation.
-    /// </summary>
     Task IAiService.StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct)
         => StreamAsyncInternal(provider, model, apiKey, messages, onToken, ct);
 
-    private Task StreamAsyncInternal(
-        string provider, string model, string apiKey, string question,
-        Action<string> onToken, CancellationToken ct)
-        => StreamAsyncInternal(provider, model, apiKey,
-            new[] { ("user", question) }, onToken, ct);
-
     /// <summary>
-    /// Streams an AI response using the given provider, model, and API key.
-    /// <paramref name="messages"/> is the full conversation: each item is (role, content)
-    /// where role is "user" or "assistant". A system prompt is prepended automatically.
+    /// Streams an AI response. The service unconditionally prepends its own system
+    /// prompt, so callers should pass only "user" and "assistant" turns. Any
+    /// "system" entries in <paramref name="messages"/> are silently dropped to
+    /// prevent the dual-system-prompt bug that previously occurred when the
+    /// ViewModel seeded the conversation with its own system message.
     /// </summary>
     private async Task StreamAsyncInternal(
         string provider,
@@ -70,17 +69,16 @@ public sealed class AiService : IAiService
 
         var msgList = new List<object>
         {
-            new { role = "system", content = "You are a helpful assistant. Be concise and use plain text — no markdown symbols." },
+            new { role = "system", content = SystemPrompt },
         };
-        foreach (var (role, content) in messages)
-            msgList.Add(new { role, content });
 
-        var body = new
+        foreach (var (role, content) in messages)
         {
-            model,
-            stream = true,
-            messages = msgList,
-        };
+            if (role == "system") continue; // guard against caller-side duplication
+            msgList.Add(new { role, content });
+        }
+
+        var body = new { model, stream = true, messages = msgList };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
@@ -94,8 +92,7 @@ public sealed class AiService : IAiService
         HttpResponseMessage response;
         try
         {
-            response = await _http.SendAsync(request,
-                HttpCompletionOption.ResponseHeadersRead, ct);
+            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         }
         catch (TaskCanceledException) when (ct.IsCancellationRequested)
         {
@@ -134,7 +131,7 @@ public sealed class AiService : IAiService
                 if (delta.TryGetProperty("content", out var content))
                     token = content.GetString();
             }
-            catch { /* malformed chunk */ }
+            catch { /* malformed chunk — skip */ }
 
             if (!string.IsNullOrEmpty(token))
                 onToken(token);

@@ -123,7 +123,7 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var id in Config.PinnedCategories)
         {
             if (string.IsNullOrWhiteSpace(id)) continue;
-            
+
             if (id == "files")
                 PinnedCategories.Add(new PinnedCategoryItem { Id = "files", Label = "Files", IconGlyph = "\uE8B7" });
             else if (id == "clipboard")
@@ -716,7 +716,7 @@ partial void OnActiveCategoryChanged(string? value)
                 var subQuery = query[prefix.Length..];
                 return (actionId, icon, subQuery);
             }
-            
+
             if (keyword.Length > 1 && query.Equals(keyword, StringComparison.OrdinalIgnoreCase))
             {
                 return (actionId, icon, string.Empty);
@@ -796,7 +796,7 @@ partial void OnActiveCategoryChanged(string? value)
                 if (result.ClipContent is not null)
                 {
                     _clipboard.Add(result.ClipContent);   // promote to top first
-                    _clipboard.CopyToSystem(result.ClipContent);
+                    _clipboard.CopyTextToSystem(result.ClipContent);
                 }
                 HideAfterLaunch();
                 break;
@@ -824,7 +824,8 @@ partial void OnActiveCategoryChanged(string? value)
                     HideAfterLaunch();
                     return;
                 }
-                
+
+                if (result.ActionId is null) break;
                 var extra = _extras.FindById(result.ActionId);
                 if (extra is not null)
                 {
@@ -877,12 +878,12 @@ partial void OnActiveCategoryChanged(string? value)
                     }
 
                     var extraResult = await extra.ExecuteAsync(actionInput);
-                    
+
                     if (extraResult.Success)
                     {
                         if (!string.IsNullOrEmpty(extraResult.CopyText))
-                            _clipboard.CopyToSystem(extraResult.CopyText);
-                        
+                            _clipboard.CopyTextToSystem(extraResult.CopyText);
+
                         ActionPreviewTitle = extraResult.Title;
                         ActionPreviewSubtitle = actionInput;
                         ActionPreviewState = !string.IsNullOrEmpty(extraResult.CopyText) ? "Copied" : "Completed";
@@ -954,7 +955,7 @@ partial void OnActiveCategoryChanged(string? value)
             case ResultType.Clipboard:
                 // Ctrl+Enter on clipboard: copy without hiding window
                 if (result.ClipContent is not null)
-                    _clipboard.CopyToSystem(result.ClipContent);
+                    _clipboard.CopyTextToSystem(result.ClipContent);
                 return;
 
             case ResultType.App:
@@ -990,7 +991,7 @@ partial void OnActiveCategoryChanged(string? value)
         };
 
         if (!string.IsNullOrWhiteSpace(path))
-            _clipboard.CopyToSystem(path);
+            _clipboard.CopyTextToSystem(path);
     }
 
     /// <summary>Launches the selected app as administrator (UAC elevation).</summary>
