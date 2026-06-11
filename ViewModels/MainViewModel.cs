@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Spur.Actions;
+using Spur.Actions.Handlers;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
@@ -41,6 +42,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly AiChatViewModel    _ai;
     private readonly TimerViewModel     _timer;
     private readonly ClipboardViewModel _clipboardVm;
+
+    // ── Action Dispatcher ─────────────────────────────────────────────
+    private readonly ActionDispatcher _actionDispatcher;
 
     // (Search actions and catalog moved to SearchEngineService)
 
@@ -108,6 +112,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         CommandPalette = commandPalette;
 
+        // Initialize ActionDispatcher
+        _actionDispatcher = CreateActionDispatcher();
+
         PopulatePaletteCommands();
 
         _apps.CatalogRefreshed += HandleCatalogRefreshed;
@@ -115,6 +122,40 @@ public sealed partial class MainViewModel : ObservableObject
         Helpers.SafeFireAndForget.Run(LoadAppsAsync, _log, "LoadApps");
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
         UpdatePinnedCategories();
+    }
+
+    private ActionDispatcher CreateActionDispatcher()
+    {
+        var dispatcher = new ActionDispatcher(_log);
+
+        // Register handlers in priority order (most specific first)
+        var catalogHandler = new ActionCatalogHandler();
+        catalogHandler.ScopeChangeRequested += (actionId, iconGlyph) =>
+        {
+            ActiveCategory = actionId;
+            ScopeIconGlyph = iconGlyph;
+            Query = string.Empty;
+        };
+        dispatcher.Register(catalogHandler);
+
+        var settingsHandler = new SettingsActionHandler();
+        settingsHandler.OpenSettingsRequested += () => OpenSettingsRequested?.Invoke();
+        dispatcher.Register(settingsHandler);
+
+        var urlHandler = new UrlActionHandler();
+        urlHandler.HideRequested += HideAfterLaunch;
+        dispatcher.Register(urlHandler);
+
+        var webHandler = new WebSearchActionHandler();
+        webHandler.HideRequested += HideAfterLaunch;
+        dispatcher.Register(webHandler);
+
+        dispatcher.Register(new TimerActionHandler(_timer));
+        dispatcher.Register(new AiActionHandler(_ai, _log));
+        dispatcher.Register(new ShellActionHandler(_extras));
+        dispatcher.Register(new GenericExtraHandler(_extras, _clipboard));
+
+        return dispatcher;
     }
 
     public void UpdatePinnedCategories()
@@ -135,10 +176,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void HandleCatalogRefreshed(List<SearchResult> freshCatalog)
     {
+        // The catalog has been refreshed in the search engine.
+        // Re-trigger the current query so results update against the fresh data.
         Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (!string.IsNullOrEmpty(Query))
-                OnPropertyChanged(nameof(Query));
+                OnQueryChanged(Query);
         });
     }
 
@@ -185,7 +228,7 @@ public sealed partial class MainViewModel : ObservableObject
     private ObservableCollection<PinnedCategoryItem> _pinnedCategories = [];
 
     [ObservableProperty]
-    private ObservableCollection<ScopeFilterItem> _scopeFilters = [];
+    private ObservableCollection<Spur.Models.ScopeFilterItem> _scopeFilters = [];
 
     private List<object> _rawResults = [];
 
@@ -203,9 +246,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsSettingsOpenChanged(bool value)
     {
         if (!value)
-        {
-            Settings?.Save();
-        }
+            Settings.Save();
     }
 
     // Sub-ViewModels — exposed for direct XAML binding (no pass-throughs)
@@ -226,19 +267,12 @@ public sealed partial class MainViewModel : ObservableObject
     }
     public bool IsActionPanelVisible => _activeActionPanel is not null;
 
-public class ScopeFilterItem
-{
-    public string Id { get; set; } = string.Empty;
-    public string Label { get; set; } = string.Empty;
-    public int Count { get; set; }
-}
-
-public class PinnedCategoryItem
-{
-    public string Id { get; set; } = string.Empty;
-    public string Label { get; set; } = string.Empty;
-    public string IconGlyph { get; set; } = string.Empty;
-}
+    public sealed class PinnedCategoryItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string IconGlyph { get; set; } = string.Empty;
+    }
     private string _actionResultText = string.Empty;
     public string ActionResultText
     {
@@ -299,9 +333,10 @@ public class PinnedCategoryItem
         _ => true,
     };
 
-    /// <summary>Hub removed per ux.md — always false.</summary>
+    /// <summary>Hub removed per ux.md.</summary>
     public bool IsHubVisible => false;
 
+    /// <summary>Scope bar controlled dynamically by UpdateScopeFilters.</summary>
     public bool IsScopeBarVisible => false;
 
     public string SearchPlaceholder => ActiveCategory switch
@@ -326,7 +361,7 @@ public class PinnedCategoryItem
     // Query change handler — debounced search
     // ═══════════════════════════════════════════════════════════════
 
-        partial void OnQueryChanged(string value)
+    partial void OnQueryChanged(string value)
     {
         try
         {
@@ -358,8 +393,6 @@ public class PinnedCategoryItem
                 return;
             }
 
-            ActiveScopeId = "all";
-
             _ = DebouncedSearchAsync(effectiveQuery, ct);
         }
         catch (Exception ex)
@@ -380,7 +413,7 @@ public class PinnedCategoryItem
         }
         catch (OperationCanceledException) { /* expected on new keystroke */ }
     }
-partial void OnActiveCategoryChanged(string? value)
+    partial void OnActiveCategoryChanged(string? value)
     {
         OnPropertyChanged(nameof(IsBrowsePanelVisible));
         OnPropertyChanged(nameof(SearchPlaceholder));
@@ -394,6 +427,7 @@ partial void OnActiveCategoryChanged(string? value)
         _searchCts?.Cancel();
         _rawResults.Clear();
         ScopeFilters.Clear();
+        ActiveScopeId = "all";
         OnPropertyChanged(nameof(IsScopeBarVisible));
 
         Application.Current?.Dispatcher.Invoke(() =>
@@ -432,8 +466,13 @@ partial void OnActiveCategoryChanged(string? value)
             return;
         }
 
-        var idx = ScopeFilters.ToList().FindIndex(s => s.Id == ActiveScopeId);
-        ActiveScopeId = idx + 1 >= ScopeFilters.Count ? "all" : ScopeFilters[idx + 1].Id;
+        // Find current index without allocating a list copy
+        int currentIdx = -1;
+        for (int i = 0; i < ScopeFilters.Count; i++)
+        {
+            if (ScopeFilters[i].Id == ActiveScopeId) { currentIdx = i; break; }
+        }
+        ActiveScopeId = currentIdx + 1 >= ScopeFilters.Count ? "all" : ScopeFilters[currentIdx + 1].Id;
     }
 
     private void CommitResults(List<object> items)
@@ -654,24 +693,19 @@ partial void OnActiveCategoryChanged(string? value)
         ScopeFilters.Clear();
         if (counts.Count < 2) return;
 
-        foreach (var (id, (label, count)) in counts)
-            ScopeFilters.Add(new ScopeFilterItem { Id = id, Label = label, Count = count });
+        bool activeScopeStillValid = ActiveScopeId == "all";
 
-        if (!ScopeFilters.Any(s => s.Id == ActiveScopeId) && ActiveScopeId != "all")
+        foreach (var (id, (label, count)) in counts)
+        {
+            ScopeFilters.Add(new Spur.Models.ScopeFilterItem { Id = id, Label = label, Count = count });
+            if (id == ActiveScopeId) activeScopeStillValid = true;
+        }
+
+        if (!activeScopeStillValid)
             ActiveScopeId = "all";
     }
 
-    private static string NormalizeUrl(string value)
-    {
-        var trimmed = value.Trim();
-        return trimmed.Contains("://", StringComparison.Ordinal) ? trimmed : $"https://{trimmed}";
-    }
 
-    private static string NormalizeWebQuery(string query)
-    {
-        var q = query.Trim();
-        return q.StartsWith('?') ? q[1..].Trim() : q;
-    }
 
     /// <summary>
     /// Detects action keywords at the start of the query (e.g. "sys ", "timer ").
@@ -757,9 +791,6 @@ partial void OnActiveCategoryChanged(string? value)
         }
     }
 
-
-
-
     // ═══════════════════════════════════════════════════════════════
     // Open / Execute
     // ═══════════════════════════════════════════════════════════════
@@ -773,136 +804,72 @@ partial void OnActiveCategoryChanged(string? value)
 
         switch (result.Type)
         {
-            case ResultType.App:
-                if (result.LnkPath is not null)
-                    Launch(result.LnkPath);
-                else if (result.ExePath is not null)
-                    Launch(result.ExePath);
-                var appKey = result.ExePath ?? result.LnkPath ?? "";
-                _freq.Increment(appKey);
-                // Update both the result and the catalog entry so SuggestedApps picks it up
-                var newScore = _freq.Get(appKey);
-                result.FrequencyScore = newScore;
-                HideAfterLaunch();
-                break;
-
-            case ResultType.File:
-                if (result.FilePath is not null)
-                    Launch(result.FilePath);
-                HideAfterLaunch();
-                break;
-
-            case ResultType.Clipboard:
-                if (result.ClipContent is not null)
-                {
-                    _clipboard.Add(result.ClipContent);   // promote to top first
-                    _clipboard.CopyTextToSystem(result.ClipContent);
-                }
-                HideAfterLaunch();
-                break;
-
-            case ResultType.Action:
-                if (result.Id?.StartsWith("action-catalog:", StringComparison.OrdinalIgnoreCase) == true
-                    && !string.IsNullOrWhiteSpace(result.ActionId))
-                {
-                    ActiveCategory = result.ActionId;
-                    ScopeIconGlyph = result.IconGlyph;
-                    Query = string.Empty;
-                    return;
-                }
-
-                if (result.ActionId == "url")
-                {
-                    Launch(NormalizeUrl(Query));
-                    HideAfterLaunch();
-                    return;
-                }
-                else if (result.ActionId == "web")
-                {
-                    var q = NormalizeWebQuery(Query);
-                    Launch($"https://www.google.com/search?q={Uri.EscapeDataString(q)}");
-                    HideAfterLaunch();
-                    return;
-                }
-
-                if (result.ActionId is null) break;
-                var extra = _extras.FindById(result.ActionId);
-                if (extra is not null)
-                {
-                    // Special case for timer to wire up the VM
-                    if (result.ActionId == "timer")
-                    {
-                        if (_timer.StartTimerPreview(actionInput))
-                            Timer.StartCommand.Execute(null);
-                        ActionPreviewTitle = result.Name;
-                        ActionPreviewSubtitle = actionInput;
-                        ActionPreviewState = Timer.TimerRunning ? "Running" : "Check input";
-                        ActiveActionPanel = "timer";
-                        return;
-                    }
-                    else if (result.ActionId == "ai")
-                    {
-                        try
-                        {
-                            ActiveActionPanel = "ai";
-                            ActionPreviewTitle = result.Name;
-                            ActionPreviewSubtitle = actionInput;
-                            ActionPreviewState = "Thinking";
-                            await _ai.StartAiAsync(actionInput);
-                            ActionPreviewState = string.IsNullOrWhiteSpace(_ai.AiError) ? "Answered" : "Needs setup";
-                        }
-                        catch (Exception ex) { _log.Warning("StartAiAsync error", ex); }
-                        return;
-                    }
-                    else if (result.ActionId == "settings")
-                    {
-                        OpenSettingsRequested?.Invoke();
-                        return;
-                    }
-                    else if (result.ActionId == "shell")
-                    {
-                        var command = actionInput.Trim();
-                        if (!string.IsNullOrWhiteSpace(command))
-                        {
-                            ActionPreviewTitle = "Shell command";
-                            ActionPreviewSubtitle = command;
-                            ActionPreviewState = "Started";
-                            ActionResultText = "Command started";
-                            ActionResultSubText = command;
-                            ActiveActionPanel = "shell";
-                            // Run the shell extra directly
-                            var shExtra = _extras.FindById("shell");
-                            if (shExtra is not null) await shExtra.ExecuteAsync(command);
-                        }
-                        return;
-                    }
-
-                    var extraResult = await extra.ExecuteAsync(actionInput);
-
-                    if (extraResult.Success)
-                    {
-                        if (!string.IsNullOrEmpty(extraResult.CopyText))
-                            _clipboard.CopyTextToSystem(extraResult.CopyText);
-
-                        ActionPreviewTitle = extraResult.Title;
-                        ActionPreviewSubtitle = actionInput;
-                        ActionPreviewState = !string.IsNullOrEmpty(extraResult.CopyText) ? "Copied" : "Completed";
-                        ActionResultText = extraResult.Detail;
-                        ActionResultSubText = extraResult.SubText;
-                        ActiveActionPanel = extraResult.PanelId;
-                    }
-                    else
-                    {
-                        ActionPreviewTitle = extraResult.Title;
-                        ActionPreviewSubtitle = actionInput;
-                        ActionPreviewState = "Error";
-                        ActionResultText = string.IsNullOrEmpty(extraResult.Detail) ? "Failed" : extraResult.Detail;
-                        ActionResultSubText = extraResult.SubText;
-                        ActiveActionPanel = extraResult.PanelId;
-                    }
-                }
-                break;
+            case ResultType.App:       OpenAppResult(result); break;
+            case ResultType.File:      OpenFileResult(result); break;
+            case ResultType.Clipboard: OpenClipboardResult(result); break;
+            case ResultType.Action:    await OpenActionResult(result, actionInput); break;
         }
+    }
+
+    private void OpenAppResult(SearchResult result)
+    {
+        if (result.LnkPath is not null)
+            Launch(result.LnkPath);
+        else if (result.ExePath is not null)
+            Launch(result.ExePath);
+        var appKey = result.ExePath ?? result.LnkPath ?? "";
+        _freq.Increment(appKey);
+        // Update both the result and the catalog entry so SuggestedApps picks it up
+        var newScore = _freq.Get(appKey);
+        result.FrequencyScore = newScore;
+        HideAfterLaunch();
+    }
+
+    private void OpenFileResult(SearchResult result)
+    {
+        if (result.FilePath is not null)
+            Launch(result.FilePath);
+        HideAfterLaunch();
+    }
+
+    private void OpenClipboardResult(SearchResult result)
+    {
+        if (result.ClipContent is not null)
+        {
+            _clipboard.Add(result.ClipContent);   // promote to top first
+            _clipboard.CopyTextToSystem(result.ClipContent);
+        }
+        // TODO: Add image clipboard support via result.ClipImage (BitmapSource).
+        HideAfterLaunch();
+    }
+
+    private async Task OpenActionResult(SearchResult result, string actionInput)
+    {
+        var state = await _actionDispatcher.DispatchAsync(result, actionInput);
+        ApplyActionPanelState(state);
+    }
+
+    private void ApplyActionPanelState(ActionPanelState state)
+    {
+        if (state.ShouldHide) return;
+
+        if (!string.IsNullOrEmpty(state.PanelId))
+            ActiveActionPanel = state.PanelId;
+
+        if (!string.IsNullOrEmpty(state.Title))
+            ActionPreviewTitle = state.Title;
+
+        if (!string.IsNullOrEmpty(state.Subtitle))
+            ActionPreviewSubtitle = state.Subtitle;
+
+        if (!string.IsNullOrEmpty(state.State))
+            ActionPreviewState = state.State;
+
+        if (!string.IsNullOrEmpty(state.ResultText))
+            ActionResultText = state.ResultText;
+
+        if (!string.IsNullOrEmpty(state.ResultSubText))
+            ActionResultSubText = state.ResultSubText;
     }
 
     private string GetActionExecutionInput(SearchResult result)
@@ -953,7 +920,6 @@ partial void OnActiveCategoryChanged(string? value)
         switch (result.Type)
         {
             case ResultType.Clipboard:
-                // Ctrl+Enter on clipboard: copy without hiding window
                 if (result.ClipContent is not null)
                     _clipboard.CopyTextToSystem(result.ClipContent);
                 return;
@@ -973,8 +939,17 @@ partial void OnActiveCategoryChanged(string? value)
             _               => null,
         };
 
-        if (!string.IsNullOrWhiteSpace(targetPath) && File.Exists(targetPath))
+        if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath))
+        {
+            _notification.Show("Spur", "File not found or has been moved.");
+            return;
+        }
+
+        try
+        {
             Process.Start("explorer.exe", $"/select,\"{targetPath}\"");
+        }
+        catch (Exception ex) { _log.Warning("OpenFolder failed", ex); }
     }
 
     [RelayCommand]
@@ -1067,23 +1042,28 @@ partial void OnActiveCategoryChanged(string? value)
         OnQueryChanged(Query ?? string.Empty);
     }
 
-    /// <summary>Removes a single clipboard item from history by its content.</summary>
+    /// <summary>Removes a single clipboard item from history.</summary>
     [RelayCommand]
     public void RemoveClipboardItem(SearchResult result)
     {
-        if (result.Type != ResultType.Clipboard || result.ClipContent is null) return;
-        var keep = _clipboard.GetHistory()
-            .Where(e => e.Content != result.ClipContent)
-            .Select(e => e.Content)
-            .ToHashSet();
-        _clipboard.KeepOnly(keep);
+        if (result.Type != ResultType.Clipboard) return;
+        if (result.ClipContent is null) return;
+
+        var entry = _clipboard.GetHistory().FirstOrDefault(e => e.Timestamp == result.ClipTimestamp);
+        if (entry is not null)
+            _clipboard.RemoveById(entry.Id);
+
         OnQueryChanged(Query ?? string.Empty);
     }
 
     private void Launch(string path)
     {
         try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
-        catch (Exception ex) { _log.Warning("Launch failed", ex); }
+        catch (Exception ex)
+        {
+            _log.Warning("Launch failed", ex);
+            _notification.Show("Spur", $"Failed to launch: {ex.Message}");
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1107,7 +1087,8 @@ partial void OnActiveCategoryChanged(string? value)
     {
         ActiveCategory = ActiveCategory switch
         {
-            null        => "files",
+            null        => "apps",
+            "apps"      => "files",
             "files"     => "clipboard",
             "clipboard" => "actions",
             _           => null,
@@ -1223,8 +1204,9 @@ partial void OnActiveCategoryChanged(string? value)
         _freq.Flush();
         _freq.Dispose();
         _searchCts?.Dispose();
-        _ai.CancelPending();
+        _ai.Dispose();
         _timer.Stop();
+        _clipboardVm.Dispose();
     }
 
     public void Reset()
@@ -1305,15 +1287,4 @@ partial void OnActiveCategoryChanged(string? value)
             if (Results[i] is SearchResult) return i;
         return -1;
     }
-
-    private static SearchResult Clone(SearchResult s) => new()
-    {
-        Id = s.Id, Type = s.Type, Name = s.Name, Subtitle = s.Subtitle,
-        IconPath = s.IconPath, IconGlyph = s.IconGlyph,
-        Score = s.Score, FrequencyScore = s.FrequencyScore,
-        ExePath = s.ExePath, LnkPath = s.LnkPath,
-        FilePath = s.FilePath, FileExtension = s.FileExtension,
-        ClipContent = s.ClipContent, ClipTimestamp = s.ClipTimestamp,
-        ActionId = s.ActionId,
-    };
 }

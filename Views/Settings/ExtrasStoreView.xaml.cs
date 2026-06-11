@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using Spur.Models;
@@ -34,28 +35,40 @@ public partial class ExtrasStoreView : UserControl
         ErrorPanel.Visibility = Visibility.Collapsed;
         DataPanel.Visibility = Visibility.Collapsed;
 
-        var manifest = await _vm.StoreService.GetManifestAsync();
+        try
+        {
+            var manifest = await _vm.StoreService.GetManifestAsync();
 
-        LoadingPanel.Visibility = Visibility.Collapsed;
-
-        if (manifest.Count == 0)
+            if (manifest.Count == 0)
+            {
+                ErrorPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                StoreItems.ItemsSource = manifest;
+                DataPanel.Visibility = Visibility.Visible;
+            }
+        }
+        catch (Exception)
         {
             ErrorPanel.Visibility = Visibility.Visible;
         }
-        else
+        finally
         {
-            StoreItems.ItemsSource = manifest;
-            DataPanel.Visibility = Visibility.Visible;
+            LoadingPanel.Visibility = Visibility.Collapsed;
         }
     }
 
     private async void OnInstallClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.DataContext is StoreManifestEntry entry && _vm?.StoreService != null)
-        {
-            btn.IsEnabled = false;
-            btn.Content = "Installing...";
+        if (sender is not Button btn || btn.DataContext is not StoreManifestEntry entry || _vm?.StoreService == null)
+            return;
 
+        btn.IsEnabled = false;
+        btn.Content = "Installing...";
+
+        try
+        {
             var success = await _vm.StoreService.InstallExtraAsync(entry);
 
             if (success)
@@ -67,6 +80,11 @@ public partial class ExtrasStoreView : UserControl
                 btn.IsEnabled = true;
                 btn.Content = "Install Failed";
             }
+        }
+        catch (Exception)
+        {
+            btn.IsEnabled = true;
+            btn.Content = "Install Failed";
         }
     }
 }

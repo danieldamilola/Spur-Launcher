@@ -10,6 +10,32 @@ namespace Spur.ViewModels;
 /// </summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
+    // AI Provider constants
+    private static class AiProviders
+    {
+        public const string Groq = "groq";
+        public const string Gemini = "gemini";
+        public const string OpenRouter = "openrouter";
+        public const string DeepSeek = "deepseek";
+    }
+
+    // Window position constants
+    private static class WindowPositions
+    {
+        public const string Center = "center";
+        public const string CenterTop = "centerTop";
+        public const string LeftTop = "leftTop";
+        public const string RightTop = "rightTop";
+        public const string Custom = "custom";
+    }
+
+    // Last query style constants
+    private static class QueryStyles
+    {
+        public const string Select = "select";
+        public const string Keep = "keep";
+        public const string Clear = "clear";
+    }
     private readonly IConfigService   _configService;
     private readonly MainViewModel    _main;
     private readonly IThemeManager    _themeManager;
@@ -239,25 +265,29 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string LastQueryStyle
     {
-        get => _config.LastQueryStyle switch
-        {
-            "select" => "Select last Query",
-            "keep" => "Keep last Query",
-            _ => "Clear",
-        };
+        get => MapQueryStyleToDisplay(_config.LastQueryStyle);
         set
         {
-            _config.LastQueryStyle = value switch
-            {
-                "Select last Query" => "select",
-                "Keep last Query" => "keep",
-                _ => "clear",
-            };
+            _config.LastQueryStyle = MapDisplayToQueryStyle(value);
             _main.Config = _config.Clone();
             Save();
             OnPropertyChanged();
         }
     }
+
+    private static string MapQueryStyleToDisplay(string style) => style switch
+    {
+        QueryStyles.Select => "Select last Query",
+        QueryStyles.Keep => "Keep last Query",
+        _ => "Clear",
+    };
+
+    private static string MapDisplayToQueryStyle(string display) => display switch
+    {
+        "Select last Query" => QueryStyles.Select,
+        "Keep last Query" => QueryStyles.Keep,
+        _ => QueryStyles.Clear,
+    };
 
     public bool IndexShell
     {
@@ -292,7 +322,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public int MaxFileDepth
     {
         get => _config.MaxFileDepth;
-        set { _config.MaxFileDepth = Math.Clamp(value, 1, 5); Save(); OnPropertyChanged(); }
+        set { _config.MaxFileDepth = Math.Clamp(value, 1, 5); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
     }
 
     public bool FileSearchEnabled
@@ -511,7 +541,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public int ClipboardHistorySize
     {
         get => _config.ClipboardHistorySize;
-        set { _config.ClipboardHistorySize = Math.Clamp(value, 10, 200); Save(); OnPropertyChanged(); }
+        set { _config.ClipboardHistorySize = Math.Clamp(value, 10, 200); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -574,33 +604,42 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string SearchWindowPosition
     {
-        get => _config.SearchWindowPosition switch
-        {
-            "centerTop" => "Center Top",
-            "leftTop" => "Left Top",
-            "rightTop" => "Right Top",
-            "custom" => "Custom Position",
-            _ => "Center",
-        };
+        get => MapWindowPositionToDisplay(_config.SearchWindowPosition);
         set
         {
-            _config.SearchWindowPosition = value switch
-            {
-                "Center Top" => "centerTop",
-                "Left Top" => "leftTop",
-                "Right Top" => "rightTop",
-                "Custom Position" => "custom",
-                _ => "center",
-            };
+            _config.SearchWindowPosition = MapDisplayToWindowPosition(value);
             _main.Config = _config.Clone();
             Save();
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(PositionCenter));
-            OnPropertyChanged(nameof(PositionTop));
-            OnPropertyChanged(nameof(PositionLeft));
-            OnPropertyChanged(nameof(PositionRight));
-            OnPropertyChanged(nameof(PositionCustom));
+            NotifyPositionPropertiesChanged();
         }
+    }
+
+    private static string MapWindowPositionToDisplay(string position) => position switch
+    {
+        WindowPositions.CenterTop => "Center Top",
+        WindowPositions.LeftTop => "Left Top",
+        WindowPositions.RightTop => "Right Top",
+        WindowPositions.Custom => "Custom Position",
+        _ => "Center",
+    };
+
+    private static string MapDisplayToWindowPosition(string display) => display switch
+    {
+        "Center Top" => WindowPositions.CenterTop,
+        "Left Top" => WindowPositions.LeftTop,
+        "Right Top" => WindowPositions.RightTop,
+        "Custom Position" => WindowPositions.Custom,
+        _ => WindowPositions.Center,
+    };
+
+    private void NotifyPositionPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(SearchWindowPosition));
+        OnPropertyChanged(nameof(PositionCenter));
+        OnPropertyChanged(nameof(PositionTop));
+        OnPropertyChanged(nameof(PositionLeft));
+        OnPropertyChanged(nameof(PositionRight));
+        OnPropertyChanged(nameof(PositionCustom));
     }
 
     public bool PositionCenter
@@ -709,73 +748,89 @@ public sealed partial class SettingsViewModel : ObservableObject
         get => _config.AiProvider;
         set
         {
-            if (_config.AiProvider == value) return;
-            _config.AiProvider = value;
+            var normalized = value.ToLowerInvariant();
+            if (string.Equals(_config.AiProvider, normalized, StringComparison.OrdinalIgnoreCase)) return;
+            _config.AiProvider = normalized;
             _main.Config = _config.Clone();
             Save();
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ApiKey));
-            OnPropertyChanged(nameof(AiModel));
-            OnPropertyChanged(nameof(CurrentModels));
+            NotifyAiProviderPropertiesChanged();
         }
     }
 
     public string ApiKey
     {
-        get => _config.AiProvider switch
-        {
-            "gemini"     => _secureStorage.Decrypt(_config.EncryptedGeminiApiKey),
-            "openrouter" => _secureStorage.Decrypt(_config.EncryptedOpenRouterApiKey),
-            "deepseek"   => _secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),
-            _            => _secureStorage.Decrypt(_config.EncryptedGroqApiKey),
-        };
-        set
-        {
-            var encrypted = _secureStorage.Encrypt(value);
-            switch (_config.AiProvider)
-            {
-                case "gemini":     _config.EncryptedGeminiApiKey     = encrypted; break;
-                case "openrouter": _config.EncryptedOpenRouterApiKey = encrypted; break;
-                case "deepseek":   _config.EncryptedDeepSeekApiKey   = encrypted; break;
-                default:           _config.EncryptedGroqApiKey       = encrypted; break;
-            }
-            _main.Config = _config.Clone();
-            Save();
-            OnPropertyChanged();
-        }
+        get => GetApiKeyForCurrentProvider();
+        set => SetApiKeyForCurrentProvider(value);
     }
 
-    public string[] CurrentModels => _config.AiProvider switch
+    private string GetApiKeyForCurrentProvider() => _config.AiProvider switch
     {
-        "groq"       => ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b"],
-        "gemini"     => ["gemini-2.0-flash", "gemini-2.5-pro-exp-03-25", "gemini-1.5-flash"],
-        "openrouter" => ["google/gemini-2.0-flash-001", "meta-llama/llama-3.1-8b-instruct", "deepseek/deepseek-chat"],
-        "deepseek"   => ["deepseek-chat", "deepseek-reasoner"],
-        _            => [],
+        AiProviders.Gemini => _secureStorage.Decrypt(_config.EncryptedGeminiApiKey),
+        AiProviders.OpenRouter => _secureStorage.Decrypt(_config.EncryptedOpenRouterApiKey),
+        AiProviders.DeepSeek => _secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),
+        _ => _secureStorage.Decrypt(_config.EncryptedGroqApiKey),
+    };
+
+    private void SetApiKeyForCurrentProvider(string value)
+    {
+        var encrypted = _secureStorage.Encrypt(value);
+        switch (_config.AiProvider)
+        {
+            case AiProviders.Gemini: _config.EncryptedGeminiApiKey = encrypted; break;
+            case AiProviders.OpenRouter: _config.EncryptedOpenRouterApiKey = encrypted; break;
+            case AiProviders.DeepSeek: _config.EncryptedDeepSeekApiKey = encrypted; break;
+            default: _config.EncryptedGroqApiKey = encrypted; break;
+        }
+        _main.Config = _config.Clone();
+        Save();
+        OnPropertyChanged(nameof(ApiKey));
+    }
+
+    public string[] CurrentModels => GetModelsForCurrentProvider();
+
+    private string[] GetModelsForCurrentProvider() => _config.AiProvider switch
+    {
+        AiProviders.Groq => ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b"],
+        AiProviders.Gemini => ["gemini-2.0-flash", "gemini-2.5-pro-exp-03-25", "gemini-1.5-flash"],
+        AiProviders.OpenRouter => ["google/gemini-2.0-flash-001", "meta-llama/llama-3.1-8b-instruct", "deepseek/deepseek-chat"],
+        AiProviders.DeepSeek => ["deepseek-chat", "deepseek-reasoner"],
+        _ => [],
     };
 
     public string AiModel
     {
-        get => _config.AiProvider switch
+        get => GetModelForCurrentProvider();
+        set => SetModelForCurrentProvider(value);
+    }
+
+    private string GetModelForCurrentProvider() => _config.AiProvider switch
+    {
+        AiProviders.Gemini => _config.GeminiModel,
+        AiProviders.OpenRouter => _config.OpenRouterModel,
+        AiProviders.DeepSeek => _config.DeepSeekModel,
+        _ => _config.GroqModel,
+    };
+
+    private void SetModelForCurrentProvider(string value)
+    {
+        switch (_config.AiProvider)
         {
-            "gemini"     => _config.GeminiModel,
-            "openrouter" => _config.OpenRouterModel,
-            "deepseek"   => _config.DeepSeekModel,
-            _            => _config.GroqModel,
-        };
-        set
-        {
-            switch (_config.AiProvider)
-            {
-                case "gemini":     _config.GeminiModel     = value; break;
-                case "openrouter": _config.OpenRouterModel = value; break;
-                case "deepseek":   _config.DeepSeekModel   = value; break;
-                default:           _config.GroqModel       = value; break;
-            }
-            _main.Config = _config.Clone();
-            Save();
-            OnPropertyChanged();
+            case AiProviders.Gemini: _config.GeminiModel = value; break;
+            case AiProviders.OpenRouter: _config.OpenRouterModel = value; break;
+            case AiProviders.DeepSeek: _config.DeepSeekModel = value; break;
+            default: _config.GroqModel = value; break;
         }
+        _main.Config = _config.Clone();
+        Save();
+        OnPropertyChanged(nameof(AiModel));
+    }
+
+    private void NotifyAiProviderPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(AiProvider));
+        OnPropertyChanged(nameof(ApiKey));
+        OnPropertyChanged(nameof(AiModel));
+        OnPropertyChanged(nameof(CurrentModels));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -803,6 +858,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         _configService.Save(_config);
         _main.Config = _config.Clone();
         LoadStartupState();
+
+        _indexedFoldersList = null;
+        _fileTypesList = null;
 
         // Notify all properties changed
         OnPropertyChanged(string.Empty);
@@ -960,6 +1018,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         while (_config.PinnedCategories.Count <= index) _config.PinnedCategories.Add("");
         _config.PinnedCategories[index] = id;
+        _config.PinnedCategories.RemoveAll(string.IsNullOrWhiteSpace);
         Save();
         _main.UpdatePinnedCategories();
     }

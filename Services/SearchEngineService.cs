@@ -351,7 +351,9 @@ public sealed class SearchEngineService : ISearchEngineService
     private static SearchResult Clone(SearchResult s) => new()
     {
         Id = s.Id, Name = s.Name, Subtitle = s.Subtitle, Type = s.Type,
-        ExePath = s.ExePath, IconPath = s.IconPath, IconGlyph = s.IconGlyph,
-        ActionId = s.ActionId, FrequencyScore = s.FrequencyScore
+        ExePath = s.ExePath, LnkPath = s.LnkPath, IconPath = s.IconPath, IconGlyph = s.IconGlyph,
+        FilePath = s.FilePath, FileExtension = s.FileExtension, IsDirectory = s.IsDirectory,
+        ClipContent = s.ClipContent, ClipTimestamp = s.ClipTimestamp, ClipImage = s.ClipImage,
+        ActionId = s.ActionId, FrequencyScore = s.FrequencyScore, IsPinned = s.IsPinned,
     };
 }

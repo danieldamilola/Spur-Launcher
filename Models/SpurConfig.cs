@@ -123,7 +123,7 @@ public sealed class SpurConfig
     [JsonIgnore] public string KeywordKill      { get; set; } = "kill";
     [JsonIgnore] public string KeywordScreenshot { get; set; } = "ss";
     [JsonIgnore] public string KeywordShell      { get; set; } = ">";
-    
+
     public string KeywordClipboard { get; set; } = "c";
     public string KeywordFiles     { get; set; } = "files";
     public string KeywordApps      { get; set; } = "apps";
@@ -259,8 +259,10 @@ public sealed class SpurConfig
         clone.IndexedFolders = new List<string>(IndexedFolders);
         clone.ExcludedFolders = new List<string>(ExcludedFolders);
         clone.FileExtensions = new List<string>(FileExtensions);
+        clone.PinnedCategories = new List<string>(PinnedCategories);
         clone.PinnedItems = new HashSet<string>(PinnedItems, StringComparer.OrdinalIgnoreCase);
         clone.PinnedClipboard = PinnedClipboard.Select(p => new PinnedClipboardItem { Id = p.Id, Content = p.Content, Preview = p.Preview, Timestamp = p.Timestamp }).ToList();
+        clone.Extras = new Dictionary<string, ExtrasEntryConfig>(Extras, StringComparer.OrdinalIgnoreCase);
         return clone;
     }
 }

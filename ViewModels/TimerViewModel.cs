@@ -34,7 +34,7 @@ public sealed partial class TimerViewModel : ObservableObject
             _timerTotal = TimeSpan.Zero;
             _timerRemaining = TimeSpan.Zero;
             TimerDisplay = "00:00";
-            TimerProgress = 0;
+            TimerProgress = 100;
             TimerStatus = "Use a duration like 5m, 30s, or 1h";
             TimerRunning = false;
             return false;
@@ -42,6 +42,7 @@ public sealed partial class TimerViewModel : ObservableObject
         var duration = TimeSpan.FromSeconds(durationSec);
         _timerTotal     = duration;
         _timerRemaining = duration;
+        TimerProgress = 100;
         UpdateTimerDisplay();
         TimerStatus = "Ready to start";
         TimerRunning = false;
@@ -50,13 +51,17 @@ public sealed partial class TimerViewModel : ObservableObject
 
     private void Start()
     {
-        if (TimerRunning || _timerTotal == TimeSpan.Zero) return;
+        if (TimerRunning) return;
+        if (_timerTotal == TimeSpan.Zero)
+        {
+            TimerStatus = "Choose a duration first";
+            return;
+        }
         _timerRemaining = _timerTotal;
         TimerRunning    = true;
         TimerStatus = "Counting down";
 
         _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-        _timerTick.Tick += OnTimerTick;
         _timerTick.Tick += OnTimerTick;
         _timerTick.Start();
     }
@@ -68,6 +73,7 @@ public sealed partial class TimerViewModel : ObservableObject
         {
             _timerRemaining = TimeSpan.Zero;
             _timerTick?.Stop();
+            _timerTick = null;
             TimerRunning = false;
             TimerStatus = "Finished";
             _notification.Show("Spur Timer", "Your timer has finished!");

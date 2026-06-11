@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              xmlns:models="clr-namespace:Spur.Models"
-             xmlns:conv="clr-namespace:Spur.Converters"
              Background="Transparent">
 
     <!--
@@ -11,10 +10,6 @@
         Extracted from the launcher's main search flow.
         DataContext → ClipboardViewModel.
     -->
-
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -289,4 +284,3 @@
     </Grid>
 
 </UserControl>
-

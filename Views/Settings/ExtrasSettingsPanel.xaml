@@ -6,7 +6,6 @@
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <UserControl.Resources>
         <conv:ExtraSettingsViewConverter x:Key="ExtraSettingsViewConv"/>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <StackPanel>
@@ -110,7 +109,7 @@
 
                             <!-- ── Expanded settings area ── -->
                             <Border x:Name="ExpandedArea"
-                                    Visibility="{Binding IsChecked, ElementName=ExpandBtn, Converter={StaticResource BoolToVis}}"
+                                    Visibility="{Binding IsChecked, ElementName=ExpandBtn, Converter={StaticResource BoolToVisibility}}"
                                     Background="{DynamicResource SurfaceLow}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,1,0,0"
@@ -176,7 +175,7 @@
                                         <Border Background="{DynamicResource SelectedBg}"
                                                 CornerRadius="4"
                                                 Padding="6,2"
-                                                Visibility="{Binding IsBuiltIn, Converter={StaticResource BoolToVis}}">
+                                                Visibility="{Binding IsBuiltIn, Converter={StaticResource BoolToVisibility}}">
                                             <TextBlock Text="Built-in"
                                                        FontSize="10"
                                                        Foreground="{DynamicResource TextMuted}"/>
@@ -185,7 +184,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Hairline divider (hidden on last item via triggers) -->
+                            <!-- Hairline divider -->
                             <Border x:Name="Divider"
                                     Height="1"
                                     Background="{DynamicResource Separator}"

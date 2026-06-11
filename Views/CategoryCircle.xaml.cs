@@ -86,6 +86,10 @@ public partial class CategoryCircle : UserControl
             return;
         }
 
+        // Cancel any in-progress opacity animation so the old Completed
+        // handler doesn't fire after we've already started showing again.
+        BeginAnimation(OpacityProperty, null);
+
         var duration = TimeSpan.FromMilliseconds(durationMs);
         var ease = SpurMotion.EaseIn();
 
@@ -93,6 +97,8 @@ public partial class CategoryCircle : UserControl
         fade.Completed += (_, _) => IsHitTestVisible = false;
         BeginAnimation(OpacityProperty, fade);
 
+        CircleScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        CircleScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
         var scale = new DoubleAnimation(1, 0.92, duration) { EasingFunction = ease };
         CircleScale.BeginAnimation(ScaleTransform.ScaleXProperty, scale);
         CircleScale.BeginAnimation(ScaleTransform.ScaleYProperty, scale);
@@ -115,4 +121,3 @@ public partial class CategoryCircle : UserControl
         IconPresenter.Glyph = IconGlyph;
     }
 }
-

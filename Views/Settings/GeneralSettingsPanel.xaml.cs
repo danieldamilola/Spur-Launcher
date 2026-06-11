@@ -8,6 +8,7 @@ namespace Spur.Views.Settings;
 public partial class GeneralSettingsPanel : UserControl
 {
     private bool _recordingShortcut;
+    private Button? _recordingButton;
 
     public GeneralSettingsPanel()
     {
@@ -20,6 +21,7 @@ public partial class GeneralSettingsPanel : UserControl
         _recordingShortcut = true;
         if (sender is Button btn)
         {
+            _recordingButton = btn;
             btn.Content = "Recording…";
             if (TryFindResource("TextPrimary") is System.Windows.Media.Brush b)
                 btn.Foreground = b;
@@ -43,11 +45,12 @@ public partial class GeneralSettingsPanel : UserControl
         if ((mods & ModifierKeys.Control) != 0) parts.Add("Ctrl");
         if ((mods & ModifierKeys.Alt)     != 0) parts.Add("Alt");
         if ((mods & ModifierKeys.Shift)   != 0) parts.Add("Shift");
+        if ((mods & ModifierKeys.Windows) != 0) parts.Add("Win");
         parts.Add(key.ToString());
 
         if (DataContext is SettingsViewModel vm)
             vm.Shortcut = string.Join("+", parts);
-            
+
         StopRecording();
     }
 
@@ -57,14 +60,14 @@ public partial class GeneralSettingsPanel : UserControl
     {
         if (!_recordingShortcut) return;
         _recordingShortcut = false;
-        // Find the button in the visual tree
-        if (this.FindName("EditShortcutBtn") is Button btn)
+        if (_recordingButton is Button btn)
         {
             btn.Content = "Edit";
             btn.PreviewKeyDown -= OnShortcutKeyDown;
             btn.LostFocus      -= OnShortcutLostFocus;
             if (TryFindResource("TextSecondary") is System.Windows.Media.Brush b)
                 btn.Foreground = b;
+            _recordingButton = null;
         }
     }
 }

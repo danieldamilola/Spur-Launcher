@@ -10,6 +10,8 @@ namespace Spur.Views;
 /// </summary>
 public partial class SettingsWindow : Window
 {
+    private bool _isShuttingDown;
+
     public SettingsWindow()
     {
         InitializeComponent();
@@ -33,10 +35,17 @@ public partial class SettingsWindow : Window
     private void OnCloseButtonClick(object sender, RoutedEventArgs e)
         => Hide();
 
-    /// <summary>Hide instead of close — window persists for re-show.</summary>
+    /// <summary>Hide instead of close — window persists for re-show. During shutdown, close for real.</summary>
     private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
     {
+        if (_isShuttingDown) return; // allow real close during shutdown
         e.Cancel = true;
         Hide();
+    }
+
+    /// <summary>Call before Application.Shutdown so the window closes cleanly.</summary>
+    public void PrepareShutdown()
+    {
+        _isShuttingDown = true;
     }
 }

@@ -3,7 +3,7 @@ namespace Spur.Services;
 /// <summary>Interface for file/folder search.</summary>
 public interface IFileSearchService
 {
-    /// <summary>Maximum folder depth for recursive search (1–5). Default 3.</summary>
+    /// <summary>Maximum folder depth for recursive search (1-5). Default 3.</summary>
     int MaxDepth { get; set; }
 
     /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
@@ -21,10 +21,14 @@ public interface IFileSearchService
 /// system binaries, or development artifacts.  Directories are always ranked
 /// ahead of files with the same fuzzy-match quality.
 ///
-/// <see cref="MaxDepth"/> controls how deep the recursive search goes (1–5).
+/// <see cref="MaxDepth"/> controls how deep the recursive search goes (1-5).
 /// </summary>
 public sealed class FileSearchService : IFileSearchService
 {
+    // ── Result ID and Type Constants ──────────────────────────────
+    private const string FileIdPrefix = "file:";
+    private const string FileSectionLabel = "Files";
+
     private static readonly string[] SearchRoots =
     [
         Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
@@ -98,18 +102,46 @@ public sealed class FileSearchService : IFileSearchService
         set => _maxDepth = Math.Clamp(value, 1, 5);
     }
 
-    private const int MaxResults = 100;
-    
+    /// <summary>Maximum number of scored results before final truncation.</summary>
+    private const int MaxSearchResults = 100;
+    /// <summary>Hard cap on total cached items to bound memory usage.</summary>
+    private const int MaxCacheSize = 20_000;
+
     // ── In-Memory Cache ───────────────────────────────────────────
     private readonly object _cacheLock = new();
     private List<CachedItem> _cache = [];
     private bool _isIndexing = false;
     private DateTime _lastIndexTime = DateTime.MinValue;
+    private volatile bool _isReady;
+
+    /// <summary>True once the initial background index build has completed at least once.</summary>
+    public bool IsReady => _isReady;
+
+    /// <summary>
+    /// Guards against infinite re-index loops: if BuildIndexAsync fails and the
+    /// cache stays empty, SearchCached would re-trigger on every keystroke.
+    /// This cooldown prevents re-triggering within N seconds of a failed attempt.
+    /// </summary>
+    private DateTime _lastIndexAttempt = DateTime.MinValue;
+    private const int ReIndexCooldownSeconds = 60;
+
+    // Local string pool — deduplicates directory paths per indexing cycle
+    // without polluting the global CLR intern pool. Cleared at the start
+    // of each BuildIndexAsync so stale paths don't accumulate.
+    private readonly Dictionary<string, string> _stringPool = new(StringComparer.Ordinal);
+
+    private string PoolString(string s)
+    {
+        if (_stringPool.TryGetValue(s, out var cached)) return cached;
+        _stringPool[s] = s;
+        return s;
+    }
 
     private struct CachedItem
     {
         public string Path;
         public string Name;
+        public string NameLower;
         public string NameNoExt;
         public string Ext;
         public string DirName;
@@ -118,10 +150,12 @@ public sealed class FileSearchService : IFileSearchService
     }
 
     private readonly SpurConfig _config;
+    private readonly ILogger? _log;
 
-    public FileSearchService(SpurConfig config)
+    public FileSearchService(SpurConfig config, ILogger? log = null)
     {
         _config = config;
+        _log = log;
         // Kick off background indexing on startup
         Task.Run(BuildIndexAsync);
     }
@@ -133,6 +167,9 @@ public sealed class FileSearchService : IFileSearchService
 
         try
         {
+            _lastIndexAttempt = DateTime.Now;
+            _stringPool.Clear();
+
             var newCache = new List<CachedItem>(5_000);
             foreach (var root in SearchRoots)
             {
@@ -146,10 +183,12 @@ public sealed class FileSearchService : IFileSearchService
                 _lastIndexTime = DateTime.Now;
             }
 
-            // Release Gen2 memory after the one-time startup index build
-            GC.Collect(2, GCCollectionMode.Optimized, false);
+            _isReady = true;
         }
-        catch { /* ignore background index errors */ }
+        catch (Exception ex)
+        {
+            _log?.Warning("Background index build failed", ex);
+        }
         finally
         {
             lock (_cacheLock) { _isIndexing = false; }
@@ -158,10 +197,11 @@ public sealed class FileSearchService : IFileSearchService
 
     private async Task IndexDirectoryAsync(string dir, int depth, List<CachedItem> results)
     {
-        if (depth > MaxDepth || results.Count >= 20_000) return; // Cap at 20k items to save RAM
+        if (depth > MaxDepth || results.Count >= MaxCacheSize) return;
 
-        // Throttle to prevent 100% CPU lockups during large enumerations
-        await Task.Delay(1);
+        // Yield to the scheduler to prevent CPU pinning during large enumerations.
+        // Unlike Task.Delay(1), this adds zero artificial latency.
+        await Task.Yield();
 
         try
         {
@@ -175,9 +215,10 @@ public sealed class FileSearchService : IFileSearchService
                 {
                     Path = file,
                     Name = info.Name,
+                    NameLower = info.Name.ToLowerInvariant(),
                     NameNoExt = Path.GetFileNameWithoutExtension(info.Name),
-                    Ext = string.Intern(info.Extension.ToLowerInvariant()),
-                    DirName = string.Intern(Path.GetDirectoryName(file) ?? ""),
+                    Ext = PoolString(info.Extension.ToLowerInvariant()),
+                    DirName = PoolString(Path.GetDirectoryName(file) ?? ""),
                     IsDirectory = false,
                     LastWriteTime = info.LastWriteTime
                 });
@@ -195,9 +236,10 @@ public sealed class FileSearchService : IFileSearchService
                 {
                     Path = sub,
                     Name = dirName,
+                    NameLower = dirName.ToLowerInvariant(),
                     NameNoExt = dirName,
                     Ext = "",
-                    DirName = string.Intern(Path.GetDirectoryName(sub) ?? ""),
+                    DirName = PoolString(Path.GetDirectoryName(sub) ?? ""),
                     IsDirectory = true,
                     LastWriteTime = dirInfo.LastWriteTime
                 });
@@ -205,7 +247,9 @@ public sealed class FileSearchService : IFileSearchService
                 await IndexDirectoryAsync(sub, depth + 1, results);
             }
         }
-        catch { }
+        catch (UnauthorizedAccessException) { /* skip inaccessible directories */ }
+        catch (PathTooLongException) { /* skip deeply nested paths */ }
+        catch (Exception ex) { _log?.Debug($"Skipped dir {dir}: {ex.Message}"); }
     }
 
     /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
@@ -225,14 +269,14 @@ public sealed class FileSearchService : IFileSearchService
         // Refresh index if it's older than config interval
         var intervalMins = _config.ReIndexIntervalHours * 60;
         if (intervalMins > 0 && (DateTime.Now - _lastIndexTime).TotalMinutes > intervalMins)
-            Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
+            Helpers.SafeFireAndForget.Run(BuildIndexAsync, _log, "BuildIndex");
 
         List<CachedItem> localCache;
         lock (_cacheLock) { localCache = _cache; }
 
-        var results = new List<(double Score, SearchResult Result)>(MaxResults);
+        var results = new List<(double Score, SearchResult Result)>(MaxSearchResults);
 
-        // Sort descending by LastWriteTime, take top 100 to score
+        // Sort descending by LastWriteTime, take top 200 to score
         var recentItems = localCache
             .OrderByDescending(x => x.LastWriteTime)
             .Take(200);
@@ -245,15 +289,17 @@ public sealed class FileSearchService : IFileSearchService
 
             results.Add((score, new SearchResult
             {
-                Id            = $"file:{item.Path}",
-                Type          = ResultType.File,
-                Name          = item.Name,
-                Subtitle      = item.IsDirectory ? item.DirName : (item.LastWriteTime.ToString("MMM d, yyyy  h:mm tt") + "  •  " + item.DirName),
-                IconPath      = item.Path,
-                FilePath      = item.Path,
+                Id = $"{FileIdPrefix}{item.Path}",
+                Type = ResultType.File,
+                Name = item.Name,
+                Subtitle = item.IsDirectory
+                    ? item.DirName
+                    : (item.LastWriteTime.ToString("MMM d, yyyy  h:mm tt") + "  \u2022  " + item.DirName),
+                IconPath = item.Path,
+                FilePath = item.Path,
                 FileExtension = item.Ext,
-                IsDirectory   = item.IsDirectory,
-                Score         = score,
+                IsDirectory = item.IsDirectory,
+                Score = score,
             }));
         }
 
@@ -270,48 +316,63 @@ public sealed class FileSearchService : IFileSearchService
 
     private List<SearchResult> SearchCached(string query, int maxReturn, CancellationToken ct)
     {
-        var results = new List<SearchResult>(MaxResults);
+        var results = new List<SearchResult>(MaxSearchResults);
         if (string.IsNullOrWhiteSpace(query)) return results;
 
         List<CachedItem> localCache;
         lock (_cacheLock) { localCache = _cache; }
 
         var intervalMins = _config.ReIndexIntervalHours * 60;
-        // Refresh index if it's empty or very old
-        if (localCache.Count == 0 || (intervalMins > 0 && (DateTime.Now - _lastIndexTime).TotalMinutes > intervalMins))
-            Helpers.SafeFireAndForget.Run(BuildIndexAsync, null, "BuildIndex");
+        // Refresh index if it's empty or very old — but respect cooldown to
+        // prevent infinite re-index loops after a failed build.
+        bool cacheEmpty = localCache.Count == 0;
+        bool cacheStale = intervalMins > 0 && (DateTime.Now - _lastIndexTime).TotalMinutes > intervalMins;
+        bool recentlyFailed = (DateTime.Now - _lastIndexAttempt).TotalSeconds < ReIndexCooldownSeconds;
 
+        if ((cacheEmpty && !recentlyFailed) || (cacheStale && !cacheEmpty))
+            Helpers.SafeFireAndForget.Run(BuildIndexAsync, _log, "BuildIndex");
+
+        // Lower the query once — all comparisons use pre-lowered data
         var queryLower = query.ToLowerInvariant();
-        
+
         foreach (var item in localCache)
         {
             if (ct.IsCancellationRequested) break;
-            
-            // Fast prefix check
-            if (!item.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+
+            double score;
+
+            // Fast substring check using pre-lowered strings
+            if (item.NameLower.Contains(queryLower, StringComparison.Ordinal))
             {
-                // Skip fuzzy matching entirely if strings are vastly different lengths to save CPU
+                // Contains match — FuzzySearch will return a high score for
+                // substring matches, so use it directly
+                score = ScoreResult(query, item.Name, item.IsDirectory, item.LastWriteTime);
+            }
+            else
+            {
+                // Skip fuzzy matching if strings are vastly different lengths
                 if (Math.Abs(item.Name.Length - query.Length) > 15) continue;
-                
-                // Try fuzzy if contains fails, but skip fuzzy on massive lists unless it's a good candidate to save CPU
-                var fuzzy = FuzzySearch.Score(query, item.Name);
-                if (fuzzy < 20) continue; // Raised threshold from 10 to 20 to aggressively trim bad results
+
+                // Fuzzy match — pass pre-lowered spans to avoid per-char ToLowerInvariant
+                var fuzzy = FuzzySearch.Score(queryLower.AsSpan(), item.NameLower.AsSpan());
+                if (fuzzy < 20) continue;
+
+                score = ScoreResult(item.IsDirectory, item.LastWriteTime, fuzzy);
             }
 
-            double score = ScoreResult(query, item.Name, item.IsDirectory, item.LastWriteTime);
             if (score < 0) continue;
 
             results.Add(new SearchResult
             {
-                Id            = $"file:{item.Path}",
-                Type          = ResultType.File,
-                Name          = item.Name,
-                Subtitle      = item.DirName,
-                IconPath      = item.Path,
-                FilePath      = item.Path,
+                Id = $"{FileIdPrefix}{item.Path}",
+                Type = ResultType.File,
+                Name = item.Name,
+                Subtitle = item.DirName,
+                IconPath = item.Path,
+                FilePath = item.Path,
                 FileExtension = item.Ext,
-                IsDirectory   = item.IsDirectory,
-                Score         = score,
+                IsDirectory = item.IsDirectory,
+                Score = score,
             });
         }
 
@@ -325,6 +386,10 @@ public sealed class FileSearchService : IFileSearchService
     // Scoring
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Full scoring: runs fuzzy match internally, then adds bonuses.
+    /// Used for items that passed the substring Contains check.
+    /// </summary>
     private static double ScoreResult(string query, string name, bool isDirectory, DateTime lastModified)
     {
         double score = FuzzySearch.Score(query, name);
@@ -333,6 +398,26 @@ public sealed class FileSearchService : IFileSearchService
         if (isDirectory) score += 1000;
         if (string.Equals(name, query, StringComparison.OrdinalIgnoreCase)) score += 500;
         else if (name.StartsWith(query, StringComparison.OrdinalIgnoreCase)) score += 200;
+
+        double daysSinceModified = (DateTime.Now - lastModified).TotalDays;
+        score += Math.Max(0, 100 - daysSinceModified);
+
+        return score;
+    }
+
+    /// <summary>
+    /// Bonus-only scoring: takes a pre-computed fuzzy score (avoids double-scoring).
+    /// Used for items that already went through the fuzzy path in the search loop.
+    /// </summary>
+    private static double ScoreResult(bool isDirectory, DateTime lastModified, double fuzzyScore)
+    {
+        if (fuzzyScore < 0) return -1;
+
+        double score = fuzzyScore;
+        if (isDirectory) score += 1000;
+
+        // Note: exact/prefix bonuses are skipped here because the item already
+        // failed the Contains check — it can't be an exact or prefix match.
 
         double daysSinceModified = (DateTime.Now - lastModified).TotalDays;
         score += Math.Max(0, 100 - daysSinceModified);

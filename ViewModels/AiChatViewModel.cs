@@ -109,14 +109,14 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                     AiLoading  = AiText.Length == 0;
                     if (_aiConversation.Count == 1)
                         _aiConversation.Add(("assistant", AiText));
-                    else
+                    else if (_aiConversation.Count > 0)
                         _aiConversation[^1] = ("assistant", AiText);
                     ConversationChanged?.Invoke(this, EventArgs.Empty);
                 });
             }, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)   { AiError = "Request timed out. Please try again."; }
+        catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
         catch (HttpRequestException ex) { AiError = ex.Message; }
         catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
         finally { AiLoading = false; }
@@ -152,8 +152,6 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             string? newResponse = null;
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
-                // Synchronous lambda — no async needed here; removing the spurious
-                // async keyword prevents exceptions from being silently swallowed.
                 Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
                     if (newResponse is null)
@@ -166,7 +164,8 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                     {
                         newResponse += token;
                         AiText += token;
-                        _aiConversation[^1] = ("assistant", newResponse);
+                        if (_aiConversation.Count > 0)
+                            _aiConversation[^1] = ("assistant", newResponse);
                     }
                     AiLoading = false;
                     ConversationChanged?.Invoke(this, EventArgs.Empty);
@@ -174,18 +173,19 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             }, ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)   { AiError = "Request timed out. Please try again."; }
+        catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
         catch (HttpRequestException ex) { AiError = ex.Message; }
         catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
         finally { AiLoading = false; }
     }
 
-    private (string Key, string Model) GetAiConfig() => _config.AiProvider switch
+    private (string Key, string Model) GetAiConfig() => _config.AiProvider.ToLowerInvariant() switch
     {
+        "groq"       => (_secureStorage.Decrypt(_config.EncryptedGroqApiKey),       _config.GroqModel),
         "gemini"     => (_secureStorage.Decrypt(_config.EncryptedGeminiApiKey),     _config.GeminiModel),
         "openrouter" => (_secureStorage.Decrypt(_config.EncryptedOpenRouterApiKey), _config.OpenRouterModel),
         "deepseek"   => (_secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),   _config.DeepSeekModel),
-        _            => (_secureStorage.Decrypt(_config.EncryptedGroqApiKey),       _config.GroqModel),
+        var p        => throw new InvalidOperationException($"Unknown AI provider: {p}"),
     };
 
     public void Dispose()

@@ -67,23 +67,26 @@ public sealed class ClipboardServiceImpl : IClipboardService
     public void Add(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return;
+        var textHash = text.GetHashCode(StringComparison.Ordinal);
 
         lock (_lock)
         {
-            // Truncate first, then deduplicate against the (possibly truncated) head.
-            // Previously storedText was computed but the full original text was stored —
-            // the truncation was silently discarded.
+            // Dedup using FullTextHash (computed from the original untruncated text).
+            // This correctly handles two long texts whose first 20k chars match but
+            // differ beyond the truncation point — they will have different hashes.
+            // Collisions are astronomically rare for different texts and the worst
+            // case is a missed history entry, never data loss.
+            if (_history.Count > 0 &&
+                _history[0] is { IsImage: false, FullTextHash: var h } &&
+                h == textHash)
+                return;
+
             var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
                 ? text[..ClipboardEntry.MaxStoredTextChars]
                 : text;
 
-            if (_history.Count > 0 &&
-                string.Equals(_history[0].Content, storedText, StringComparison.Ordinal))
-                return;
-
             _history.Insert(0, new ClipboardEntry(storedText));
-            while (_history.Count > _maxItems)
-                _history.RemoveAt(_history.Count - 1);
+            EnforceLimits();
         }
         RaiseClipboardChanged();
     }
@@ -96,9 +99,7 @@ public sealed class ClipboardServiceImpl : IClipboardService
         lock (_lock)
         {
             _history.Insert(0, new ClipboardEntry(image));
-            TrimImages();
-            while (_history.Count > _maxItems)
-                _history.RemoveAt(_history.Count - 1);
+            EnforceLimits();
         }
         RaiseClipboardChanged();
     }
@@ -119,8 +120,22 @@ public sealed class ClipboardServiceImpl : IClipboardService
     }
 
     /// <summary>
-    /// Copies the entry to the system clipboard. Previously only text was
-    /// supported; image entries were silently no-ops.
+    /// Enforces both the per-total-count cap (<see cref="MaxItems"/>) and the
+    /// per-image-type cap (<see cref="MaxImageEntries"/>). Called from both
+    /// <see cref="Add"/> and <see cref="AddImage"/> to keep limits consistent
+    /// regardless of which Add overload is used.
+    /// </summary>
+    private void EnforceLimits()
+    {
+        TrimImages();
+        while (_history.Count > _maxItems)
+            _history.RemoveAt(_history.Count - 1);
+    }
+
+    /// <summary>
+    /// Copies the entry to the system clipboard. Must be called from an STA thread
+    /// (the WPF UI thread). Internally uses <c>System.Windows.Clipboard</c> which
+    /// throws if called from MTA.
     /// </summary>
     public void CopyToSystem(ClipboardEntry entry)
     {
@@ -140,8 +155,9 @@ public sealed class ClipboardServiceImpl : IClipboardService
     /// <inheritdoc />
     public void CopyTextToSystem(string text)
     {
-        if (!string.IsNullOrEmpty(text))
-            CopyToSystem(new ClipboardEntry(text));
+        if (string.IsNullOrEmpty(text)) return;
+        try { Clipboard.SetText(text); }
+        catch (Exception ex) { _log.Warning("Clipboard copy failed", ex); }
     }
 
     public string? ReadFromSystem()

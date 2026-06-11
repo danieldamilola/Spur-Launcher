@@ -34,7 +34,7 @@ public sealed class CurrencyExtra : IExtra
     private static readonly Regex _regex = new(
         @"^(?<amount>\d+(?:\.\d+)?)\s*(?<from>[a-z]{3})(?:\s+(?:to|in)\s+)?(?<to>[a-z]{3})?$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        
+
     private static readonly HttpClient _http = new();
     private static DateTime _lastFetch = DateTime.MinValue;
     private static Dictionary<string, double>? _rates;
@@ -43,7 +43,7 @@ public sealed class CurrencyExtra : IExtra
     {
         var text = subQuery.Trim();
         var settings = (Settings as CurrencySettings) ?? new CurrencySettings();
-        
+
         if (string.IsNullOrWhiteSpace(text))
         {
             yield return new SearchResult
@@ -97,7 +97,7 @@ public sealed class CurrencyExtra : IExtra
         var settings = (Settings as CurrencySettings) ?? new CurrencySettings();
         var text = input.Trim();
         var m = _regex.Match(text);
-        
+
         if (!m.Success)
             return new ExtraResult { Success = false, Title = Name, Detail = "Invalid format" };
 
@@ -107,7 +107,7 @@ public sealed class CurrencyExtra : IExtra
 
         try
         {
-            if (_rates == null || (DateTime.Now - _lastFetch).TotalHours > 24)
+            if (_rates == null || (DateTime.UtcNow - _lastFetch).TotalHours > 24)
             {
                 // Open.ER-API is a free, no-key public API for exchange rates
                 var json = await _http.GetStringAsync("https://open.er-api.com/v6/latest/USD", ct);
@@ -121,7 +121,7 @@ public sealed class CurrencyExtra : IExtra
                     {
                         _rates[prop.Name] = prop.Value.GetDouble();
                     }
-                    _lastFetch = DateTime.Now;
+                    _lastFetch = DateTime.UtcNow;
                 }
             }
 
@@ -129,7 +129,7 @@ public sealed class CurrencyExtra : IExtra
             {
                 var usdAmount = amount / rateFrom;
                 var result = usdAmount * rateTo;
-                
+
                 var formatted = $"{result:N2} {to}";
                 return new ExtraResult
                 {
@@ -141,7 +141,7 @@ public sealed class CurrencyExtra : IExtra
                     SubText = "Copied to clipboard"
                 };
             }
-            
+
             return new ExtraResult { Success = false, Title = Name, Detail = "Currency not found" };
         }
         catch (Exception ex)

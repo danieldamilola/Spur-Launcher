@@ -57,7 +57,7 @@ public partial class CommandPalette : UserControl
             case Key.Tab:
                 // Cycle through results with Tab/Shift+Tab
                 vm.MoveSelectionCommand.Execute(
-                    Keyboard.Modifiers == ModifierKeys.Shift ? -1 : 1);
+                    Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
                 e.Handled = true;
                 break;
         }

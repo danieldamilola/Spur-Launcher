@@ -25,15 +25,14 @@ public partial class ClipboardManager : UserControl
         if (e.NewValue is ClipboardViewModel vm)
         {
             _vm = vm;
-            vm.Refresh();
         }
     }
 
     private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (IsVisible)
+        if (IsVisible && _vm is not null)
         {
-            _vm?.Refresh();
+            _vm.Refresh();
         }
     }
 

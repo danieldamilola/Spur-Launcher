@@ -34,7 +34,12 @@ public sealed class NullToVisibilityConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        bool hasValue = value is not null && value is not string s || (value is string str && !string.IsNullOrEmpty(str));
+        bool hasValue = value switch
+        {
+            null => false,
+            string s => !string.IsNullOrEmpty(s),
+            _ => true,
+        };
         bool show = ShowWhenNull ? !hasValue : hasValue;
         return show ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -42,4 +47,3 @@ public sealed class NullToVisibilityConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
-

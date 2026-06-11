@@ -128,17 +128,26 @@
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <!-- Dark -->
-                        <Border x:Name="ThemeDarkCard"
+                        <Button x:Name="ThemeDarkCard"
                                 Width="120"
-                                CornerRadius="10"
                                 Background="{DynamicResource Depth2}"
                                 BorderBrush="{DynamicResource Accent}"
                                 BorderThickness="2"
-                                Padding="0"
                                 Margin="0,0,10,0"
                                 Cursor="Hand"
                                 AutomationProperties.Name="Dark theme"
-                                MouseLeftButtonDown="OnThemeDarkClick">
+                                Click="OnThemeDarkClick">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="10"
+                                            Padding="0">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
                                         Background="{DynamicResource OnboardingPreviewDark}" Margin="0,0,0,8"/>
@@ -149,20 +158,29 @@
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
-                        </Border>
+                        </Button>
 
                         <!-- Light -->
-                        <Border x:Name="ThemeLightCard"
+                        <Button x:Name="ThemeLightCard"
                                 Width="120"
-                                CornerRadius="10"
                                 Background="{DynamicResource Depth2}"
                                 BorderBrush="Transparent"
                                 BorderThickness="2"
-                                Padding="0"
                                 Margin="0,0,10,0"
                                 Cursor="Hand"
                                 AutomationProperties.Name="Light theme"
-                                MouseLeftButtonDown="OnThemeLightClick">
+                                Click="OnThemeLightClick">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="10"
+                                            Padding="0">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
                                         Background="{DynamicResource OnboardingPreviewLight}" Margin="0,0,0,8"/>
@@ -173,19 +191,28 @@
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
-                        </Border>
+                        </Button>
 
                         <!-- System -->
-                        <Border x:Name="ThemeSystemCard"
+                        <Button x:Name="ThemeSystemCard"
                                 Width="120"
-                                CornerRadius="10"
                                 Background="{DynamicResource Depth2}"
                                 BorderBrush="Transparent"
                                 BorderThickness="2"
-                                Padding="0"
                                 Cursor="Hand"
                                 AutomationProperties.Name="System theme"
-                                MouseLeftButtonDown="OnThemeSystemClick">
+                                Click="OnThemeSystemClick">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="10"
+                                            Padding="0">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
                             <StackPanel Margin="16">
                                 <Border Width="88" Height="48" CornerRadius="6"
                                         Background="{DynamicResource OnboardingPreviewDark}" Margin="0,0,0,8">
@@ -199,7 +226,7 @@
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
-                        </Border>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
 

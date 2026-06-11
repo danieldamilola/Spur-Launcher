@@ -6,24 +6,6 @@ using System.Windows.Data;
 
 namespace Spur.Views;
 
-public sealed class InvertBoolConverter : IValueConverter
-{
-    public static readonly InvertBoolConverter Instance = new();
-    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        => value is true ? false : true;
-    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-public sealed class BoolToVisibilityConverter : IValueConverter
-{
-    public static readonly BoolToVisibilityConverter Instance = new();
-    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        => value is true ? Visibility.Visible : Visibility.Collapsed;
-    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _vm;

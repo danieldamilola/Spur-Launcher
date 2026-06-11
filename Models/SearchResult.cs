@@ -20,7 +20,7 @@ public class SearchResult
     [System.Text.Json.Serialization.JsonIgnore]
     public string DisplaySubtitle => Type switch
     {
-        ResultType.App  => "",                          // name is enough
+        ResultType.App => "",                          // name is enough
         ResultType.File when IsDirectory => Subtitle,   // show path for folders
         ResultType.File => string.IsNullOrWhiteSpace(FileExtension)
             ? Subtitle

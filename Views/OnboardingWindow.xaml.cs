@@ -155,9 +155,9 @@ public partial class OnboardingWindow : Window
 
     // ── Theme selection (Slide 3) ──────────────────────────────
 
-    private void OnThemeDarkClick(object sender, MouseButtonEventArgs e)  => SelectTheme("dark");
-    private void OnThemeLightClick(object sender, MouseButtonEventArgs e)  => SelectTheme("light");
-    private void OnThemeSystemClick(object sender, MouseButtonEventArgs e) => SelectTheme("system");
+    private void OnThemeDarkClick(object sender, RoutedEventArgs e)  => SelectTheme("dark");
+    private void OnThemeLightClick(object sender, RoutedEventArgs e)  => SelectTheme("light");
+    private void OnThemeSystemClick(object sender, RoutedEventArgs e) => SelectTheme("system");
 
     private void SelectTheme(string theme)
     {
@@ -174,4 +174,3 @@ public partial class OnboardingWindow : Window
         ThemeSystemCard.BorderBrush = _config.Theme == "system" ? accent : Brushes.Transparent;
     }
 }
-

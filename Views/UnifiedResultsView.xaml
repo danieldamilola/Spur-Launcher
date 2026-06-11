@@ -20,7 +20,6 @@
              ItemsSource="{Binding Results}"
              ItemTemplateSelector="{StaticResource TemplateSelector}"
              SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
-             SelectionChanged="OnSelectionChanged"
              PreviewMouseLeftButtonUp="OnListMouseClick"
              HorizontalContentAlignment="Stretch"
               Padding="0"
@@ -33,4 +32,3 @@
              ScrollViewer.CanContentScroll="True"
              AutomationProperties.Name="Search results"/>
 </UserControl>
-

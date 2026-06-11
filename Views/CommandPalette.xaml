@@ -85,7 +85,7 @@
                      Margin="8,0,8,8"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.CanContentScroll="False"
                      VirtualizingPanel.ScrollUnit="Pixel"
                      IsTabStop="False"
                      Focusable="False"
@@ -161,7 +161,7 @@
                                            Margin="0,1,0,0"/>
                             </StackPanel>
 
-                            <!-- Keyboard hint -->
+                            <!-- Keyboard hint (only shown for selected item) -->
                             <TextBlock Grid.Column="2"
                                        x:Name="HintText"
                                        Text="↵"
@@ -169,8 +169,15 @@
                                        FontFamily="{DynamicResource Token.Font.Primary}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextTertiary}"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
                         </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="HintText" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
@@ -192,5 +199,3 @@
         </Grid>
     </Border>
 </UserControl>
-
-

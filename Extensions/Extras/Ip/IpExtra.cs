@@ -27,6 +27,8 @@ public sealed class IpExtra : IExtra
     public object? Settings { get; set; }
     public FrameworkElement? CreateSettingsView() => null;
 
+    private static readonly HttpClient _http = new();
+
     public IEnumerable<SearchResult> GetResults(string subQuery)
     {
         yield return new SearchResult
@@ -47,7 +49,7 @@ public sealed class IpExtra : IExtra
     {
         var local = GetLocalIp();
         var pub = await GetPublicIpAsync(ct);
-        
+
         var combined = $"{local} · {pub}";
 
         return new ExtraResult
@@ -79,8 +81,7 @@ public sealed class IpExtra : IExtra
     {
         try
         {
-            using var http = new HttpClient();
-            var response = await http.GetStringAsync("https://api.ipify.org", ct);
+            var response = await _http.GetStringAsync("https://api.ipify.org", ct);
             return response.Trim();
         }
         catch

@@ -23,7 +23,7 @@ public sealed class ClipboardWatcher : IDisposable
     private HwndSource? _source;
     private bool _disposed;
     private string? _lastText;
-    private int _lastImageFingerprint;        // replaces BitmapSource reference
+    private int? _lastImageFingerprint;
     private readonly IClipboardService _clipboard;
     private readonly ILogger _log;
 
@@ -43,8 +43,9 @@ public sealed class ClipboardWatcher : IDisposable
             throw new InvalidOperationException("ClipboardWatcher is already attached to a window.");
 
         _hwnd   = hwnd;
-        _source = HwndSource.FromHwnd(hwnd);
-        _source?.AddHook(Hook);
+        _source = HwndSource.FromHwnd(hwnd)
+            ?? throw new InvalidOperationException("HwndSource not found for the given HWND. Window may not be fully initialized.");
+        _source.AddHook(Hook);
 
         if (!AddClipboardFormatListener(hwnd))
             _log.Warning($"AddClipboardFormatListener failed (Win32 error {Marshal.GetLastWin32Error()})");
@@ -72,7 +73,7 @@ public sealed class ClipboardWatcher : IDisposable
         if (text is not null && text != _lastText)
         {
             _lastText = text;
-            _lastImageFingerprint = 0;
+            _lastImageFingerprint = null;
             _clipboard.Add(text);
         }
 
@@ -104,8 +105,10 @@ public sealed class ClipboardWatcher : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
+        // Only remove the hook from WPF's HwndSource — do NOT dispose it (it is owned
+        // by the main window and destroying it would tear down the entire HWND).
         _source?.RemoveHook(Hook);
-        _source?.Dispose();
+        _source = null;
         if (_hwnd != IntPtr.Zero)
             RemoveClipboardFormatListener(_hwnd);
         _disposed = true;

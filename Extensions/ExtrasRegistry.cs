@@ -28,8 +28,17 @@ public sealed class ExtrasRegistry
     private readonly List<IExtra> _builtIn = new();
     private readonly List<IExtra> _community = new();
     private readonly ILogger _logger;
+    private IReadOnlyList<IExtra>? _allCache;
 
-    public IReadOnlyList<IExtra> All => _builtIn.Concat(_community).ToList();
+    public IReadOnlyList<IExtra> All
+    {
+        get
+        {
+            if (_allCache is null)
+                _allCache = _builtIn.Concat(_community).ToList();
+            return _allCache;
+        }
+    }
     public IReadOnlyList<IExtra> BuiltIn => _builtIn;
     public IReadOnlyList<IExtra> Community => _community;
 
@@ -54,6 +63,7 @@ public sealed class ExtrasRegistry
         _builtIn.Add(new ShellExtra { Settings = new ShellSettings() });
         _builtIn.Add(new SystemExtra { Settings = new SystemSettings() });
         _builtIn.Add(new SettingsNavExtra { Settings = new SettingsNavSettings() });
+        InvalidateCache();
     }
 
     public IExtra? FindById(string id)
@@ -114,6 +124,8 @@ public sealed class ExtrasRegistry
             };
         }
     }
+
+    private void InvalidateCache() => _allCache = null;
 
     public void LoadCommunityExtras(string extrasFolder)
     {

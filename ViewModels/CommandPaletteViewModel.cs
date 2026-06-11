@@ -41,7 +41,7 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
     {
         RebuildFilter();
         HasFilter = !string.IsNullOrEmpty(value);
-        SelectedIndex = FilteredCommands.Count > 0 ? 0 : -1;
+        ResetSelection();
         ShowNoMatch = HasFilter && FilteredCommands.Count == 0;
     }
 
@@ -53,7 +53,7 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
             HasFilter = false;
             ShowNoMatch = false;
             RebuildFilter();
-            SelectedIndex = FilteredCommands.Count > 0 ? 0 : -1;
+            ResetSelection();
         }
     }
 
@@ -91,6 +91,11 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
     }
 
     // ── Internal ───────────────────────────────────────────────────
+
+    private void ResetSelection()
+    {
+        SelectedIndex = FilteredCommands.Count > 0 ? 0 : -1;
+    }
 
     private void RebuildFilter()
     {

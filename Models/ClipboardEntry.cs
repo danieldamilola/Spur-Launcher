@@ -10,13 +10,14 @@ public sealed class ClipboardEntry
     /// <summary>Text constructor.</summary>
     public ClipboardEntry(string content)
     {
-        Id          = Guid.NewGuid();
-        IsTruncated = content.Length > MaxStoredTextChars;
-        Content   = IsTruncated ? content[..MaxStoredTextChars] : content;
-        Timestamp = DateTime.Now;
-        IsImage   = false;
-        var display = Content.Replace('\n', ' ').Replace('\r', ' ');
-        Preview   = display.Length > 80 ? display[..80] + "..." : display;
+        Id            = Guid.NewGuid();
+        FullTextHash  = content.GetHashCode(StringComparison.Ordinal);
+        IsTruncated   = content.Length > MaxStoredTextChars;
+        Content       = IsTruncated ? content[..MaxStoredTextChars] : content;
+        Timestamp     = DateTime.UtcNow;
+        IsImage       = false;
+        var display   = Content.Replace('\n', ' ').Replace('\r', ' ');
+        Preview      = display.Length > 80 ? display[..80] + "..." : display;
     }
 
     /// <summary>Image constructor. The BitmapSource must already be frozen.</summary>
@@ -24,10 +25,10 @@ public sealed class ClipboardEntry
     {
         Id        = Guid.NewGuid();
         Content   = string.Empty;
-        Timestamp = DateTime.Now;
+        Timestamp = DateTime.UtcNow;
         IsImage   = true;
         Image     = image;
-        Preview   = $"Image  {image.PixelWidth} × {image.PixelHeight}";
+        Preview   = $"Image {image.PixelWidth} × {image.PixelHeight}";
     }
 
     public Guid        Id        { get; }
@@ -35,6 +36,8 @@ public sealed class ClipboardEntry
     public DateTime    Timestamp { get; }
     public bool        IsImage   { get; }
     public bool        IsTruncated { get; }
+    /// <summary>Hash of the full original text (before truncation). Used for reliable dedup.</summary>
+    public int         FullTextHash { get; }
     public BitmapSource? Image   { get; }
 
     /// <summary>Truncated single-line preview for display in results list.</summary>
@@ -44,7 +47,7 @@ public sealed class ClipboardEntry
     {
         get
         {
-            var elapsed = DateTime.Now - Timestamp;
+            var elapsed = DateTime.UtcNow - Timestamp;
             if (elapsed.TotalSeconds < 60) return "just now";
             if (elapsed.TotalMinutes < 60) return $"{(int)elapsed.TotalMinutes}m ago";
             return $"{(int)elapsed.TotalHours}h ago";

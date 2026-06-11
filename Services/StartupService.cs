@@ -8,6 +8,8 @@ public interface IStartupService
     void Enable();
     void Disable();
     bool IsEnabled();
+    /// <summary>Toggles startup registration. Returns the new state.</summary>
+    bool Toggle();
 }
 
 /// <summary>
@@ -25,7 +27,13 @@ public sealed class StartupServiceImpl : IStartupService
         _log = log;
         _exePath = Environment.ProcessPath
             ?? Process.GetCurrentProcess().MainModule?.FileName
-            ?? "Spur.exe";
+            ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Spur", "Spur.exe");
+
+        // Sanity check: if we somehow ended up with a bare filename, log it.
+        if (!Path.IsPathRooted(_exePath))
+            _log.Warning($"Startup exe path is not rooted: {_exePath}");
     }
 
     public void Enable()
@@ -34,7 +42,14 @@ public sealed class StartupServiceImpl : IStartupService
         {
             using var key = Registry.CurrentUser.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
-            key?.SetValue(AppName, $"\"{_exePath}\" --minimized");
+
+            if (key is null)
+            {
+                _log.Warning("Startup registry key not found or access denied — cannot enable");
+                return;
+            }
+
+            key.SetValue(AppName, $"\"{_exePath}\" --minimized");
         }
         catch (Exception ex)
         {
@@ -48,7 +63,14 @@ public sealed class StartupServiceImpl : IStartupService
         {
             using var key = Registry.CurrentUser.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
-            key?.DeleteValue(AppName, throwOnMissingValue: false);
+
+            if (key is null)
+            {
+                _log.Warning("Startup registry key not found — cannot disable");
+                return;
+            }
+
+            key.DeleteValue(AppName, throwOnMissingValue: false);
         }
         catch (Exception ex)
         {
@@ -62,11 +84,31 @@ public sealed class StartupServiceImpl : IStartupService
         {
             using var key = Registry.CurrentUser.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
-            return key?.GetValue(AppName) is not null;
+            var value = key?.GetValue(AppName) as string;
+
+            if (value is null) return false;
+
+            // Verify the stored path actually points to this exe.
+            // If the user moved the install, the stale entry would look "enabled"
+            // but silently fail on actual login.
+            return value.Contains(_exePath, StringComparison.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
+            _log.Warning("StartupService.IsEnabled check failed", ex);
             return false;
         }
+    }
+
+    /// <inheritdoc />
+    public bool Toggle()
+    {
+        if (IsEnabled())
+        {
+            Disable();
+            return false;
+        }
+        Enable();
+        return IsEnabled();
     }
 }

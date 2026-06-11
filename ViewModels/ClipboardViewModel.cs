@@ -17,9 +17,10 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     private readonly IConfigService _configSvc;
     private readonly Action _clipboardChangedHandler;
 
-    // Prevents UpdateStatus() from overwriting a transient "Copied ✓" status
-    // while clipboard mutations triggered by Copy() are still propagating.
-    private bool _suppressStatusUpdate;
+    // Timestamp of the last Copy() call. UpdateStatus() will not overwrite
+    // "Copied ✓" for 500ms after this, giving any queued Refresh handlers
+    // from ClipboardWatcher time to settle.
+    private DateTime _lastCopyTimestamp = DateTime.MinValue;
 
     public ClipboardViewModel(
         IClipboardService clipboard,
@@ -100,29 +101,19 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     {
         if (entry is null) return;
 
-        // Suppress the status overwrite that would be triggered when ClipboardChanged
-        // fires as a side-effect of Add() below.
-        _suppressStatusUpdate = true;
-        try
+        _lastCopyTimestamp = DateTime.UtcNow;
+
+        if (entry.IsImage)
         {
-            if (entry.IsImage)
-            {
-                // For images, copy directly. ClipboardWatcher will re-add the image
-                // on the resulting WM_CLIPBOARDUPDATE (fingerprint dedup handles it).
-                _clipboard.CopyToSystem(entry);
-            }
-            else
-            {
-                // Promote to head of history BEFORE writing to the system clipboard.
-                // ClipboardWatcher deduplicates against index 0, so the resulting
-                // WM_CLIPBOARDUPDATE is ignored — no duplicate entry is created.
-                _clipboard.Add(entry.Content!);
-                _clipboard.CopyToSystem(entry);
-            }
+            if (entry.Image is null) return;
+            _clipboard.AddImage(entry.Image);
+            _clipboard.CopyToSystem(entry);
         }
-        finally
+        else
         {
-            _suppressStatusUpdate = false;
+            if (entry.Content is null) return;
+            _clipboard.Add(entry.Content);
+            _clipboard.CopyToSystem(entry);
         }
 
         StatusText = "Copied ✓";
@@ -183,7 +174,6 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     /// </summary>
     private void SyncEntries(IReadOnlyList<ClipboardEntry> desired)
     {
-        // Build a set once for O(1) lookups during the removal pass (was O(n²)).
         var desiredIds = desired.Select(e => e.Id).ToHashSet();
 
         for (int i = Entries.Count - 1; i >= 0; i--)
@@ -192,31 +182,29 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
                 Entries.RemoveAt(i);
         }
 
+        var existingIndex = new Dictionary<Guid, int>(Entries.Count);
+        for (int i = 0; i < Entries.Count; i++)
+            existingIndex[Entries[i].Id] = i;
+
         for (int i = 0; i < desired.Count; i++)
         {
             if (i < Entries.Count && Entries[i].Id == desired[i].Id)
-                continue; // already correct position
-
-            // Search for the entry somewhere later in the current list.
-            var existingIdx = -1;
-            for (int j = i + 1; j < Entries.Count; j++)
             {
-                if (Entries[j].Id == desired[i].Id)
-                {
-                    existingIdx = j;
-                    break;
-                }
+                existingIndex[desired[i].Id] = i;
+                continue;
             }
 
-            if (existingIdx >= 0)
+            if (existingIndex.TryGetValue(desired[i].Id, out var existingIdx) && existingIdx >= i)
             {
                 var item = Entries[existingIdx];
                 Entries.RemoveAt(existingIdx);
                 Entries.Insert(i, item);
+                existingIndex[item.Id] = i;
             }
             else
             {
                 Entries.Insert(i, desired[i]);
+                existingIndex[desired[i].Id] = i;
             }
         }
 
@@ -233,17 +221,17 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
 
     private void UpdateStatus()
     {
-        if (_suppressStatusUpdate) return;
+        // Preserve "Copied ✓" for 500ms after the last Copy() call,
+        // allowing any queued Refresh (e.g. from ClipboardWatcher) to settle.
+        if (StatusText == "Copied ✓" &&
+            (DateTime.UtcNow - _lastCopyTimestamp).TotalMilliseconds < 500)
+            return;
 
         var total = TotalCount;
         var shown = FilteredCount;
         StatusText = string.IsNullOrWhiteSpace(FilterText)
             ? $"{total} item{(total == 1 ? "" : "s")}"
             : $"{shown} of {total} item{(total == 1 ? "" : "s")}";
-
-        OnPropertyChanged(nameof(StatusText));
-        OnPropertyChanged(nameof(TotalCount));
-        OnPropertyChanged(nameof(FilteredCount));
     }
 
     // ── Cleanup ─────────────────────────────────────────────────────

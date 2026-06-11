@@ -45,13 +45,21 @@ public partial class UnifiedResultsView : UserControl
 
                     if (animate)
                     {
-                        var tt = new TranslateTransform(0, 4);
-                        container.RenderTransform = tt;
+                        var tt = container.RenderTransform as TranslateTransform;
+                        if (tt is null)
+                        {
+                            tt = new TranslateTransform(0, 4);
+                            container.RenderTransform = tt;
+                        }
+                        else
+                        {
+                            tt.Y = 4;
+                        }
                         container.Opacity = 0;
 
                         var ease = SpurMotion.EaseOut();
                         var delay = TimeSpan.FromMilliseconds(i * 16);
-                        
+
                         var yAnim = new DoubleAnimation(4, 0, TimeSpan.FromMilliseconds(120)) { EasingFunction = ease, BeginTime = delay };
                         var opAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(120)) { EasingFunction = ease, BeginTime = delay };
 
@@ -79,11 +87,8 @@ public partial class UnifiedResultsView : UserControl
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.SelectedIndex))
-            Dispatcher.InvokeAsync(ScrollToSelected);
+            ScrollToSelected();
     }
-
-    private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-        => ScrollToSelected();
 
     private void ScrollToSelected()
     {
@@ -107,7 +112,7 @@ public partial class UnifiedResultsView : UserControl
                     int idx = vm.Results.IndexOf(result);
                     if (idx >= 0)
                         vm.SelectedIndex = idx;
-                        
+
                     vm.OpenSelectedCommand.Execute(null);
                     e.Handled = true;
                 }
@@ -116,4 +121,3 @@ public partial class UnifiedResultsView : UserControl
     }
 
 }
-

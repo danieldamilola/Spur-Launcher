@@ -13,7 +13,7 @@ public interface IFrequencyService : IDisposable
 /// Stored as a JSON dictionary at %LocalAppData%\Spur\Spur.freq.json.
 /// Writes are batched — at most one disk write per 30 seconds.
 /// </summary>
-public sealed class FrequencyService : IFrequencyService, IDisposable
+public sealed class FrequencyService : IFrequencyService
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 
@@ -70,12 +70,18 @@ public sealed class FrequencyService : IFrequencyService, IDisposable
     /// <summary>Forces an immediate write. Called by the timer and on shutdown.</summary>
     public void Flush()
     {
+        Dictionary<string, int> snapshot;
         lock (_lock)
         {
             if (!_dirty) return;
-            Save();
+            // Snapshot the data under the lock, then write outside it.
+            // This avoids holding the lock during synchronous disk I/O,
+            // which could block Increment() calls from the UI thread.
+            snapshot = new Dictionary<string, int>(_counts, _counts.Comparer);
             _dirty = false;
         }
+
+        SaveToDisk(snapshot);
     }
 
     public void Dispose()
@@ -97,12 +103,26 @@ public sealed class FrequencyService : IFrequencyService, IDisposable
             lock (_lock)
                 foreach (var kv in data) _counts[kv.Key] = kv.Value;
         }
-        catch (Exception ex) { _log.Warning("Frequency load failed — starting fresh", ex); }
+        catch (Exception ex)
+        {
+            _log.Warning("Frequency load failed — starting fresh", ex);
+            // Delete the corrupt file so the next startup doesn't re-trigger the same error.
+            try { File.Delete(_path); } catch { /* best effort */ }
+        }
     }
 
-    private void Save()
+    /// <summary>Writes the snapshot to disk. Called outside the lock.</summary>
+    private void SaveToDisk(Dictionary<string, int> data)
     {
-        try { File.WriteAllText(_path, JsonSerializer.Serialize(_counts, JsonOpts)); }
-        catch (Exception ex) { _log.Warning("Frequency save failed", ex); }
+        try
+        {
+            File.WriteAllText(_path, JsonSerializer.Serialize(data, JsonOpts));
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Frequency save failed", ex);
+            // Re-mark as dirty so the next timer tick retries the write.
+            lock (_lock) { _dirty = true; }
+        }
     }
 }

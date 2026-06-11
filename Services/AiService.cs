@@ -19,13 +19,24 @@ public sealed class AiService : IAiService
 {
     // SocketsHttpHandler with PooledConnectionLifetime prevents stale DNS entries
     // that accumulate when a plain static HttpClient holds connections indefinitely.
+    // ConnectTimeout bounds connection establishment; no overall Timeout is set
+    // because streaming responses can legitimately exceed any fixed duration.
     private static readonly HttpClient _http = new(new SocketsHttpHandler
     {
         PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        ConnectTimeout = TimeSpan.FromSeconds(30),
     })
     {
         Timeout = TimeSpan.FromMinutes(5),
+        DefaultRequestHeaders =
+        {
+            UserAgent = { new("Spur", "1.0") },
+        },
     };
+
+    private readonly ILogger _log;
+
+    public AiService(ILogger? log = null) => _log = log ?? NullLogger.Instance;
 
     private static readonly Dictionary<string, (string Endpoint, string? DefaultModel)> Providers = new()
     {
@@ -62,7 +73,9 @@ public sealed class AiService : IAiService
         Action<string> onToken,
         CancellationToken ct = default)
     {
-        if (!Providers.TryGetValue(provider, out var p))
+        // Normalize provider name for case-insensitive lookup.
+        var normalizedProvider = provider.ToLowerInvariant();
+        if (!Providers.TryGetValue(normalizedProvider, out var p))
             throw new ArgumentException($"Unknown provider: {provider}", nameof(provider));
 
         var (endpoint, _) = p;
@@ -103,7 +116,8 @@ public sealed class AiService : IAiService
         {
             var err = await response.Content.ReadAsStringAsync(ct);
             var msg = err.Trim();
-            if (msg.Length > 200) msg = msg[..200] + "\u2026";
+            if (msg.Length > 200) msg = msg[..200] + "…";
+            _log.Warning($"{provider} API returned {(int)response.StatusCode}: {msg}");
             throw new HttpRequestException(
                 $"{provider} API error {(int)response.StatusCode}: {msg}");
         }
@@ -117,6 +131,8 @@ public sealed class AiService : IAiService
             if (string.IsNullOrEmpty(line)) continue;
             if (!line.StartsWith("data: ")) continue;
 
+            // Guard: line must have content after "data: " prefix (at least 7 chars).
+            if (line.Length <= 6) continue;
             var data = line[6..];
             if (data == "[DONE]") break;
 
@@ -131,7 +147,10 @@ public sealed class AiService : IAiService
                 if (delta.TryGetProperty("content", out var content))
                     token = content.GetString();
             }
-            catch { /* malformed chunk — skip */ }
+            catch (Exception ex)
+            {
+                _log.Debug($"Malformed SSE chunk from {provider}: {ex.Message}");
+            }
 
             if (!string.IsNullOrEmpty(token))
                 onToken(token);

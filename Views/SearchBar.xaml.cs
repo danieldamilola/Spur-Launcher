@@ -10,25 +10,24 @@ public partial class SearchBar : UserControl
     public SearchBar()
     {
         InitializeComponent();
-        DataContextChanged += (_, e) => _vm = e.NewValue as MainViewModel;
+        DataContextChanged += OnDataContextChanged;
         Loaded += (_, _) => FocusInput();
+    }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        _vm = e.NewValue as MainViewModel;
     }
 
     public void FocusInput()
     {
         SearchInput.Focus();
-        
-        System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-        {
-            if (_vm?.Config.LastQueryStyle is "select" or "keep")
-            {
-                SearchInput.SelectAll();
-            }
-            else
-            {
-                SearchInput.CaretIndex = SearchInput.Text.Length;
-            }
-        });
+        if (_vm is null) return;
+
+        if (_vm.Config.LastQueryStyle is "select" or "keep")
+            SearchInput.SelectAll();
+        else
+            SearchInput.CaretIndex = SearchInput.Text.Length;
     }
 
     private void OnTextChanged(object sender, TextChangedEventArgs e)

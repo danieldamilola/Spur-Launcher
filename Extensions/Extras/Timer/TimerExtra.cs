@@ -110,8 +110,7 @@ public sealed class TimerExtra : IExtra
         }
     }
 
-    public bool CanHandle(string query)
-        => !string.IsNullOrWhiteSpace(query) && TryParseDuration(query.Trim(), out _);
+    public bool CanHandle(string query) => false;
 
     public SearchResult BuildResult(string query)
     {
