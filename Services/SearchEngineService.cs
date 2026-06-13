@@ -197,6 +197,29 @@ public sealed class SearchEngineService : ISearchEngineService
                 globalActionResults.Add(r);
             }
 
+            // Also include non-global add-ons when query matches their name/keyword
+            foreach (var extra in _addOns.GetEnabled())
+            {
+                if (extra.IsGlobal) continue;
+                if (string.IsNullOrWhiteSpace(query)) continue;
+                if (!extra.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    && !extra.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    && !(extra.Id == "ai" && "ask ai".Contains(query, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                globalActionResults.Add(new SearchResult
+                {
+                    Id = $"action-catalog:{extra.Id}",
+                    Type = ResultType.Action,
+                    Name = extra.Name,
+                    Subtitle = extra.Description,
+                    IconGlyph = extra.IconGlyph,
+                    IconPath = extra.IconPath,
+                    ActionId = extra.Id,
+                    Score = 500,
+                });
+            }
+
             var url = BuildUrlAction(query);
             if (url is not null) globalActionResults.Add(url);
 
