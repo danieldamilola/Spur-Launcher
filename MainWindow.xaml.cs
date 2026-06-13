@@ -226,7 +226,7 @@ public partial class MainWindow : Window
             nameof(MainViewModel.FooterHint),
             nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
-            nameof(MainViewModel.IsQuickAiActive),
+
         };
 
         if (layoutProps.Contains(e.PropertyName))
@@ -263,13 +263,12 @@ public partial class MainWindow : Window
 
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
-        bool showContent = isBrowse || hasResults || _vm.IsQuickAiActive;
+        bool showContent = isBrowse || hasResults;
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         bool hideActionChrome = _vm.IsActionPanelVisible && IsActionCategory(_vm.ActiveCategory);
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = isClipboard || hideActionChrome || _vm.IsQuickAiActive ? Visibility.Collapsed : Visibility.Visible;
-        QuickAiPanel.Visibility = _vm.IsQuickAiActive ? Visibility.Visible : Visibility.Collapsed;
+        UnifiedResultsControl.Visibility = isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -476,21 +475,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Tab)
+        if (e.Key == Key.Tab && _vm.IsScopeBarVisible)
         {
-            // Tab → Quick AI (Raycast-style): if there's text in the search bar, trigger AI
-            if (!string.IsNullOrWhiteSpace(_vm.Query) && !_vm.IsQuickAiActive)
-            {
-                _ = _vm.StartQuickAi();
-                e.Handled = true;
-                return;
-            }
-            // Fallback: cycle scope bar if visible
-            if (_vm.IsScopeBarVisible)
-            {
-                _vm.CycleScope();
-                e.Handled = true;
-            }
+            _vm.CycleScope();
+            e.Handled = true;
         }
     }
 
@@ -502,9 +490,7 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (_vm.IsQuickAiActive)
-                    _vm.CloseQuickAi();
-                else if (_vm.CommandPalette.IsOpen)
+                if (_vm.CommandPalette.IsOpen)
                     _vm.CommandPalette.IsOpen = false;
                 else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
@@ -524,18 +510,6 @@ public partial class MainWindow : Window
                 break;
 
             case Key.Enter:
-                // When Quick AI is active, Enter sends follow-up question
-                if (_vm.IsQuickAiActive)
-                {
-                    var followUp = _vm.Query?.Trim();
-                    if (!string.IsNullOrWhiteSpace(followUp))
-                    {
-                        _ = _vm.SendAiFollowUp(followUp);
-                        _vm.Query = string.Empty;
-                    }
-                    e.Handled = true;
-                    break;
-                }
                 if (Keyboard.Modifiers == ModifierKeys.Control)
                     _vm.RunAsAdminCommand.Execute(null);
                 else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
@@ -597,7 +571,6 @@ public partial class MainWindow : Window
         if (_vm is null) return;
         var text = _vm.ActiveActionPanel switch
         {
-            "ai" => _vm.AiChat.AiText,
             "color" => _vm.ActionResultText,
             "pw" => _vm.ActionResultText,
             "ip" => _vm.ActionResultText,
@@ -607,16 +580,6 @@ public partial class MainWindow : Window
             System.Windows.Clipboard.SetText(text);
     }
 
-    private void OnAiFollowUpKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter || _vm is null) return;
-        var text = AiFollowUpInput.Text?.Trim();
-        if (string.IsNullOrEmpty(text)) return;
-
-        _vm.AiChat.AiFollowUpCommand.Execute(text);
-        AiFollowUpInput.Clear();
-        e.Handled = true;
-    }
 
     private void OnCloseActionPanelClick(object sender, RoutedEventArgs e)
     {
