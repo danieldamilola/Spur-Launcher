@@ -226,7 +226,7 @@ public partial class MainWindow : Window
             nameof(MainViewModel.FooterHint),
             nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
-
+            nameof(MainViewModel.IsAiModeActive),
         };
 
         if (layoutProps.Contains(e.PropertyName))
@@ -263,12 +263,13 @@ public partial class MainWindow : Window
 
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
-        bool showContent = isBrowse || hasResults;
+        bool showContent = isBrowse || hasResults || _vm.IsAiModeActive;
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         bool hideActionChrome = _vm.IsActionPanelVisible && IsActionCategory(_vm.ActiveCategory);
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
+        UnifiedResultsControl.Visibility = _vm.IsAiModeActive || isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
+        AiChatPanelControl.Visibility = _vm.IsAiModeActive ? Visibility.Visible : Visibility.Collapsed;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -490,7 +491,9 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (_vm.CommandPalette.IsOpen)
+                if (_vm.IsAiModeActive)
+                    _vm.ExitAiMode();
+                else if (_vm.CommandPalette.IsOpen)
                     _vm.CommandPalette.IsOpen = false;
                 else if (!string.IsNullOrEmpty(_vm.Query))
                     _vm.Query = string.Empty;
@@ -510,6 +513,18 @@ public partial class MainWindow : Window
                 break;
 
             case Key.Enter:
+                // In AI mode, Enter sends the query to AI
+                if (_vm.IsAiModeActive)
+                {
+                    var aiQuery = _vm.Query?.Trim();
+                    if (!string.IsNullOrWhiteSpace(aiQuery))
+                    {
+                        AiChatPanelControl.HandleUserInput(aiQuery);
+                        _vm.Query = string.Empty;
+                    }
+                    e.Handled = true;
+                    break;
+                }
                 if (Keyboard.Modifiers == ModifierKeys.Control)
                     _vm.RunAsAdminCommand.Execute(null);
                 else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))

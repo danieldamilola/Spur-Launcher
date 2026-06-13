@@ -267,6 +267,65 @@ public sealed partial class MainViewModel : ObservableObject
     }
     public bool IsActionPanelVisible => _activeActionPanel is not null;
 
+    // ── AI Chat Mode ────────────────────────────────────────────────
+    private bool _isAiModeActive;
+    /// <summary>When true, the results area is replaced by the AI chat panel.</summary>
+    public bool IsAiModeActive
+    {
+        get => _isAiModeActive;
+        set => SetProperty(ref _isAiModeActive, value);
+    }
+
+    /// <summary>Returns the current AI model name for display (e.g. "GPT-4o").</summary>
+    public string AiModelName
+    {
+        get
+        {
+            try { return Config.AiProvider.ToLowerInvariant() switch
+            {
+                "groq"       => Config.GroqModel,
+                "gemini"     => Config.GeminiModel,
+                "openrouter" => Config.OpenRouterModel,
+                "deepseek"   => Config.DeepSeekModel,
+                _            => Config.AiProvider,
+            }; }
+            catch { return "AI"; }
+        }
+    }
+
+    /// <summary>Enter AI chat mode — clears query, shows AI panel.</summary>
+    public void EnterAiMode()
+    {
+        IsAiModeActive = true;
+        Query = string.Empty;
+        ActiveActionPanel = null;
+        OnPropertyChanged(nameof(SearchPlaceholder));
+    }
+
+    /// <summary>Exit AI chat mode — returns to normal search.</summary>
+    public void ExitAiMode()
+    {
+        IsAiModeActive = false;
+        _ai.CancelPending();
+        OnPropertyChanged(nameof(SearchPlaceholder));
+    }
+
+    /// <summary>Send a query to AI. First message uses StartAiAsync, follow-ups use AiFollowUpCommand.</summary>
+    public async Task SendAiQuery(string question)
+    {
+        if (string.IsNullOrWhiteSpace(question)) return;
+
+        if (_ai.AiConversation.Count == 0)
+            await _ai.StartAiAsync(question);
+        else
+            await _ai.AiFollowUpCommand.ExecuteAsync(question);
+    }
+
+    /// <summary>Clear AI conversation history.</summary>
+    public void ClearAiChat()
+    {
+        _ai.ClearConversation();
+    }
 
     public sealed class PinnedCategoryItem
     {
@@ -340,14 +399,22 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Scope bar controlled dynamically by UpdateScopeFilters.</summary>
     public bool IsScopeBarVisible => false;
 
-    public string SearchPlaceholder => ActiveCategory switch
+    public string SearchPlaceholder
     {
-        "files"     => "Search files…",
-        "actions"   => "Search actions…",
-        "ai"        => "Ask AI…",
-        "clipboard" => "Filter clipboard…",
-        _           => "Search",
-    };
+        get
+        {
+            if (IsAiModeActive)
+                return _ai.AiConversation.Count > 0 ? "Ask follow-up…" : "Ask anything…";
+
+            return ActiveCategory switch
+            {
+                "files"     => "Search files…",
+                "actions"   => "Search actions…",
+                "clipboard" => "Filter clipboard…",
+                _           => "Search",
+            };
+        }
+    }
 
     public SearchResult? SelectedResult
     {
@@ -844,6 +911,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task OpenActionResult(SearchResult result, string actionInput)
     {
+        // AI action enters AI chat mode instead of using the action panel
+        if (result.ActionId == "ai")
+        {
+            EnterAiMode();
+            return;
+        }
+
         var state = await _actionDispatcher.DispatchAsync(result, actionInput);
         ApplyActionPanelState(state);
     }

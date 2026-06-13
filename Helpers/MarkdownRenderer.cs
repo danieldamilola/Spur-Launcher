@@ -1,0 +1,431 @@
+using System.Windows.Documents;
+
+namespace Spur.Helpers;
+
+/// <summary>Converts a markdown string into a WPF <see cref="FlowDocument"/>.</summary>
+public static class MarkdownRenderer
+{
+    // ── Resource key constants ──────────────────────────────────────────
+    private const string KeyTextPrimary  = "TextPrimary";
+    private const string KeyTextTertiary = "TextTertiary";
+    private const string KeyDepth2       = "Depth2";
+    private const string KeyAccentBrush  = "AccentBrush";
+    private const string KeySeparator    = "Separator";
+    private const string KeyFontPrimary  = "Token.Font.Primary";
+
+    private static readonly FontFamily CodeFont = new("Cascadia Code, Consolas");
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Public API
+    // ────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Render a markdown string to a <see cref="FlowDocument"/> themed
+    /// with brushes / fonts from <paramref name="resources"/>.
+    /// </summary>
+    public static FlowDocument Render(string markdown, ResourceDictionary resources)
+    {
+        var textBrush   = GetBrush(resources, KeyTextPrimary,  Brushes.White);
+        var mutedBrush  = GetBrush(resources, KeyTextTertiary, Brushes.Gray);
+        var codeBg      = GetBrush(resources, KeyDepth2,       new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)));
+        var accentBrush = GetBrush(resources, KeyAccentBrush,  Brushes.CornflowerBlue);
+        var borderBrush = GetBrush(resources, KeySeparator,    Brushes.DimGray);
+        var fontFamily  = resources[KeyFontPrimary] as FontFamily ?? new FontFamily("Segoe UI");
+
+        var doc = new FlowDocument
+        {
+            PagePadding = new Thickness(0),
+            Foreground  = textBrush,
+            FontFamily  = fontFamily,
+            FontSize    = 13.5,
+            LineHeight  = 21,
+            Background  = Brushes.Transparent,
+        };
+
+        if (string.IsNullOrEmpty(markdown))
+            return doc;
+
+        var lines = markdown.Replace("\r\n", "\n").Split('\n');
+
+        var ctx = new ParseContext
+        {
+            TextBrush   = textBrush,
+            MutedBrush  = mutedBrush,
+            CodeBg      = codeBg,
+            AccentBrush = accentBrush,
+            BorderBrush = borderBrush,
+        };
+
+        bool inCodeBlock = false;
+        string? codeLanguage = null;
+        var codeLines = new List<string>();
+
+        List<string>? bulletItems = null;
+        List<string>? numberedItems = null;
+        int numberedStart = 1;
+
+        var paragraphLines = new List<string>();
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+
+            // ── Fenced code blocks ─────────────────────────────────
+            if (line.TrimStart().StartsWith("```"))
+            {
+                if (!inCodeBlock)
+                {
+                    // Flush any pending content before starting code block.
+                    FlushParagraph(doc, paragraphLines, ctx);
+                    FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+                    bulletItems = null;
+                    numberedItems = null;
+
+                    inCodeBlock = true;
+                    codeLanguage = line.TrimStart().Length > 3
+                        ? line.TrimStart()[3..].Trim()
+                        : null;
+                    codeLines.Clear();
+                }
+                else
+                {
+                    // End code block — emit it.
+                    EmitCodeBlock(doc, codeLines, ctx);
+                    inCodeBlock = false;
+                    codeLanguage = null;
+                    codeLines.Clear();
+                }
+                continue;
+            }
+
+            if (inCodeBlock)
+            {
+                codeLines.Add(line);
+                continue;
+            }
+
+            // ── Headers ────────────────────────────────────────────
+            if (line.StartsWith('#'))
+            {
+                FlushParagraph(doc, paragraphLines, ctx);
+                FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+                bulletItems = null;
+                numberedItems = null;
+
+                int level = 0;
+                while (level < line.Length && line[level] == '#') level++;
+                if (level <= 6 && level < line.Length && line[level] == ' ')
+                {
+                    EmitHeader(doc, line[(level + 1)..], level, ctx);
+                    continue;
+                }
+                // Not a valid header — fall through to paragraph.
+            }
+
+            // ── Bullet lists ───────────────────────────────────────
+            if ((line.StartsWith("- ") || line.StartsWith("* ")) && line.Length > 2)
+            {
+                FlushParagraph(doc, paragraphLines, ctx);
+                if (numberedItems is not null)
+                {
+                    FlushList(doc, null, numberedItems, numberedStart, ctx);
+                    numberedItems = null;
+                }
+                bulletItems ??= [];
+                bulletItems.Add(line[2..]);
+                continue;
+            }
+
+            // ── Numbered lists ─────────────────────────────────────
+            if (TryParseNumberedItem(line, out int num, out string? itemText))
+            {
+                FlushParagraph(doc, paragraphLines, ctx);
+                if (bulletItems is not null)
+                {
+                    FlushList(doc, bulletItems, null, 1, ctx);
+                    bulletItems = null;
+                }
+                if (numberedItems is null)
+                {
+                    numberedItems = [];
+                    numberedStart = num;
+                }
+                numberedItems.Add(itemText!);
+                continue;
+            }
+
+            // ── Blank line → flush paragraph ───────────────────────
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                FlushParagraph(doc, paragraphLines, ctx);
+                FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+                bulletItems = null;
+                numberedItems = null;
+                continue;
+            }
+
+            // ── Regular text line ──────────────────────────────────
+            // If we were building a list, a non-list line ends the list.
+            if (bulletItems is not null || numberedItems is not null)
+            {
+                FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+                bulletItems = null;
+                numberedItems = null;
+            }
+            paragraphLines.Add(line);
+        }
+
+        // Flush remaining content.
+        if (inCodeBlock && codeLines.Count > 0)
+            EmitCodeBlock(doc, codeLines, ctx);
+
+        FlushParagraph(doc, paragraphLines, ctx);
+        FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+
+        return doc;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Block builders
+    // ────────────────────────────────────────────────────────────────────
+
+    private static void FlushParagraph(FlowDocument doc, List<string> lines, ParseContext ctx)
+    {
+        if (lines.Count == 0) return;
+
+        var para = new Paragraph { Margin = new Thickness(0, 0, 0, 8) };
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i > 0) para.Inlines.Add(new LineBreak());
+            AddInlines(para.Inlines, lines[i], ctx);
+        }
+        doc.Blocks.Add(para);
+        lines.Clear();
+    }
+
+    private static void FlushList(
+        FlowDocument doc,
+        List<string>? bulletItems,
+        List<string>? numberedItems,
+        int numberedStart,
+        ParseContext ctx)
+    {
+        if (bulletItems is { Count: > 0 })
+        {
+            var list = new List
+            {
+                MarkerStyle  = TextMarkerStyle.Disc,
+                Margin       = new Thickness(16, 0, 0, 8),
+                Padding      = new Thickness(0),
+            };
+            foreach (var text in bulletItems)
+            {
+                var li = new ListItem { Margin = new Thickness(0, 0, 0, 2) };
+                var p = new Paragraph { Margin = new Thickness(0) };
+                AddInlines(p.Inlines, text, ctx);
+                li.Blocks.Add(p);
+                list.ListItems.Add(li);
+            }
+            doc.Blocks.Add(list);
+            bulletItems.Clear();
+        }
+
+        if (numberedItems is { Count: > 0 })
+        {
+            var list = new List
+            {
+                MarkerStyle = TextMarkerStyle.Decimal,
+                StartIndex  = numberedStart,
+                Margin      = new Thickness(16, 0, 0, 8),
+                Padding     = new Thickness(0),
+            };
+            foreach (var text in numberedItems)
+            {
+                var li = new ListItem { Margin = new Thickness(0, 0, 0, 2) };
+                var p = new Paragraph { Margin = new Thickness(0) };
+                AddInlines(p.Inlines, text, ctx);
+                li.Blocks.Add(p);
+                list.ListItems.Add(li);
+            }
+            doc.Blocks.Add(list);
+            numberedItems.Clear();
+        }
+    }
+
+    private static void EmitHeader(FlowDocument doc, string text, int level, ParseContext ctx)
+    {
+        double fontSize = level switch
+        {
+            1 => 22,
+            2 => 18,
+            3 => 15.5,
+            _ => 14,
+        };
+
+        var para = new Paragraph
+        {
+            FontSize   = fontSize,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = ctx.AccentBrush,
+            Margin     = new Thickness(0, level <= 2 ? 12 : 8, 0, 6),
+        };
+
+        AddInlines(para.Inlines, text, ctx, overrideForeground: ctx.AccentBrush);
+        doc.Blocks.Add(para);
+    }
+
+    private static void EmitCodeBlock(FlowDocument doc, List<string> lines, ParseContext ctx)
+    {
+        var para = new Paragraph
+        {
+            FontFamily    = CodeFont,
+            FontSize      = 12.5,
+            Background    = ctx.CodeBg,
+            Foreground    = ctx.TextBrush,
+            Padding       = new Thickness(12, 10, 12, 10),
+            Margin        = new Thickness(0, 4, 0, 8),
+            BorderBrush   = ctx.BorderBrush,
+            BorderThickness = new Thickness(1),
+            LineHeight    = 18,
+        };
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i > 0) para.Inlines.Add(new LineBreak());
+            para.Inlines.Add(new Run(lines[i]));
+        }
+
+        doc.Blocks.Add(para);
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Inline parser — simple state machine for bold, italic, code
+    // ────────────────────────────────────────────────────────────────────
+
+    private static void AddInlines(
+        InlineCollection inlines,
+        string text,
+        ParseContext ctx,
+        Brush? overrideForeground = null)
+    {
+        var fg = overrideForeground ?? ctx.TextBrush;
+        int i = 0;
+        int len = text.Length;
+        var buffer = new StringBuilder();
+
+        void FlushBuffer()
+        {
+            if (buffer.Length == 0) return;
+            inlines.Add(new Run(buffer.ToString()) { Foreground = fg });
+            buffer.Clear();
+        }
+
+        while (i < len)
+        {
+            char c = text[i];
+
+            // ── Inline code: `…` ───────────────────────────────────
+            if (c == '`')
+            {
+                int end = text.IndexOf('`', i + 1);
+                if (end > i)
+                {
+                    FlushBuffer();
+                    var run = new Run(text[(i + 1)..end])
+                    {
+                        FontFamily = CodeFont,
+                        FontSize   = 12,
+                        Foreground = ctx.MutedBrush,
+                        Background = ctx.CodeBg,
+                    };
+                    inlines.Add(run);
+                    i = end + 1;
+                    continue;
+                }
+            }
+
+            // ── Bold: **…** ────────────────────────────────────────
+            if (c == '*' && i + 1 < len && text[i + 1] == '*')
+            {
+                int close = text.IndexOf("**", i + 2, StringComparison.Ordinal);
+                if (close > i)
+                {
+                    FlushBuffer();
+                    var bold = new Bold();
+                    bold.Inlines.Add(new Run(text[(i + 2)..close]) { Foreground = fg });
+                    inlines.Add(bold);
+                    i = close + 2;
+                    continue;
+                }
+            }
+
+            // ── Italic: *…* (single asterisk, not followed by another *) ──
+            if (c == '*' && (i + 1 >= len || text[i + 1] != '*'))
+            {
+                // Find closing single * that is not part of **
+                int search = i + 1;
+                int close = -1;
+                while (search < len)
+                {
+                    int idx = text.IndexOf('*', search);
+                    if (idx < 0) break;
+                    // Make sure it's a single * (not **)
+                    if (idx + 1 < len && text[idx + 1] == '*') { search = idx + 2; continue; }
+                    close = idx;
+                    break;
+                }
+
+                if (close > i)
+                {
+                    FlushBuffer();
+                    var italic = new Italic();
+                    italic.Inlines.Add(new Run(text[(i + 1)..close]) { Foreground = fg });
+                    inlines.Add(italic);
+                    i = close + 1;
+                    continue;
+                }
+            }
+
+            buffer.Append(c);
+            i++;
+        }
+
+        FlushBuffer();
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Helpers
+    // ────────────────────────────────────────────────────────────────────
+
+    private static bool TryParseNumberedItem(string line, out int number, out string? text)
+    {
+        number = 0;
+        text = null;
+
+        int dotIdx = line.IndexOf('.');
+        if (dotIdx <= 0 || dotIdx + 1 >= line.Length || line[dotIdx + 1] != ' ')
+            return false;
+
+        if (!int.TryParse(line[..dotIdx], out number))
+            return false;
+
+        text = line[(dotIdx + 2)..];
+        return true;
+    }
+
+    private static Brush GetBrush(ResourceDictionary res, string key, Brush fallback)
+    {
+        if (res.Contains(key) && res[key] is Brush b) return b;
+        return fallback;
+    }
+
+    // ── Internal state bag passed through parse methods ─────────────
+    private sealed class ParseContext
+    {
+        public required Brush TextBrush   { get; init; }
+        public required Brush MutedBrush  { get; init; }
+        public required Brush CodeBg      { get; init; }
+        public required Brush AccentBrush { get; init; }
+        public required Brush BorderBrush { get; init; }
+    }
+}

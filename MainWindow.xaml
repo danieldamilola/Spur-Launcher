@@ -109,6 +109,9 @@
                 <views:ClipboardManager x:Name="ClipboardManagerControl"
                                         DataContext="{Binding Clipboard}"
                                         Visibility="Collapsed"/>
+                <views:AiChatPanel x:Name="AiChatPanelControl"
+                                   DataContext="{Binding}"
+                                   Visibility="Collapsed"/>
               </Grid>
             </Grid>
 
