@@ -27,17 +27,8 @@ public sealed class AiAddOn : IAddOn
 
     public IEnumerable<SearchResult> GetResults(string subQuery)
     {
-        // AI no longer uses keyword-scoped search — just returns the "Ask AI" entry
-        yield return new SearchResult
-        {
-            Id = "action:ai",
-            Type = ResultType.Action,
-            Name = "Ask AI",
-            Subtitle = "Chat with AI assistant",
-            IconGlyph = IconGlyph,
-            IconPath = IconPath,
-            ActionId = Id,
-        };
+        // AI UI is being redesigned — no search results surfaced for now.
+        yield break;
     }
 
     public bool CanHandle(string query) => false;
