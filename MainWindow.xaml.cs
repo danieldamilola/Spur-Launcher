@@ -226,7 +226,7 @@ public partial class MainWindow : Window
             nameof(MainViewModel.FooterHint),
             nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
-            nameof(MainViewModel.IsAiModeActive),
+            nameof(MainViewModel.IsFullPanelActive),
         };
 
         if (layoutProps.Contains(e.PropertyName))
@@ -263,13 +263,13 @@ public partial class MainWindow : Window
 
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
-        bool showContent = isBrowse || hasResults || _vm.IsAiModeActive;
+        bool showContent = isBrowse || hasResults || _vm.IsFullPanelActive;
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         bool hideActionChrome = _vm.IsActionPanelVisible && IsActionCategory(_vm.ActiveCategory);
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = _vm.IsAiModeActive || isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
-        AiChatPanelControl.Visibility = _vm.IsAiModeActive ? Visibility.Visible : Visibility.Collapsed;
+        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
+        AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
@@ -290,7 +290,6 @@ public partial class MainWindow : Window
                     if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
                     
                     ContentArea.Visibility = Visibility.Visible;
-                    ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                     FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
@@ -312,14 +311,12 @@ public partial class MainWindow : Window
                     ContentArea.Opacity = 1;
                     FooterArea.Opacity = 1;
                     ContentArea.Visibility = Visibility.Visible;
-                    ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                     FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
             else
             {
                 FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
-                ActionPreviewPanel.Visibility = _vm.IsActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
                 FooterArea.Opacity = 1;
             }
         }
@@ -338,7 +335,6 @@ public partial class MainWindow : Window
                     anim.Completed += (s, e) => 
                     { 
                         ContentArea.Visibility = Visibility.Collapsed; 
-                        ActionPreviewPanel.Visibility = Visibility.Collapsed;
                         FooterArea.Visibility = Visibility.Collapsed; 
                     };
                     
@@ -380,8 +376,6 @@ public partial class MainWindow : Window
         // Set color swatch background when the color action panel is active
         if (_vm.ActiveActionPanel == "color" && !string.IsNullOrEmpty(_vm.ActionResultText))
         {
-            try { ColorSwatch.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_vm.ActionResultText)); }
-            catch { ColorSwatch.Background = Brushes.Transparent; }
         }
 
         _categoryExpanded = expandRail;
@@ -491,8 +485,8 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (_vm.IsAiModeActive)
-                    _vm.ExitAiMode();
+                if (_vm.IsFullPanelActive)
+                    _vm.ExitAddOnPanel();
                 else if (_vm.CommandPalette.IsOpen)
                     _vm.CommandPalette.IsOpen = false;
                 else if (!string.IsNullOrEmpty(_vm.Query))
@@ -514,12 +508,12 @@ public partial class MainWindow : Window
 
             case Key.Enter:
                 // In AI mode, Enter sends the query to AI
-                if (_vm.IsAiModeActive)
+                if (_vm.IsFullPanelActive)
                 {
                     var aiQuery = _vm.Query?.Trim();
                     if (!string.IsNullOrWhiteSpace(aiQuery))
                     {
-                        AiChatPanelControl.HandleUserInput(aiQuery);
+                        AddOnPanelControl.HandleUserInput(aiQuery);
                         _vm.Query = string.Empty;
                     }
                     e.Handled = true;

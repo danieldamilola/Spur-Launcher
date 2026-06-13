@@ -1,0 +1,99 @@
+<UserControl x:Class="Spur.Views.AddOnPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- ═══ Scrollable content area ═══ -->
+    <ScrollViewer x:Name="ContentScroll"
+                  Grid.Row="0"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="16,12,16,4">
+      <StackPanel x:Name="ContentArea"/>
+    </ScrollViewer>
+
+    <!-- ═══ Footer bar ═══ -->
+    <Border Grid.Row="1"
+            Padding="14,8"
+            Background="{DynamicResource Depth2}"
+            BorderBrush="{DynamicResource Separator}"
+            BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Icon + label + model name + clear -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Image x:Name="FooterIcon" Width="14" Height="14"
+                 Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                 Margin="0,0,6,0" VerticalAlignment="Center"/>
+          <TextBlock x:Name="FooterLabel" Text="Add-on"
+                     FontFamily="{DynamicResource Token.Font.Primary}"
+                     FontWeight="SemiBold" FontSize="12"
+                     Foreground="{DynamicResource TextSecondary}"
+                     VerticalAlignment="Center"
+                     Margin="0,0,8,0"/>
+          <TextBlock x:Name="ModelLabel" Text=""
+                     FontFamily="{DynamicResource Token.Font.Primary}"
+                     FontSize="11"
+                     Foreground="{DynamicResource TextTertiary}"
+                     VerticalAlignment="Center"
+                     Visibility="Collapsed"/>
+          <!-- Clear button (AI only) -->
+          <Button x:Name="ClearButton"
+                  Click="OnClearClick"
+                  Visibility="Collapsed"
+                  Margin="12,0,0,0"
+                  Padding="6,2"
+                  Cursor="Hand"
+                  Background="Transparent"
+                  BorderThickness="0">
+            <StackPanel Orientation="Horizontal">
+              <ui:FontIcon Glyph="&#xE74D;" FontSize="11" Margin="0,0,4,0"
+                           Foreground="{DynamicResource TextTertiary}"/>
+              <TextBlock Text="Clear"
+                         FontFamily="{DynamicResource Token.Font.Primary}"
+                         FontSize="11"
+                         Foreground="{DynamicResource TextTertiary}"
+                         VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+        </StackPanel>
+
+        <!-- Right: Copy -->
+        <Button x:Name="CopyButton"
+                Grid.Column="2"
+                Click="OnCopyClick"
+                Padding="8,4"
+                Background="Transparent"
+                BorderThickness="0"
+                Cursor="Hand"
+                Visibility="Collapsed">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Copy"
+                       FontFamily="{DynamicResource Token.Font.Primary}"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextTertiary}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,4,0"/>
+            <TextBlock Text="Ctrl+C"
+                       FontFamily="{DynamicResource Token.Font.Primary}"
+                       FontSize="10"
+                       Foreground="{DynamicResource TextTertiary}"
+                       VerticalAlignment="Center"
+                       Opacity="0.6"/>
+          </StackPanel>
+        </Button>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

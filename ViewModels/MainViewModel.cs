@@ -267,14 +267,28 @@ public sealed partial class MainViewModel : ObservableObject
     }
     public bool IsActionPanelVisible => _activeActionPanel is not null;
 
-    // ── AI Chat Mode ────────────────────────────────────────────────
-    private bool _isAiModeActive;
-    /// <summary>When true, the results area is replaced by the AI chat panel.</summary>
-    public bool IsAiModeActive
+    // ── Full-Panel Mode (generic for all add-ons) ─────────────────
+    private string? _activeFullPanel;
+    /// <summary>Which add-on panel is active (e.g. "ai", "calc", "timer"). null = normal search.</summary>
+    public string? ActiveFullPanel
     {
-        get => _isAiModeActive;
-        set => SetProperty(ref _isAiModeActive, value);
+        get => _activeFullPanel;
+        set
+        {
+            if (SetProperty(ref _activeFullPanel, value))
+            {
+                OnPropertyChanged(nameof(IsFullPanelActive));
+                OnPropertyChanged(nameof(IsAiModeActive));
+                OnPropertyChanged(nameof(SearchPlaceholder));
+            }
+        }
     }
+
+    /// <summary>True when any add-on panel is active.</summary>
+    public bool IsFullPanelActive => _activeFullPanel is not null;
+
+    /// <summary>Backward compat — true when AI panel specifically is active.</summary>
+    public bool IsAiModeActive => _activeFullPanel == "ai";
 
     /// <summary>Returns the current AI model name for display (e.g. "GPT-4o").</summary>
     public string AiModelName
@@ -293,24 +307,29 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Enter AI chat mode — clears query, shows AI panel.</summary>
-    public void EnterAiMode()
+    /// <summary>Enter a full-panel add-on mode.</summary>
+    public void EnterAddOnPanel(string panelId)
     {
-        IsAiModeActive = true;
+        ActiveFullPanel = panelId;
         Query = string.Empty;
         ActiveActionPanel = null;
-        OnPropertyChanged(nameof(SearchPlaceholder));
     }
 
-    /// <summary>Exit AI chat mode — returns to normal search.</summary>
-    public void ExitAiMode()
+    /// <summary>Exit any full-panel mode — returns to normal search.</summary>
+    public void ExitAddOnPanel()
     {
-        IsAiModeActive = false;
-        _ai.CancelPending();
-        OnPropertyChanged(nameof(SearchPlaceholder));
+        var wasAi = _activeFullPanel == "ai";
+        ActiveFullPanel = null;
+        if (wasAi) _ai.CancelPending();
     }
 
-    /// <summary>Send a query to AI. First message uses StartAiAsync, follow-ups use AiFollowUpCommand.</summary>
+    /// <summary>Shortcut for entering AI mode.</summary>
+    public void EnterAiMode() => EnterAddOnPanel("ai");
+
+    /// <summary>Shortcut for exiting AI mode.</summary>
+    public void ExitAiMode() => ExitAddOnPanel();
+
+    /// <summary>Send a query to AI.</summary>
     public async Task SendAiQuery(string question)
     {
         if (string.IsNullOrWhiteSpace(question)) return;
@@ -403,8 +422,25 @@ public sealed partial class MainViewModel : ObservableObject
     {
         get
         {
-            if (IsAiModeActive)
-                return _ai.AiConversation.Count > 0 ? "Ask follow-up…" : "Ask anything…";
+            if (_activeFullPanel is not null)
+            {
+                return _activeFullPanel switch
+                {
+                    "ai"         => _ai.AiConversation.Count > 0 ? "Ask follow-up…" : "Ask anything…",
+                    "calc"       => "Type a math expression…",
+                    "timer"      => "e.g. 5m, 30s, 1h…",
+                    "color"      => "Type a hex code like #ff0055…",
+                    "ip"         => "IP Address",
+                    "currency"   => "e.g. 100 usd to eur…",
+                    "pw"         => "e.g. pw 16…",
+                    "kill"       => "Search processes…",
+                    "note"       => "Type a note…",
+                    "screenshot" => "Screenshot",
+                    "system"     => "System commands…",
+                    "shell"      => "Type a command…",
+                    _            => "Search",
+                };
+            }
 
             return ActiveCategory switch
             {
@@ -911,7 +947,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task OpenActionResult(SearchResult result, string actionInput)
     {
-        // AI action enters AI chat mode instead of using the action panel
+        // AI action enters AI chat mode directly (no dispatcher)
         if (result.ActionId == "ai")
         {
             EnterAiMode();
@@ -925,9 +961,6 @@ public sealed partial class MainViewModel : ObservableObject
     private void ApplyActionPanelState(ActionPanelState state)
     {
         if (state.ShouldHide) return;
-
-        if (!string.IsNullOrEmpty(state.PanelId))
-            ActiveActionPanel = state.PanelId;
 
         if (!string.IsNullOrEmpty(state.Title))
             ActionPreviewTitle = state.Title;
@@ -943,6 +976,10 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(state.ResultSubText))
             ActionResultSubText = state.ResultSubText;
+
+        // Route to full panel mode instead of old inline action panel
+        if (!string.IsNullOrEmpty(state.PanelId))
+            EnterAddOnPanel(state.PanelId);
     }
 
     private string GetActionExecutionInput(SearchResult result)
