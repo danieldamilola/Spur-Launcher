@@ -977,9 +977,68 @@ public sealed partial class MainViewModel : ObservableObject
         if (!string.IsNullOrEmpty(state.ResultSubText))
             ActionResultSubText = state.ResultSubText;
 
-        // Route to full panel mode instead of old inline action panel
-        if (!string.IsNullOrEmpty(state.PanelId))
+        // Tier 3: Sustained add-ons get full panel takeover
+        if (state.PanelId is "ai" or "timer")
+        {
             EnterAddOnPanel(state.PanelId);
+            return;
+        }
+
+        // Tier 1 & 2: Instant/interactive — show confirmation toast, then auto-hide
+        var toastText = state.State == "Copied" ? "✓ Copied to clipboard"
+                      : state.State == "Completed" ? $"✓ {state.Title}"
+                      : state.State == "Error" ? $"✗ {state.ResultText}"
+                      : !string.IsNullOrEmpty(state.ResultText) ? $"✓ {state.ResultText}"
+                      : null;
+
+        if (toastText is not null)
+        {
+            ShowToast(toastText);
+        }
+    }
+
+    // ── Toast Notification ──────────────────────────────────────────
+    private string? _toastMessage;
+    public string? ToastMessage
+    {
+        get => _toastMessage;
+        set => SetProperty(ref _toastMessage, value);
+    }
+
+    private bool _isToastVisible;
+    public bool IsToastVisible
+    {
+        get => _isToastVisible;
+        set => SetProperty(ref _isToastVisible, value);
+    }
+
+    private CancellationTokenSource? _toastCts;
+
+    public void ShowToast(string message, int durationMs = 1500)
+    {
+        _toastCts?.Cancel();
+        _toastCts = new CancellationTokenSource();
+        var token = _toastCts.Token;
+
+        ToastMessage = message;
+        IsToastVisible = true;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(durationMs, token);
+                if (!token.IsCancellationRequested)
+                {
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        IsToastVisible = false;
+                        ToastMessage = null;
+                    });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
     }
 
     private string GetActionExecutionInput(SearchResult result)

@@ -132,6 +132,22 @@
                          Text="{Binding FooterHint}"/>
             </Border>
 
+            <!-- ═══ Toast notification bar ═══ -->
+            <Border Grid.Row="3"
+                    x:Name="ToastBar"
+                    Visibility="Collapsed"
+                    Height="32"
+                    Background="{DynamicResource Depth2}"
+                    BorderBrush="{DynamicResource Separator}"
+                    BorderThickness="0,1,0,0"
+                    Padding="16,0">
+              <TextBlock Text="{Binding ToastMessage}"
+                         VerticalAlignment="Center"
+                         FontFamily="{DynamicResource Token.Font.Primary}"
+                         FontSize="12"
+                         Foreground="{DynamicResource TextSecondary}"/>
+            </Border>
+
             <!-- Command palette overlay -->
             <views:CommandPalette x:Name="CommandPaletteControl"
                                   Grid.RowSpan="5"

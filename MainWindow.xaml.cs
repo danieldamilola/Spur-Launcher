@@ -227,6 +227,7 @@ public partial class MainWindow : Window
             nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
             nameof(MainViewModel.IsFullPanelActive),
+            nameof(MainViewModel.IsToastVisible),
         };
 
         if (layoutProps.Contains(e.PropertyName))
@@ -270,6 +271,7 @@ public partial class MainWindow : Window
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
         UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
         AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
+        ToastBar.Visibility = _vm.IsToastVisible ? Visibility.Visible : Visibility.Collapsed;
 
         bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
