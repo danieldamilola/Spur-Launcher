@@ -52,9 +52,7 @@
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
     <PackageReference Include="iNKORE.UI.WPF.Modern" Version="0.10.2.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-    <PackageReference Include="Polly" Version="8.5.0" />
     <PackageReference Include="Velopack" Version="0.0.1053" />
   </ItemGroup>
 
@@ -66,6 +64,8 @@
     <Page Remove="RefactorApp\**" />
     <!-- Font files bundled as resources -->
     <Resource Include="Themes\Fonts\*.ttf" />
+    <!-- Colored add-on icons (Flow Launcher, MIT license) -->
+    <Resource Include="Assets\Icons\*.png" />
     <!-- Brand icons (tray + UI); exe icon from ApplicationIcon above -->
     <Resource Include="Icons\spur-launcher-16x16.ico" />
     <Resource Include="Icons\spur-launcher-32x32.ico" />

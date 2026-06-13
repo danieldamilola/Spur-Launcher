@@ -170,12 +170,6 @@ public partial class MainWindow : Window
             _vm?.Reset();
             _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
-            
-            // Aggressively clear memory while idle
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            NativeMethods.SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, -1, -1);
         }
 
         SpurMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
@@ -185,12 +179,6 @@ public partial class MainWindow : Window
             _vm?.Reset();
             _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
-            
-            // Aggressively clear memory while idle
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            NativeMethods.SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, -1, -1);
         });
     }
 

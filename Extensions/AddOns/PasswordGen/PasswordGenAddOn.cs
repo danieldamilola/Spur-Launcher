@@ -15,6 +15,7 @@ public sealed class PasswordGenAddOn : IAddOn
     public string Name => "Password";
     public string Description => "Generate strong random passwords.";
     public string IconGlyph => "\ue8d7";
+    public string? IconPath => "/Assets/Icons/lock.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -53,6 +54,7 @@ public sealed class PasswordGenAddOn : IAddOn
                 Name       = $"Generate Password · {defaultLength} chars",
                 Subtitle   = "Press ↵ to generate and copy",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;
@@ -68,6 +70,7 @@ public sealed class PasswordGenAddOn : IAddOn
                 Name       = $"Generate Password · {length} chars",
                 Subtitle   = "Press ↵ to generate and copy",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }
@@ -80,6 +83,7 @@ public sealed class PasswordGenAddOn : IAddOn
                 Name       = $"Generate Password · {defaultLength} chars",
                 Subtitle   = "Invalid length, press ↵ for default",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }
@@ -98,6 +102,7 @@ public sealed class PasswordGenAddOn : IAddOn
             Name       = $"Generate Password · {length} chars",
             Subtitle   = "Press ↵ to generate and copy",
             IconGlyph  = IconGlyph,
+            IconPath   = IconPath,
             ActionId   = Id,
         };
     }

@@ -13,6 +13,7 @@ public sealed partial class CalculatorAddOn : IAddOn
     public string Name => "Calculator";
     public string Description => "Evaluate math expressions inline.";
     public string IconGlyph => "\ue1d0";
+    public string? IconPath => "/Assets/Icons/calculator.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -43,6 +44,7 @@ public sealed partial class CalculatorAddOn : IAddOn
                 Name = $"= {result}",
                 Subtitle = expr,
                 IconGlyph = IconGlyph,
+                IconPath = IconPath,
                 ActionId = Id,
                 Score = 1000,
             };
@@ -56,6 +58,7 @@ public sealed partial class CalculatorAddOn : IAddOn
                 Name = "Invalid expression",
                 Subtitle = query,
                 IconGlyph = IconGlyph,
+                IconPath = IconPath,
                 ActionId = Id,
             };
         }

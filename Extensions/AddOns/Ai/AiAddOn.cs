@@ -13,6 +13,7 @@ public sealed class AiAddOn : IAddOn
     public string Name => "AI Assistant";
     public string Description => "Ask the configured AI provider.";
     public string IconGlyph => "\ue270";
+    public string? IconPath => "/Assets/Icons/find.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -34,6 +35,7 @@ public sealed class AiAddOn : IAddOn
             Name = "Ask AI",
             Subtitle = "Chat with AI assistant",
             IconGlyph = IconGlyph,
+            IconPath = IconPath,
             ActionId = Id,
         };
     }

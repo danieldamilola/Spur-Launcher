@@ -138,11 +138,30 @@
                                     Height="32"
                                     Margin="0,0,10,0"
                                     VerticalAlignment="Center">
-                                <ui:FontIcon Glyph="{Binding IconGlyph}"
-                                               FontSize="16"
-                                               Foreground="{DynamicResource TextSecondary}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                                <Grid>
+                                    <Image Source="{Binding IconPath}"
+                                           Width="20" Height="20"
+                                           Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                                    <ui:FontIcon Glyph="{Binding IconGlyph}"
+                                                   FontSize="16"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center">
+                                        <ui:FontIcon.Style>
+                                            <Style TargetType="ui:FontIcon">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:FontIcon.Style>
+                                    </ui:FontIcon>
+                                </Grid>
                             </Border>
 
                             <!-- Label + Description -->

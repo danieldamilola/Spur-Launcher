@@ -166,7 +166,14 @@
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Extras">
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="AI">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:AiSettingsPanel/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Add-ons">
                                 <Setter Property="Content">
                                     <Setter.Value>
                                         <settings:AddOnsSettingsPanel/>

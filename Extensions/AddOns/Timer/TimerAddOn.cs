@@ -14,6 +14,7 @@ public sealed class TimerAddOn : IAddOn
     public string Name => "Timer";
     public string Description => "Start a countdown directly from the launcher.";
     public string IconGlyph => "\ue121";
+    public string? IconPath => "/Assets/Icons/history.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -55,6 +56,7 @@ public sealed class TimerAddOn : IAddOn
                     Name       = label,
                     Subtitle   = string.IsNullOrEmpty(input) ? "Type a duration like 5m or 30s" : $"timer {input}",
                     IconGlyph  = IconGlyph,
+                    IconPath   = IconPath,
                     ActionId   = Id,
                 };
             }
@@ -71,6 +73,7 @@ public sealed class TimerAddOn : IAddOn
                 Name       = $"Start Timer — {display}",
                 Subtitle   = $"Press ↵ to start a {display.ToLowerInvariant()} countdown",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }
@@ -83,6 +86,7 @@ public sealed class TimerAddOn : IAddOn
                 Name       = "Invalid duration",
                 Subtitle   = "Try something like 5m, 30s, 1h, or 2h30m",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }
@@ -124,6 +128,7 @@ public sealed class TimerAddOn : IAddOn
                 Name       = $"Start Timer — {display}",
                 Subtitle   = $"Press ↵ to start a {display.ToLowerInvariant()} countdown",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }

@@ -16,6 +16,7 @@ public sealed class KillProcessAddOn : IAddOn
     public string Name => "Kill";
     public string Description => "Find and terminate running processes by name.";
     public string IconGlyph => "\ue711";
+    public string? IconPath => "/Assets/Icons/shutdown.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -90,6 +91,7 @@ public sealed class KillProcessAddOn : IAddOn
                 Name       = $"Kill \"{name}\" · not found",
                 Subtitle   = "No matching process running",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;

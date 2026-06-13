@@ -68,7 +68,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             new("General",  "\ue713"),
             new("Search",   "\ue11A"),
-            new("Extras",   "\ue113"),
+            new("AI",       "\ue2b1"),
+            new("Add-ons",  "\ue113"),
             new("Store",    "\ue719"),
             new("About",    "\ue946"),
         };
@@ -754,6 +755,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     // ═══════════════════════════════════════════════════════════════
     // AI Assistant
     // ═══════════════════════════════════════════════════════════════
+
+    public bool AiEnabled
+    {
+        get => _config.AiEnabled;
+        set { _config.AiEnabled = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
 
     public string[] Providers { get; } = ["groq", "gemini", "openrouter", "deepseek"];
 

@@ -16,6 +16,7 @@ public sealed class IpAddOn : IAddOn
     public string Name => "IP";
     public string Description => "Show local and public IP addresses.";
     public string IconGlyph => "\ue717";
+    public string? IconPath => "/Assets/Icons/info.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -38,6 +39,7 @@ public sealed class IpAddOn : IAddOn
             Name       = "Get IP Addresses",
             Subtitle   = "Press ↵ to fetch local and public IPs",
             IconGlyph  = IconGlyph,
+            IconPath   = IconPath,
             ActionId   = Id,
         };
     }

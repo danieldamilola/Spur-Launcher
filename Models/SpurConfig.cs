@@ -234,6 +234,9 @@ public sealed class SpurConfig
     // AI (API keys are encrypted at rest via DPAPI)
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>Whether AI results are shown when searching.</summary>
+    public bool AiEnabled { get; set; } = false;
+
     /// <summary>"groq" | "gemini" | "openrouter" | "deepseek"</summary>
     public string AiProvider { get; set; } = "groq";
 

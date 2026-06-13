@@ -14,6 +14,7 @@ public sealed class QuickNoteAddOn : IAddOn
     public string Name => "Quick Note";
     public string Description => "Save quick notes instantly.";
     public string IconGlyph => "\ue70b";
+    public string? IconPath => "/Assets/Icons/copy.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -40,6 +41,7 @@ public sealed class QuickNoteAddOn : IAddOn
                 Name       = "New Quick Note",
                 Subtitle   = "Type your note...",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;
@@ -50,8 +52,9 @@ public sealed class QuickNoteAddOn : IAddOn
             Id         = $"action:note:{note.GetHashCode()}",
             Type       = ResultType.Action,
             Name       = "Save Note",
-            Subtitle   = $"Press ↵ to save: {note}",
+            Subtitle   = $"Press ↵ to save to SpurNotes.txt: {note}",
             IconGlyph  = IconGlyph,
+            IconPath   = IconPath,
             ActionId   = Id,
         };
     }
@@ -76,10 +79,11 @@ public sealed class QuickNoteAddOn : IAddOn
                 folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             }
 
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            var file = Path.Combine(folder, $"Note_{timestamp}.txt");
+            var file = Path.Combine(folder, "SpurNotes.txt");
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            var entry = $"--- {timestamp} ---\r\n{note}\r\n\r\n";
 
-            File.WriteAllText(file, note);
+            File.AppendAllText(file, entry);
 
             return Task.FromResult(new AddOnResult
             {
@@ -87,7 +91,7 @@ public sealed class QuickNoteAddOn : IAddOn
                 Title = Name,
                 Detail = file,
                 PanelId = Id,
-                SubText = $"Saved to {file}"
+                SubText = "Saved to SpurNotes.txt"
             });
         }
         catch (Exception ex)

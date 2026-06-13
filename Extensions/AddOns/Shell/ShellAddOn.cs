@@ -12,6 +12,7 @@ public sealed class ShellAddOn : IAddOn
     public string Name => "Shell";
     public string Description => "Run commands through your configured terminal.";
     public string IconGlyph => "\ue765";
+    public string? IconPath => "/Assets/Icons/shell.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -36,6 +37,7 @@ public sealed class ShellAddOn : IAddOn
             Name = string.IsNullOrWhiteSpace(command) ? "Run Command" : $"Run {command}",
             Subtitle = string.IsNullOrWhiteSpace(command) ? "Type a command to run" : "Press ↵ to execute",
             IconGlyph = IconGlyph,
+            IconPath = IconPath,
             ActionId = Id,
             Score = 600,
         };

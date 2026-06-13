@@ -17,6 +17,7 @@ public sealed class CurrencyAddOn : IAddOn
     public string Name => "Currency";
     public string Description => "Real-time currency conversion.";
     public string IconGlyph => "\ue12c";
+    public string? IconPath => "/Assets/Icons/url.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -53,6 +54,7 @@ public sealed class CurrencyAddOn : IAddOn
                 Name       = "Currency Converter",
                 Subtitle   = $"e.g. 100 {settings.DefaultFrom} to {settings.DefaultTo}",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;
@@ -72,6 +74,7 @@ public sealed class CurrencyAddOn : IAddOn
                 Name       = $"Convert {amount} {from} to {to}",
                 Subtitle   = "Press ↵ to calculate",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }
@@ -84,6 +87,7 @@ public sealed class CurrencyAddOn : IAddOn
                 Name       = "Invalid format",
                 Subtitle   = $"e.g. 100 {settings.DefaultFrom} to {settings.DefaultTo}",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
         }

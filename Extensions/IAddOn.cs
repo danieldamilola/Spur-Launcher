@@ -15,7 +15,9 @@ public interface IAddOn
     string Id          { get; }   // e.g. "calc", "timer", "pw"
     string Name        { get; }   // e.g. "Calculator", shown in UI
     string Description { get; }   // shown in the Add-ons store card
-    string IconGlyph   { get; }   // Segoe MDL2 / custom glyph
+    string IconGlyph   { get; }   // Segoe MDL2 / custom glyph (fallback)
+    /// <summary>Resource path to a colored PNG icon (e.g. "/Assets/Icons/calculator.png"). Null = use IconGlyph fallback.</summary>
+    string? IconPath    { get; }
     string Author      { get; }   // "Built-in" for shipped add-ons
     string Version     { get; }
     bool   IsBuiltIn   { get; }   // false = community / downloaded

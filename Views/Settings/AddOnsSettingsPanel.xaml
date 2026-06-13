@@ -44,11 +44,32 @@
                                         CornerRadius="9"
                                         Background="{DynamicResource SurfaceRaised}"
                                         VerticalAlignment="Center">
-                                    <ui:FontIcon Glyph="{Binding IconGlyph}"
-                                                 FontSize="16"
-                                                 Foreground="{DynamicResource Accent}"
-                                                 HorizontalAlignment="Center"
-                                                 VerticalAlignment="Center"/>
+                                    <Grid>
+                                        <!-- Colored PNG icon (preferred) -->
+                                        <Image Source="{Binding IconPath}"
+                                               Width="20" Height="20"
+                                               Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                        <!-- Glyph fallback (hidden when IconPath is set) -->
+                                        <ui:FontIcon Glyph="{Binding IconGlyph}"
+                                                     FontSize="16"
+                                                     Foreground="{DynamicResource Accent}"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center">
+                                            <ui:FontIcon.Style>
+                                                <Style TargetType="ui:FontIcon">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ui:FontIcon.Style>
+                                        </ui:FontIcon>
+                                    </Grid>
                                 </Border>
 
                                 <!-- Name + Description -->

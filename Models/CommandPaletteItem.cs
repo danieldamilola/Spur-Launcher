@@ -20,6 +20,9 @@ public sealed partial class CommandPaletteItem : ObservableObject
     [ObservableProperty]
     private string _IconGlyph = string.Empty;
 
+    [ObservableProperty]
+    private string? _IconPath;
+
     /// <summary>
     /// The action to invoke when this command is selected.
     /// </summary>

@@ -12,6 +12,7 @@ public sealed class SettingsNavAddOn : IAddOn
     public string Name => "Settings";
     public string Description => "Open Spur settings.";
     public string IconGlyph => "\ue713";
+    public string? IconPath => "/Assets/Icons/settings.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -32,6 +33,7 @@ public sealed class SettingsNavAddOn : IAddOn
             Name = "Settings",
             Subtitle = "Configure Spur",
             IconGlyph = IconGlyph,
+            IconPath = IconPath,
             ActionId = Id,
         };
     }

@@ -15,6 +15,7 @@ public sealed class ColorAddOn : IAddOn
     public string Name => "Color";
     public string Description => "Hex/RGB/HSL color conversion and preview.";
     public string IconGlyph => "\ue790";
+    public string? IconPath => "/Assets/Icons/color.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
@@ -42,6 +43,7 @@ public sealed class ColorAddOn : IAddOn
                 Name       = "Color Converter",
                 Subtitle   = "Type a Hex, RGB, or HSL color",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;
@@ -57,6 +59,7 @@ public sealed class ColorAddOn : IAddOn
                 Name       = "Invalid color format",
                 Subtitle   = "Try #ff0000, rgb(255,0,0), or hsl(0,100,50)",
                 IconGlyph  = IconGlyph,
+                IconPath   = IconPath,
                 ActionId   = Id,
             };
             yield break;
@@ -93,6 +96,7 @@ public sealed class ColorAddOn : IAddOn
         Name       = value,
         Subtitle   = $"Copy {label} to clipboard",
         IconGlyph  = IconGlyph,
+        IconPath   = IconPath,
         ActionId   = Id,
     };
 
