@@ -86,4 +86,41 @@ public sealed class AddOnStoreService
             _logger.Error($"Failed to uninstall add-on {addOnId}.", ex);
         }
     }
+
+    /// <summary>
+    /// Checks the manifest for a specific add-on and returns whether an update
+    /// is available compared to the currently installed version.
+    /// </summary>
+    public async Task<(bool UpdateAvailable, string LatestVersion)> CheckForUpdateAsync(
+        string addOnId, string currentVersion, CancellationToken ct = default)
+    {
+        try
+        {
+            var manifest = await GetManifestAsync(ct);
+            var entry = manifest.Find(e => string.Equals(e.Id, addOnId, StringComparison.OrdinalIgnoreCase));
+
+            if (entry == null)
+                return (false, currentVersion);
+
+            if (!Version.TryParse(NormalizeVersion(entry.Version), out var latest) ||
+                !Version.TryParse(NormalizeVersion(currentVersion), out var current))
+                return (false, entry.Version);
+
+            return (latest > current, entry.Version);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to check for update for add-on {addOnId}.", ex);
+            return (false, currentVersion);
+        }
+    }
+
+    /// <summary>
+    /// Ensures a version string has at least Major.Minor so <see cref="Version.TryParse"/> succeeds.
+    /// </summary>
+    private static string NormalizeVersion(string version)
+    {
+        var v = version.TrimStart('v', 'V');
+        return v.Contains('.') ? v : v + ".0";
+    }
 }

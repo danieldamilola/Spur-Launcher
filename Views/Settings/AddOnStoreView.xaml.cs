@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Spur.Models;
@@ -22,9 +23,18 @@ public partial class AddOnStoreView : UserControl
         await LoadManifestAsync();
     }
 
-    private async void OnRetryClicked(object sender, RoutedEventArgs e)
+    private void OnBrowseBuiltInClicked(object sender, RoutedEventArgs e)
     {
-        await LoadManifestAsync();
+        NavigateToAddOns();
+    }
+
+    private void NavigateToAddOns()
+    {
+        if (_vm == null) return;
+
+        var addOnsSection = _vm.Sections.FirstOrDefault(s => s.Name == "Add-ons");
+        if (addOnsSection != null)
+            _vm.SelectedSection = addOnsSection;
     }
 
     private async System.Threading.Tasks.Task LoadManifestAsync()

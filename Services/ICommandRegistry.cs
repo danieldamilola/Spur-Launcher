@@ -9,6 +9,7 @@ public sealed record CommandPaletteEntry
     public required string Label { get; init; }
     public required string Description { get; init; }
     public required string IconGlyph { get; init; }
+    public string? IconPath { get; init; }
     public required Action Execute { get; init; }
 }
 

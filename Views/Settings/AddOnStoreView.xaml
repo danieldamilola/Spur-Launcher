@@ -22,12 +22,13 @@
 
         <!-- Empty / Error State -->
         <StackPanel x:Name="ErrorPanel" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
-            <ui:FontIcon Glyph="&#xe7ba;" FontSize="32" Foreground="{DynamicResource TextTertiary}" Margin="0,0,0,16"/>
-            <TextBlock x:Name="ErrorText" Text="Failed to load add-ons manifest." Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"/>
-            <Button Margin="0,16,0,0" Click="OnRetryClicked" Padding="12,6">
+            <ui:FontIcon Glyph="&#xE8F1;" FontSize="32" Foreground="{DynamicResource TextTertiary}" Margin="0,0,0,16"/>
+            <TextBlock x:Name="ErrorText" Text="No community add-ons available yet. Check back soon!" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"/>
+            <TextBlock Text="Built-in add-ons are managed in the Add-ons tab." Foreground="{DynamicResource TextTertiary}" FontSize="12" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center" Margin="0,6,0,0"/>
+            <Button Margin="0,16,0,0" Click="OnBrowseBuiltInClicked" Padding="12,6">
                 <StackPanel Orientation="Horizontal">
-                    <ui:FontIcon Glyph="&#xE72C;" FontSize="13" Margin="0,0,6,0"/>
-                    <TextBlock Text="Retry" VerticalAlignment="Center"/>
+                    <ui:FontIcon Glyph="&#xE113;" FontSize="13" Margin="0,0,6,0"/>
+                    <TextBlock Text="Browse Built-in Add-ons" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
         </StackPanel>

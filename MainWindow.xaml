@@ -225,33 +225,116 @@
                   <RowDefinition Height="Auto"/>
                   <RowDefinition Height="*"/>
                   <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0"
-                           Text="AI Response"
-                           FontWeight="Medium"
-                           Foreground="{DynamicResource TextSecondary}"
-                           Margin="0,0,0,4"/>
-                <ScrollViewer Grid.Row="1"
-                              MaxHeight="200"
-                              VerticalScrollBarVisibility="Auto">
-                  <StackPanel>
-                    <TextBlock Text="Thinking..."
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                  <ui:FontIcon Glyph="&#xE9D9;" FontSize="14"
                                Foreground="{DynamicResource TextTertiary}"
-                               FontSize="13">
-                      <TextBlock.Style>
-                        <Style TargetType="TextBlock">
+                               Margin="0,0,6,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Ask AI"
+                             FontFamily="{DynamicResource Token.Font.Primary}"
+                             FontWeight="SemiBold"
+                             FontSize="13"
+                             Foreground="{DynamicResource TextSecondary}"
+                             VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Welcome state (shown when AiText is empty and not loading) -->
+                <StackPanel Grid.Row="1"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Margin="0,24,0,24">
+                  <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                      <Setter Property="Visibility" Value="Visible"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding AiChat.AiLoading}" Value="True">
                           <Setter Property="Visibility" Value="Collapsed"/>
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding AiChat.AiLoading}" Value="True">
-                              <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </TextBlock.Style>
-                    </TextBlock>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </StackPanel.Style>
+                  <!-- Only show when AiText is empty (no conversation yet) -->
+                  <StackPanel.Resources>
+                    <Style x:Key="WelcomeVis" TargetType="StackPanel">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding AiChat.AiText}" Value="">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </StackPanel.Resources>
+                  <StackPanel Style="{StaticResource WelcomeVis}">
+                    <ui:FontIcon Glyph="&#xE9D9;" FontSize="28"
+                                 Foreground="{DynamicResource TextTertiary}"
+                                 HorizontalAlignment="Center"
+                                 Margin="0,0,0,8"/>
+                    <TextBlock Text="Ask AI anything"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="15"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimary}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Press Enter to ask a question"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiary}"
+                               HorizontalAlignment="Center"/>
+                  </StackPanel>
+                </StackPanel>
+
+                <!-- Thinking indicator -->
+                <StackPanel Grid.Row="1"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Margin="0,24,0,24">
+                  <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding AiChat.AiLoading}" Value="True">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </StackPanel.Style>
+                  <ui:FontIcon Glyph="&#xE9D9;" FontSize="14"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,0,6,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Thinking..."
+                             FontFamily="{DynamicResource Token.Font.Primary}"
+                             FontSize="13"
+                             Foreground="{DynamicResource TextTertiary}"
+                             VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Conversation display -->
+                <ScrollViewer Grid.Row="1"
+                              x:Name="AiScrollViewer"
+                              MaxHeight="280"
+                              VerticalScrollBarVisibility="Auto"
+                              Margin="0,0,0,4">
+                  <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                      <Setter Property="Visibility" Value="Visible"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding AiChat.AiText}" Value="">
+                          <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </ScrollViewer.Style>
+                  <StackPanel>
+                    <!-- Error message -->
                     <TextBlock Text="{Binding AiChat.AiError}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource Red}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="13"
                                Margin="0,0,0,6">
                       <TextBlock.Style>
@@ -265,13 +348,68 @@
                         </Style>
                       </TextBlock.Style>
                     </TextBlock>
+                    <!-- AI response text -->
                     <TextBlock Text="{Binding AiChat.AiText}"
                                TextWrapping="Wrap"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
                                Foreground="{DynamicResource TextPrimary}"
-                               FontSize="13"/>
+                               FontSize="14"
+                               LineHeight="20"/>
                   </StackPanel>
                 </ScrollViewer>
-                <StackPanel Grid.Row="2"
+
+                <!-- Follow-up input -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceRaised}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource RadiusSm}"
+                        Padding="10,0"
+                        Margin="0,4,0,0"
+                        Height="36">
+                  <Border.Style>
+                    <Style TargetType="Border">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActiveActionPanel}" Value="ai">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <Grid>
+                    <TextBox x:Name="AiFollowUpInput"
+                             VerticalAlignment="Center"
+                             FontFamily="{DynamicResource Token.Font.Primary}"
+                             FontSize="13"
+                             Foreground="{DynamicResource TextPrimary}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0"
+                             KeyDown="OnAiFollowUpKeyDown"
+                             AutomationProperties.Name="Ask a follow-up"/>
+                    <TextBlock Text="Ask a follow-up..."
+                               IsHitTestVisible="False"
+                               VerticalAlignment="Center"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextTertiary}">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Visibility" Value="Collapsed"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Text, ElementName=AiFollowUpInput}" Value="">
+                              <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Grid>
+                </Border>
+
+                <!-- Action buttons -->
+                <StackPanel Grid.Row="3"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Margin="0,8,0,0">

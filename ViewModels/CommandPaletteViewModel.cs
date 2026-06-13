@@ -115,6 +115,7 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
                 Label = entry.Label,
                 Description = entry.Description,
                 IconGlyph = entry.IconGlyph,
+                IconPath = entry.IconPath,
                 ExecuteAction = entry.Execute,
             });
         }

@@ -580,6 +580,17 @@ public partial class MainWindow : Window
             System.Windows.Clipboard.SetText(text);
     }
 
+    private void OnAiFollowUpKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || _vm is null) return;
+        var text = AiFollowUpInput.Text?.Trim();
+        if (string.IsNullOrEmpty(text)) return;
+
+        _vm.AiChat.AiFollowUpCommand.Execute(text);
+        AiFollowUpInput.Clear();
+        e.Handled = true;
+    }
+
     private void OnCloseActionPanelClick(object sender, RoutedEventArgs e)
     {
         _vm?.CloseActionPanel();
