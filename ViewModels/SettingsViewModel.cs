@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
+using System.Windows;
 
 namespace Spur.ViewModels;
 
@@ -76,6 +77,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         SelectedSection = Sections[0];
 
         LoadStartupState();
+        ApplyViewModeResources(_config.ViewMode);
 
         PropertyChanged += (_, e) =>
         {
@@ -212,6 +214,47 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _config.BarWidth;
         set { _config.BarWidth = Math.Clamp(value, 400, 1000); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+    }
+
+    // ── View mode ────────────────────────────────────────────────
+
+    public bool ViewModeCompact
+    {
+        get => _config.ViewMode == "compact";
+        set { if (value) SetViewMode("compact"); }
+    }
+    public bool ViewModeComfortable
+    {
+        get => _config.ViewMode == "comfortable";
+        set { if (value) SetViewMode("comfortable"); }
+    }
+    public bool ViewModeSpacious
+    {
+        get => _config.ViewMode == "spacious";
+        set { if (value) SetViewMode("spacious"); }
+    }
+
+    private void SetViewMode(string mode)
+    {
+        _config.ViewMode = mode;
+        Save();
+        OnPropertyChanged(nameof(ViewModeCompact));
+        OnPropertyChanged(nameof(ViewModeComfortable));
+        OnPropertyChanged(nameof(ViewModeSpacious));
+        ApplyViewModeResources(mode);
+        _main.Config = _config.Clone();
+    }
+
+    /// <summary>Updates the RowHeight WPF resource to match the selected view mode.</summary>
+    internal static void ApplyViewModeResources(string mode)
+    {
+        double rowHeight = mode switch
+        {
+            "compact"  => 36.0,
+            "spacious" => 56.0,
+            _          => 44.0, // comfortable (default)
+        };
+        Application.Current.Resources["RowHeight"] = rowHeight;
     }
 
     // ═══════════════════════════════════════════════════════════════

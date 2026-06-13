@@ -163,6 +163,7 @@ public sealed class SearchEngineService : ISearchEngineService
                     Name       = c.Preview,
                     Subtitle   = c.TimeAgo,
                     IconGlyph = c.IsImage ? "image" : "clipboard",
+                IconPath = "/Assets/Icons/copy.png",
                     ClipContent = c.Content,
                     ClipTimestamp = c.Timestamp,
                     ClipImage = c.Image,
@@ -266,6 +267,7 @@ public sealed class SearchEngineService : ISearchEngineService
                 Name = extra.Name,
                 Subtitle = string.IsNullOrWhiteSpace(extra.Keyword) ? extra.Description : $"{extra.Keyword}  ·  {extra.Description}",
                 IconGlyph = extra.IconGlyph,
+                IconPath = extra.IconPath,
                 ActionId = extra.Keyword, // Set ActionId to keyword so MainViewModel can use it
                 Score = 500,
             };
@@ -298,6 +300,7 @@ public sealed class SearchEngineService : ISearchEngineService
             Name = $"Open {query}",
             Subtitle = "Open URL",
             IconGlyph = "\ue12b",
+            IconPath = "/Assets/Icons/url.png",
             ActionId = "url",
             Score = 500,
         };
@@ -314,6 +317,7 @@ public sealed class SearchEngineService : ISearchEngineService
             Name = $"Search the web for \"{q}\"",
             Subtitle = "Web",
             IconGlyph = "\ue11a",
+            IconPath = "/Assets/Icons/search.png",
             ActionId = "web",
             Score = 50,
         };

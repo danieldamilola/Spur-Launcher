@@ -30,6 +30,9 @@ public sealed class SpurConfig
     /// <summary>How many results to display before scrolling (5, 8, or 10).</summary>
     public int ResultsCount { get; set; } = 5;
 
+    /// <summary>"compact" | "comfortable" | "spacious" — controls result row height/density.</summary>
+    public string ViewMode { get; set; } = "comfortable";
+
 
     /// <summary>True after the user completes the first-launch onboarding.</summary>
     public bool OnboardingComplete { get; set; } = false;
