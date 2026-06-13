@@ -66,12 +66,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         // Init sidebar — features.md §6
         Sections = new ObservableCollection<SettingsSection>
         {
-            new("General",  "\ue713"),
-            new("Search",   "\ue11A"),
-            new("AI",       "\ue2b1"),
-            new("Add-ons",  "\ue113"),
-            new("Store",    "\ue719"),
-            new("About",    "\ue946"),
+            new("General",  "\ue713", "/Assets/Icons/settings.png"),
+            new("Search",   "\ue11A", "/Assets/Icons/search.png"),
+            new("AI",       "\ue2b1", "/Assets/Icons/find.png"),
+            new("Add-ons",  "\ue113", "/Assets/Icons/store.png"),
+            new("Store",    "\ue719", "/Assets/Icons/open.png"),
+            new("About",    "\ue946", "/Assets/Icons/info.png"),
         };
         SelectedSection = Sections[0];
 
