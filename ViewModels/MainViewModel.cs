@@ -722,7 +722,6 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 [Config.KeywordSystem]     = ("system",     "power"),
                 [Config.KeywordTimer]      = ("timer",      "\ue121"),
-                [Config.KeywordAi]         = ("ai",         "AI"),
                 [Config.KeywordCurrency]   = ("currency",   "\ue825"),
                 [Config.KeywordPassword]   = ("pw",         "\ue722"),
                 [Config.KeywordNote]       = ("note",       "\ue727"),
