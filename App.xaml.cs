@@ -77,6 +77,7 @@ public partial class App : Application
         services.AddSingleton<IFileSearchService, FileSearchService>();
         services.AddSingleton<IAiService, AiService>();
         services.AddSingleton<IFrequencyService, FrequencyService>();
+        services.AddSingleton(new System.Net.Http.HttpClient()); // shared HttpClient for AddOnStoreService and AiService
         services.AddSingleton<AddOnRegistry>();
         services.AddSingleton<AddOnStoreService>();
         services.AddSingleton<ISearchEngineService, SearchEngineService>();
