@@ -267,6 +267,39 @@ public sealed partial class MainViewModel : ObservableObject
     }
     public bool IsActionPanelVisible => _activeActionPanel is not null;
 
+    // ── Quick AI (Raycast-style inline AI) ────────────────────────
+    private bool _isQuickAiActive;
+    /// <summary>When true, the results area is replaced by the AI panel (triggered by Tab key).</summary>
+    public bool IsQuickAiActive
+    {
+        get => _isQuickAiActive;
+        set => SetProperty(ref _isQuickAiActive, value);
+    }
+
+    /// <summary>Start Quick AI: hides results, shows AI panel inline, sends query to AI.</summary>
+    public async Task StartQuickAi()
+    {
+        var query = Query?.Trim();
+        if (string.IsNullOrWhiteSpace(query)) return;
+
+        IsQuickAiActive = true;
+        await _ai.StartAiAsync(query);
+    }
+
+    /// <summary>Send a follow-up question while Quick AI is active.</summary>
+    public async Task SendAiFollowUp(string followUp)
+    {
+        if (!IsQuickAiActive || string.IsNullOrWhiteSpace(followUp)) return;
+        await _ai.StartAiAsync(followUp);
+    }
+
+    /// <summary>Close Quick AI and return to normal search results.</summary>
+    public void CloseQuickAi()
+    {
+        IsQuickAiActive = false;
+        _ai.ClearConversation();
+    }
+
     public sealed class PinnedCategoryItem
     {
         public string Id { get; set; } = string.Empty;
