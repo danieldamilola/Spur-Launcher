@@ -7,6 +7,10 @@ using Spur.ViewModels;
 
 namespace Spur.Behaviors;
 
+/// <summary>
+/// Attached behavior for the main launcher window. Handles positioning,
+/// keyboard navigation, drag-move, and window resize hit-testing.
+/// </summary>
 public static class LauncherWindowBehavior
 {
     public static readonly DependencyProperty AttachProperty =

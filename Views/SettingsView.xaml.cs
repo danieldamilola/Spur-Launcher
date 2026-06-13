@@ -27,7 +27,7 @@ public sealed class SectionVisibilityConverter : System.Windows.Data.IValueConve
     public object Convert(object value, Type targetType, object parameter,
         System.Globalization.CultureInfo culture)
     {
-        var sectionName = (value as Spur.ViewModels.SettingsSection)?.Name ?? "";
+        var sectionName = (value as Spur.Models.SettingsSection)?.Name ?? "";
         var target = parameter as string ?? "";
         return sectionName == target
             ? System.Windows.Visibility.Visible

@@ -48,7 +48,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        try { InitializeComponent(); } catch(Exception ex) { try { var crashDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Spur"); System.IO.Directory.CreateDirectory(crashDir); System.IO.File.WriteAllText(System.IO.Path.Combine(crashDir, "crash.txt"), ex.ToString() + "\nInner: " + ex.InnerException?.ToString()); } catch { } throw; }
+        try { InitializeComponent(); } catch(Exception ex) { try { var crashDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Spur"); System.IO.Directory.CreateDirectory(crashDir); System.IO.File.WriteAllText(System.IO.Path.Combine(crashDir, "crash.txt"), ex.ToString() + "\nInner: " + ex.InnerException?.ToString()); } catch { /* intentional: crash-log write failed, still re-throw original */ } throw; }
         Loaded += OnLoaded;
     }
 
@@ -574,7 +574,7 @@ public partial class MainWindow : Window
     {
         base.OnMouseLeftButtonDown(e);
         if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
-        try { DragMove(); } catch { }
+        try { DragMove(); } catch { /* intentional: DragMove throws if button released mid-drag */ }
     }
 
     private void OnActionCopyClick(object sender, RoutedEventArgs e)

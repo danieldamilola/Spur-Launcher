@@ -117,13 +117,13 @@ public class MainViewModelTests
         var files = new FakeFiles();
         var freq = new FakeFreq();
         var clip = new FakeClip();
-        var extras = new Spur.Extensions.ExtrasRegistry(NullLogger.Instance);
-        var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq, extras);
+        var addOns = new Spur.Extensions.AddOnRegistry(NullLogger.Instance);
+        var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq, addOns);
 
         return new MainViewModel(cfg, NullLogger.Instance,
             apps, files, freq, new FakeConfigSvc(cfg),
             clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
-            registry, commandPalette, searchEngine, new FakeSecureStorage(), extras, new Spur.Services.ExtrasStoreService(NullLogger.Instance));
+            registry, commandPalette, searchEngine, new FakeSecureStorage(), addOns, new Spur.Services.AddOnStoreService(NullLogger.Instance));
     }
 
     [Fact]

@@ -110,6 +110,6 @@ public static class WindowBackdrop
             int darkMode = isDark ? 1 : 0;
             DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
         }
-        catch { }
+        catch { /* intentional: dark mode attribute not supported on older Windows */ }
     }
 }

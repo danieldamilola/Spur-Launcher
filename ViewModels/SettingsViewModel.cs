@@ -44,14 +44,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ISecureStorageService _secureStorage;
     private          SpurConfig       _config;
 
-    public Spur.Extensions.ExtrasRegistry Registry { get; }
-    public System.Collections.Generic.IEnumerable<Spur.Extensions.IExtra> AllExtras => Registry.All;
-    public Spur.Services.ExtrasStoreService StoreService { get; }
+    public Spur.Extensions.AddOnRegistry Registry { get; }
+    public System.Collections.Generic.IEnumerable<Spur.Extensions.IAddOn> AllAddOns => Registry.All;
+    public Spur.Services.AddOnStoreService StoreService { get; }
 
     public SettingsViewModel(SpurConfig config, IConfigService configService, MainViewModel main,
                              IThemeManager themeManager, IStartupService startupService, IFrequencyService frequencyService,
-                             ISecureStorageService secureStorage, Spur.Extensions.ExtrasRegistry registry,
-                             Spur.Services.ExtrasStoreService storeService)
+                             ISecureStorageService secureStorage, Spur.Extensions.AddOnRegistry registry,
+                             Spur.Services.AddOnStoreService storeService)
     {
         _config          = config;
         Registry         = registry;
@@ -288,6 +288,20 @@ public sealed partial class SettingsViewModel : ObservableObject
         "Keep last Query" => QueryStyles.Keep,
         _ => QueryStyles.Clear,
     };
+
+    public int SearchDelay
+    {
+        get => _config.SearchDelay;
+        set { _config.SearchDelay = Math.Clamp(value, 0, 500); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
+
+    public string[] WebSearchEngineOptions { get; } = ["Google", "DuckDuckGo", "Bing"];
+
+    public string WebSearchEngine
+    {
+        get => ToTitle(_config.WebSearchEngine);
+        set { _config.WebSearchEngine = ToKey(value); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+    }
 
     public bool IndexShell
     {
@@ -1023,12 +1037,3 @@ public sealed partial class SettingsViewModel : ObservableObject
         _main.UpdatePinnedCategories();
     }
 }
-
-public class PinnedCategoryOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>A single sidebar section in the settings UI.</summary>
-public record SettingsSection(string Name, string IconGlyph);

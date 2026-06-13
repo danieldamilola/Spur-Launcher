@@ -5,11 +5,11 @@ namespace Spur.Actions.Handlers;
 
 public sealed class ShellActionHandler : IActionHandler
 {
-    private readonly ExtrasRegistry _extras;
+    private readonly AddOnRegistry _addOns;
 
-    public ShellActionHandler(ExtrasRegistry extras)
+    public ShellActionHandler(AddOnRegistry addOns)
     {
-        _extras = extras ?? throw new ArgumentNullException(nameof(extras));
+        _addOns = addOns ?? throw new ArgumentNullException(nameof(addOns));
     }
 
     public bool CanHandle(SearchResult result) =>
@@ -24,7 +24,7 @@ public sealed class ShellActionHandler : IActionHandler
         if (string.IsNullOrWhiteSpace(command))
             return ActionPanelState.Empty();
 
-        var shellExtra = _extras.FindById("shell");
+        var shellExtra = _addOns.FindById("shell");
         if (shellExtra is not null)
             await shellExtra.ExecuteAsync(command);
 

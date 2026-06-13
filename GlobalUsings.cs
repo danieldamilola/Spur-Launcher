@@ -18,6 +18,10 @@ global using System.Windows.Media;
 global using System.Windows.Threading;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
+global using Spur.Interop;
+global using Spur.Animations;
 global using Spur.Models;
 global using Spur.Services;
-
+// B1: Alias so callers can use ISpurLogger to avoid shadowing
+// Microsoft.Extensions.Logging.ILogger if that namespace is ever imported.
+global using ISpurLogger = Spur.Services.ILogger;

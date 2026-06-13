@@ -34,6 +34,13 @@ public sealed class SpurConfig
     /// <summary>True after the user completes the first-launch onboarding.</summary>
     public bool OnboardingComplete { get; set; } = false;
 
+    /// <summary>UI font scale multiplier (0.8–1.4). 1.0 = default size.</summary>
+    public double FontScale { get; set; } = 1.0;
+
+    /// <summary>Which monitor to show the launcher on: "primary", "mouse", or a monitor index.</summary>
+    public string PreferredMonitor { get; set; } = "primary";
+
+
     // ═══════════════════════════════════════════════════════════════
     // Search
     // ═══════════════════════════════════════════════════════════════
@@ -76,6 +83,22 @@ public sealed class SpurConfig
 
     /// <summary>Minimum fuzzy score required for visible matches: "low", "regular", or "strict".</summary>
     public string QuerySearchPrecision { get; set; } = "regular";
+
+    /// <summary>Debounce delay in milliseconds before search starts (0–500). Lower = faster but more CPU.</summary>
+    public int SearchDelay { get; set; } = 30;
+
+    /// <summary>Maximum results per section before truncation (3–20).</summary>
+    public int MaxResultsPerSection { get; set; } = 5;
+
+    /// <summary>Glob patterns to exclude from file search (e.g. "node_modules", ".git").</summary>
+    public List<string> ExclusionPatterns { get; set; } = ["node_modules", ".git", "__pycache__", "bin", "obj"];
+
+    /// <summary>Default web search engine: "google", "duckduckgo", "bing", or "custom".</summary>
+    public string WebSearchEngine { get; set; } = "google";
+
+    /// <summary>Custom search URL template. Use {query} as placeholder.</summary>
+    public string CustomWebSearchUrl { get; set; } = "";
+
 
     /// <summary>What to do with the previous query when the launcher is shown again.</summary>
     public string LastQueryStyle { get; set; } = "clear";
@@ -243,11 +266,11 @@ public sealed class SpurConfig
     public List<PinnedClipboardItem> PinnedClipboard { get; set; } = [];
 
     // ═══════════════════════════════════════════════════════════════
-    // Extras Store
+    // Add-ons Store
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Canonical storage for all extras (built-in and community).</summary>
-    public Dictionary<string, ExtrasEntryConfig> Extras { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Canonical storage for all add-ons (built-in and community).</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("Extras")] public Dictionary<string, AddOnEntryConfig> AddOns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // ═══════════════════════════════════════════════════════════════
     // Clone
@@ -262,7 +285,8 @@ public sealed class SpurConfig
         clone.PinnedCategories = new List<string>(PinnedCategories);
         clone.PinnedItems = new HashSet<string>(PinnedItems, StringComparer.OrdinalIgnoreCase);
         clone.PinnedClipboard = PinnedClipboard.Select(p => new PinnedClipboardItem { Id = p.Id, Content = p.Content, Preview = p.Preview, Timestamp = p.Timestamp }).ToList();
-        clone.Extras = new Dictionary<string, ExtrasEntryConfig>(Extras, StringComparer.OrdinalIgnoreCase);
+        clone.AddOns = new Dictionary<string, AddOnEntryConfig>(AddOns, StringComparer.OrdinalIgnoreCase);
+        clone.ExclusionPatterns = new List<string>(ExclusionPatterns);
         return clone;
     }
 }

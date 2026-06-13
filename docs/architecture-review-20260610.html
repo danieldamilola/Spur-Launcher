@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spur — Architecture Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        securityLevel: "loose",
+      });
+    </script>
+    <style>
+      .card {
+        @apply bg-white rounded-xl border border-gray-200 overflow-hidden;
+      }
+      .badge-strong {
+        @apply bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded;
+      }
+      .badge-worth {
+        @apply bg-amber-100 text-amber-800 text-xs font-medium px-2 py-0.5 rounded;
+      }
+      .badge-speculative {
+        @apply bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      pre {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="max-w-4xl mx-auto px-6 py-12">
+      <!-- Header -->
+      <div class="mb-12">
+        <h1 class="text-3xl font-bold tracking-tight mb-2">
+          Spur — Architecture Review
+        </h1>
+        <p class="text-gray-500">
+          2026-06-10 &middot; WPF / .NET 9 launcher for Windows
+        </p>
+        <p class="text-gray-400 text-sm mt-1">
+          No CONTEXT.md or ADR directory found — domain vocabulary sourced from
+          <code>architecture.md</code>.
+        </p>
+      </div>
+
+      <!-- Candidate 1 -->
+      <div class="card mb-8 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">
+            1. Extract ActionDispatcher from MainViewModel
+          </h2>
+          <span
+            class="badge-strong"
+            style="background-color: #10b981; color: white"
+            >✓ Implemented</span
+          >
+        </div>
+        <div class="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/MainViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Extensions/IExtra.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/TimerViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/AiChatViewModel.cs</code
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Problem
+            </h3>
+            <p class="text-sm leading-relaxed">
+              MainViewModel's <code>OpenActionResult</code> is a ~100-line
+              switch dispatcher handling timer, AI, shell, settings, URL, web,
+              and generic extras. Each branch marshals data between the action
+              input, sub-ViewModels (Timer, AiChat), and the action panel. This
+              is a <strong>shallow module</strong> — the interface (one method,
+              two parameters) is nearly as complex as the implementation (seven
+              branches, each setting 4–6 properties on MainViewModel).
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              Adding a new action requires editing MainViewModel, which already
+              owns search orchestration, scope/category state, clipboard
+              management, settings, and the command palette. The
+              <strong>deletion test</strong> confirms: if OpenActionResult
+              disappeared, complexity would concentrate in callers — but only
+              because the dispatcher doesn't exist. A real dispatcher behind a
+              seam would let callers stay simple.
+            </p>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Solution
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Introduce an <code>IActionDispatcher</code> behind a seam in
+              MainViewModel. Each action type (timer, AI, shell, extras)
+              registers an adapter. The dispatcher receives a
+              <code>SearchResult</code> + input string and returns an
+              <code>ExtraResult</code>, updating the action panel state through
+              a callback rather than by directly setting MainViewModel
+              properties.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              MainViewModel's responsibility reduces to: "given a search result,
+              dispatch to the right adapter and surface the result." Tests
+              become possible: each adapter can be unit-tested in isolation, and
+              MainViewModel can be tested with mock dispatchers.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Before
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    MV[MainViewModel.OpenActionResult]
+    MV -->|if timer| T[Set Timer.StartTimerPreview<br/>Set ActionPreviewTitle<br/>Set ActionPreviewSubtitle<br/>Set ActionPreviewState<br/>Set ActiveActionPanel]
+    MV -->|if ai| A[Set ActiveActionPanel<br/>Set ActionPreviewTitle<br/>Set ActionPreviewSubtitle<br/>Set ActionPreviewState<br/>await Ai.StartAiAsync]
+    MV -->|if shell| S[Trim input<br/>Set ActionPreviewTitle<br/>Set ActionPreviewSubtitle<br/>...4 more properties]
+    MV -->|if settings| ST[Invoke OpenSettingsRequested]
+    MV -->|else| EX[Call extra.ExecuteAsync<br/>Check Success<br/>Copy to clipboard<br/>Set 5 properties]
+    style MV fill:#fef3c7,stroke:#f59e0b
+      </pre>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              After
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    MV[MainViewModel] -->|dispatch| D[ActionDispatcher]
+    D --> TA[TimerAdapter : IActionHandler]
+    D --> AA[AiAdapter : IActionHandler]
+    D --> SA[ShellAdapter : IActionHandler]
+    D --> XA[GenericExtraAdapter : IActionHandler]
+    TA -->|callback| P[UpdatePanel]
+    AA -->|callback| P
+    SA -->|callback| P
+    XA -->|callback| P
+    style D fill:#d1fae5,stroke:#059669
+    style P fill:#dbeafe,stroke:#3b82f6
+      </pre
+            >
+          </div>
+        </div>
+
+        <div>
+          <h3
+            class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+          >
+            Benefits
+          </h3>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+              <strong>Locality</strong>: Each adapter contains exactly the logic
+              for one action type. Changing the timer UX doesn't touch AI or
+              shell code.
+            </li>
+            <li>
+              <strong>Testability</strong>: Each adapter is independently
+              unit-testable. MainViewModel can be tested with a mock dispatcher.
+            </li>
+            <li>
+              <strong>Leverage</strong>: Adding a new action type becomes:
+              implement <code>IActionHandler</code>, register in the dispatcher.
+              No MainViewModel edits.
+            </li>
+            <li>
+              Removes ~80 lines from MainViewModel, moving toward the Single
+              Responsibility Principle.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Candidate 2 -->
+      <div class="card mb-8 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">
+            2. Decouple SettingsViewModel from MainViewModel
+          </h2>
+          <span class="badge-strong">Strong</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/SettingsViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/MainViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Models/SpurConfig.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Services/ConfigService.cs</code
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Problem
+            </h3>
+            <p class="text-sm leading-relaxed">
+              SettingsViewModel holds a direct reference to
+              <code>MainViewModel _main</code> (line 14) and mutates it:
+              <code>_main.Config = _config.Clone()</code> in ~20 property
+              setters. This is a <strong>tight coupling</strong> —
+              SettingsViewModel cannot exist without MainViewModel, cannot be
+              tested in isolation, and knows the internal structure of its
+              parent.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              The config flow is: setting changes →
+              <code>_config.Property = value</code> →
+              <code>_main.Config = _config.Clone()</code> →
+              MainViewModel.OnConfigChanged pushes to services. This makes
+              SettingsViewModel the owner of config propagation — a
+              responsibility that belongs to the config service or a dedicated
+              notifier.
+            </p>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Solution
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Replace the <code>MainViewModel</code> reference with an
+              <code>IConfigChangeNotifier</code> interface. SettingsViewModel
+              publishes config changes through this seam. MainViewModel (or the
+              DI container) adapts by subscribing and propagating to services.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              Alternatively, make <code>ConfigService</code> observable — raise
+              events when config is saved, and have MainViewModel subscribe
+              directly. This eliminates the SettingsViewModel→MainViewModel hop
+              entirely.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Before
+            </h3>
+            <pre class="mermaid text-xs">
+graph LR
+    SV[SettingsViewModel] -->|_main.Config = clone| MV[MainViewModel]
+    MV -->|OnConfigChanged| FS[FileSearchService]
+    MV -->|OnConfigChanged| CS[ClipboardService]
+    SV -->|Save| CFG[ConfigService]
+    style SV fill:#fef3c7,stroke:#f59e0b
+    style MV fill:#fef3c7,stroke:#f59e0b
+      </pre
+            >
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              After
+            </h3>
+            <pre class="mermaid text-xs">
+graph LR
+    SV[SettingsViewModel] -->|publish| N[IConfigChangeNotifier]
+    N -->|subscribe| MV[MainViewModel]
+    N -->|subscribe| FS[FileSearchService]
+    N -->|subscribe| CS[ClipboardService]
+    SV -->|Save| CFG[ConfigService]
+    style N fill:#d1fae5,stroke:#059669
+      </pre
+            >
+          </div>
+        </div>
+
+        <div>
+          <h3
+            class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+          >
+            Benefits
+          </h3>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+              <strong>Locality</strong>: Config propagation logic lives in one
+              place (the notifier/event system), not scattered across 20
+              property setters.
+            </li>
+            <li>
+              <strong>Testability</strong>: SettingsViewModel can be tested with
+              a mock IConfigChangeNotifier. No MainViewModel dependency.
+            </li>
+            <li>
+              <strong>Seam</strong>: The notifier interface creates a real seam
+              — services subscribe independently, and SettingsViewModel doesn't
+              know about them.
+            </li>
+            <li>
+              Eliminates the need for <code>_config.Clone()</code> calls in
+              every setter — the clone was done solely to trigger
+              MainViewModel.OnConfigChanged.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Candidate 3 -->
+      <div class="card mb-8 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">
+            3. Type the IExtra Settings seam
+          </h2>
+          <span class="badge-worth">Worth exploring</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Extensions/IExtra.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Extensions/ExtrasRegistry.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Extensions/Extras/*/*Extra.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Extensions/Extras/*/*Settings.cs</code
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Problem
+            </h3>
+            <p class="text-sm leading-relaxed">
+              The <code>IExtra.Settings</code> property is typed as
+              <code>object?</code>. Every consumer casts:
+              <code
+                >(Settings as KillProcessSettings) ?? new
+                KillProcessSettings()</code
+              >. ExtrasRegistry uses a JSON serialize→deserialize round-trip to
+              bridge between
+              <code>Dictionary&lt;string, JsonElement&gt;</code> (from
+              SpurConfig) and the typed settings POCO. This is
+              <strong>fragile</strong> — a mismatched type cast fails silently,
+              and the round-trip is wasteful.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              The <strong>deletion test</strong>: if the
+              <code>object?</code> property disappeared, every extra would need
+              its own typed property, exposing the fact that the current
+              interface is too generic. A generic interface would concentrate
+              that complexity.
+            </p>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Solution
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Make <code>IExtra</code> generic on its settings type:
+              <code>IExtra&lt;TSettings&gt;</code>. Each extra declares its
+              concrete settings type. ExtrasRegistry uses a non-generic wrapper
+              for storage but exposes typed access. The serialize→deserialize
+              round-trip in LoadSettings/SaveSettings is replaced with direct
+              typed deserialization.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              Alternatively, if generics are too invasive, introduce a marker
+              interface <code>IExtraSettings</code> and a typed
+              <code>GetSettings&lt;T&gt;()</code> extension method with cached
+              cast validation.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Before
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    E[IExtra] -->|object? Settings| C[Consumer]
+    C -->|cast| K[KillProcessSettings?]
+    C -->|cast| T[TimerSettings?]
+    R[ExtrasRegistry] -->|JsonElement→JSON→POCO| E
+    style E fill:#fef3c7,stroke:#f59e0b
+      </pre
+            >
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              After
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    E[IExtra&lt;TSettings&gt;] -->|TSettings Settings| C[Consumer]
+    C -->|no cast needed| K[KillProcessSettings]
+    C -->|no cast needed| T[TimerSettings]
+    R[ExtrasRegistry] -->|typed deserialize| E
+    style E fill:#d1fae5,stroke:#059669
+      </pre
+            >
+          </div>
+        </div>
+
+        <div>
+          <h3
+            class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+          >
+            Benefits
+          </h3>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+              <strong>Depth</strong>: The interface becomes self-documenting —
+              you know the settings type without reading the implementation.
+            </li>
+            <li>
+              <strong>Locality</strong>: Cast failures move from runtime to
+              compile time.
+            </li>
+            <li>
+              Eliminates the serialize→deserialize round-trip in ExtrasRegistry
+              (~20 lines of fragile JSON manipulation).
+            </li>
+            <li>
+              Caveat: generics complicate the ExtrasRegistry storage (needs a
+              non-generic wrapper). Worth exploring but requires careful DI
+              design.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Candidate 4 -->
+      <div class="card mb-8 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">
+            4. Split SearchEngineService by result source
+          </h2>
+          <span class="badge-worth">Worth exploring</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Services/SearchEngineService.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/MainViewModel.cs</code
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Problem
+            </h3>
+            <p class="text-sm leading-relaxed">
+              SearchEngineService.SearchAsync is ~180 lines with app matching,
+              file search routing, clipboard browsing, global action building,
+              Windows settings search, URL detection, and web fallback all
+              interleaved in a single method. Each section manages its own
+              result lists, scoring, sorting, and section labeling. The method
+              has <strong>low locality</strong> — understanding clipboard search
+              requires reading past app and file logic.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              The <strong>deletion test</strong>: if you deleted the clipboard
+              section, would complexity concentrate? No — the clipboard logic is
+              self-contained behind a few lines. But the method structure makes
+              it hard to see that. A split would make each source's independence
+              visible.
+            </p>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Solution
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Extract each result source into a separate
+              <code>IResultProvider</code> adapter:
+              <code>AppResultProvider</code>, <code>FileResultProvider</code>,
+              <code>ClipboardResultProvider</code>,
+              <code>ActionResultProvider</code>, <code>WebResultProvider</code>.
+              SearchEngineService becomes an orchestrator that queries each
+              provider and merges results.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              Each provider encapsulates its own: enabled-check (config),
+              scoring, result construction, section labeling, and sorting.
+              SearchEngineService only handles ordering sections and applying
+              the web fallback heuristic.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Before
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    S[SearchEngineService.SearchAsync]
+    S -->|inline 60 lines| APPS[App matching + scoring + sort]
+    S -->|inline 30 lines| FILES[File search routing]
+    S -->|inline 40 lines| CLIP[Clipboard matching]
+    S -->|inline 40 lines| ACTIONS[Global actions + URL + web]
+    S -->|inline 20 lines| SETTINGS[Windows settings]
+    style S fill:#fef3c7,stroke:#f59e0b
+      </pre
+            >
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              After
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    S[SearchEngineService] --> AP[AppResultProvider]
+    S --> FP[FileResultProvider]
+    S --> CP[ClipboardResultProvider]
+    S --> AC[ActionResultProvider]
+    S --> WP[WebResultProvider]
+    S -->|merge + order| R[Results list]
+    style S fill:#d1fae5,stroke:#059669
+      </pre
+            >
+          </div>
+        </div>
+
+        <div>
+          <h3
+            class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+          >
+            Benefits
+          </h3>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+              <strong>Locality</strong>: Each provider is self-contained —
+              clipboard logic lives exclusively in ClipboardResultProvider.
+            </li>
+            <li>
+              <strong>Testability</strong>: Each provider can be unit-tested
+              with mock config and services. Currently SearchEngineService
+              requires all services at once.
+            </li>
+            <li>
+              <strong>Seam</strong>: Adding a new search source (e.g., browser
+              bookmarks) is a new adapter behind IResultProvider — no
+              SearchEngineService edits.
+            </li>
+            <li>
+              Reduces SearchEngineService from ~360 lines to ~80 lines
+              (orchestration only).
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Candidate 5 -->
+      <div class="card mb-8 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">
+            5. Consolidate clipboard ownership
+          </h2>
+          <span class="badge-speculative">Speculative</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/ClipboardViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >ViewModels/MainViewModel.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Services/ClipboardService.cs</code
+          >
+          <code class="bg-gray-100 px-2 py-0.5 rounded"
+            >Services/SearchEngineService.cs</code
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Problem
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Clipboard state is managed across three modules:
+              <strong>ClipboardViewModel</strong> (history list, copy, delete,
+              pin, selection),
+              <strong>MainViewModel</strong> (RemoveClipboardItem,
+              ClearClipboard, ActivateClipboardCategory), and
+              <strong>SearchEngineService</strong> (clipboard-to-SearchResult
+              conversion for search display). The responsibility for "what is a
+              clipboard item and how is it displayed" is split across three
+              files.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              When a user deletes a clipboard item from the search results,
+              MainViewModel.RemoveClipboardItem finds the entry by timestamp
+              match (line 1088) — a fragile lookup that duplicates logic already
+              in ClipboardViewModel.Delete (which uses the entry ID directly).
+              This is a <strong>leaky seam</strong> — clipboard identity leaks
+              from the service (Guid) through the search result (timestamp
+              ticks) into MainViewModel.
+            </p>
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Solution
+            </h3>
+            <p class="text-sm leading-relaxed">
+              Move all clipboard state management into ClipboardViewModel.
+              MainViewModel delegates RemoveClipboardItem, ClearClipboard, and
+              clipboard category activation to ClipboardViewModel methods.
+              SearchEngineService delegates clipboard-to-SearchResult conversion
+              to a method on ClipboardViewModel or a shared
+              ClipboardResultBuilder.
+            </p>
+            <p class="text-sm leading-relaxed mt-2">
+              The SearchResult for clipboard already carries the entry's
+              <code>ClipTimestamp</code>. Add a <code>ClipEntryId</code> (Guid)
+              field to SearchResult so deletion can match by stable ID rather
+              than fragile timestamp comparison.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              Before
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    MV[MainViewModel] -->|RemoveClipboardItem| CS[ClipboardService]
+    MV -->|ClearClipboard| CS
+    MV -->|ActivateClipboardCategory| MV
+    CV[ClipboardViewModel] -->|Copy/Delete/Pin| CS
+    SE[SearchEngineService] -->|build SearchResult| CS
+    CS -->|ClipboardEntry[]| CV
+    CS -->|ClipboardEntry[]| SE
+    style MV fill:#fef3c7,stroke:#f59e0b
+    style SE fill:#fef3c7,stroke:#f59e0b
+    style CS fill:#dbeafe,stroke:#3b82f6
+      </pre
+            >
+          </div>
+          <div>
+            <h3
+              class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+            >
+              After
+            </h3>
+            <pre class="mermaid text-xs">
+graph TD
+    MV[MainViewModel] -->|delegate| CV[ClipboardViewModel]
+    CV -->|all operations| CS[ClipboardService]
+    SE[SearchEngineService] -->|query| CV
+    CV -->|SearchResult[]| SE
+    CS -->|ClipboardEntry[]| CV
+    style CV fill:#d1fae5,stroke:#059669
+    style CS fill:#dbeafe,stroke:#3b82f6
+      </pre
+            >
+          </div>
+        </div>
+
+        <div>
+          <h3
+            class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"
+          >
+            Benefits
+          </h3>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+              <strong>Locality</strong>: All clipboard logic lives in
+              ClipboardViewModel — delete by ID, clear with pin preservation,
+              category toggle.
+            </li>
+            <li>
+              <strong>Interface</strong>: ClipboardViewModel exposes a clean
+              surface: DeleteById(Guid), ClearNonPinned(), BuildSearchResults().
+            </li>
+            <li>
+              Removes the fragile timestamp-based lookup in
+              MainViewModel.RemoveClipboardItem.
+            </li>
+            <li>
+              Caveat: requires adding a Guid field to SearchResult for clipboard
+              items. This is a model change but well-scoped.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Top Recommendation -->
+      <div class="card mb-8 p-6 bg-blue-50 border-blue-200">
+        <h2 class="text-xl font-semibold mb-3">Top Recommendation</h2>
+        <p class="text-sm leading-relaxed">
+          <strong
+            >Start with Candidate 1 — Extract ActionDispatcher from
+            MainViewModel.</strong
+          >
+        </p>
+        <p class="text-sm leading-relaxed mt-2">
+          It has the highest leverage-to-risk ratio: MainViewModel is the
+          project's central nervous system and its action-dispatch logic is the
+          single largest block of coupled code (100 lines of switch branches
+          setting 4–6 properties each). Extracting it into adapters behind an
+          <code>IActionHandler</code> seam:
+        </p>
+        <ul class="list-disc list-inside text-sm mt-2 space-y-1">
+          <li>Immediately removes ~80 lines from MainViewModel</li>
+          <li>Creates a natural seam for testing each action in isolation</li>
+          <li>Makes adding new actions a registration, not an edit</li>
+          <li>
+            Doesn't require model changes or DI restructuring — purely an
+            extraction
+          </li>
+        </ul>
+        <p class="text-sm leading-relaxed mt-2">
+          After that, Candidate 2 (decouple SettingsViewModel) is the logical
+          follow-up — it eliminates the last remaining tight coupling between
+          the two largest ViewModels and enables independent testing of both.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -17,7 +17,7 @@ public sealed class SearchEngineService : ISearchEngineService
     private readonly IClipboardService _clipboard;
     private readonly SpurConfig _config;
     private readonly IFrequencyService _freq;
-    private readonly ExtrasRegistry _extras;
+    private readonly AddOnRegistry _addOns;
 
     private volatile IReadOnlyList<SearchResult> _appCatalog = [];
 
@@ -28,7 +28,7 @@ public sealed class SearchEngineService : ISearchEngineService
         IClipboardService clipboard,
         SpurConfig config,
         IFrequencyService freq,
-        ExtrasRegistry extras)
+        AddOnRegistry addOns)
     {
         _log = log;
         _apps = apps;
@@ -36,9 +36,9 @@ public sealed class SearchEngineService : ISearchEngineService
         _clipboard = clipboard;
         _config = config;
         _freq = freq;
-        _extras = extras;
+        _addOns = addOns;
 
-        _extras.LoadSettings(_config);
+        _addOns.LoadSettings(_config);
 
         _apps.CatalogRefreshed += HandleCatalogRefreshed;
     }
@@ -72,7 +72,7 @@ public sealed class SearchEngineService : ISearchEngineService
                 return newResults;
             }
 
-            var scopedExtra = _extras.FindById(activeCategory);
+            var scopedExtra = _addOns.FindById(activeCategory);
             if (scopedExtra is not null)
             {
                 var actionResults = scopedExtra.GetResults(query).ToList();
@@ -188,7 +188,7 @@ public sealed class SearchEngineService : ISearchEngineService
         {
             var globalActionResults = new List<SearchResult>();
 
-            foreach (var extra in _extras.GetGlobalEnabled())
+            foreach (var extra in _addOns.GetGlobalEnabled())
             {
                 if (!extra.CanHandle(query)) continue;
                 var r = extra.BuildResult(query);
@@ -247,7 +247,7 @@ public sealed class SearchEngineService : ISearchEngineService
 
     private IEnumerable<SearchResult> BuildActionCatalog(string query)
     {
-        foreach (var extra in _extras.GetEnabled())
+        foreach (var extra in _addOns.GetEnabled())
         {
             if (extra.IsGlobal) continue; // Global extras don't have a keyword-scoped entry in the catalog usually, though calc is an exception. Actually calc has IsGlobal=true but shouldn't show up here normally. We'll skip globals.
 

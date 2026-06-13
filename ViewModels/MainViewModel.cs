@@ -36,7 +36,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICommandRegistry     _registry;
     private readonly ISearchEngineService _searchEngine;
     private readonly ISecureStorageService _secureStorage;
-    private readonly ExtrasRegistry       _extras;
+    private readonly AddOnRegistry        _addOns;
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel    _ai;
@@ -76,8 +76,8 @@ public sealed partial class MainViewModel : ObservableObject
         CommandPaletteViewModel commandPalette,
         ISearchEngineService  searchEngine,
         ISecureStorageService secureStorage,
-        ExtrasRegistry        extras,
-        Spur.Services.ExtrasStoreService storeService)
+        AddOnRegistry         addOns,
+        Spur.Services.AddOnStoreService storeService)
     {
         _log          = log;
         _apps         = apps;
@@ -92,10 +92,10 @@ public sealed partial class MainViewModel : ObservableObject
         _registry = registry;
         _searchEngine = searchEngine;
         _secureStorage = secureStorage;
-        _extras = extras;
+        _addOns = addOns;
 
         Config   = config;
-        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _extras, storeService);
+        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _addOns, storeService);
 
         // Push initial config to services
         _files.MaxDepth     = Config.MaxFileDepth;
@@ -152,8 +152,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         dispatcher.Register(new TimerActionHandler(_timer));
         dispatcher.Register(new AiActionHandler(_ai, _log));
-        dispatcher.Register(new ShellActionHandler(_extras));
-        dispatcher.Register(new GenericExtraHandler(_extras, _clipboard));
+        dispatcher.Register(new ShellActionHandler(_addOns));
+        dispatcher.Register(new GenericAddOnHandler(_addOns, _clipboard));
 
         return dispatcher;
     }
@@ -169,7 +169,7 @@ public sealed partial class MainViewModel : ObservableObject
                 PinnedCategories.Add(new PinnedCategoryItem { Id = "files", Label = "Files", IconGlyph = "\uE8B7" });
             else if (id == "clipboard")
                 PinnedCategories.Add(new PinnedCategoryItem { Id = "clipboard", Label = "Clips", IconGlyph = "\uE77F" });
-            else if (_extras.FindById(id) is { } extra)
+            else if (_addOns.FindById(id) is { } extra)
                 PinnedCategories.Add(new PinnedCategoryItem { Id = extra.Id, Label = extra.Name, IconGlyph = extra.IconGlyph });
         }
     }
@@ -894,7 +894,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (result.ActionId == "shell")
         {
-            var extra = _extras.FindByKeyword(result.ActionId);
+            var extra = _addOns.FindByKeyword(result.ActionId);
             var keyword = extra?.Keyword ?? string.Empty;
             var trimmed = Query.Trim();
             if (string.IsNullOrWhiteSpace(keyword)) return trimmed;

@@ -307,7 +307,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                         LnkPath  = lnk,
                     });
                 }
-                catch { }
+                catch { /* intentional: skip shortcuts that fail to resolve */ }
             }
         }
     }
@@ -358,7 +358,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                     LnkPath  = lnk,
                 });
             }
-            catch { }
+            catch { /* intentional: skip shortcuts that fail to resolve */ }
         }
     }
 
@@ -449,7 +449,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                     catch { continue; }
                 }
             }
-            catch { }
+            catch { /* intentional: shell folder enumeration may fail on some systems */ }
         }
 
         // Method 2: Use Get-StartApps PowerShell to get additional apps
@@ -493,11 +493,11 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                             }
                         }
                     }
-                    catch { }
+                    catch { /* intentional: skip unparseable Start Menu entries */ }
                 }
             }
         }
-        catch { }
+        catch { /* intentional: PowerShell fallback may not be available */ }
 
         return apps;
     }
@@ -674,7 +674,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                     ExePath  = bestExe,
                 });
             }
-            catch { }
+            catch { /* intentional: skip apps whose exe path cannot be resolved */ }
         }
     }
 
@@ -926,7 +926,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                     AddExeResult(results, seen, Path.GetFileNameWithoutExtension(name), Environment.ExpandEnvironmentVariables(path.Trim('"')));
                 }
             }
-            catch { }
+            catch { /* intentional: registry hive may be inaccessible */ }
         }
     }
 
@@ -957,7 +957,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
                         AddExeResult(results, seen, display, exe);
                 }
             }
-            catch { }
+            catch { /* intentional: registry hive may be inaccessible */ }
         }
     }
 
@@ -1144,7 +1144,7 @@ public sealed class AppDiscoveryService : IAppDiscoveryService
     public void ClearCache()
     {
         try { if (File.Exists(CachePath)) File.Delete(CachePath); }
-        catch { }
+        catch { /* intentional: best-effort cache deletion */ }
     }
 }
 

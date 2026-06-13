@@ -4,6 +4,10 @@ using Spur.Models;
 
 namespace Spur.ViewModels;
 
+/// <summary>
+/// ViewModel for the countdown timer feature. Handles start, cancel,
+/// tick updates, and completion notifications.
+/// </summary>
 public sealed partial class TimerViewModel : ObservableObject
 {
     private readonly INotificationService _notification;
@@ -29,7 +33,7 @@ public sealed partial class TimerViewModel : ObservableObject
 
     public bool StartTimerPreview(string query)
     {
-        if (!Spur.Extensions.Extras.Timer.TimerExtra.TryParseDuration(query, out var durationSec))
+        if (!Spur.Extensions.AddOns.Timer.TimerAddOn.TryParseDuration(query, out var durationSec))
         {
             _timerTotal = TimeSpan.Zero;
             _timerRemaining = TimeSpan.Zero;

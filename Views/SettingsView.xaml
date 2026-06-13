@@ -169,14 +169,14 @@
                             <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Extras">
                                 <Setter Property="Content">
                                     <Setter.Value>
-                                        <settings:ExtrasSettingsPanel/>
+                                        <settings:AddOnsSettingsPanel/>
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Store">
                                 <Setter Property="Content">
                                     <Setter.Value>
-                                        <settings:ExtrasStoreView/>
+                                        <settings:AddOnStoreView/>
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>

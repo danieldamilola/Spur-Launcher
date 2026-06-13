@@ -77,8 +77,8 @@ public partial class App : Application
         services.AddSingleton<IFileSearchService, FileSearchService>();
         services.AddSingleton<IAiService, AiService>();
         services.AddSingleton<IFrequencyService, FrequencyService>();
-        services.AddSingleton<ExtrasRegistry>();
-        services.AddSingleton<ExtrasStoreService>();
+        services.AddSingleton<AddOnRegistry>();
+        services.AddSingleton<AddOnStoreService>();
         services.AddSingleton<ISearchEngineService, SearchEngineService>();
         services.AddSingleton<ISecureStorageService, SecureStorageService>();
 
