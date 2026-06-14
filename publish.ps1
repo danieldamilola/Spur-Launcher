@@ -18,7 +18,9 @@ Write-Host ""
 
 # 1. Kill running instance
 Write-Host "  [1/4] Stopping running Spur..." -ForegroundColor Yellow
-taskkill /IM Spur.exe /F 2>$null
+$ErrorActionPreference = "SilentlyContinue"
+taskkill /IM Spur.exe /F 2>&1 | Out-Null
+$ErrorActionPreference = "Stop"
 Start-Sleep -Milliseconds 400
 
 # 2. Clean previous publish
