@@ -1405,7 +1405,6 @@ public sealed partial class MainViewModel : ObservableObject
         _freq.Dispose();
         _searchCts?.Dispose();
         _ai.Dispose();
-        _timer.Stop();
         _clipboardVm.Dispose();
     }
 
