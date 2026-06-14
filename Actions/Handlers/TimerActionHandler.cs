@@ -28,7 +28,7 @@ public sealed class TimerActionHandler : IActionHandler
             PanelId = "timer",
             Title = result.Name,
             Subtitle = actionInput,
-            State = _timer.TimerRunning ? "Running" : "Check input"
+            State = _timer.HasActiveTimer ? "Running" : "Check input"
         };
 
         return Task.FromResult(state);

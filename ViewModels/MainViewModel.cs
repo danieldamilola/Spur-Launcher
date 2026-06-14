@@ -735,7 +735,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (result?.Type != ResultType.Action || result.ActionId is null)
         {
             // Only clear if no action is currently executing (timer running)
-            if (ActiveActionPanel is "timer" && _timer.TimerRunning) return;
+            if (ActiveActionPanel is "timer" && _timer.HasActiveTimer) return;
             ActiveActionPanel = null;
             return;
         }

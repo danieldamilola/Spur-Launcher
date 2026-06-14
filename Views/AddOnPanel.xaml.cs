@@ -276,43 +276,195 @@ public partial class AddOnPanel : UserControl
         ModelLabel.Visibility = Visibility.Collapsed;
         if (Vm is null) return;
 
+        var monoFont = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas");
+        var primaryBrush = TryFindResource("TextPrimary") as Brush ?? Brushes.White;
+        var mutedBrush = TryFindResource("TextTertiary") as Brush ?? Brushes.Gray;
+        var accentBrush = TryFindResource("Accent") as Brush ?? Brushes.CornflowerBlue;
+        var separatorBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray;
+        var depth2Brush = TryFindResource("Depth2") as Brush;
+
+        // ── Active timers list ─────────────────────────────
+        var activeTimers = Vm.Timer.ActiveTimers;
+        if (activeTimers.Count > 0)
+        {
+            foreach (var timer in activeTimers)
+            {
+                var timerCard = new Border
+                {
+                    CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
+                    BorderBrush = separatorBrush, Background = depth2Brush,
+                    Padding = new Thickness(14, 10, 14, 10), Margin = new Thickness(0, 0, 0, 8),
+                    Tag = timer
+                };
+
+                var timerStack = new StackPanel();
+
+                // Top row: label + buttons
+                var topRow = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+
+                var label = new TextBlock
+                {
+                    Text = timer.Label, FontSize = 12, FontWeight = FontWeights.Medium,
+                    Foreground = primaryBrush, VerticalAlignment = VerticalAlignment.Center
+                };
+                DockPanel.SetDock(label, Dock.Left);
+                topRow.Children.Add(label);
+
+                // Button panel (right-aligned)
+                var btnPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                // Pause/Resume button
+                var pauseResumeBtn = new Button
+                {
+                    Padding = new Thickness(6, 3, 6, 3), Margin = new Thickness(0, 0, 4, 0),
+                    Background = Brushes.Transparent, BorderThickness = new Thickness(0),
+                    Cursor = System.Windows.Input.Cursors.Hand, Tag = timer
+                };
+                var pauseResumeIcon = new TextBlock
+                {
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12,
+                    Foreground = primaryBrush, VerticalAlignment = VerticalAlignment.Center,
+                    Text = timer.IsPaused ? "\uE768" : "\uE769"
+                };
+                pauseResumeBtn.Content = pauseResumeIcon;
+                pauseResumeBtn.ToolTip = timer.IsPaused ? "Resume" : "Pause";
+                pauseResumeBtn.Click += (s, e) =>
+                {
+                    if (s is Button btn && btn.Tag is TimerInstance inst)
+                    {
+                        if (inst.IsPaused) Vm.Timer.Resume(inst);
+                        else Vm.Timer.Pause(inst);
+                        _lastPanel = null; // Force rebuild to update icons
+                        Refresh();
+                    }
+                };
+                btnPanel.Children.Add(pauseResumeBtn);
+
+                // Cancel (X) button
+                var cancelBtn = new Button
+                {
+                    Padding = new Thickness(6, 3, 6, 3),
+                    Background = Brushes.Transparent, BorderThickness = new Thickness(0),
+                    Cursor = System.Windows.Input.Cursors.Hand, Tag = timer
+                };
+                cancelBtn.Content = new TextBlock
+                {
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12,
+                    Foreground = Brushes.IndianRed, VerticalAlignment = VerticalAlignment.Center,
+                    Text = "\uE711"
+                };
+                cancelBtn.ToolTip = "Cancel timer";
+                cancelBtn.Click += (s, e) =>
+                {
+                    if (s is Button btn && btn.Tag is TimerInstance inst)
+                    {
+                        Vm.Timer.Cancel(inst);
+                        _lastPanel = null; // Force rebuild
+                        Refresh();
+                    }
+                };
+                btnPanel.Children.Add(cancelBtn);
+
+                DockPanel.SetDock(btnPanel, Dock.Right);
+                topRow.Children.Add(btnPanel);
+                timerStack.Children.Add(topRow);
+
+                // Countdown display
+                var display = new TextBlock
+                {
+                    Text = timer.DisplayTime, FontSize = 28, FontWeight = FontWeights.Medium,
+                    FontFamily = monoFont, Foreground = primaryBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 2),
+                    Tag = timer
+                };
+                // Live update via PropertyChanged
+                timer.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(TimerInstance.DisplayTime) && s is TimerInstance inst)
+                        Dispatcher.InvokeAsync(() => display.Text = inst.DisplayTime);
+                };
+                timerStack.Children.Add(display);
+
+                // Status text
+                var statusText = timer.IsPaused ? "Paused" : "Running";
+                var statusLabel = new TextBlock
+                {
+                    Text = statusText, FontSize = 10, Foreground = mutedBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4)
+                };
+                timer.PropertyChanged += (s, e) =>
+                {
+                    if (s is TimerInstance inst && (e.PropertyName == nameof(TimerInstance.IsPaused) || e.PropertyName == nameof(TimerInstance.IsRunning)))
+                        Dispatcher.InvokeAsync(() => statusLabel.Text = inst.IsPaused ? "Paused" : inst.IsRunning ? "Running" : "Done");
+                };
+                timerStack.Children.Add(statusLabel);
+
+                // Progress bar
+                var progress = new ProgressBar
+                {
+                    Minimum = 0, Maximum = 100, Value = timer.Progress,
+                    Height = 4, Margin = new Thickness(0, 4, 0, 0)
+                };
+                timer.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(TimerInstance.Progress) && s is TimerInstance inst)
+                        Dispatcher.InvokeAsync(() => progress.Value = inst.Progress);
+                };
+                timerStack.Children.Add(progress);
+
+                timerCard.Child = timerStack;
+                ContentArea.Children.Add(timerCard);
+            }
+
+            // Status row: "X/3 timers active"
+            ContentArea.Children.Add(new TextBlock
+            {
+                Text = $"{activeTimers.Count}/3 timers active",
+                FontSize = 11, Foreground = mutedBrush,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 8)
+            });
+        }
+
+        // ── New timer card (always shown) ──────────────────
         var card = new Border
         {
             CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
+            BorderBrush = separatorBrush, Background = depth2Brush,
             Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
         };
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
 
-        // Timer display
-        var display = new TextBlock
+        // Timer display (preview for new timer)
+        var previewDisplay = new TextBlock
         {
             FontSize = 32, FontWeight = FontWeights.Medium,
-            FontFamily = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas"),
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White,
+            FontFamily = monoFont, Foreground = primaryBrush,
             HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 4)
         };
-        display.SetBinding(TextBlock.TextProperty, new Binding("Timer.TimerDisplay"));
-        stack.Children.Add(display);
+        previewDisplay.SetBinding(TextBlock.TextProperty, new Binding("Timer.TimerDisplay"));
+        stack.Children.Add(previewDisplay);
 
         // Status
         var status = new TextBlock
         {
-            FontSize = 11,
-            Foreground = TryFindResource("TextTertiary") as Brush ?? Brushes.Gray,
+            FontSize = 11, Foreground = mutedBrush,
             HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4)
         };
         status.SetBinding(TextBlock.TextProperty, new Binding("Timer.TimerStatus"));
         stack.Children.Add(status);
 
-        // Progress bar
-        var progress = new ProgressBar
+        // Progress bar (preview)
+        var previewProgress = new ProgressBar
         {
             Minimum = 0, Maximum = 100, Height = 4, Margin = new Thickness(0, 8, 0, 8)
         };
-        progress.SetBinding(ProgressBar.ValueProperty, new Binding("Timer.TimerProgress"));
-        stack.Children.Add(progress);
+        previewProgress.SetBinding(ProgressBar.ValueProperty, new Binding("Timer.TimerProgress"));
+        stack.Children.Add(previewProgress);
 
         // Buttons
         var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
@@ -323,12 +475,12 @@ public partial class AddOnPanel : UserControl
         startBtn.Content = startContent;
         btns.Children.Add(startBtn);
 
-        var cancelBtn = new Button { Padding = new Thickness(12, 6, 12, 6) };
-        cancelBtn.SetBinding(Button.CommandProperty, new Binding("Timer.CancelCommand"));
+        var cancelAllBtn = new Button { Padding = new Thickness(12, 6, 12, 6) };
+        cancelAllBtn.SetBinding(Button.CommandProperty, new Binding("Timer.CancelCommand"));
         var cancelContent = new StackPanel { Orientation = Orientation.Horizontal };
         cancelContent.Children.Add(new TextBlock { Text = "✕ Cancel", VerticalAlignment = VerticalAlignment.Center });
-        cancelBtn.Content = cancelContent;
-        btns.Children.Add(cancelBtn);
+        cancelAllBtn.Content = cancelContent;
+        btns.Children.Add(cancelAllBtn);
 
         stack.Children.Add(btns);
         card.Child = stack;
