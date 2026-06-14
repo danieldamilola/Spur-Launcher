@@ -61,13 +61,7 @@ public partial class GeneralSettingsPanel : UserControl
         parts.Add(key.ToString());
 
         if (DataContext is SettingsViewModel vm)
-        {
-            var shortcutValue = string.Join("+", parts);
-            if (_recordingTarget == "clipboardShortcut")
-                vm.ClipboardShortcut = shortcutValue;
-            else
-                vm.Shortcut = shortcutValue;
-        }
+            vm.Shortcut = string.Join("+", parts);
 
         StopRecording();
     }
