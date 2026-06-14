@@ -897,6 +897,96 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(string.Empty);
     }
 
+    [RelayCommand]
+    private void ExportSettings()
+    {
+        try
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Export Spur Settings",
+                Filter = "JSON files (*.json)|*.json",
+                FileName = "spur-settings.json",
+                DefaultExt = ".json"
+            };
+
+            if (dlg.ShowDialog() != true) return;
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            var json = JsonSerializer.Serialize(_config, options);
+            System.IO.File.WriteAllText(dlg.FileName, json);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to export settings:\n{ex.Message}", "Export Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void ImportSettings()
+    {
+        try
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Import Spur Settings",
+                Filter = "JSON files (*.json)|*.json",
+                DefaultExt = ".json"
+            };
+
+            if (dlg.ShowDialog() != true) return;
+
+            var json = System.IO.File.ReadAllText(dlg.FileName);
+            var imported = JsonSerializer.Deserialize<SpurConfig>(json);
+
+            if (imported is null)
+            {
+                MessageBox.Show("The selected file does not contain valid settings.",
+                    "Import Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "Importing settings will replace all current settings.\n\nContinue?",
+                "Import Settings",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            // Preserve machine-specific values
+            var preserveOnboarding = _config.OnboardingComplete;
+            imported.OnboardingComplete = preserveOnboarding;
+
+            // Validate and clamp values
+            ConfigValidator.Validate(imported);
+
+            _config = imported;
+            SaveAndApply();
+            LoadStartupState();
+
+            _indexedFoldersList = null;
+            _fileTypesList = null;
+
+            // Notify all properties changed
+            OnPropertyChanged(string.Empty);
+
+            MessageBox.Show("Settings imported successfully.", "Import Complete",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (JsonException)
+        {
+            MessageBox.Show("The selected file is not valid JSON.",
+                "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to import settings:\n{ex.Message}", "Import Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // About — Update flow
     // Single state machine drives the entire row: status, text, and button.
