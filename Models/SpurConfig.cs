@@ -33,6 +33,10 @@ public sealed class SpurConfig
     /// <summary>"compact" | "comfortable" | "spacious" — controls result row height/density.</summary>
     public string ViewMode { get; set; } = "comfortable";
 
+    /// <summary>"compact" | "expanded" — launcher window display mode.
+    /// Compact shows only the search bar on launch; expanded shows search bar + results.</summary>
+    public string WindowMode { get; set; } = "expanded";
+
 
     /// <summary>True after the user completes the first-launch onboarding.</summary>
     public bool OnboardingComplete { get; set; } = false;

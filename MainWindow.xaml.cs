@@ -264,9 +264,15 @@ public partial class MainWindow : Window
     {
         if (_vm is null) return;
 
+        bool isCompactWindow = _vm.Config.WindowMode == "compact";
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
-        bool showContent = isBrowse || hasResults || _vm.IsFullPanelActive;
+        bool hasQuery = !string.IsNullOrEmpty(_vm.Query);
+
+        // Compact: only expand when user typed something and results appeared
+        // Expanded (default): expand whenever there are results or browse panel
+        bool showContent = _vm.IsFullPanelActive || isBrowse
+            || (isCompactWindow ? (hasQuery && hasResults) : hasResults);
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;

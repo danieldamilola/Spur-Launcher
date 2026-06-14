@@ -257,6 +257,27 @@ public sealed partial class SettingsViewModel : ObservableObject
         Application.Current.Resources["RowHeight"] = rowHeight;
     }
 
+    // ── Window Mode (compact / expanded) ─────────────────────────
+    public bool WindowModeCompact
+    {
+        get => _config.WindowMode == "compact";
+        set { if (value) SetWindowMode("compact"); }
+    }
+    public bool WindowModeExpanded
+    {
+        get => _config.WindowMode == "expanded";
+        set { if (value) SetWindowMode("expanded"); }
+    }
+
+    private void SetWindowMode(string mode)
+    {
+        _config.WindowMode = mode;
+        Save();
+        OnPropertyChanged(nameof(WindowModeCompact));
+        OnPropertyChanged(nameof(WindowModeExpanded));
+        _main.Config = _config.Clone();
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Search & Indexing
     // ═══════════════════════════════════════════════════════════════
