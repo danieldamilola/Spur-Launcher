@@ -21,7 +21,7 @@ public static class ConfigValidator
         config.MaxFileDepth         = Math.Clamp(config.MaxFileDepth,         1,   5);
         config.ClipboardHistorySize = Math.Clamp(config.ClipboardHistorySize, 5,   200);
         config.SearchDelay          = Math.Clamp(config.SearchDelay,          0,   500);
-        config.MaxResultsPerSection = Math.Clamp(config.MaxResultsPerSection, 3,   20);
+
         config.FontScale            = Math.Clamp(config.FontScale,           0.8, 1.4);
 
         // Null-init all collection / dictionary properties so callers never need
