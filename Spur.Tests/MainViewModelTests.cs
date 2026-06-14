@@ -65,11 +65,13 @@ public class MainViewModelTests
         public IReadOnlyList<ClipboardEntry> GetHistory() => new List<ClipboardEntry>();
         public void Add(string text) { }
         public void AddImage(System.Windows.Media.Imaging.BitmapSource image) { }
-        public void CopyToSystem(string text) { }
+        public void CopyToSystem(ClipboardEntry entry) { }
+        public void CopyTextToSystem(string text) { }
         public string? ReadFromSystem() => null;
         public System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem() => null;
         public void Clear() { }
         public void KeepOnly(ISet<string> contentToKeep) { }
+        public void RemoveById(Guid id) { }
     }
 
     private sealed class FakeNotify : INotificationService { public void Show(string t, string m) { } }
@@ -92,6 +94,7 @@ public class MainViewModelTests
         public void Enable() => Enabled = true;
         public void Disable() => Enabled = false;
         public bool IsEnabled() => Enabled;
+        public bool Toggle() { Enabled = !Enabled; return Enabled; }
     }
 
     private sealed class FakeRegistry : ICommandRegistry
@@ -123,7 +126,7 @@ public class MainViewModelTests
         return new MainViewModel(cfg, NullLogger.Instance,
             apps, files, freq, new FakeConfigSvc(cfg),
             clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
-            registry, commandPalette, searchEngine, new FakeSecureStorage(), addOns, new Spur.Services.AddOnStoreService(NullLogger.Instance));
+            registry, commandPalette, searchEngine, new FakeSecureStorage(), addOns, new Spur.Services.AddOnStoreService(new System.Net.Http.HttpClient(), NullLogger.Instance));
     }
 
     [Fact]
