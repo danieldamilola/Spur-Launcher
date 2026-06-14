@@ -1,3 +1,4 @@
+using System.Text;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
@@ -17,6 +18,17 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     // AiService and must not be added here — doing so caused a duplicate system
     // prompt to be sent with conflicting instructions.
     private readonly List<(string Role, string Content)> _aiConversation = [];
+
+    // Performance: use StringBuilder to avoid O(n²) string concatenation during streaming
+    private readonly StringBuilder _aiTextBuilder = new();
+    private readonly StringBuilder _responseBuilder = new();
+
+    // Debounce UI updates — max ~60fps instead of per-token
+    private DateTime _lastUiUpdate = DateTime.MinValue;
+    private static readonly TimeSpan UiUpdateInterval = TimeSpan.FromMilliseconds(16);
+
+    // Cap conversation to prevent unbounded memory growth
+    private const int MaxConversationTurns = 50;
 
     public AiChatViewModel(IAiService aiService, ISecureStorageService secureStorage, SpurConfig config)
     {
@@ -50,6 +62,8 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     {
         CancelPending();
         _aiConversation.Clear();
+        _aiTextBuilder.Clear();
+        _responseBuilder.Clear();
         AiText    = string.Empty;
         AiLoading = false;
         AiError   = string.Empty;
@@ -89,6 +103,8 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 
         _aiConversation.Clear();
         _aiConversation.Add(("user", question));
+        _aiTextBuilder.Clear();
+        _responseBuilder.Clear();
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         try
@@ -106,8 +122,15 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             {
                 Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
-                    AiText    += token;
-                    AiLoading  = AiText.Length == 0;
+                    _aiTextBuilder.Append(token);
+
+                    // Debounce UI updates — skip if less than 16ms since last update
+                    var now = DateTime.UtcNow;
+                    if (now - _lastUiUpdate < UiUpdateInterval) return;
+                    _lastUiUpdate = now;
+
+                    AiText    = _aiTextBuilder.ToString();
+                    AiLoading = AiText.Length == 0;
                     if (_aiConversation.Count == 1)
                         _aiConversation.Add(("assistant", AiText));
                     else if (_aiConversation.Count > 0)
@@ -115,6 +138,12 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                     ConversationChanged?.Invoke(this, EventArgs.Empty);
                 });
             }, ct);
+
+            // Final flush — ensure last tokens are displayed
+            AiText = _aiTextBuilder.ToString();
+            if (_aiConversation.Count > 0)
+                _aiConversation[^1] = ("assistant", AiText);
+            ConversationChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
@@ -139,9 +168,13 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         _aiCts = new CancellationTokenSource();
         var ct = _aiCts.Token;
 
+        // Cap conversation to prevent unbounded memory growth
+        TrimConversationIfNeeded();
+
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
         AiLoading = true;
+        _responseBuilder.Clear();
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         try
@@ -155,28 +188,42 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            string? newResponse = null;
+            bool isFirstToken = true;
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
                 Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
-                    if (newResponse is null)
+                    if (isFirstToken)
                     {
-                        newResponse = token;
-                        AiText += "\n\n" + token;
-                        _aiConversation.Add(("assistant", newResponse));
+                        isFirstToken = false;
+                        _aiTextBuilder.Append("\n\n");
                     }
+                    _responseBuilder.Append(token);
+                    _aiTextBuilder.Append(token);
+
+                    // Debounce UI updates
+                    var now = DateTime.UtcNow;
+                    if (now - _lastUiUpdate < UiUpdateInterval) return;
+                    _lastUiUpdate = now;
+
+                    var response = _responseBuilder.ToString();
+                    AiText = _aiTextBuilder.ToString();
+                    if (isFirstToken || _aiConversation[^1].Role != "assistant")
+                        _aiConversation.Add(("assistant", response));
                     else
-                    {
-                        newResponse += token;
-                        AiText += token;
-                        if (_aiConversation.Count > 0)
-                            _aiConversation[^1] = ("assistant", newResponse);
-                    }
+                        _aiConversation[^1] = ("assistant", response);
                     AiLoading = false;
                     ConversationChanged?.Invoke(this, EventArgs.Empty);
                 });
             }, ct);
+
+            // Final flush
+            var finalResponse = _responseBuilder.ToString();
+            AiText = _aiTextBuilder.ToString();
+            if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "assistant")
+                _aiConversation[^1] = ("assistant", finalResponse);
+            else
+                _aiConversation.Add(("assistant", finalResponse));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
@@ -187,6 +234,14 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             AiLoading = false;
             ConversationChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    /// <summary>Trims conversation history to MaxConversationTurns, keeping the most recent turns.</summary>
+    private void TrimConversationIfNeeded()
+    {
+        if (_aiConversation.Count <= MaxConversationTurns) return;
+        var excess = _aiConversation.Count - MaxConversationTurns;
+        _aiConversation.RemoveRange(0, excess);
     }
 
     private (string Key, string Model) GetAiConfig() => _config.AiProvider.ToLowerInvariant() switch

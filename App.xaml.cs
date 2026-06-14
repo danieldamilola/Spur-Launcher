@@ -284,6 +284,9 @@ public partial class App : Application
                 _window.HideWindow();
                 // Revert to throughput-optimized GC when launcher is hidden
                 GCSettings.LatencyMode = GCLatencyMode.Interactive;
+                // Trim memory after hide — releases cached search results,
+                // rendered UI elements, and forces a gen-2 collect while idle.
+                TrimMemoryAsync();
             }
             else
             {
@@ -291,6 +294,29 @@ public partial class App : Application
                 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
                 _window.ShowWindow();
             }
+        });
+    }
+
+    /// <summary>
+    /// Aggressively releases memory when the launcher is hidden.
+    /// Runs on a background thread to avoid blocking the UI.
+    /// </summary>
+    private void TrimMemoryAsync()
+    {
+        Task.Run(() =>
+        {
+            try
+            {
+                // Force a full GC to release all cached objects
+                GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+                GC.WaitForPendingFinalizers();
+                GC.Collect(0, GCCollectionMode.Forced);
+
+                // Trim the working set — tells the OS we don't need all this physical memory right now
+                using var process = System.Diagnostics.Process.GetCurrentProcess();
+                process.MinWorkingSet = process.MinWorkingSet; // Triggers OS working set trim
+            }
+            catch { /* best-effort */ }
         });
     }
 
