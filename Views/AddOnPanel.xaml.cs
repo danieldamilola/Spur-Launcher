@@ -182,14 +182,47 @@ public partial class AddOnPanel : UserControl
             ContentArea.Children.Add(thinking);
         }
 
-        // Error
+        // Error + Retry button
         if (!string.IsNullOrEmpty(error))
         {
-            ContentArea.Children.Add(new TextBlock
+            var errorPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+            errorPanel.Children.Add(new TextBlock
             {
                 Text = error, TextWrapping = TextWrapping.Wrap, FontSize = 13,
-                Foreground = Brushes.IndianRed, Margin = new Thickness(0, 0, 0, 8)
+                Foreground = Brushes.IndianRed, Margin = new Thickness(0, 0, 0, 6)
             });
+
+            var retryBtn = new Button
+            {
+                Padding = new Thickness(10, 5, 10, 5),
+                Background = Brushes.Transparent,
+                BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            var retryContent = new StackPanel { Orientation = Orientation.Horizontal };
+            retryContent.Children.Add(new TextBlock
+            {
+                Text = "\uE72C", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12,
+                Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0)
+            });
+            retryContent.Children.Add(new TextBlock
+            {
+                Text = "Retry", FontSize = 12,
+                Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            retryBtn.Content = retryContent;
+            retryBtn.Click += (s, e) =>
+            {
+                if (Vm?.AiChat.RetryLastCommand.CanExecute(null) == true)
+                    Vm.AiChat.RetryLastCommand.Execute(null);
+            };
+            errorPanel.Children.Add(retryBtn);
+
+            ContentArea.Children.Add(errorPanel);
         }
 
         // Model label

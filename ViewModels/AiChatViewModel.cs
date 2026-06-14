@@ -39,13 +39,18 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         // AsyncRelayCommand surfaces exceptions via its error path rather than
         // crashing the process (previously was async void).
         AiFollowUpCommand = new AsyncRelayCommand<string>(OnAiFollowUpAsync);
+        RetryLastCommand  = new AsyncRelayCommand(RetryLastAsync, () => !string.IsNullOrEmpty(AiError));
     }
 
     [ObservableProperty] private string _aiText    = string.Empty;
     [ObservableProperty] private bool   _aiLoading = false;
     [ObservableProperty] private string _aiError   = string.Empty;
 
+    /// <summary>Tracks the last user query so it can be retried on error.</summary>
+    private string? _lastQuery;
+
     public IAsyncRelayCommand<string> AiFollowUpCommand { get; }
+    public IAsyncRelayCommand RetryLastCommand { get; }
 
     public event EventHandler? ConversationChanged;
 
@@ -97,6 +102,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             ? trimmed[3..].Trim()
             : trimmed;
 
+        _lastQuery = question;
         AiText    = string.Empty;
         AiError   = string.Empty;
         AiLoading = true;
@@ -171,6 +177,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         // Cap conversation to prevent unbounded memory growth
         TrimConversationIfNeeded();
 
+        _lastQuery = followUp;
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
         AiLoading = true;
@@ -233,6 +240,25 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         {
             AiLoading = false;
             ConversationChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Retry the last failed query.</summary>
+    private async Task RetryLastAsync()
+    {
+        if (string.IsNullOrEmpty(_lastQuery)) return;
+
+        // If there's an existing conversation, retry as follow-up; otherwise start fresh
+        if (_aiConversation.Count > 1)
+        {
+            // Remove the last user message that failed (if it's still there without an assistant reply)
+            if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "user")
+                _aiConversation.RemoveAt(_aiConversation.Count - 1);
+            await OnAiFollowUpAsync(_lastQuery);
+        }
+        else
+        {
+            await StartAiAsync(_lastQuery);
         }
     }
 

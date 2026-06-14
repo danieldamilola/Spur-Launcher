@@ -208,7 +208,13 @@ public static class LauncherWindowBehavior
                 break;
 
             case Key.Enter:
-                if (Keyboard.Modifiers == ModifierKeys.Control)
+                // Clipboard mode: paste selected entry and hide
+                if (vm.ActiveCategory == "clipboard" && window is MainWindow cmw)
+                {
+                    var clipManager = FindClipboardManager(cmw);
+                    clipManager?.PasteSelected();
+                }
+                else if (Keyboard.Modifiers == ModifierKeys.Control)
                     vm.RunAsAdminCommand.Execute(null);
                 else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
                     vm.OpenFolderCommand.Execute(null);
@@ -249,5 +255,19 @@ public static class LauncherWindowBehavior
                 vm.OpenFolderCommand.Execute(null);
                 e.Handled = true; break;
         }
+    }
+
+    /// <summary>Walks the visual tree to find the ClipboardManager control.</summary>
+    private static Views.ClipboardManager? FindClipboardManager(DependencyObject root)
+    {
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is Views.ClipboardManager cm) return cm;
+            var result = FindClipboardManager(child);
+            if (result is not null) return result;
+        }
+        return null;
     }
 }
