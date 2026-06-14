@@ -469,6 +469,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
+            // In full panel mode (AI, Timer), the panel owns input — skip search
+            if (IsFullPanelActive) return;
+
             _searchCts?.Cancel();
             _searchCts?.Dispose();
             _searchCts = new CancellationTokenSource();

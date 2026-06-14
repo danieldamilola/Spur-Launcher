@@ -51,14 +51,22 @@ public partial class AddOnPanel : UserControl
     }
 
     /// <summary>Called by MainWindow when the user presses Enter in panel mode.</summary>
-    public void HandleUserInput(string query)
+    public async void HandleUserInput(string query)
     {
         if (Vm is null || string.IsNullOrWhiteSpace(query)) return;
 
         var panel = Vm.ActiveFullPanel;
         if (panel == "ai")
         {
-            _ = Vm.SendAiQuery(query);
+            try
+            {
+                await Vm.SendAiQuery(query);
+            }
+            catch (Exception ex)
+            {
+                Vm.AiChat.AiError = $"Error: {ex.Message}";
+                Vm.AiChat.AiLoading = false;
+            }
         }
     }
 
