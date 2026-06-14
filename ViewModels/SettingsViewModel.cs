@@ -884,7 +884,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void ResetToDefaults()
     {
+        var preserveOnboarding = _config.OnboardingComplete;
         _config = new SpurConfig();
+        _config.OnboardingComplete = preserveOnboarding; // Never re-show onboarding
         SaveAndApply();
         LoadStartupState();
 
