@@ -59,6 +59,26 @@
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
 
+                <!-- File preview -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE8FF;" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Show file preview" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Preview text and images when a file result is selected." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding FilePreviewEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
+
                 <!-- Result count -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>

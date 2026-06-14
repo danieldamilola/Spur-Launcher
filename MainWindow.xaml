@@ -35,9 +35,19 @@
       <Grid.ColumnDefinitions>
         <!-- Search capsule — shrinks/grows with SizeToContent -->
         <ColumnDefinition Width="*"/>
+        <!-- File preview panel -->
+        <ColumnDefinition x:Name="PreviewColumn" Width="Auto"/>
         <!-- Category circles — float outside to the right -->
         <ColumnDefinition x:Name="CategoryColumn" Width="0"/>
       </Grid.ColumnDefinitions>
+
+      <!-- ── File preview panel ── -->
+      <views:FilePreviewPanel x:Name="FilePreviewControl"
+                               Grid.Column="1"
+                               DataContext="{Binding}"
+                               VerticalAlignment="Top"
+                               Margin="8,0,0,0"
+                               Visibility="{Binding IsPreviewVisible, Converter={StaticResource BoolToVisibility}}"/>
 
       <!-- ── Search capsule (search bar + results only, no categories) ── -->
       <Grid Grid.Column="0" Background="Transparent">
@@ -165,7 +175,7 @@
 
       <!-- ── Category circles — outside the capsule, slide in on hover ── -->
       <Grid x:Name="CategoryZone"
-            Grid.Column="1"
+            Grid.Column="2"
             VerticalAlignment="Top"
             Height="56"
             Margin="6,0,0,0">

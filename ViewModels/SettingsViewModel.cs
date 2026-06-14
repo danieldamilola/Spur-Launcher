@@ -317,6 +317,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.FuzzySearch = value; Save(); OnPropertyChanged(); }
     }
 
+    public bool FilePreviewEnabled
+    {
+        get => _config.FilePreviewEnabled;
+        set { _config.FilePreviewEnabled = value; Save(); OnPropertyChanged(); }
+    }
+
     public string[] QuerySearchPrecisionOptions { get; } = ["Low", "Regular", "Strict"];
 
     public string QuerySearchPrecision
