@@ -254,6 +254,7 @@ public partial class MainWindow : Window
     {
         if (_vm is null) return false;
         if (_vm.IsFullPanelActive) return false;
+        if (_vm.ActiveActionPanel is not null) return false;
         if (!string.IsNullOrEmpty(_vm.Query)) return false;
         if (_vm.ActiveCategory is not null) return false;
         return _isPointerInside;
