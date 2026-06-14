@@ -323,6 +323,46 @@ public partial class AddOnPanel : UserControl
         startBtn.Content = startContent;
         btns.Children.Add(startBtn);
 
+        // Pause button — visible when timer is running and not paused
+        var pauseBtn = new Button { Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 6, 12, 6) };
+        var pauseContent = new StackPanel { Orientation = Orientation.Horizontal };
+        pauseContent.Children.Add(new TextBlock
+        {
+            Text = "\uE769", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 5, 0)
+        });
+        pauseContent.Children.Add(new TextBlock { Text = "Pause", VerticalAlignment = VerticalAlignment.Center });
+        pauseBtn.Content = pauseContent;
+        pauseBtn.Visibility = Vm.Timer.TimerRunning && !Vm.Timer.IsPaused
+            ? Visibility.Visible : Visibility.Collapsed;
+        pauseBtn.Click += (s, e) =>
+        {
+            Vm?.Timer.PauseCommand.Execute(null);
+            _lastPanel = null; // Force rebuild to update button visibility
+            Refresh();
+        };
+        btns.Children.Add(pauseBtn);
+
+        // Resume button — visible when timer is paused
+        var resumeBtn = new Button { Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(12, 6, 12, 6) };
+        var resumeContent = new StackPanel { Orientation = Orientation.Horizontal };
+        resumeContent.Children.Add(new TextBlock
+        {
+            Text = "\uE768", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 5, 0)
+        });
+        resumeContent.Children.Add(new TextBlock { Text = "Resume", VerticalAlignment = VerticalAlignment.Center });
+        resumeBtn.Content = resumeContent;
+        resumeBtn.Visibility = Vm.Timer.IsPaused
+            ? Visibility.Visible : Visibility.Collapsed;
+        resumeBtn.Click += (s, e) =>
+        {
+            Vm?.Timer.ResumeCommand.Execute(null);
+            _lastPanel = null; // Force rebuild to update button visibility
+            Refresh();
+        };
+        btns.Children.Add(resumeBtn);
+
         var cancelBtn = new Button { Padding = new Thickness(12, 6, 12, 6) };
         cancelBtn.SetBinding(Button.CommandProperty, new Binding("Timer.CancelCommand"));
         var cancelContent = new StackPanel { Orientation = Orientation.Horizontal };
