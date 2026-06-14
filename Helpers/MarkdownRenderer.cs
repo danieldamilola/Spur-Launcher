@@ -276,26 +276,95 @@ public static class MarkdownRenderer
 
     private static void EmitCodeBlock(FlowDocument doc, List<string> lines, ParseContext ctx)
     {
-        var para = new Paragraph
+        var codeText = string.Join("\n", lines);
+
+        // Code content
+        var textBlock = new TextBlock
         {
-            FontFamily    = CodeFont,
-            FontSize      = 12.5,
-            Background    = ctx.CodeBg,
-            Foreground    = ctx.TextBrush,
-            Padding       = new Thickness(12, 10, 12, 10),
-            Margin        = new Thickness(0, 4, 0, 8),
-            BorderBrush   = ctx.BorderBrush,
-            BorderThickness = new Thickness(1),
-            LineHeight    = 18,
+            Text = codeText,
+            FontFamily = CodeFont,
+            FontSize = 12.5,
+            Foreground = ctx.TextBrush,
+            TextWrapping = TextWrapping.Wrap,
+            Padding = new Thickness(12, 10, 40, 10),
+            LineHeight = 18,
         };
 
-        for (int i = 0; i < lines.Count; i++)
+        // Copy button
+        var copyButton = new System.Windows.Controls.Button
         {
-            if (i > 0) para.Inlines.Add(new LineBreak());
-            para.Inlines.Add(new Run(lines[i]));
-        }
+            Content = "\uE8C8",  // Segoe MDL2 Copy glyph
+            FontFamily = new FontFamily("Segoe MDL2 Assets"),
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 6, 6, 0),
+            Padding = new Thickness(5, 3, 5, 3),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            ToolTip = "Copy code",
+            Background = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+            Foreground = ctx.MutedBrush,
+            BorderThickness = new Thickness(0),
+        };
 
-        doc.Blocks.Add(para);
+        // Style the button with a simple template
+        var buttonTemplate = new ControlTemplate(typeof(System.Windows.Controls.Button));
+        var borderFactory = new FrameworkElementFactory(typeof(Border));
+        borderFactory.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+        borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+        borderFactory.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
+        var contentPresenterFactory = new FrameworkElementFactory(typeof(ContentPresenter));
+        contentPresenterFactory.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        contentPresenterFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+        borderFactory.AppendChild(contentPresenterFactory);
+        buttonTemplate.VisualTree = borderFactory;
+        copyButton.Template = buttonTemplate;
+
+        copyButton.Click += (sender, e) =>
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(codeText);
+                var btn = (System.Windows.Controls.Button)sender!;
+                var originalContent = btn.Content;
+                var originalFontFamily = btn.FontFamily;
+                btn.Content = "Copied!";
+                btn.FontFamily = new FontFamily("Segoe UI");
+                btn.FontSize = 10;
+
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+                timer.Tick += (_, _) =>
+                {
+                    btn.Content = originalContent;
+                    btn.FontFamily = originalFontFamily;
+                    btn.FontSize = 12;
+                    timer.Stop();
+                };
+                timer.Start();
+            }
+            catch { /* clipboard may be locked */ }
+        };
+
+        // Grid container
+        var grid = new Grid
+        {
+            Background = ctx.CodeBg,
+            Margin = new Thickness(0, 4, 0, 8),
+        };
+
+        // Add a subtle border
+        var border = new Border
+        {
+            BorderBrush = ctx.BorderBrush,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Child = grid,
+        };
+
+        grid.Children.Add(textBlock);
+        grid.Children.Add(copyButton);
+
+        doc.Blocks.Add(new BlockUIContainer(border));
     }
 
     // ────────────────────────────────────────────────────────────────────
