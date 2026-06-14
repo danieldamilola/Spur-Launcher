@@ -207,13 +207,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     public double WindowOpacity
     {
         get => _config.WindowOpacity;
-        set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.WindowOpacity = Math.Clamp(value, 0.5, 1.0); SaveAndApply(); OnPropertyChanged(); }
     }
 
     public double BarWidth
     {
         get => _config.BarWidth;
-        set { _config.BarWidth = Math.Clamp(value, 400, 1000); Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.BarWidth = Math.Clamp(value, 400, 1000); SaveAndApply(); OnPropertyChanged(); }
     }
 
     // ── View mode ────────────────────────────────────────────────
@@ -237,12 +237,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void SetViewMode(string mode)
     {
         _config.ViewMode = mode;
-        Save();
+        SaveAndApply();
         OnPropertyChanged(nameof(ViewModeCompact));
         OnPropertyChanged(nameof(ViewModeComfortable));
         OnPropertyChanged(nameof(ViewModeSpacious));
         ApplyViewModeResources(mode);
-        _main.Config = _config.Clone();
     }
 
     /// <summary>Updates the RowHeight WPF resource to match the selected view mode.</summary>
@@ -272,10 +271,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void SetWindowMode(string mode)
     {
         _config.WindowMode = mode;
-        Save();
+        SaveAndApply();
         OnPropertyChanged(nameof(WindowModeCompact));
         OnPropertyChanged(nameof(WindowModeExpanded));
-        _main.Config = _config.Clone();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -323,7 +321,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string QuerySearchPrecision
     {
         get => ToTitle(_config.QuerySearchPrecision);
-        set { _config.QuerySearchPrecision = ToKey(value); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.QuerySearchPrecision = ToKey(value); SaveAndApply(); OnPropertyChanged(); }
     }
 
     public string[] LastQueryStyleOptions { get; } = ["Clear", "Select last Query", "Keep last Query"];
@@ -334,8 +332,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         set
         {
             _config.LastQueryStyle = MapDisplayToQueryStyle(value);
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             OnPropertyChanged();
         }
     }
@@ -357,7 +354,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public int SearchDelay
     {
         get => _config.SearchDelay;
-        set { _config.SearchDelay = Math.Clamp(value, 0, 500); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.SearchDelay = Math.Clamp(value, 0, 500); SaveAndApply(); OnPropertyChanged(); }
     }
 
     public string[] WebSearchEngineOptions { get; } = ["Google", "DuckDuckGo", "Bing"];
@@ -365,43 +362,43 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string WebSearchEngine
     {
         get => ToTitle(_config.WebSearchEngine);
-        set { _config.WebSearchEngine = ToKey(value); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.WebSearchEngine = ToKey(value); SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool IndexShell
     {
         get => _config.IndexShell;
-        set { _config.IndexShell = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexShell = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool IndexSystemCommands
     {
         get => _config.IndexSystemCommands;
-        set { _config.IndexSystemCommands = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexSystemCommands = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool IndexUrls
     {
         get => _config.IndexUrls;
-        set { _config.IndexUrls = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexUrls = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool IndexWebSearches
     {
         get => _config.IndexWebSearches;
-        set { _config.IndexWebSearches = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexWebSearches = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool IndexWindowsSettings
     {
         get => _config.IndexWindowsSettings;
-        set { _config.IndexWindowsSettings = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.IndexWindowsSettings = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public int MaxFileDepth
     {
         get => _config.MaxFileDepth;
-        set { _config.MaxFileDepth = Math.Clamp(value, 1, 5); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.MaxFileDepth = Math.Clamp(value, 1, 5); SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool FileSearchEnabled
@@ -411,8 +408,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             if (_config.FileSearchEnabled == value) return;
             _config.FileSearchEnabled = value;
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             OnPropertyChanged();
         }
     }
@@ -444,8 +440,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             }
 
             _config.ClipboardEnabled = value;
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             OnPropertyChanged();
         }
     }
@@ -458,8 +453,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void SetCount(int n)
     {
         _config.ResultsCount = n;
-        _main.Config = _config.Clone();
-        Save();
+        SaveAndApply();
         OnPropertyChanged(nameof(Results5));
         OnPropertyChanged(nameof(Results8));
         OnPropertyChanged(nameof(Results10));
@@ -541,8 +535,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             if (_config.Shortcut == value || string.IsNullOrWhiteSpace(value)) return;
             _config.Shortcut = value;
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             OnPropertyChanged();
         }
     }
@@ -581,7 +574,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool ShowTrayIcon
     {
         get => _config.ShowTrayIcon;
-        set { _config.ShowTrayIcon = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.ShowTrayIcon = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool ReIndexOnStartup
@@ -620,7 +613,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public int ClipboardHistorySize
     {
         get => _config.ClipboardHistorySize;
-        set { _config.ClipboardHistorySize = Math.Clamp(value, 10, 200); _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.ClipboardHistorySize = Math.Clamp(value, 10, 200); SaveAndApply(); OnPropertyChanged(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -670,13 +663,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool AnimationEnabled
     {
         get => _config.AnimationEnabled;
-        set { _config.AnimationEnabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.AnimationEnabled = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public bool SoundEffectEnabled
     {
         get => _config.SoundEffectEnabled;
-        set { _config.SoundEffectEnabled = value; _main.Config = _config.Clone(); Save(); OnPropertyChanged(); }
+        set { _config.SoundEffectEnabled = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public string[] SearchWindowPositions { get; } = ["Center", "Center Top", "Left Top", "Right Top", "Custom Position"];
@@ -687,8 +680,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         set
         {
             _config.SearchWindowPosition = MapDisplayToWindowPosition(value);
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             NotifyPositionPropertiesChanged();
         }
     }
@@ -748,63 +740,18 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Actions — enable/disable each action independently
+    // Actions — enable/disable (managed through AddOnRegistry now)
     // ═══════════════════════════════════════════════════════════════
 
     public bool ActionCalc
     {
         get => _config.IndexCalculator;
-        set { _config.IndexCalculator = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionColor
-    {
-        get => _config.ActionColor;
-        set { _config.ActionColor = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionCurrency
-    {
-        get => _config.ActionCurrency;
-        set { _config.ActionCurrency = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionTimer
-    {
-        get => _config.ActionTimer;
-        set { _config.ActionTimer = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionIp
-    {
-        get => _config.ActionIp;
-        set { _config.ActionIp = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionAi
-    {
-        get => _config.ActionAi;
-        set { _config.ActionAi = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionPasswordGen
-    {
-        get => _config.ActionPasswordGen;
-        set { _config.ActionPasswordGen = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionQuickNote
-    {
-        get => _config.ActionQuickNote;
-        set { _config.ActionQuickNote = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionKillProcess
-    {
-        get => _config.ActionKillProcess;
-        set { _config.ActionKillProcess = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
-    }
-    public bool ActionScreenshot
-    {
-        get => _config.ActionScreenshot;
-        set { _config.ActionScreenshot = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.IndexCalculator = value; SaveAndApply(); OnPropertyChanged(); }
     }
     public bool ActionSystem
     {
         get => _config.IndexSystemCommands;
-        set { _config.IndexSystemCommands = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.IndexSystemCommands = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -823,7 +770,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool AiEnabled
     {
         get => _config.AiEnabled;
-        set { _config.AiEnabled = value; Save(); OnPropertyChanged(); _main.Config = _config.Clone(); }
+        set { _config.AiEnabled = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     public string[] Providers { get; } = ["groq", "gemini", "openrouter", "deepseek"];
@@ -836,8 +783,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             var normalized = value.ToLowerInvariant();
             if (string.Equals(_config.AiProvider, normalized, StringComparison.OrdinalIgnoreCase)) return;
             _config.AiProvider = normalized;
-            _main.Config = _config.Clone();
-            Save();
+            SaveAndApply();
             NotifyAiProviderPropertiesChanged();
         }
     }
@@ -866,8 +812,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             case AiProviders.DeepSeek: _config.EncryptedDeepSeekApiKey = encrypted; break;
             default: _config.EncryptedGroqApiKey = encrypted; break;
         }
-        _main.Config = _config.Clone();
-        Save();
+        SaveAndApply();
         OnPropertyChanged(nameof(ApiKey));
     }
 
@@ -905,8 +850,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             case AiProviders.DeepSeek: _config.DeepSeekModel = value; break;
             default: _config.GroqModel = value; break;
         }
-        _main.Config = _config.Clone();
-        Save();
+        SaveAndApply();
         OnPropertyChanged(nameof(AiModel));
     }
 
@@ -940,8 +884,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void ResetToDefaults()
     {
         _config = new SpurConfig();
-        _configService.Save(_config);
-        _main.Config = _config.Clone();
+        SaveAndApply();
         LoadStartupState();
 
         _indexedFoldersList = null;
@@ -1064,6 +1007,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         Registry.SaveSettings(_config);
         _configService.Save(_config);
+    }
+
+    /// <summary>
+    /// Saves config to disk and pushes a snapshot to MainViewModel.
+    /// Consolidates the repeated Save() + _main.Config = _config.Clone() pattern.
+    /// </summary>
+    private void SaveAndApply()
+    {
+        Save();
+        _main.Config = _config.Clone();
     }
 
     private static string ToTitle(string value)

@@ -51,6 +51,7 @@ public sealed partial class CalculatorAddOn : IAddOn
         }
         catch
         {
+            // Intentional: invalid math expression — show error result to user
             return new SearchResult
             {
                 Id = "calc:error",
@@ -94,6 +95,7 @@ public sealed partial class CalculatorAddOn : IAddOn
         }
         catch
         {
+            // Intentional: invalid math expression — return failure result
             return Task.FromResult(new AddOnResult
             {
                 Success = false,

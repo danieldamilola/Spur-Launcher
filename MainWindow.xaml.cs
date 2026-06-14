@@ -253,6 +253,8 @@ public partial class MainWindow : Window
     private bool ShouldShowCategoryRail()
     {
         if (_vm is null) return false;
+        // In expanded mode, categories are on the homepage — no hover rail needed
+        if (_vm.Config.WindowMode == "expanded") return false;
         if (_vm.IsFullPanelActive) return false;
         if (_vm.ActiveActionPanel is not null) return false;
         if (!string.IsNullOrEmpty(_vm.Query)) return false;
@@ -268,100 +270,124 @@ public partial class MainWindow : Window
         bool isBrowse = _vm.IsBrowsePanelVisible;
         bool hasResults = _vm.HasResults || isBrowse;
         bool hasQuery = !string.IsNullOrEmpty(_vm.Query);
+        bool isExpandedHome = _vm.IsExpandedHome;
 
-        // Compact: only expand when user typed something and results appeared
-        // Expanded (default): expand whenever there are results or browse panel
-        bool showContent = _vm.IsFullPanelActive || isBrowse
+        bool showContent = _vm.IsFullPanelActive || isBrowse || isExpandedHome
             || (isCompactWindow ? (hasQuery && hasResults) : hasResults);
 
-        bool isClipboard = _vm.ActiveCategory == "clipboard";
-        ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard ? Visibility.Collapsed : Visibility.Visible;
-        AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
-        ToastBar.Visibility = _vm.IsToastVisible ? Visibility.Visible : Visibility.Collapsed;
+        UpdatePanelVisibility(isBrowse, isExpandedHome);
 
-        bool expandRail = ShouldShowCategoryRail();
         var animEnabled = animate && _vm.Config.AnimationEnabled;
 
-        // Animate content area expand/collapse
         if (showContent)
+            AnimateContentExpand(animEnabled);
+        else
+            AnimateContentCollapse(animEnabled);
+
+        UpdateCategoryRail(animEnabled, fastAnchorHide);
+    }
+
+    /// <summary>Sets panel visibility based on active mode (homepage, clipboard, add-on, or results).</summary>
+    private void UpdatePanelVisibility(bool isBrowse, bool isExpandedHome)
+    {
+        bool isClipboard = _vm!.ActiveCategory == "clipboard";
+
+        // Homepage is shown in expanded mode with empty query
+        HomePanelControl.Visibility = isExpandedHome ? Visibility.Visible : Visibility.Collapsed;
+
+        ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
+        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || isExpandedHome
+            ? Visibility.Collapsed : Visibility.Visible;
+        AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
+        ToastBar.Visibility = _vm.IsToastVisible ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Expands the content area (with optional animation).</summary>
+    private void AnimateContentExpand(bool animEnabled)
+    {
+        bool showFooter = _vm!.SelectedResult is not null && !_vm.IsFullPanelActive;
+
+        if (ContentArea.Visibility != Visibility.Visible)
         {
-            if (ContentArea.Visibility != Visibility.Visible)
+            if (animEnabled)
             {
-                if (animEnabled)
-                {
-                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    
-                    ExpandedScale.ScaleY = 0;
-                    ContentArea.Opacity = 0;
-                    if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
-                    
-                    ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
+                ClearContentAnimations();
+                ExpandedScale.ScaleY = 0;
+                ContentArea.Opacity = 0;
+                if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
 
-                    var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
-                    { EasingFunction = SpurMotion.EaseOut() };
-                    
-                    var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
-                    { EasingFunction = SpurMotion.EaseOut() };
+                ContentArea.Visibility = Visibility.Visible;
+                FooterArea.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
 
-                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
-                    ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                    if (_vm.SelectedResult is not null) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                }
-                else
-                {
-                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    ExpandedScale.ScaleY = 1;
-                    ContentArea.Opacity = 1;
-                    FooterArea.Opacity = 1;
-                    ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
-                }
+                var scaleAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+                { EasingFunction = SpurMotion.EaseOut() };
+                var fadeAnim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+                { EasingFunction = SpurMotion.EaseOut() };
+
+                ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                if (_vm.SelectedResult is not null) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
             }
             else
             {
-                FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
+                ClearContentAnimations();
+                ExpandedScale.ScaleY = 1;
+                ContentArea.Opacity = 1;
                 FooterArea.Opacity = 1;
+                ContentArea.Visibility = Visibility.Visible;
+                FooterArea.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
             }
         }
         else
         {
-            if (ContentArea.Visibility != Visibility.Collapsed)
-            {
-                if (animEnabled)
-                {
-                    var anim = new DoubleAnimation(ExpandedScale.ScaleY, 0, TimeSpan.FromMilliseconds(120))
-                    { EasingFunction = SpurMotion.EaseIn() };
-                    
-                    var fadeAnim = new DoubleAnimation(ContentArea.Opacity, 0, TimeSpan.FromMilliseconds(120))
-                    { EasingFunction = SpurMotion.EaseIn() };
-
-                    anim.Completed += (s, e) => 
-                    { 
-                        ContentArea.Visibility = Visibility.Collapsed; 
-                        FooterArea.Visibility = Visibility.Collapsed; 
-                    };
-                    
-                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
-                    ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                    FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                }
-                else
-                {
-                    ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                    ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
-                    ExpandedScale.ScaleY = 1;
-                    ContentArea.Visibility = Visibility.Collapsed;
-                    FooterArea.Visibility = Visibility.Collapsed;
-                }
-            }
+            FooterArea.Visibility = showFooter ? Visibility.Visible : Visibility.Collapsed;
+            FooterArea.Opacity = 1;
         }
+    }
+
+    /// <summary>Collapses the content area (with optional animation).</summary>
+    private void AnimateContentCollapse(bool animEnabled)
+    {
+        if (ContentArea.Visibility == Visibility.Collapsed) return;
+
+        if (animEnabled)
+        {
+            var scaleAnim = new DoubleAnimation(ExpandedScale.ScaleY, 0, TimeSpan.FromMilliseconds(120))
+            { EasingFunction = SpurMotion.EaseIn() };
+            var fadeAnim = new DoubleAnimation(ContentArea.Opacity, 0, TimeSpan.FromMilliseconds(120))
+            { EasingFunction = SpurMotion.EaseIn() };
+
+            scaleAnim.Completed += (_, _) =>
+            {
+                ContentArea.Visibility = Visibility.Collapsed;
+                FooterArea.Visibility = Visibility.Collapsed;
+            };
+
+            ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+            FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+        }
+        else
+        {
+            ClearContentAnimations();
+            ExpandedScale.ScaleY = 1;
+            ContentArea.Visibility = Visibility.Collapsed;
+            FooterArea.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>Clears pending animations on content, scale, and footer elements.</summary>
+    private void ClearContentAnimations()
+    {
+        ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        ContentArea.BeginAnimation(UIElement.OpacityProperty, null);
+        FooterArea.BeginAnimation(UIElement.OpacityProperty, null);
+    }
+
+    /// <summary>Shows or hides the category rail on the left side.</summary>
+    private void UpdateCategoryRail(bool animEnabled, bool fastAnchorHide)
+    {
+        bool expandRail = ShouldShowCategoryRail();
 
         if (expandRail)
             SpurMotion.RevealAnchors(
@@ -381,7 +407,6 @@ public partial class MainWindow : Window
                 AnchorCircles,
                 animEnabled,
                 fastForTyping: fastAnchorHide);
-
 
         _categoryExpanded = expandRail;
     }

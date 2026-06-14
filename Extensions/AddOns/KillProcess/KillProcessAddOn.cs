@@ -46,19 +46,19 @@ public sealed class KillProcessAddOn : IAddOn
                 .ThenByDescending(p =>
                 {
                     try { return p.WorkingSet64; }
-                    catch { return 0; }
+                    catch { return 0; /* Intentional: elevated/exited process */ }
                 })
                 .Take(20);
 
             foreach (var p in procs)
             {
                 string? pname;
-                try { pname = p.ProcessName; } catch { continue; }
+                try { pname = p.ProcessName; } catch { continue; /* Intentional: process may have exited */ }
                 var mb = 0L;
-                try { mb = p.WorkingSet64 / 1024 / 1024; } catch { }
+                try { mb = p.WorkingSet64 / 1024 / 1024; } catch { /* Intentional: elevated/exited process */ }
                 var title = GetWindowTitle(p);
                 string? iconPath = null;
-                try { iconPath = p.MainModule?.FileName; } catch { }
+                try { iconPath = p.MainModule?.FileName; } catch { /* Intentional: elevated process blocks MainModule access */ }
                 yield return new SearchResult
                 {
                     Id         = $"kill:{pname.ToLowerInvariant()}",
@@ -77,7 +77,7 @@ public sealed class KillProcessAddOn : IAddOn
             .Where(p =>
             {
                 try { return p.ProcessName.StartsWith(name, StringComparison.OrdinalIgnoreCase); }
-                catch { return false; }
+                catch { return false; /* Intentional: process may have exited */ }
             })
             .OrderByDescending(p => settings.PrioritizeVisibleWindows && HasVisibleWindow(p))
             .ToList();
@@ -100,14 +100,14 @@ public sealed class KillProcessAddOn : IAddOn
         foreach (var p in matches.Take(10))
         {
             var mb = 0L;
-            try { mb = p.WorkingSet64 / 1024 / 1024; } catch { }
+            try { mb = p.WorkingSet64 / 1024 / 1024; } catch { /* Intentional: elevated/exited process */ }
             var title = GetWindowTitle(p);
             var label = settings.ShowWindowTitles && !string.IsNullOrWhiteSpace(title)
                 ? $"{p.ProcessName} - {title}"
                 : p.ProcessName;
                 
             string? iconPath = null;
-            try { iconPath = p.MainModule?.FileName; } catch { }
+            try { iconPath = p.MainModule?.FileName; } catch { /* Intentional: elevated process blocks MainModule access */ }
                 
             yield return new SearchResult
             {
@@ -125,13 +125,13 @@ public sealed class KillProcessAddOn : IAddOn
     private static bool HasVisibleWindow(Process process)
     {
         try { return process.MainWindowHandle != IntPtr.Zero; }
-        catch { return false; }
+        catch { return false; /* Intentional: process may have exited */ }
     }
 
     private static string GetWindowTitle(Process process)
     {
         try { return process.MainWindowTitle; }
-        catch { return string.Empty; }
+        catch { return string.Empty; /* Intentional: process may have exited */ }
     }
 
     public bool CanHandle(string query) => false;
@@ -161,7 +161,7 @@ public sealed class KillProcessAddOn : IAddOn
                 p.Dispose();
                 killed++;
             }
-            catch { }
+            catch { /* Intentional: process may have already exited or be protected */ }
         }
 
         return Task.FromResult(new AddOnResult

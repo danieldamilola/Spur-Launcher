@@ -43,6 +43,9 @@ public sealed class ClipboardEntry
     /// <summary>Truncated single-line preview for display in results list.</summary>
     public string Preview { get; }
 
+    /// <summary>Whether this entry is pinned. Set by the ViewModel during refresh.</summary>
+    public bool IsPinned { get; set; }
+
     public string TimeAgo
     {
         get

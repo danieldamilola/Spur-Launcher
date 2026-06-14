@@ -43,7 +43,7 @@ public sealed class UrlActionHandler : IActionHandler
         }
         catch
         {
-            // Fail silently
+            // Intentional: Process.Start may fail for invalid or unsupported URLs
         }
     }
 }

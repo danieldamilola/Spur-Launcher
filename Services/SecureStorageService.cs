@@ -32,6 +32,7 @@ public sealed class SecureStorageService : ISecureStorageService
         }
         catch
         {
+            // Decryption failed — return empty to signal missing key
             return string.Empty;
         }
     }

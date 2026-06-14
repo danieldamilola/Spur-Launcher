@@ -155,9 +155,8 @@ public sealed class ClipboardServiceImpl : IClipboardService
     /// <inheritdoc />
     public void CopyTextToSystem(string text)
     {
-        if (string.IsNullOrEmpty(text)) return;
-        try { Clipboard.SetText(text); }
-        catch (Exception ex) { _log.Warning("Clipboard copy failed", ex); }
+        if (!string.IsNullOrEmpty(text))
+            CopyToSystem(new ClipboardEntry(text));
     }
 
     public string? ReadFromSystem()

@@ -8,13 +8,16 @@ public static class AppIcons
 {
     public const string Folder = "Icons";
 
-    public const string Size16  = "spur-launcher-16x16.ico";
-    public const string Size32  = "spur-launcher-32x32.ico";
-    public const string Size64  = "spur-launcher-64x64.ico";
-    public const string Size128 = "spur-launcher-128x128.ico";
-    public const string Size256 = "spur-launcher-256x256.ico";
-    public const string Size512 = "spur-launcher-512x512.ico";
-    public const string Size1024 = "spur-launcher-1024x1024.ico";
+    public const string Size16  = "spur-16x16.ico";
+    public const string Size24  = "spur-24x24.ico";
+    public const string Size32  = "spur-32x32.ico";
+    public const string Size48  = "spur-48x48.ico";
+    public const string Size64  = "spur-64x64.ico";
+    public const string Size96  = "spur-96x96.ico";
+    public const string Size128 = "spur-128x128.ico";
+    public const string Size256 = "spur-256x256.ico";
+    public const string Size512 = "spur-512x512.ico";
+    public const string Size1024 = "spur-1024x1024.ico";
 
     /// <summary>Embedded in the .exe — compile-time <see cref="ApplicationIcon"/>.</summary>
     public const string Application = Size256;

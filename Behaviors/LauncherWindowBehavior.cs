@@ -56,6 +56,10 @@ public static class LauncherWindowBehavior
         var width = window.Width > 0 && !double.IsNaN(window.Width) ? window.Width : window.ActualWidth;
         var height = window.Height > 0 && !double.IsNaN(window.Height) ? window.Height : window.ActualHeight;
 
+        // The RootBorder has Padding matching ShadowMargin to give DropShadowEffect rendering room.
+        // Subtract this from the position so the visible capsule stays centered.
+        const double shadowMargin = Spur.Models.LauncherLayout.ShadowMargin;
+
         // Center based on the search bar height (56px) so the drop down expands downward from the center
         var barHeight = 56.0;
         var left = screen.Left + (screen.Width - width) / 2;
@@ -83,8 +87,8 @@ public static class LauncherWindowBehavior
                 break;
         }
 
-        window.Left = left;
-        window.Top = top;
+        window.Left = left - shadowMargin;
+        window.Top = top - shadowMargin;
     }
 
     private static void OnSourceInitialized(object? sender, EventArgs e)
@@ -153,7 +157,7 @@ public static class LauncherWindowBehavior
                     vm.SaveConfig();
                 }
             } 
-            catch { }
+            catch { /* Intentional: DragMove throws if button released mid-drag */ }
         }
     }
 

@@ -1,7 +1,7 @@
 # Copies the canonical 256px app icon to Assets\spur.ico for legacy tooling.
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
-$src  = Join-Path $PSScriptRoot "spur-launcher-256x256.ico"
+$src  = Join-Path $PSScriptRoot "spur-256x256.ico"
 $dest = Join-Path $root "Assets\spur.ico"
 
 if (-not (Test-Path $src)) {

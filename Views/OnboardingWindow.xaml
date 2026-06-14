@@ -29,7 +29,7 @@
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24"
                            RenderOptions.BitmapScalingMode="HighQuality"
-                           Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"/>
+                           Source="pack://application:,,,/Icons/spur-64x64.ico"/>
                     <TextBlock Text="Spur"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="36"

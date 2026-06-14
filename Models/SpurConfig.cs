@@ -125,34 +125,9 @@ public sealed class SpurConfig
     /// <summary>Enable Windows Settings search results.</summary>
     public bool IndexWindowsSettings { get; set; } = true;
 
-    // Legacy action toggles
-    [JsonIgnore] public bool ActionColor      { get; set; } = true;
-    [JsonIgnore] public bool ActionTimer      { get; set; } = false;
-    [JsonIgnore] public bool ActionIp         { get; set; } = false;
-    [JsonIgnore] public bool ActionAi         { get; set; } = false;
-    [JsonIgnore] public bool ActionCurrency   { get; set; } = true;
-    [JsonIgnore] public bool ActionPasswordGen { get; set; } = false;
-    [JsonIgnore] public bool ActionQuickNote  { get; set; } = false;
-    [JsonIgnore] public bool ActionKillProcess { get; set; } = false;
-    [JsonIgnore] public bool ActionScreenshot { get; set; } = false;
-
-    // Per-action settings have been moved to individual extra folders
-    // and are stored in the new Extras dictionary below.
-
     // ═══════════════════════════════════════════════════════════════
-    // Action Keywords (Legacy Flow Launcher-style, kept for compat)
+    // Category Keywords (clipboard, files, apps are category filters — not add-ons)
     // ═══════════════════════════════════════════════════════════════
-    [JsonIgnore] public string KeywordSystem    { get; set; } = "sys";
-    [JsonIgnore] public string KeywordColor     { get; set; } = "color";
-    [JsonIgnore] public string KeywordTimer     { get; set; } = "timer";
-    [JsonIgnore] public string KeywordIp        { get; set; } = "ip";
-    [JsonIgnore] public string KeywordAi        { get; set; } = "ai";
-    [JsonIgnore] public string KeywordCurrency  { get; set; } = "cur";
-    [JsonIgnore] public string KeywordPassword  { get; set; } = "pw";
-    [JsonIgnore] public string KeywordNote      { get; set; } = "note";
-    [JsonIgnore] public string KeywordKill      { get; set; } = "kill";
-    [JsonIgnore] public string KeywordScreenshot { get; set; } = "ss";
-    [JsonIgnore] public string KeywordShell      { get; set; } = ">";
 
     public string KeywordClipboard { get; set; } = "c";
     public string KeywordFiles     { get; set; } = "files";

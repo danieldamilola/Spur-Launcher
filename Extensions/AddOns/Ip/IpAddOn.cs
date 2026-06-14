@@ -75,6 +75,7 @@ public sealed class IpAddOn : IAddOn
         }
         catch
         {
+            // Intentional: network unavailable — degrade gracefully
             return "Unknown";
         }
     }
@@ -88,6 +89,7 @@ public sealed class IpAddOn : IAddOn
         }
         catch
         {
+            // Intentional: network unavailable — degrade gracefully
             return "Unknown";
         }
     }

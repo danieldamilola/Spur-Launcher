@@ -89,6 +89,10 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
 
         SyncEntries(desired);
 
+        // Stamp pin status so the UI can bind to it directly.
+        foreach (var entry in Entries)
+            entry.IsPinned = IsPinned(entry);
+
         if (Entries.Count > 0 && (SelectedEntry == null || !Entries.Contains(SelectedEntry)))
             SelectedEntry = Entries[0];
 

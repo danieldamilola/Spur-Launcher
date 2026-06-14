@@ -5,7 +5,7 @@
         xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Spur Settings"
-        Icon="pack://application:,,,/Icons/spur-launcher-32x32.ico"
+        Icon="pack://application:,,,/Icons/spur-32x32.ico"
         Width="920"
         Height="760"
         MinWidth="820"
@@ -39,7 +39,7 @@
             <!-- App title (drag area) -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0"
                         IsHitTestVisible="False">
-                <Image Source="pack://application:,,,/Icons/spur-launcher-16x16.ico"
+                <Image Source="pack://application:,,,/Icons/spur-16x16.ico"
                        Width="16" Height="16" Margin="0,0,8,0"
                        VerticalAlignment="Center"/>
                 <TextBlock Text="Spur Settings"

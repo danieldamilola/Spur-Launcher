@@ -200,6 +200,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasQuery))]
     [NotifyPropertyChangedFor(nameof(HasResults))]
+    [NotifyPropertyChangedFor(nameof(IsExpandedHome))]
     private string _query = string.Empty;
 
     [ObservableProperty]
@@ -234,6 +235,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Null = all categories. Values: "apps" | "files" | "clipboard" | "actions".</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsExpandedHome))]
     private string? _activeCategory;
 
     /// <summary>Lucide icon glyph shown in the search bar when a keyword scope is active.</summary>
@@ -346,12 +348,6 @@ public sealed partial class MainViewModel : ObservableObject
         _ai.ClearConversation();
     }
 
-    public sealed class PinnedCategoryItem
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;
-        public string IconGlyph { get; set; } = string.Empty;
-    }
     private string _actionResultText = string.Empty;
     public string ActionResultText
     {
@@ -404,6 +400,16 @@ public sealed partial class MainViewModel : ObservableObject
     public bool HasQuery          => !string.IsNullOrEmpty(Query);
     public bool HasResults         => Results.Count > 0;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
+
+    /// <summary>True when expanded mode should show the homepage (empty query, no category, no full panel).</summary>
+    public bool IsExpandedHome =>
+        Config.WindowMode == "expanded"
+        && !HasQuery
+        && ActiveCategory is null
+        && !IsFullPanelActive;
+
+    /// <summary>All enabled add-ons for the homepage quick-actions list.</summary>
+    public IReadOnlyList<Extensions.IAddOn> EnabledAddOns => _addOns.GetEnabled().ToList();
 
     /// <summary>True when ActiveCategory points to a keyword-scoped action (not a category filter).</summary>
     private static bool IsActionScope(string? category) => category switch
@@ -500,7 +506,9 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            _ = DebouncedSearchAsync(effectiveQuery, ct);
+            _ = DebouncedSearchAsync(effectiveQuery, ct)
+                .ContinueWith(t => _log.Warning("DebouncedSearchAsync unexpected error", t.Exception!.InnerException!),
+                    TaskContinuationOptions.OnlyOnFaulted);
         }
         catch (Exception ex)
         {
@@ -821,23 +829,20 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (string.IsNullOrEmpty(query)) return null;
 
-        // Use cached keyword map — rebuilt only when config changes (see OnConfigChanged)
+        // Auto-build from registry — each add-on owns its own Id, Keyword, IconGlyph.
+        // No hand-coded IDs means no mismatch bugs.
         if (_keywordMap is null)
         {
-            _keywordMap = new()
+            _keywordMap = new();
+            foreach (var addOn in _addOns.GetEnabled())
             {
-                [Config.KeywordSystem]     = ("system",     "power"),
-                [Config.KeywordTimer]      = ("timer",      "\ue121"),
-                [Config.KeywordCurrency]   = ("cur",        "\ue825"),
-                [Config.KeywordPassword]   = ("pw",         "\ue722"),
-                [Config.KeywordNote]       = ("note",       "\ue727"),
-                [Config.KeywordKill]       = ("kill",       "\ue747"),
-                [Config.KeywordScreenshot] = ("ss",          "\ue74c"),
-                [Config.KeywordShell]      = ("shell",      "\ue765"),
-                [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
-                [Config.KeywordFiles]      = ("files",      "\ue70a"),
-                [Config.KeywordApps]       = ("apps",       "\ue71d"),
-            };
+                if (string.IsNullOrEmpty(addOn.Keyword)) continue;
+                _keywordMap[addOn.Keyword] = (addOn.Id, addOn.IconGlyph);
+            }
+            // Category filters (not add-ons — they filter existing results)
+            _keywordMap[Config.KeywordClipboard] = ("clipboard", "clipboard");
+            _keywordMap[Config.KeywordFiles]     = ("files",     "\ue70a");
+            _keywordMap[Config.KeywordApps]      = ("apps",      "\ue71d");
         }
 
         foreach (var (keyword, (actionId, icon)) in _keywordMap)
@@ -870,7 +875,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (ct.IsCancellationRequested) return;
             CancelActionWork();
-            _ = SearchAsync(query, ct);
+            _ = SearchAsync(query, ct)
+                .ContinueWith(t => _log.Warning("SearchAsync unexpected error", t.Exception!.InnerException!),
+                    TaskContinuationOptions.OnlyOnFaulted);
         }
         catch (Exception ex)
         {
@@ -1056,7 +1063,8 @@ public sealed partial class MainViewModel : ObservableObject
                     });
                 }
             }
-            catch (TaskCanceledException) { }
+            catch (TaskCanceledException) { /* Intentional: toast dismissed early */ }
+            catch (Exception ex) { _log.Warning("Toast timer failed", ex); }
         }, token);
     }
 

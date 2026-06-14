@@ -38,7 +38,7 @@ namespace Spur.Interop
             }
             catch
             {
-                // best-effort — don't crash if unsupported
+                // Intentional: best-effort — don't crash if unsupported
             }
         }
 

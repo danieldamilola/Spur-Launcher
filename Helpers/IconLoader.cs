@@ -32,6 +32,7 @@ public static class IconLoader
         }
         catch
         {
+            // Intentional: icon file may be missing or corrupt — callers handle null
             return null;
         }
     }
@@ -46,6 +47,7 @@ public static class IconLoader
         }
         catch
         {
+            // Intentional: icon file may be missing or corrupt — callers handle null
             return null;
         }
     }

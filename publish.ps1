@@ -60,7 +60,7 @@ vpk pack `
     --packDir "$PublishDir" `
     --outputDir "$OutputDir" `
     --packTitle "Spur Launcher" `
-    --icon "$ProjectDir\Icons\spur-launcher-256x256.ico" `
+    --icon "$ProjectDir\Icons\spur-256x256.ico" `
     --mainExe "Spur.exe"
 
 if ($LASTEXITCODE -ne 0) {

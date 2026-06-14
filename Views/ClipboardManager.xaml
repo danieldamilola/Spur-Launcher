@@ -16,7 +16,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- ═══ Actions bar ═══ -->
@@ -38,249 +37,336 @@
                        Margin="8,0,0,0"/>
         </StackPanel>
 
-        <!-- ═══ Entry list ═══ -->
-        <ListBox x:Name="ClipList"
-                 Grid.Row="2"
-                 ItemsSource="{Binding Entries}"
-                 SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 VirtualizingStackPanel.IsVirtualizing="True"
-                 FocusVisualStyle="{x:Null}"
-                 PreviewMouseLeftButtonUp="OnListMouseClick"
-                 AutomationProperties.Name="Clipboard history">
+        <!-- ═══ Content area: list + detail side by side ═══ -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="55*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="45*"/>
+            </Grid.ColumnDefinitions>
 
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type models:ClipboardEntry}">
-                    <Grid x:Name="RowRoot"
-                          Height="56"
-                          Background="Transparent"
-                          Cursor="Hand"
-                          AutomationProperties.Name="{Binding Preview}">
+            <!-- ═══ Entry list ═══ -->
+            <ListBox x:Name="ClipList"
+                     Grid.Column="0"
+                     ItemsSource="{Binding Entries}"
+                     SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     VirtualizingStackPanel.IsVirtualizing="True"
+                     FocusVisualStyle="{x:Null}"
+                     PreviewMouseLeftButtonUp="OnListMouseClick"
+                     AutomationProperties.Name="Clipboard history">
 
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="6"/>
-                            <ColumnDefinition Width="2"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:ClipboardEntry}">
+                        <Grid x:Name="RowRoot"
+                              Height="56"
+                              Background="Transparent"
+                              Cursor="Hand"
+                              AutomationProperties.Name="{Binding Preview}">
 
-                        <!-- Selection rail (placeholder to match padding) -->
-                        <Border x:Name="SelectionRail"
-                                Grid.Column="1"
-                                Background="Transparent"
-                                CornerRadius="2"
-                                Margin="0,8,0,8"/>
-
-                        <!-- Row background -->
-                        <Border x:Name="RowBg"
-                                Grid.Column="2"
-                                Background="Transparent"
-                                CornerRadius="{DynamicResource RadiusRow}"/>
-
-                        <Border x:Name="HoverOverlay"
-                                Grid.Column="2"
-                                CornerRadius="{DynamicResource RadiusRow}"
-                                Background="{DynamicResource HoverBg}"
-                                Opacity="0"/>
-
-                        <Grid Grid.Column="2" Margin="12,0,14,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="3"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Image preview (only visible when IsImage) -->
-                            <Border x:Name="ImgBox"
-                                    Grid.Column="0"
-                                    Width="32" Height="32"
-                                    CornerRadius="8"
-                                    Background="{DynamicResource SurfaceLow}"
-                                    VerticalAlignment="Center"
-                                    Visibility="Collapsed">
-                                <Image Width="30" Height="30"
-                                       Stretch="UniformToFill"
-                                       RenderOptions.BitmapScalingMode="HighQuality"
-                                       Source="{Binding Image}"/>
-                            </Border>
+                            <!-- Selection rail -->
+                            <Border x:Name="SelectionRail"
+                                    Grid.Column="1"
+                                    Background="Transparent"
+                                    CornerRadius="2"
+                                    Margin="0,8,0,8"/>
 
-                            <!-- Text icon -->
-                            <Border x:Name="TextIconBox"
-                                    Grid.Column="0"
-                                    Width="32" Height="32"
-                                    CornerRadius="8"
-                                    Background="{DynamicResource SurfaceLow}"
-                                    VerticalAlignment="Center">
-                                <ui:FontIcon Glyph="&#xE8C8;" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                            <!-- Row background -->
+                            <Border x:Name="RowBg"
+                                    Grid.Column="2"
+                                    Background="Transparent"
+                                    CornerRadius="{DynamicResource RadiusRow}"/>
 
-                            <!-- Content -->
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,2,0,0">
-                                <TextBlock Text="{Binding Preview}"
-                                           FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimary}"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding TimeAgo}"
-                                           FontFamily="{DynamicResource Token.Font.Secondary}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextTertiary}"
-                                           Margin="0,1,0,0"/>
-                            </StackPanel>
+                            <Border x:Name="HoverOverlay"
+                                    Grid.Column="2"
+                                    CornerRadius="{DynamicResource RadiusRow}"
+                                    Background="{DynamicResource HoverBg}"
+                                    Opacity="0"/>
 
-                            <!-- Pin + Delete buttons -->
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- Pin button -->
-                                <Button x:Name="PinBtn"
-                                        Width="24" Height="24"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Cursor="Hand"
-                                        Margin="2,0"
-                                        ToolTip="Pin"
-                                        Tag="{Binding}"
-                                        AutomationProperties.Name="Pin entry"
-                                        Click="OnPinClick">
-                                    <ui:FontIcon Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
-                                </Button>
+                            <!-- Selected overlay -->
+                            <Border x:Name="SelectedOverlay"
+                                    Grid.Column="2"
+                                    CornerRadius="{DynamicResource RadiusRow}"
+                                    Background="{DynamicResource SelectedBg}"
+                                    Opacity="0"/>
 
-                                <!-- Delete button -->
-                                <Button Width="24" Height="24"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Cursor="Hand"
-                                        Margin="2,0"
-                                        ToolTip="Remove"
-                                        AutomationProperties.Name="Delete entry"
-                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                        CommandParameter="{Binding}">
-                                    <ui:FontIcon Glyph="&#xE711;" FontSize="14" Foreground="{DynamicResource TextMuted}"/>
-                                </Button>
-                            </StackPanel>
+                            <Grid Grid.Column="2" Margin="12,0,14,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Image preview (only visible when IsImage) -->
+                                <Border x:Name="ImgBox"
+                                        Grid.Column="0"
+                                        Width="32" Height="32"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SurfaceLow}"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed">
+                                    <Image Width="30" Height="30"
+                                           Stretch="UniformToFill"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           Source="{Binding Image}"/>
+                                </Border>
+
+                                <!-- Text icon -->
+                                <Border x:Name="TextIconBox"
+                                        Grid.Column="0"
+                                        Width="32" Height="32"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SurfaceLow}"
+                                        VerticalAlignment="Center">
+                                    <ui:FontIcon Glyph="&#xE8C8;" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Content -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding Preview}"
+                                               FontFamily="{DynamicResource Token.Font.Primary}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding TimeAgo}"
+                                               FontFamily="{DynamicResource Token.Font.Secondary}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiary}"
+                                               Margin="0,1,0,0"/>
+                                </StackPanel>
+
+                                <!-- Pin + Delete buttons -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Pin button -->
+                                    <Button x:Name="PinBtn"
+                                            Width="24" Height="24"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            Margin="2,0"
+                                            ToolTip="Pin"
+                                            Tag="{Binding}"
+                                            AutomationProperties.Name="Pin entry"
+                                            Click="OnPinClick">
+                                        <ui:FontIcon x:Name="PinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                    </Button>
+
+                                    <!-- Delete button -->
+                                    <Button Width="24" Height="24"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            Margin="2,0"
+                                            ToolTip="Remove"
+                                            AutomationProperties.Name="Delete entry"
+                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}">
+                                        <ui:FontIcon Glyph="&#xE711;" FontSize="14" Foreground="{DynamicResource TextMuted}"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
                         </Grid>
-                    </Grid>
 
-                    <DataTemplate.Triggers>
-                        <!-- Hover -->
-                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.15"
-                                                         EasingFunction="{StaticResource AnimEaseOut}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
-                            <DataTrigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.2"
-                                                         EasingFunction="{StaticResource AnimEaseIn}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.ExitActions>
-                        </DataTrigger>
+                        <DataTemplate.Triggers>
+                            <!-- Hover -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.15"
+                                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.2"
+                                                             EasingFunction="{StaticResource AnimEaseIn}"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
 
-                        <!-- Image entry -->
-                        <DataTrigger Binding="{Binding IsImage}" Value="True">
-                            <Setter TargetName="ImgBox" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="TextIconBox" Property="Visibility" Value="Collapsed"/>
-                        </DataTrigger>
-                    </DataTemplate.Triggers>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                            <!-- Image entry -->
+                            <DataTrigger Binding="{Binding IsImage}" Value="True">
+                                <Setter TargetName="ImgBox" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="TextIconBox" Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
 
-        <!-- ═══ Detail preview ═══ -->
-        <Border Grid.Row="3"
-                x:Name="DetailPanel"
-                BorderBrush="{DynamicResource Separator}"
-                BorderThickness="0,1,0,0"
-                Background="{DynamicResource Depth2}"
-                MaxHeight="120">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Visible"/>
-                    <Setter Property="Opacity" Value="0"/>
-                    <Setter Property="RenderTransform">
-                        <Setter.Value>
-                            <TranslateTransform X="12"/>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <!-- When SelectedEntry is NOT null (so we trigger on False, wait, no, we need to trigger when it IS NOT null) -->
-                        <DataTrigger Binding="{Binding SelectedEntry}" Value="{x:Null}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                        </DataTrigger>
-                        <Trigger Property="Visibility" Value="Visible">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.16"
-                                                         EasingFunction="{StaticResource AnimEaseOut}"/>
-                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                         To="0" Duration="0:0:0.16"
-                                                         EasingFunction="{StaticResource AnimEaseOut}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <Grid Margin="12,8">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+                            <!-- Selection rail + selected overlay when selected -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="SelectionRail" Property="Background" Value="{DynamicResource Accent}"/>
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.05"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.05"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-                    <Button Style="{StaticResource SettingsSoftButton}"
-                            Command="{Binding CopyCommand}"
-                            CommandParameter="{Binding SelectedEntry}"
-                            AutomationProperties.Name="Copy selected entry"
-                            Padding="12,6">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:FontIcon Glyph="&#xE8C8;" FontSize="13" Margin="0,0,6,0"/>
-                            <TextBlock Text="Copy" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource SettingsSoftButton}"
-                            Margin="6,0,0,0"
-                            Command="{Binding DeleteCommand}"
-                            CommandParameter="{Binding SelectedEntry}"
-                            Foreground="{DynamicResource TextMuted}"
-                            AutomationProperties.Name="Delete selected entry"
-                            Padding="12,6">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:FontIcon Glyph="&#xE74D;" FontSize="13" Margin="0,0,6,0"/>
-                            <TextBlock Text="Delete" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                            <!-- Pin visual indicator: swap glyph + color when pinned -->
+                            <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                <Setter TargetName="PinGlyph" Property="Glyph" Value="&#xE841;"/>
+                                <Setter TargetName="PinGlyph" Property="Foreground" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="PinBtn" Property="ToolTip" Value="Unpin"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
-                <ScrollViewer Grid.Row="1"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled"
-                              MaxHeight="72">
-                    <TextBlock Text="{Binding SelectedContent}"
-                               FontFamily="{DynamicResource Token.Font.Mono}"
-                               FontSize="11"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextWrapping="Wrap"
-                               TextTrimming="CharacterEllipsis"/>
-                </ScrollViewer>
-            </Grid>
-        </Border>
+            <!-- ═══ Empty state ═══ -->
+            <StackPanel Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        x:Name="EmptyState">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Entries.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <TextBlock Text="📋"
+                           FontSize="36"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="Clipboard is empty"
+                           FontFamily="{DynamicResource Token.Font.Primary}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Copy something to get started"
+                           FontFamily="{DynamicResource Token.Font.Primary}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextTertiary}"
+                           HorizontalAlignment="Center"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- Vertical separator between list and detail -->
+            <Border Grid.Column="1"
+                    Width="1"
+                    Background="{DynamicResource Separator}"
+                    VerticalAlignment="Stretch"/>
+
+            <!-- ═══ Detail preview (right side) ═══ -->
+            <Border Grid.Column="2"
+                    x:Name="DetailPanel"
+                    Background="{DynamicResource Depth2}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Setter Property="Opacity" Value="0"/>
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <TranslateTransform X="12"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <!-- Hide when nothing is selected -->
+                            <DataTrigger Binding="{Binding SelectedEntry}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <Trigger Property="Visibility" Value="Visible">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.16"
+                                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                             To="0" Duration="0:0:0.16"
+                                                             EasingFunction="{StaticResource AnimEaseOut}"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid Margin="12,8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Style="{StaticResource SettingsSoftButton}"
+                                Command="{Binding CopyCommand}"
+                                CommandParameter="{Binding SelectedEntry}"
+                                ToolTip="Copy"
+                                AutomationProperties.Name="Copy selected entry"
+                                Padding="6" Width="30" Height="30">
+                            <ui:FontIcon Glyph="&#xE8C8;" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="DetailPinBtn"
+                                Style="{StaticResource SettingsSoftButton}"
+                                Margin="4,0,0,0"
+                                Tag="{Binding SelectedEntry}"
+                                ToolTip="Pin"
+                                AutomationProperties.Name="Pin selected entry"
+                                Click="OnPinClick"
+                                Padding="6" Width="30" Height="30">
+                            <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="14"/>
+                        </Button>
+                        <Button Style="{StaticResource SettingsSoftButton}"
+                                Margin="4,0,0,0"
+                                Command="{Binding DeleteCommand}"
+                                CommandParameter="{Binding SelectedEntry}"
+                                ToolTip="Delete"
+                                Foreground="{DynamicResource TextMuted}"
+                                AutomationProperties.Name="Delete selected entry"
+                                Padding="6" Width="30" Height="30">
+                            <ui:FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock Text="{Binding SelectedContent}"
+                                   FontFamily="{DynamicResource Token.Font.Mono}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 
 </UserControl>

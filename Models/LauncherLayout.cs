@@ -19,4 +19,7 @@ public static class LauncherLayout
     public const double MaxShelfRows = 8;
     public const double ShelfRowHeight = 44;
     public const double MaxShelfListHeight = MaxShelfRows * ShelfRowHeight;
+
+    /// <summary>Padding around the capsule to give DropShadowEffect room to render without clipping.</summary>
+    public const double ShadowMargin = 20;
 }

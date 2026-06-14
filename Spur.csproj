@@ -9,7 +9,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>Spur</AssemblyName>
     <RootNamespace>Spur</RootNamespace>
-    <ApplicationIcon>Icons\spur-launcher-256x256.ico</ApplicationIcon>
+    <ApplicationIcon>Icons\spur-256x256.ico</ApplicationIcon>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     
@@ -67,13 +67,16 @@
     <!-- Colored add-on icons (Flow Launcher, MIT license) -->
     <Resource Include="Assets\Icons\*.png" />
     <!-- Brand icons (tray + UI); exe icon from ApplicationIcon above -->
-    <Resource Include="Icons\spur-launcher-16x16.ico" />
-    <Resource Include="Icons\spur-launcher-32x32.ico" />
-    <Resource Include="Icons\spur-launcher-64x64.ico" />
-    <Resource Include="Icons\spur-launcher-128x128.ico" />
-    <Resource Include="Icons\spur-launcher-256x256.ico" />
-    <Resource Include="Icons\spur-launcher-512x512.ico" />
-    <Resource Include="Icons\spur-launcher-1024x1024.ico" />
+    <Resource Include="Icons\spur-16x16.ico" />
+    <Resource Include="Icons\spur-24x24.ico" />
+    <Resource Include="Icons\spur-32x32.ico" />
+    <Resource Include="Icons\spur-48x48.ico" />
+    <Resource Include="Icons\spur-64x64.ico" />
+    <Resource Include="Icons\spur-96x96.ico" />
+    <Resource Include="Icons\spur-128x128.ico" />
+    <Resource Include="Icons\spur-256x256.ico" />
+    <Resource Include="Icons\spur-512x512.ico" />
+    <Resource Include="Icons\spur-1024x1024.ico" />
     <!-- Legacy copy for publish.ps1 / Velopack (synced from 256px source) -->
     <Content Include="Assets\spur.ico" CopyToOutputDirectory="Never" />
   </ItemGroup>

@@ -49,7 +49,7 @@
             <!-- Logo block -->
             <StackPanel Grid.Row="0" Margin="20,28,20,20" HorizontalAlignment="Left">
                 <!-- App icon -->
-                <Image Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"
+                <Image Source="pack://application:,,,/Icons/spur-64x64.ico"
                        Width="52" Height="52"
                        Margin="0,0,0,10"
                        HorizontalAlignment="Left"

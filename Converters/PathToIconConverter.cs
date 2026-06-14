@@ -27,7 +27,7 @@ public sealed class PathToIconConverter : IValueConverter
                 bmp.Freeze();
                 return bmp;
             }
-            catch { return null; }
+            catch { return null; /* Intentional: resource image may be missing or corrupt */ }
         }
 
         // Filesystem paths → shell icon extraction

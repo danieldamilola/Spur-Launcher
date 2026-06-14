@@ -22,10 +22,29 @@ public partial class ClipboardManager : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        if (e.OldValue is ClipboardViewModel oldVm)
+            oldVm.PropertyChanged -= OnVmPropertyChanged;
+
         if (e.NewValue is ClipboardViewModel vm)
         {
             _vm = vm;
+            vm.PropertyChanged += OnVmPropertyChanged;
         }
+    }
+
+    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ClipboardViewModel.SelectedEntry))
+            Dispatcher.InvokeAsync(UpdateDetailPinState);
+    }
+
+    /// <summary>Syncs the detail panel pin button glyph with the selected entry's pinned state.</summary>
+    private void UpdateDetailPinState()
+    {
+        var entry = _vm?.SelectedEntry;
+        bool isPinned = entry?.IsPinned == true;
+        DetailPinGlyph.Glyph = isPinned ? "\uE841" : "\uE718";
+        DetailPinBtn.ToolTip = isPinned ? "Unpin" : "Pin";
     }
 
     private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -53,7 +72,11 @@ public partial class ClipboardManager : UserControl
     private void OnPinClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: ClipboardEntry entry })
+        {
             _vm?.TogglePinCommand.Execute(entry);
+            // Refresh the detail pin state after toggling
+            Dispatcher.InvokeAsync(UpdateDetailPinState);
+        }
     }
 
     public void MoveSelection(int delta) => _vm?.MoveSelection(delta);

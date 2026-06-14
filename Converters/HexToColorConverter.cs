@@ -27,7 +27,8 @@ public class HexToColorConverter : IValueConverter
             }
             catch
             {
-                return new SolidColorBrush(Color.FromRgb(20, 20, 22)); // Default
+                // Intentional: invalid hex input returns default color
+                return new SolidColorBrush(Color.FromRgb(20, 20, 22));
             }
         }
         return new SolidColorBrush(Color.FromRgb(20, 20, 22)); // Default

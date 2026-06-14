@@ -170,7 +170,7 @@ public partial class AddOnPanel : UserControl
             thinking.Children.Add(new Border
             {
                 Width = 8, Height = 8, CornerRadius = new CornerRadius(4),
-                Background = TryFindResource("AccentBrush") as Brush ?? Brushes.CornflowerBlue,
+                Background = TryFindResource("Accent") as Brush ?? Brushes.CornflowerBlue,
                 Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, Opacity = 0.7
             });
             thinking.Children.Add(new TextBlock
@@ -229,6 +229,19 @@ public partial class AddOnPanel : UserControl
             };
             reader.SetValue(Control.BorderThicknessProperty, new Thickness(0));
             reader.SetValue(Control.PaddingProperty, new Thickness(0));
+
+            // Forward mouse wheel to the parent ScrollViewer so AI content is scrollable
+            reader.PreviewMouseWheel += (s, ev) =>
+            {
+                ev.Handled = true;
+                ContentScroll.RaiseEvent(new System.Windows.Input.MouseWheelEventArgs(
+                    ev.MouseDevice, ev.Timestamp, ev.Delta)
+                {
+                    RoutedEvent = UIElement.MouseWheelEvent,
+                    Source = s
+                });
+            };
+
             stack.Children.Add(reader);
         }
         card.Child = stack;
@@ -249,28 +262,12 @@ public partial class AddOnPanel : UserControl
             return;
         }
 
-        var card = new Border
-        {
-            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
-            Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
-        };
         var stack = new StackPanel();
-        stack.Children.Add(new TextBlock
-        {
-            Text = query ?? "", FontSize = 13,
-            Foreground = TryFindResource("TextTertiary") as Brush ?? Brushes.Gray,
-            Margin = new Thickness(0, 0, 0, 8)
-        });
-        stack.Children.Add(new TextBlock
-        {
-            Text = $"= {result}", FontSize = 28, FontWeight = FontWeights.Medium,
-            FontFamily = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas"),
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White
-        });
-        card.Child = stack;
-        ContentArea.Children.Add(card);
+        var queryLabel = CreateLabel(query ?? "", muted: true);
+        queryLabel.Margin = new Thickness(0, 0, 0, 8);
+        stack.Children.Add(queryLabel);
+        stack.Children.Add(CreateLabel($"= {result}", fontSize: 28, mono: true, weight: FontWeights.Medium));
+        ContentArea.Children.Add(CreateCard(stack));
     }
 
     // ─── TIMER ───────────────────────────────────────────────
@@ -370,7 +367,7 @@ public partial class AddOnPanel : UserControl
                 BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 12, 0)
             });
         }
-        catch { }
+        catch { /* Intentional: invalid color string — skip swatch rendering */ }
 
         var info = new StackPanel();
         info.Children.Add(new TextBlock
@@ -402,20 +399,7 @@ public partial class AddOnPanel : UserControl
             return;
         }
 
-        var card = new Border
-        {
-            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
-            Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
-        };
-        card.Child = new TextBlock
-        {
-            Text = text, TextWrapping = TextWrapping.Wrap, FontSize = 14,
-            FontFamily = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas"),
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White
-        };
-        ContentArea.Children.Add(card);
+        ContentArea.Children.Add(CreateCard(CreateLabel(text, fontSize: 14, mono: true)));
     }
 
     // ─── CURRENCY ────────────────────────────────────────────
@@ -430,20 +414,7 @@ public partial class AddOnPanel : UserControl
             return;
         }
 
-        var card = new Border
-        {
-            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
-            Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
-        };
-        card.Child = new TextBlock
-        {
-            Text = result, TextWrapping = TextWrapping.Wrap, FontSize = 20,
-            FontWeight = FontWeights.Medium,
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White
-        };
-        ContentArea.Children.Add(card);
+        ContentArea.Children.Add(CreateCard(CreateLabel(result, fontSize: 20, weight: FontWeights.Medium)));
     }
 
     // ─── PASSWORD ────────────────────────────────────────────
@@ -458,28 +429,12 @@ public partial class AddOnPanel : UserControl
             return;
         }
 
-        var card = new Border
-        {
-            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
-            Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
-        };
         var stack = new StackPanel();
-        stack.Children.Add(new TextBlock
-        {
-            Text = result, FontSize = 16,
-            FontFamily = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas"),
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White,
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4)
-        });
-        stack.Children.Add(new TextBlock
-        {
-            Text = "Password copied to clipboard", FontSize = 11,
-            Foreground = TryFindResource("TextTertiary") as Brush ?? Brushes.Gray
-        });
-        card.Child = stack;
-        ContentArea.Children.Add(card);
+        var pw = CreateLabel(result, fontSize: 16, mono: true);
+        pw.Margin = new Thickness(0, 0, 0, 4);
+        stack.Children.Add(pw);
+        stack.Children.Add(CreateLabel("Password copied to clipboard", fontSize: 11, muted: true));
+        ContentArea.Children.Add(CreateCard(stack));
     }
 
     // ─── GENERIC (kill, note, screenshot, system, shell) ─────
@@ -495,30 +450,15 @@ public partial class AddOnPanel : UserControl
             return;
         }
 
-        var card = new Border
-        {
-            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
-            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
-            Background = TryFindResource("Depth2") as Brush,
-            Padding = new Thickness(16, 14, 16, 14), Margin = new Thickness(0, 0, 0, 12),
-        };
         var stack = new StackPanel();
-        stack.Children.Add(new TextBlock
-        {
-            Text = result, FontSize = 14, FontWeight = FontWeights.Medium,
-            Foreground = TryFindResource("TextPrimary") as Brush ?? Brushes.White
-        });
+        stack.Children.Add(CreateLabel(result, fontSize: 14, weight: FontWeights.Medium));
         if (!string.IsNullOrEmpty(sub))
         {
-            stack.Children.Add(new TextBlock
-            {
-                Text = sub, FontSize = 11,
-                Foreground = TryFindResource("TextTertiary") as Brush ?? Brushes.Gray,
-                Margin = new Thickness(0, 2, 0, 0)
-            });
+            var subLabel = CreateLabel(sub, fontSize: 11, muted: true);
+            subLabel.Margin = new Thickness(0, 2, 0, 0);
+            stack.Children.Add(subLabel);
         }
-        card.Child = stack;
-        ContentArea.Children.Add(card);
+        ContentArea.Children.Add(CreateCard(stack));
     }
 
     // ─── Empty state ─────────────────────────────────────────
@@ -547,6 +487,39 @@ public partial class AddOnPanel : UserControl
             });
         }
         ContentArea.Children.Add(stack);
+    }
+
+    // ─── UI Factory Helpers ─────────────────────────────────────
+    /// <summary>Creates a themed content card with standard padding, border, and corner radius.</summary>
+    private Border CreateCard(UIElement content)
+    {
+        return new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(1),
+            BorderBrush = TryFindResource("Separator") as Brush ?? Brushes.DimGray,
+            Background = TryFindResource("Depth2") as Brush,
+            Padding = new Thickness(16, 14, 16, 14),
+            Margin = new Thickness(0, 0, 0, 12),
+            Child = content
+        };
+    }
+
+    /// <summary>Creates a themed TextBlock with common defaults.</summary>
+    private TextBlock CreateLabel(string text, double fontSize = 13, bool muted = false, bool mono = false, FontWeight? weight = null)
+    {
+        var block = new TextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = fontSize,
+            Foreground = muted
+                ? TryFindResource("TextTertiary") as Brush ?? Brushes.Gray
+                : TryFindResource("TextPrimary") as Brush ?? Brushes.White,
+        };
+        if (weight.HasValue) block.FontWeight = weight.Value;
+        if (mono) block.FontFamily = TryFindResource("Token.Font.Mono") as FontFamily ?? new FontFamily("Consolas");
+        return block;
     }
 
     // ─── Helpers ─────────────────────────────────────────────
@@ -587,7 +560,7 @@ public partial class AddOnPanel : UserControl
         };
         if (path is null) return null;
         try { return new System.Windows.Media.Imaging.BitmapImage(new Uri(path, UriKind.Relative)); }
-        catch { return null; }
+        catch { return null; /* Intentional: icon resource may be missing */ }
     }
 
     private void OnClearClick(object sender, RoutedEventArgs e) => Vm?.ClearAiChat();

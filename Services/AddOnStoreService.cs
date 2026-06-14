@@ -64,12 +64,12 @@ public sealed class AddOnStoreService
         catch (Exception ex)
         {
             _logger.Error($"Failed to install add-on {entry.Id}.", ex);
-            try { if (Directory.Exists(targetDir)) Directory.Delete(targetDir, true); } catch { }
+            try { if (Directory.Exists(targetDir)) Directory.Delete(targetDir, true); } catch { /* Intentional: best-effort cleanup after install failure */ }
             return false;
         }
         finally
         {
-            try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
+            try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { /* Intentional: best-effort temp file cleanup */ }
         }
     }
 

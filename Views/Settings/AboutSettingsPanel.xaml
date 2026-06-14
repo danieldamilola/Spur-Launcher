@@ -88,7 +88,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- App icon -->
-                <Image Source="pack://application:,,,/Icons/spur-launcher-64x64.ico"
+                <Image Source="pack://application:,,,/Icons/spur-64x64.ico"
                        Width="56" Height="56"
                        Margin="0,0,20,0"
                        VerticalAlignment="Center"

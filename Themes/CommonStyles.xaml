@@ -560,6 +560,15 @@
         <Setter Property="Margin" Value="0,0,6,6"/>
     </Style>
 
+    <!-- ── Homepage category pill button ── -->
+    <Style x:Key="HomeCategoryButton" TargetType="Button" BasedOn="{StaticResource SettingsSoftButton}">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+
     <Style x:Key="SettingsInputFrame" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>

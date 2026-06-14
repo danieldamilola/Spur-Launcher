@@ -1,30 +1,30 @@
 # Spur brand icons
 
-This folder contains the **official Spur launcher** Windows icon set. All files are `.ico` format with the `spur-launcher-{size}` naming convention.
+This folder contains the **official Spur launcher** Windows icon set. All files are `.ico` format with the `spur-{size}` naming convention.
 
 ## Files
 
 | File | Nominal size | Primary use |
 |------|----------------|-------------|
-| `spur-launcher-16x16.ico` | 16×16 | **System tray** (notification area) |
-| `spur-launcher-32x32.ico` | 32×32 | Small UI, legacy tray, alt contexts |
-| `spur-launcher-64x64.ico` | 64×64 | Medium DPI shell surfaces |
-| `spur-launcher-128x128.ico` | 128×128 | High-DPI shortcuts, thumbnails |
-| `spur-launcher-256x256.ico` | 256×256 | **Application icon** (embedded in `Spur.exe`) |
-| `spur-launcher-512x512.ico` | 512×512 | Store / marketing / large tiles |
-| `spur-launcher-1024x1024.ico` | 1024×1024 | Source / export master |
+| `spur-16x16.ico` | 16×16 | **System tray** (notification area) |
+| `spur-32x32.ico` | 32×32 | Small UI, legacy tray, alt contexts |
+| `spur-64x64.ico` | 64×64 | Medium DPI shell surfaces |
+| `spur-128x128.ico` | 128×128 | High-DPI shortcuts, thumbnails |
+| `spur-256x256.ico` | 256×256 | **Application icon** (embedded in `Spur.exe`) |
+| `spur-512x512.ico` | 512×512 | Store / marketing / large tiles |
+| `spur-1024x1024.ico` | 1024×1024 | Source / export master |
 
 ## Where each icon is used in the repo
 
 | Location | Icon file | Notes |
 |----------|-----------|--------|
-| `Spur.csproj` → `ApplicationIcon` | `spur-launcher-256x256.ico` | Baked into the executable at build time *(pending csproj rename)* |
-| `App.xaml.cs` → tray (`TaskbarIcon`) | `spur-launcher-16x16.ico` | Loaded via `IconLoader.LoadTrayIcon()` *(pending code rename)* |
-| `publish.ps1` → Velopack `--icon` | `spur-launcher-256x256.ico` | Installer / update package icon |
+| `Spur.csproj` → `ApplicationIcon` | `spur-256x256.ico` | Baked into the executable at build time *(pending csproj rename)* |
+| `App.xaml.cs` → tray (`TaskbarIcon`) | `spur-16x16.ico` | Loaded via `IconLoader.LoadTrayIcon()` *(pending code rename)* |
+| `publish.ps1` → Velopack `--icon` | `spur-256x256.ico` | Installer / update package icon |
 | `Assets/spur.ico` | Copy of **256×256** | Legacy path for scripts; run sync below |
 | `installer.iss` | *(from built exe)* | `UninstallDisplayIcon` uses `Spur.exe` embedded icon |
-| `Views/OnboardingWindow.xaml` | `spur-launcher-64x64.ico` | Welcome slide brand mark *(pending XAML update)* |
-| `Views/SettingsWindow.xaml` | `spur-launcher-32x32.ico` | Settings window title-bar icon *(pending XAML update)* |
+| `Views/OnboardingWindow.xaml` | `spur-64x64.ico` | Welcome slide brand mark *(pending XAML update)* |
+| `Views/SettingsWindow.xaml` | `spur-32x32.ico` | Settings window title-bar icon *(pending XAML update)* |
 
 ## Code references
 
@@ -51,9 +51,9 @@ dotnet build Spur.csproj
 
 ## Adding a new size
 
-1. Export `spur-launcher-{N}x{N}.ico` into this folder.
+1. Export `spur-{N}x{N}.ico` into this folder.
 2. Add a constant in `AppIcons.cs`.
-3. Add `<Resource Include="Icons\spur-launcher-{N}x{N}.ico" />` in `Spur.csproj`.
+3. Add `<Resource Include="Icons\spur-{N}x{N}.ico" />` in `Spur.csproj`.
 4. Document the use case in this README.
 
 ## Design notes
