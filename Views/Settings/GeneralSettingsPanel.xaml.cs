@@ -9,6 +9,7 @@ public partial class GeneralSettingsPanel : UserControl
 {
     private bool _recordingShortcut;
     private Button? _recordingButton;
+    private string? _recordingTarget; // "shortcut" or "clipboardShortcut"
 
     public GeneralSettingsPanel()
     {
@@ -17,8 +18,19 @@ public partial class GeneralSettingsPanel : UserControl
 
     private void OnEditShortcutClick(object sender, RoutedEventArgs e)
     {
+        StartRecording(sender, "shortcut");
+    }
+
+    private void OnEditClipboardShortcutClick(object sender, RoutedEventArgs e)
+    {
+        StartRecording(sender, "clipboardShortcut");
+    }
+
+    private void StartRecording(object sender, string target)
+    {
         if (_recordingShortcut) return;
         _recordingShortcut = true;
+        _recordingTarget = target;
         if (sender is Button btn)
         {
             _recordingButton = btn;
@@ -49,7 +61,13 @@ public partial class GeneralSettingsPanel : UserControl
         parts.Add(key.ToString());
 
         if (DataContext is SettingsViewModel vm)
-            vm.Shortcut = string.Join("+", parts);
+        {
+            var shortcutValue = string.Join("+", parts);
+            if (_recordingTarget == "clipboardShortcut")
+                vm.ClipboardShortcut = shortcutValue;
+            else
+                vm.Shortcut = shortcutValue;
+        }
 
         StopRecording();
     }
@@ -60,6 +78,7 @@ public partial class GeneralSettingsPanel : UserControl
     {
         if (!_recordingShortcut) return;
         _recordingShortcut = false;
+        _recordingTarget = null;
         if (_recordingButton is Button btn)
         {
             btn.Content = "Edit";
