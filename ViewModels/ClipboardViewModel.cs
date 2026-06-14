@@ -93,8 +93,11 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         foreach (var entry in Entries)
             entry.IsPinned = IsPinned(entry);
 
-        if (Entries.Count > 0 && (SelectedEntry == null || !Entries.Contains(SelectedEntry)))
+        // Always select the first item so the selection rail starts at the top
+        if (Entries.Count > 0)
             SelectedEntry = Entries[0];
+        else
+            SelectedEntry = null;
 
         UpdateStatus();
     }
@@ -107,19 +110,25 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
 
         _lastCopyTimestamp = DateTime.UtcNow;
 
+        // Suppress the ClipboardWatcher so our own CopyToSystem doesn't
+        // re-add the entry as a duplicate.
+        if (_clipboard is ClipboardServiceImpl impl)
+            impl.SuppressNextCapture();
+
+        // Move existing entry to the top (remove + re-insert)
+        _clipboard.RemoveById(entry.Id);
         if (entry.IsImage)
         {
             if (entry.Image is null) return;
             _clipboard.AddImage(entry.Image);
-            _clipboard.CopyToSystem(entry);
         }
         else
         {
             if (entry.Content is null) return;
             _clipboard.Add(entry.Content);
-            _clipboard.CopyToSystem(entry);
         }
 
+        _clipboard.CopyToSystem(entry);
         StatusText = "Copied ✓";
     }
 

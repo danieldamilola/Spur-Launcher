@@ -36,9 +36,19 @@ public sealed class ClipboardServiceImpl : IClipboardService
     private readonly object _lock = new();
     private readonly ILogger _log;
 
+    /// <summary>
+    /// When true, the next Add/AddImage call from the ClipboardWatcher will be
+    /// silently ignored. Reset to false after one suppression. This prevents
+    /// duplication when Copy() puts an entry on the system clipboard.
+    /// </summary>
+    private volatile bool _suppressNext;
+
     public event Action? ClipboardChanged;
 
     public ClipboardServiceImpl(ILogger log) => _log = log;
+
+    /// <summary>Call this before CopyToSystem to prevent the watcher from re-adding the entry.</summary>
+    public void SuppressNextCapture() => _suppressNext = true;
 
     public int MaxItems
     {
@@ -67,19 +77,26 @@ public sealed class ClipboardServiceImpl : IClipboardService
     public void Add(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return;
+
+        // If suppressed (internal copy), skip this capture
+        if (_suppressNext)
+        {
+            _suppressNext = false;
+            return;
+        }
+
         var textHash = text.GetHashCode(StringComparison.Ordinal);
 
         lock (_lock)
         {
-            // Dedup using FullTextHash (computed from the original untruncated text).
-            // This correctly handles two long texts whose first 20k chars match but
-            // differ beyond the truncation point — they will have different hashes.
-            // Collisions are astronomically rare for different texts and the worst
-            // case is a missed history entry, never data loss.
-            if (_history.Count > 0 &&
-                _history[0] is { IsImage: false, FullTextHash: var h } &&
-                h == textHash)
-                return;
+            // Dedup: if the same text already exists anywhere, move it to the top
+            var existingIdx = _history.FindIndex(e => !e.IsImage && e.FullTextHash == textHash);
+            if (existingIdx >= 0)
+            {
+                // Already at the top — nothing to do
+                if (existingIdx == 0) return;
+                _history.RemoveAt(existingIdx);
+            }
 
             var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
                 ? text[..ClipboardEntry.MaxStoredTextChars]
@@ -94,14 +111,48 @@ public sealed class ClipboardServiceImpl : IClipboardService
     public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
     {
         if (image is null) return;
+
+        // If suppressed (internal copy), skip this capture
+        if (_suppressNext)
+        {
+            _suppressNext = false;
+            return;
+        }
+
         if (!image.IsFrozen) image.Freeze();
 
+        // Dedup: compute fingerprint and check if the same image exists already
+        var fp = ComputeImageFingerprint(image);
         lock (_lock)
         {
-            _history.Insert(0, new ClipboardEntry(image));
+            var existingIdx = _history.FindIndex(e => e.IsImage && e.ImageFingerprint == fp);
+            if (existingIdx >= 0)
+            {
+                if (existingIdx == 0) return; // already at top
+                _history.RemoveAt(existingIdx);
+            }
+
+            _history.Insert(0, new ClipboardEntry(image) { ImageFingerprint = fp });
             EnforceLimits();
         }
         RaiseClipboardChanged();
+    }
+
+    /// <summary>Fast image fingerprint: dimensions + first row sample.</summary>
+    private static int ComputeImageFingerprint(System.Windows.Media.Imaging.BitmapSource img)
+    {
+        int w   = img.PixelWidth;
+        int h   = img.PixelHeight;
+        int bpp = Math.Max(1, img.Format.BitsPerPixel / 8);
+        int sampleWidth = Math.Min(w, 128 / bpp);
+        var buf = new byte[sampleWidth * bpp];
+        img.CopyPixels(new System.Windows.Int32Rect(0, 0, sampleWidth, 1), buf, buf.Length, 0);
+
+        var hash = new HashCode();
+        hash.Add(w);
+        hash.Add(h);
+        foreach (var b in buf) hash.Add(b);
+        return hash.ToHashCode();
     }
 
     private void TrimImages()

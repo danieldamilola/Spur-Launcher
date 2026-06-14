@@ -39,6 +39,8 @@ public sealed class ClipboardEntry
     /// <summary>Hash of the full original text (before truncation). Used for reliable dedup.</summary>
     public int         FullTextHash { get; }
     public BitmapSource? Image   { get; }
+    /// <summary>Fingerprint for image dedup (dimensions + first row sample hash).</summary>
+    public int ImageFingerprint { get; set; }
 
     /// <summary>Truncated single-line preview for display in results list.</summary>
     public string Preview { get; }
