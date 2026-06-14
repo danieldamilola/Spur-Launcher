@@ -267,9 +267,8 @@ public partial class MainWindow : Window
         bool showContent = isBrowse || hasResults || _vm.IsFullPanelActive;
 
         bool isClipboard = _vm.ActiveCategory == "clipboard";
-        bool hideActionChrome = _vm.IsActionPanelVisible && IsActionCategory(_vm.ActiveCategory);
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || hideActionChrome ? Visibility.Collapsed : Visibility.Visible;
+        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard ? Visibility.Collapsed : Visibility.Visible;
         AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
         ToastBar.Visibility = _vm.IsToastVisible ? Visibility.Visible : Visibility.Collapsed;
 
@@ -292,7 +291,7 @@ public partial class MainWindow : Window
                     if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
                     
                     ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
                     { EasingFunction = SpurMotion.EaseOut() };
@@ -302,7 +301,7 @@ public partial class MainWindow : Window
 
                     ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
                     ContentArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
-                    if (_vm.SelectedResult is not null && !hideActionChrome) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
+                    if (_vm.SelectedResult is not null) FooterArea.BeginAnimation(UIElement.OpacityProperty, fadeAnim);
                 }
                 else
                 {
@@ -313,12 +312,12 @@ public partial class MainWindow : Window
                     ContentArea.Opacity = 1;
                     FooterArea.Opacity = 1;
                     ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
             else
             {
-                FooterArea.Visibility = _vm.SelectedResult is not null && !hideActionChrome ? Visibility.Visible : Visibility.Collapsed;
+                FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
                 FooterArea.Opacity = 1;
             }
         }
@@ -375,19 +374,11 @@ public partial class MainWindow : Window
                 animEnabled,
                 fastForTyping: fastAnchorHide);
 
-        // Set color swatch background when the color action panel is active
-        if (_vm.ActiveActionPanel == "color" && !string.IsNullOrEmpty(_vm.ActionResultText))
-        {
-        }
 
         _categoryExpanded = expandRail;
     }
 
-    private static bool IsActionCategory(string? category) => category switch
-    {
-        null or "apps" or "files" or "clipboard" or "actions" => false,
-        _ => true,
-    };
+
 
     private CancellationTokenSource? _hoverHideCts;
 
@@ -577,23 +568,5 @@ public partial class MainWindow : Window
         try { DragMove(); } catch { /* intentional: DragMove throws if button released mid-drag */ }
     }
 
-    private void OnActionCopyClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm is null) return;
-        var text = _vm.ActiveActionPanel switch
-        {
-            "color" => _vm.ActionResultText,
-            "pw" => _vm.ActionResultText,
-            "ip" => _vm.ActionResultText,
-            _ => _vm.ActionResultText
-        };
-        if (!string.IsNullOrEmpty(text))
-            System.Windows.Clipboard.SetText(text);
-    }
 
-
-    private void OnCloseActionPanelClick(object sender, RoutedEventArgs e)
-    {
-        _vm?.CloseActionPanel();
-    }
 }

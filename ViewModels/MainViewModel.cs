@@ -729,7 +729,6 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        ActiveActionPanel = result.ActionId;
         var subQuery = GetActionSubQuery();
         ActionPreviewTitle = result.Name;
         ActionPreviewSubtitle = result.Subtitle ?? string.Empty;
@@ -738,14 +737,15 @@ public sealed partial class MainViewModel : ObservableObject
         ActionResultSubText = result.Subtitle ?? string.Empty;
         ActionPreviewQuery = string.IsNullOrWhiteSpace(subQuery) ? Query : subQuery;
 
-        switch (result.ActionId)
+        // Only timer needs the old ActiveActionPanel for live preview
+        if (result.ActionId == "timer")
         {
-            case "timer":
-                _timer.StartTimerPreview(subQuery);
-                break;
-            default:
-                ActiveActionPanel = null;
-                break;
+            ActiveActionPanel = result.ActionId;
+            _timer.StartTimerPreview(subQuery);
+        }
+        else
+        {
+            ActiveActionPanel = null;
         }
     }
 
