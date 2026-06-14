@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Spur.ViewModels;
@@ -178,6 +179,41 @@ public static class LauncherWindowBehavior
         {
             vm.CycleScope();
             e.Handled = true;
+            return;
+        }
+
+        // Home/End: jump to first/last result
+        if (e.Key == Key.Home && vm.Results.Count > 0)
+        {
+            for (int i = 0; i < vm.Results.Count; i++)
+            {
+                if (vm.Results[i] is not SectionLabel) { vm.SelectedIndex = i; break; }
+            }
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.End && vm.Results.Count > 0)
+        {
+            for (int i = vm.Results.Count - 1; i >= 0; i--)
+            {
+                if (vm.Results[i] is not SectionLabel) { vm.SelectedIndex = i; break; }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        // PageUp/PageDown: move selection by 5 items
+        if (e.Key == Key.PageUp)
+        {
+            vm.MoveSelection(-5);
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.PageDown)
+        {
+            vm.MoveSelection(5);
+            e.Handled = true;
+            return;
         }
     }
 
@@ -248,6 +284,9 @@ public static class LauncherWindowBehavior
                 e.Handled = true; break;
 
             case Key.C when Keyboard.Modifiers == ModifierKeys.Control:
+                // Don't intercept Ctrl+C when the user has text selected in a TextBox
+                if (Keyboard.FocusedElement is TextBox tb && tb.SelectionLength > 0)
+                    break;
                 vm.CopySelectedPathCommand.Execute(null);
                 e.Handled = true; break;
 
