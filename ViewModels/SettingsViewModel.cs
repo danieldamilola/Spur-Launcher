@@ -492,6 +492,70 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void RemoveFolder(string path) => IndexedFoldersList.Remove(path);
 
+    // ── Excluded folders (observable list) ────────────────────────
+
+    private ObservableCollection<string>? _excludedFoldersList;
+    public ObservableCollection<string> ExcludedFoldersList
+    {
+        get
+        {
+            if (_excludedFoldersList is null)
+            {
+                _excludedFoldersList = new ObservableCollection<string>(_config.ExcludedFolders);
+                _excludedFoldersList.CollectionChanged += (_, _) =>
+                { _config.ExcludedFolders = [.._excludedFoldersList]; Save(); };
+            }
+            return _excludedFoldersList;
+        }
+    }
+
+    [ObservableProperty] private string _newExcludedFolderPath = string.Empty;
+
+    [RelayCommand]
+    private void AddExcludedFolder()
+    {
+        var path = NewExcludedFolderPath.Trim();
+        if (!string.IsNullOrEmpty(path) &&
+            !ExcludedFoldersList.Contains(path, StringComparer.OrdinalIgnoreCase))
+            ExcludedFoldersList.Add(path);
+        NewExcludedFolderPath = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveExcludedFolder(string path) => ExcludedFoldersList.Remove(path);
+
+    // ── Exclusion patterns (observable list) ─────────────────────
+
+    private ObservableCollection<string>? _exclusionPatternsList;
+    public ObservableCollection<string> ExclusionPatternsList
+    {
+        get
+        {
+            if (_exclusionPatternsList is null)
+            {
+                _exclusionPatternsList = new ObservableCollection<string>(_config.ExclusionPatterns);
+                _exclusionPatternsList.CollectionChanged += (_, _) =>
+                { _config.ExclusionPatterns = [.._exclusionPatternsList]; Save(); };
+            }
+            return _exclusionPatternsList;
+        }
+    }
+
+    [ObservableProperty] private string _newExclusionPattern = string.Empty;
+
+    [RelayCommand]
+    private void AddExclusionPattern()
+    {
+        var pattern = NewExclusionPattern.Trim();
+        if (!string.IsNullOrEmpty(pattern) &&
+            !ExclusionPatternsList.Contains(pattern, StringComparer.OrdinalIgnoreCase))
+            ExclusionPatternsList.Add(pattern);
+        NewExclusionPattern = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveExclusionPattern(string pattern) => ExclusionPatternsList.Remove(pattern);
+
     // ── File types (observable list) ──────────────────────────────
 
     private ObservableCollection<string>? _fileTypesList;
@@ -891,6 +955,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         LoadStartupState();
 
         _indexedFoldersList = null;
+        _excludedFoldersList = null;
+        _exclusionPatternsList = null;
         _fileTypesList = null;
 
         // Notify all properties changed
