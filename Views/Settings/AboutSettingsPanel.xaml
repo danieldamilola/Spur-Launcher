@@ -128,11 +128,11 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Primary button — label and command swap by state. -->
+                    <!-- Primary button — swaps between Check / Download / Install -->
                     <Button x:Name="UpdatePrimaryButton" Padding="12,6">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SettingsSoftButton}">
-                                <!-- Idle / NoUpdate / Error → "Check for updates" -->
+                                <!-- Default: Check for updates -->
                                 <Setter Property="Command"        Value="{Binding CheckForUpdatesCommand}"/>
                                 <Setter Property="IsEnabled"       Value="{Binding CanCheckForUpdates}"/>
                                 <Setter Property="ContentTemplate">
@@ -146,21 +146,50 @@
                                     </Setter.Value>
                                 </Setter>
                                 <Style.Triggers>
-                                    <!-- Checking / Downloading / Installing → "Working…" + disabled -->
-                                    <DataTrigger Binding="{Binding IsUpdateBusy}" Value="True">
+                                    <!-- Checking → "Checking…" + disabled -->
+                                    <DataTrigger Binding="{Binding UpdateStatus}" Value="Checking">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Setter Property="ContentTemplate">
                                             <Setter.Value>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:FontIcon Glyph="&#xE895;" FontSize="13" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="Working…" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Checking…" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>
-                                    <!-- Ready → "Restart now" -->
+                                    <!-- Update available → "Download" -->
+                                    <DataTrigger Binding="{Binding UpdateStatus}" Value="UpdateAvailable">
+                                        <Setter Property="Command" Value="{Binding DownloadUpdateCommand}"/>
+                                        <Setter Property="IsEnabled" Value="True"/>
+                                        <Setter Property="ContentTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:FontIcon Glyph="&#xE118;" FontSize="13" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Download" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <!-- Downloading → "Downloading…" + disabled -->
+                                    <DataTrigger Binding="{Binding UpdateStatus}" Value="Downloading">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Setter Property="ContentTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:FontIcon Glyph="&#xE118;" FontSize="13" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Downloading…" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <!-- Ready → "Install &amp; Restart" -->
                                     <DataTrigger Binding="{Binding UpdateStatus}" Value="ReadyToRestart">
                                         <Setter Property="Command" Value="{Binding RestartToUpdateCommand}"/>
                                         <Setter Property="IsEnabled" Value="True"/>
@@ -169,18 +198,22 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:FontIcon Glyph="&#xE7E7;" FontSize="13" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="Restart now" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Install &amp; Restart" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </Setter.Value>
                                         </Setter>
+                                    </DataTrigger>
+                                    <!-- Error → re-enable check -->
+                                    <DataTrigger Binding="{Binding UpdateStatus}" Value="Error">
+                                        <Setter Property="IsEnabled" Value="True"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                     </Button>
 
-                    <!-- Cancel — only shown once an update is ready to install. -->
+                    <!-- Cancel — visible during UpdateAvailable, Downloading, or ReadyToRestart -->
                     <Button Margin="6,0,0,0"
                             Padding="12,6"
                             Command="{Binding CancelUpdateCommand}">
@@ -188,6 +221,9 @@
                             <Style TargetType="Button" BasedOn="{StaticResource SettingsSoftButton}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
+                                    <DataTrigger Binding="{Binding UpdateStatus}" Value="UpdateAvailable">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding UpdateStatus}" Value="ReadyToRestart">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>

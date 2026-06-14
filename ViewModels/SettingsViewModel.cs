@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
+using Velopack;
 
 namespace Spur.ViewModels;
 
@@ -910,8 +911,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         Idle,
         Checking,
         NoUpdate,
+        UpdateAvailable,
         Downloading,
-        Installing,
         ReadyToRestart,
         Error,
     }
@@ -919,31 +920,64 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private UpdateState _updateStatus = UpdateState.Idle;
 
+    [ObservableProperty]
+    private int _downloadProgress;
+
+    [ObservableProperty]
+    private string _availableVersion = string.Empty;
+
+    private UpdateManager? _updateManager;
+    private UpdateInfo? _pendingUpdate;
+
     /// <summary>Human-readable label for the current state. The UI binds to this directly.</summary>
     public string UpdateStatusText => UpdateStatus switch
     {
-        UpdateState.Idle            => "Up to date",
-        UpdateState.Checking        => "Checking for updates…",
-        UpdateState.NoUpdate        => "You're on the latest version",
-        UpdateState.Downloading     => "Downloading update…",
-        UpdateState.Installing      => "Installing update…",
-        UpdateState.ReadyToRestart  => "Update ready — restart Spur to install",
-        UpdateState.Error           => "Update failed. Tap to retry.",
+        UpdateState.Idle             => "Up to date",
+        UpdateState.Checking         => "Checking for updates…",
+        UpdateState.NoUpdate         => "You're on the latest version",
+        UpdateState.UpdateAvailable  => $"v{AvailableVersion} available",
+        UpdateState.Downloading      => $"Downloading… {DownloadProgress}%",
+        UpdateState.ReadyToRestart   => "Update ready — restart to install",
+        UpdateState.Error            => "Update failed. Try again.",
         _                            => string.Empty,
     };
 
     /// <summary>True while Spur is working on an update — disables the primary button.</summary>
     public bool IsUpdateBusy =>
-        UpdateStatus is UpdateState.Checking or UpdateState.Downloading or UpdateState.Installing;
+        UpdateStatus is UpdateState.Checking or UpdateState.Downloading;
 
     /// <summary>Whether the user can trigger a check (i.e. nothing is already in flight).</summary>
     public bool CanCheckForUpdates => !IsUpdateBusy;
+
+    /// <summary>True when an update is available and ready to download.</summary>
+    public bool CanDownload => UpdateStatus == UpdateState.UpdateAvailable;
+
+    /// <summary>True when the update has been downloaded and is ready to install.</summary>
+    public bool CanInstall => UpdateStatus == UpdateState.ReadyToRestart;
 
     partial void OnUpdateStatusChanged(UpdateState value)
     {
         OnPropertyChanged(nameof(UpdateStatusText));
         OnPropertyChanged(nameof(IsUpdateBusy));
         OnPropertyChanged(nameof(CanCheckForUpdates));
+        OnPropertyChanged(nameof(CanDownload));
+        OnPropertyChanged(nameof(CanInstall));
+    }
+
+    partial void OnDownloadProgressChanged(int value)
+    {
+        OnPropertyChanged(nameof(UpdateStatusText));
+    }
+
+    private UpdateManager GetOrCreateUpdateManager()
+    {
+        if (_updateManager is null)
+        {
+            var cfg = _config;
+            var updateUrl = cfg.UpdateUrl ?? "https://github.com/danieldamilola/Spur-Launcher/releases/latest/download";
+            _updateManager = new UpdateManager(updateUrl);
+        }
+        return _updateManager;
     }
 
     [RelayCommand]
@@ -951,45 +985,75 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         if (IsUpdateBusy) return;
 
-        UpdateStatus = UpdateState.Checking;
-        // Mock remote check — replace with real release lookup.
-        await Task.Delay(1500);
-        UpdateStatus = UpdateState.NoUpdate;
+        try
+        {
+            UpdateStatus = UpdateState.Checking;
+            var mgr = GetOrCreateUpdateManager();
+            var update = await mgr.CheckForUpdatesAsync();
+
+            if (update is null)
+            {
+                UpdateStatus = UpdateState.NoUpdate;
+                return;
+            }
+
+            _pendingUpdate = update;
+            AvailableVersion = update.TargetFullRelease.Version.ToString();
+            UpdateStatus = UpdateState.UpdateAvailable;
+        }
+        catch (Exception)
+        {
+            UpdateStatus = UpdateState.Error;
+        }
     }
 
     [RelayCommand]
     private async Task DownloadUpdate()
     {
-        if (IsUpdateBusy) return;
+        if (_pendingUpdate is null || UpdateStatus != UpdateState.UpdateAvailable) return;
 
-        UpdateStatus = UpdateState.Downloading;
-        // Mock download with a short, visible delay.
-        await Task.Delay(1500);
-        await InstallUpdateAsync();
-    }
+        try
+        {
+            UpdateStatus = UpdateState.Downloading;
+            DownloadProgress = 0;
 
-    [RelayCommand]
-    private async Task InstallUpdateAsync()
-    {
-        if (IsUpdateBusy) return;
+            var mgr = GetOrCreateUpdateManager();
+            await mgr.DownloadUpdatesAsync(_pendingUpdate, progress =>
+            {
+                DownloadProgress = progress;
+            });
 
-        UpdateStatus = UpdateState.Installing;
-        // Mock install.
-        await Task.Delay(800);
-        UpdateStatus = UpdateState.ReadyToRestart;
+            DownloadProgress = 100;
+            UpdateStatus = UpdateState.ReadyToRestart;
+        }
+        catch (Exception)
+        {
+            UpdateStatus = UpdateState.Error;
+        }
     }
 
     [RelayCommand]
     private void RestartToUpdate()
     {
-        // Real flow would spawn the installed update + exit cleanly.
-        System.Windows.Application.Current.Shutdown();
+        if (_pendingUpdate is null) return;
+
+        try
+        {
+            var mgr = GetOrCreateUpdateManager();
+            mgr.ApplyUpdatesAndRestart(_pendingUpdate);
+        }
+        catch (Exception)
+        {
+            // Fallback: just shut down so the update applies on next launch
+            Application.Current.Shutdown();
+        }
     }
 
     [RelayCommand]
     private void CancelUpdate()
     {
-        // User chose to keep the current version for now.
+        _pendingUpdate = null;
+        DownloadProgress = 0;
         UpdateStatus = UpdateState.Idle;
     }
 
