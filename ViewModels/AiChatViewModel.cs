@@ -91,16 +91,17 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         _aiConversation.Add(("user", question));
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
-        var (key, model) = GetAiConfig();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
-            AiLoading = false;
-            return;
-        }
-
         try
         {
+            var (key, model) = GetAiConfig();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+                AiLoading = false;
+                ConversationChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
                 Application.Current?.Dispatcher.InvokeAsync(() =>
@@ -118,8 +119,12 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
         catch (HttpRequestException ex) { AiError = ex.Message; }
-        catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
-        finally { AiLoading = false; }
+        catch (Exception ex)            { AiError = $"Error: {ex.Message}"; }
+        finally
+        {
+            AiLoading = false;
+            ConversationChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     /// <summary>
@@ -139,16 +144,17 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         AiLoading = true;
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
-        var (key, model) = GetAiConfig();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
-            AiLoading = false;
-            return;
-        }
-
         try
         {
+            var (key, model) = GetAiConfig();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                AiError   = $"Add your {_config.AiProvider} API key in Settings (Ctrl+,) to use AI.";
+                AiLoading = false;
+                ConversationChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
             string? newResponse = null;
             await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
             {
@@ -175,8 +181,12 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
         catch (HttpRequestException ex) { AiError = ex.Message; }
-        catch (Exception ex)            { AiError = $"Unexpected error: {ex.Message}"; }
-        finally { AiLoading = false; }
+        catch (Exception ex)            { AiError = $"Error: {ex.Message}"; }
+        finally
+        {
+            AiLoading = false;
+            ConversationChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private (string Key, string Model) GetAiConfig() => _config.AiProvider.ToLowerInvariant() switch

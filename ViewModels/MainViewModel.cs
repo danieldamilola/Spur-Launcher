@@ -825,11 +825,11 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 [Config.KeywordSystem]     = ("system",     "power"),
                 [Config.KeywordTimer]      = ("timer",      "\ue121"),
-                [Config.KeywordCurrency]   = ("currency",   "\ue825"),
+                [Config.KeywordCurrency]   = ("cur",        "\ue825"),
                 [Config.KeywordPassword]   = ("pw",         "\ue722"),
                 [Config.KeywordNote]       = ("note",       "\ue727"),
                 [Config.KeywordKill]       = ("kill",       "\ue747"),
-                [Config.KeywordScreenshot] = ("screenshot", "\ue74c"),
+                [Config.KeywordScreenshot] = ("ss",          "\ue74c"),
                 [Config.KeywordShell]      = ("shell",      "\ue765"),
                 [Config.KeywordClipboard]  = ("clipboard",  "clipboard"),
                 [Config.KeywordFiles]      = ("files",      "\ue70a"),
@@ -985,15 +985,31 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         // Tier 1 & 2: Instant/interactive — show confirmation toast, then auto-hide
-        var toastText = state.State == "Copied" ? "✓ Copied to clipboard"
+        var toastText = state.State == "Copied" ? $"✓ Copied to clipboard"
+                      : state.State == "Completed" && !string.IsNullOrEmpty(state.ResultSubText) ? $"✓ {state.ResultSubText}"
                       : state.State == "Completed" ? $"✓ {state.Title}"
                       : state.State == "Error" ? $"✗ {state.ResultText}"
+                      : !string.IsNullOrEmpty(state.ResultSubText) ? $"✓ {state.ResultSubText}"
                       : !string.IsNullOrEmpty(state.ResultText) ? $"✓ {state.ResultText}"
                       : null;
 
         if (toastText is not null)
         {
             ShowToast(toastText);
+
+            // Open the file for Quick Note after saving
+            if (state.PanelId == "note" && state.State == "Completed" && !string.IsNullOrEmpty(state.ResultText))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = state.ResultText,
+                        UseShellExecute = true
+                    });
+                }
+                catch { /* file might not exist */ }
+            }
         }
     }
 
