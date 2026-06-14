@@ -1,6 +1,9 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Spur.Models;
+using Spur.Services;
 using Spur.ViewModels;
 
 namespace Spur.Views;
@@ -55,7 +58,7 @@ public partial class ClipboardManager : UserControl
         }
     }
 
-    private void OnListMouseClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void OnListMouseClick(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is DependencyObject src)
         {
@@ -63,11 +66,86 @@ public partial class ClipboardManager : UserControl
             if (item?.DataContext is ClipboardEntry entry && _vm != null)
             {
                 _vm.SelectedEntry = entry;
-                _vm.CopyCommand.Execute(entry);
+                PasteAndHide(entry);
                 e.Handled = true;
             }
         }
     }
+
+    /// <summary>
+    /// Copies the entry to clipboard, hides Spur, and simulates Ctrl+V
+    /// to paste into the previously focused application.
+    /// </summary>
+    public void PasteAndHide(ClipboardEntry? entry)
+    {
+        if (entry is null || _vm is null) return;
+
+        // Copy to clipboard (with suppression to avoid duplication)
+        _vm.Copy(entry);
+
+        // Hide the window
+        var mainWindow = Window.GetWindow(this) as MainWindow;
+        mainWindow?.HideWindow();
+
+        // Small delay to let the previous app regain focus, then simulate Ctrl+V
+        Task.Delay(150).ContinueWith(_ =>
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                SimulateCtrlV();
+            });
+        });
+    }
+
+    /// <summary>Simulates a Ctrl+V keypress using Win32 SendInput.</summary>
+    private static void SimulateCtrlV()
+    {
+        var inputs = new INPUT[4];
+
+        // Ctrl down
+        inputs[0].type = 1; // INPUT_KEYBOARD
+        inputs[0].ki.wVk = 0x11; // VK_CONTROL
+
+        // V down
+        inputs[1].type = 1;
+        inputs[1].ki.wVk = 0x56; // VK_V
+
+        // V up
+        inputs[2].type = 1;
+        inputs[2].ki.wVk = 0x56;
+        inputs[2].ki.dwFlags = 0x0002; // KEYEVENTF_KEYUP
+
+        // Ctrl up
+        inputs[3].type = 1;
+        inputs[3].ki.wVk = 0x11;
+        inputs[3].ki.dwFlags = 0x0002;
+
+        SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
+    }
+
+    // ── Win32 SendInput interop ───────────────────────────────────
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT
+    {
+        public uint type;
+        public KEYBDINPUT ki;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT
+    {
+        public ushort wVk;
+        public ushort wScan;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+        // Padding to match the union size of INPUT (mouse/hardware)
+        private readonly ulong _padding;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
     private void OnPinClick(object sender, RoutedEventArgs e)
     {
@@ -80,4 +158,7 @@ public partial class ClipboardManager : UserControl
     }
 
     public void MoveSelection(int delta) => _vm?.MoveSelection(delta);
+
+    /// <summary>Called from the keyboard handler when Enter is pressed in clipboard mode.</summary>
+    public void PasteSelected() => PasteAndHide(_vm?.SelectedEntry);
 }

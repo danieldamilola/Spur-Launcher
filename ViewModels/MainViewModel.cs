@@ -948,6 +948,10 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (result.ClipContent is not null)
         {
+            // Suppress the watcher to prevent duplicate entries
+            if (_clipboard is ClipboardServiceImpl impl)
+                impl.SuppressNextCapture();
+
             _clipboard.Add(result.ClipContent);   // promote to top first
             _clipboard.CopyTextToSystem(result.ClipContent);
         }
