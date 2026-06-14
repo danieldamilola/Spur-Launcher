@@ -16,14 +16,16 @@ public partial class OnboardingWindow : Window
     private readonly Ellipse[] _dots;
     private readonly SpurConfig _config;
     private readonly IConfigService _configService;
+    private readonly IThemeManager _themeManager;
     private bool _recordingShortcut;
 
     public event Action? OnCompleted;
 
-    public OnboardingWindow(SpurConfig config, IConfigService configService)
+    public OnboardingWindow(SpurConfig config, IConfigService configService, IThemeManager themeManager)
     {
         _config = config;
         _configService = configService;
+        _themeManager = themeManager;
 
         InitializeComponent();
         _slides = [Slide1, Slide2, Slide3, Slide4];
@@ -57,6 +59,7 @@ public partial class OnboardingWindow : Window
                 $"Shortcut: {_config.Shortcut.Replace("+", " + ")}\n" +
                 $"Theme: {themeName}\n\n" +
                 "You can change both anytime in Settings.";
+            ShortcutHintText.Text = $"Press {_config.Shortcut.Replace("+", " + ")} anytime to open Spur.";
         }
 
         var current = _slides[_slide];
@@ -80,6 +83,35 @@ public partial class OnboardingWindow : Window
 
         UpdateDots();
         NextButton.Content = _slide == _slides.Length - 1 ? "Finish" : "Continue";
+        BackButton.Visibility = _slide > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnBackClick(object sender, RoutedEventArgs e)
+    {
+        if (_slide <= 0) return;
+
+        var current = _slides[_slide];
+        _slide--;
+
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120))
+        {
+            EasingFunction = SpurMotion.EaseIn()
+        };
+        fadeOut.Completed += (_, _) => current.Visibility = Visibility.Collapsed;
+        current.BeginAnimation(OpacityProperty, fadeOut);
+
+        var prev = _slides[_slide];
+        prev.Visibility = Visibility.Visible;
+        prev.Opacity = 0;
+        prev.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = SpurMotion.EaseOut()
+            });
+
+        UpdateDots();
+        NextButton.Content = "Continue";
+        BackButton.Visibility = _slide > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UpdateDots()
@@ -162,6 +194,7 @@ public partial class OnboardingWindow : Window
     private void SelectTheme(string theme)
     {
         _config.Theme = theme;
+        _themeManager.Apply(theme);
         UpdateThemeCards();
     }
 

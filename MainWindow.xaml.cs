@@ -299,7 +299,34 @@ public partial class MainWindow : Window
         UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || isExpandedHome
             ? Visibility.Collapsed : Visibility.Visible;
         AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
-        ToastBar.Visibility = _vm.IsToastVisible ? Visibility.Visible : Visibility.Collapsed;
+        AnimateToast(_vm.IsToastVisible);
+    }
+
+    /// <summary>Fades the toast bar in or out with an opacity animation.</summary>
+    private void AnimateToast(bool show)
+    {
+        if (show)
+        {
+            ToastBar.Visibility = Visibility.Visible;
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
+            {
+                EasingFunction = Animations.SpurMotion.EaseOut()
+            };
+            ToastBar.BeginAnimation(OpacityProperty, fadeIn);
+        }
+        else if (ToastBar.Visibility == Visibility.Visible)
+        {
+            var fadeOut = new DoubleAnimation(ToastBar.Opacity, 0, TimeSpan.FromMilliseconds(150))
+            {
+                EasingFunction = Animations.SpurMotion.EaseOut()
+            };
+            fadeOut.Completed += (_, _) =>
+            {
+                ToastBar.Visibility = Visibility.Collapsed;
+                ToastBar.BeginAnimation(OpacityProperty, null);
+            };
+            ToastBar.BeginAnimation(OpacityProperty, fadeOut);
+        }
     }
 
     /// <summary>Expands the content area (with optional animation).</summary>

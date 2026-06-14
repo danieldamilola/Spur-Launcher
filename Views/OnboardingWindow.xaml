@@ -250,7 +250,8 @@
                                TextWrapping="Wrap"
                                MaxWidth="360"
                                Margin="0,0,0,32"/>
-                    <TextBlock Text="Press Alt+Space anytime to open Spur."
+                    <TextBlock x:Name="ShortcutHintText"
+                               Text="Press Alt+Space anytime to open Spur."
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="12"
                                Foreground="{DynamicResource TextTertiary}"
@@ -262,6 +263,7 @@
             <Grid Grid.Row="1" Margin="48,0,48,32">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -281,7 +283,22 @@
                              AutomationProperties.Name="Step 4 of 4"/>
                 </StackPanel>
 
-                <Button Grid.Column="1"
+                <Button x:Name="BackButton"
+                        Grid.Column="1"
+                        Content="Back"
+                        Visibility="Collapsed"
+                        Margin="0,0,8,0"
+                        FontFamily="{DynamicResource Token.Font.Primary}"
+                        FontSize="12"
+                        Foreground="{DynamicResource TextSecondary}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="12,8"
+                        Cursor="Hand"
+                        AutomationProperties.Name="Go back"
+                        Click="OnBackClick"/>
+
+                <Button Grid.Column="2"
                         Content="Skip"
                         Margin="0,0,8,0"
                         FontFamily="{DynamicResource Token.Font.Primary}"
@@ -294,7 +311,7 @@
                         AutomationProperties.Name="Skip onboarding"
                         Click="OnSkipClick"/>
 
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         x:Name="NextButton"
                         Content="Continue"
                         FontFamily="{DynamicResource Token.Font.Primary}"
