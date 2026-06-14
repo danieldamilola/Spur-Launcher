@@ -146,6 +146,9 @@ public sealed class SpurConfig
     /// <summary>Global open shortcut, e.g. "Alt+Space".</summary>
     public string Shortcut { get; set; } = "Alt+Space";
 
+    /// <summary>Global shortcut to open directly in clipboard mode, e.g. "Ctrl+Shift+V".</summary>
+    public string ClipboardShortcut { get; set; } = "Ctrl+Shift+V";
+
     /// <summary>Whether the global hotkey is enabled.</summary>
     public bool HotkeyEnabled { get; set; } = true;
 

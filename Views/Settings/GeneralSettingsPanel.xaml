@@ -218,6 +218,33 @@
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
 
+                <!-- Clipboard Shortcut -->
+                <Grid MinHeight="56" Margin="18,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
+                        <Image Source="/Assets/Icons/keyboard.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Clipboard Shortcut" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="{Binding ClipboardShortcut}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                        <Button x:Name="EditClipboardShortcutBtn" Click="OnEditClipboardShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit clipboard shortcut" Padding="12,6">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FontIcon Glyph="&#xE70F;" FontSize="13" Margin="0,0,6,0"/>
+                                <TextBlock Text="Edit" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
+
                 <!-- Position -->
                 <Grid MinHeight="56" Margin="18,0">
                     <Grid.ColumnDefinitions>
