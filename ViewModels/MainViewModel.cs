@@ -1478,7 +1478,9 @@ public sealed partial class MainViewModel : ObservableObject
     private void CancelActionWork()
     {
         _ai.CancelPending();
-        _timer.Stop();
+        // Note: Timer is intentionally NOT stopped here.
+        // The timer persists across window hide/show cycles and search changes.
+        // Only the user's explicit Cancel command stops it.
     }
 
     private int FindFirstResultIndex()
