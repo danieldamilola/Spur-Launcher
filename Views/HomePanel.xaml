@@ -34,13 +34,37 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="0,0,5,0" Padding="12,10"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="files">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="0.75" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
                         <ui:FontIcon Glyph="&#xE8B7;" FontSize="18"
                                      Foreground="{DynamicResource Accent}"
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Files"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="12.5" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="Search your files"
@@ -57,13 +81,37 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="3,0,3,0" Padding="12,10"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="clipboard">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="0.75" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
                         <ui:FontIcon Glyph="&#xE77F;" FontSize="18"
                                      Foreground="{DynamicResource Accent}"
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Clipboard"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="12.5" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="History &amp; pins"
@@ -80,13 +128,37 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="5,0,0,0" Padding="12,10"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="actions">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="0.75" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0:0:0.12"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <StackPanel>
                         <ui:FontIcon Glyph="&#xE756;" FontSize="18"
                                      Foreground="{DynamicResource Accent}"
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Commands"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="12.5" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="System actions"
@@ -101,7 +173,7 @@
             <!-- ═══ Quick Actions label ═══ -->
             <TextBlock Text="QUICK ACTIONS"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="10" FontWeight="SemiBold"
+                       FontSize="{DynamicResource FontNano}" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextMuted}"
                        Margin="18,14,0,4"
                        Opacity="0.7"/>
@@ -152,7 +224,7 @@
 
                                         <ui:FontIcon x:Name="GlyphFallback"
                                                      Glyph="{Binding IconGlyph}"
-                                                     FontSize="15"
+                                                     FontSize="{DynamicResource FontMd}"
                                                      Foreground="{DynamicResource TextSecondary}"
                                                      HorizontalAlignment="Center"
                                                      VerticalAlignment="Center"
@@ -180,7 +252,7 @@
                                         VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayKeyword}"
                                                FontFamily="{DynamicResource Token.Font.Mono}"
-                                               FontSize="11"
+                                               FontSize="{DynamicResource FontXs}"
                                                Foreground="{DynamicResource TextMuted}"/>
                                 </Border>
                             </Grid>
