@@ -4,7 +4,7 @@
 # Requires: dotnet tool install -g vpk  (run once)
 
 param(
-    [string]$Version = "1.3.0",
+    [string]$Version = "1.3.1",
     [string]$OutputDir = ".\dist"
 )
 
