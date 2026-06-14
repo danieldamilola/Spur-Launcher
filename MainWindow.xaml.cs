@@ -253,6 +253,7 @@ public partial class MainWindow : Window
     private bool ShouldShowCategoryRail()
     {
         if (_vm is null) return false;
+        if (_vm.IsFullPanelActive) return false;
         if (!string.IsNullOrEmpty(_vm.Query)) return false;
         if (_vm.ActiveCategory is not null) return false;
         return _isPointerInside;
@@ -291,7 +292,7 @@ public partial class MainWindow : Window
                     if (_vm.SelectedResult is not null) FooterArea.Opacity = 0;
                     
                     ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
 
                     var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150))
                     { EasingFunction = SpurMotion.EaseOut() };
@@ -312,12 +313,12 @@ public partial class MainWindow : Window
                     ContentArea.Opacity = 1;
                     FooterArea.Opacity = 1;
                     ContentArea.Visibility = Visibility.Visible;
-                    FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                    FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
             else
             {
-                FooterArea.Visibility = _vm.SelectedResult is not null ? Visibility.Visible : Visibility.Collapsed;
+                FooterArea.Visibility = _vm.SelectedResult is not null && !_vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
                 FooterArea.Opacity = 1;
             }
         }
