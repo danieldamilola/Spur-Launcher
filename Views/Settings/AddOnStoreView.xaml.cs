@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,7 +15,37 @@ public partial class AddOnStoreView : UserControl
     public AddOnStoreView()
     {
         InitializeComponent();
-        DataContextChanged += (_, e) => _vm = e.NewValue as SettingsViewModel;
+        DataContextChanged += (_, e) =>
+        {
+            _vm = e.NewValue as SettingsViewModel;
+            SubscribeToRestartRequired();
+        };
+    }
+
+    private void SubscribeToRestartRequired()
+    {
+        if (_vm?.StoreService == null) return;
+
+        // Show banner immediately if already flagged
+        UpdateRestartBanner();
+
+        _vm.StoreService.PropertyChanged += OnStoreServicePropertyChanged;
+    }
+
+    private void OnStoreServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Services.AddOnStoreService.RestartRequired))
+        {
+            Dispatcher.Invoke(UpdateRestartBanner);
+        }
+    }
+
+    private void UpdateRestartBanner()
+    {
+        if (_vm?.StoreService != null)
+            RestartBanner.Visibility = _vm.StoreService.RestartRequired
+                ? Visibility.Visible
+                : Visibility.Collapsed;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -83,7 +114,7 @@ public partial class AddOnStoreView : UserControl
 
             if (success)
             {
-                btn.Content = "Installed";
+                btn.Content = "Restart Required";
             }
             else
             {

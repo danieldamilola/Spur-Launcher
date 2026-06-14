@@ -100,7 +100,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
                     changed = true;
                 }
             }
-            if (changed) RaiseClipboardChanged();
+            if (changed)
+            {
+                RaiseClipboardChanged();
+                ScheduleSave();
+            }
         }
     }
 
@@ -141,6 +145,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
             EnforceLimits();
         }
         RaiseClipboardChanged();
+        ScheduleSave();
     }
 
     public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
@@ -261,6 +266,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     {
         lock (_lock) _history.Clear();
         RaiseClipboardChanged();
+        ScheduleSave();
     }
 
     /// <summary>
@@ -276,7 +282,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
                 e.IsImage || !contentToKeep.Contains(e.Content ?? string.Empty));
             changed = removed > 0;
         }
-        if (changed) RaiseClipboardChanged();
+        if (changed)
+        {
+            RaiseClipboardChanged();
+            ScheduleSave();
+        }
     }
 
     /// <summary>
@@ -292,7 +302,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
             int removed = _history.RemoveAll(e => e.Id == id);
             changed = removed > 0;
         }
-        if (changed) RaiseClipboardChanged();
+        if (changed)
+        {
+            RaiseClipboardChanged();
+            ScheduleSave();
+        }
     }
 
     // Captures the delegate before null-checking to eliminate the race between
@@ -301,5 +315,91 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     {
         var handler = ClipboardChanged;
         handler?.Invoke();
+    }
+
+    // ── Persistence helpers ──────────────────────────────────────────
+
+    /// <summary>Loads text entries from the JSON file. Handles corruption gracefully.</summary>
+    private void LoadHistory()
+    {
+        try
+        {
+            if (!File.Exists(_savePath)) return;
+
+            var json = File.ReadAllText(_savePath);
+            var dtos = JsonSerializer.Deserialize<List<ClipboardEntryDto>>(json);
+            if (dtos is null) return;
+
+            lock (_lock)
+            {
+                foreach (var dto in dtos)
+                {
+                    if (string.IsNullOrWhiteSpace(dto.Content)) continue;
+                    if (_history.Count >= _maxItems) break;
+                    _history.Add(new ClipboardEntry(dto.Content));
+                }
+            }
+
+            _log.Info($"Loaded {_history.Count} clipboard entries from {_savePath}");
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Failed to load clipboard history — starting fresh", ex);
+        }
+    }
+
+    /// <summary>Marks a save as pending and starts (or restarts) the debounce timer.</summary>
+    private void ScheduleSave()
+    {
+        _savePending = true;
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+
+    /// <summary>Performs the actual save if one is pending.</summary>
+    private void FlushSave()
+    {
+        if (!_savePending) return;
+        _savePending = false;
+
+        try
+        {
+            List<ClipboardEntryDto> dtos;
+            lock (_lock)
+            {
+                dtos = _history
+                    .Where(e => !e.IsImage && !string.IsNullOrEmpty(e.Content))
+                    .Select(e => new ClipboardEntryDto
+                    {
+                        Content   = e.Content,
+                        Timestamp = e.Timestamp
+                    })
+                    .ToList();
+            }
+
+            var dir = Path.GetDirectoryName(_savePath)!;
+            Directory.CreateDirectory(dir);
+
+            var json = JsonSerializer.Serialize(dtos, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_savePath, json);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Failed to save clipboard history", ex);
+        }
+    }
+
+    /// <summary>Stops the debounce timer and performs a final synchronous save.</summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _debounceTimer.Stop();
+        _debounceTimer.Dispose();
+
+        // Final save to capture any pending changes
+        _savePending = true;
+        FlushSave();
     }
 }
