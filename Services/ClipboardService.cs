@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Spur.Models;
 
 namespace Spur.Services;
@@ -24,17 +26,37 @@ public interface IClipboardService
 }
 
 /// <summary>
-/// In-memory clipboard history. Thread-safe. Never persisted.
-/// Deduplicates consecutive identical text entries. Max items is configurable
-/// via <see cref="MaxItems"/> (default 10, settable from settings).
+/// Lightweight DTO for serializing text clipboard entries to JSON.
+/// Images are never persisted.
 /// </summary>
-public sealed class ClipboardServiceImpl : IClipboardService
+internal sealed class ClipboardEntryDto
+{
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = string.Empty;
+
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; }
+}
+
+/// <summary>
+/// In-memory clipboard history with JSON persistence for text entries.
+/// Thread-safe. Deduplicates consecutive identical text entries. Max items
+/// is configurable via <see cref="MaxItems"/> (default 10, settable from settings).
+/// Text entries are persisted to <c>%LocalAppData%\Spur\clipboard_history.json</c>.
+/// </summary>
+public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
 {
     private int _maxItems = 10;
     private const int MaxImageEntries = 5;
     private readonly List<ClipboardEntry> _history = [];
     private readonly object _lock = new();
     private readonly ILogger _log;
+
+    // ── Persistence ──────────────────────────────────────────────────
+    private readonly string _savePath;
+    private volatile bool _savePending;
+    private readonly System.Timers.Timer _debounceTimer;
+    private bool _disposed;
 
     /// <summary>
     /// When true, the next Add/AddImage call from the ClipboardWatcher will be
@@ -45,7 +67,20 @@ public sealed class ClipboardServiceImpl : IClipboardService
 
     public event Action? ClipboardChanged;
 
-    public ClipboardServiceImpl(ILogger log) => _log = log;
+    public ClipboardServiceImpl(ILogger log)
+    {
+        _log = log;
+
+        _savePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Spur", "clipboard_history.json");
+
+        // Debounce timer: saves at most once every 2 seconds
+        _debounceTimer = new System.Timers.Timer(2000) { AutoReset = false };
+        _debounceTimer.Elapsed += (_, _) => FlushSave();
+
+        LoadHistory();
+    }
 
     /// <summary>Call this before CopyToSystem to prevent the watcher from re-adding the entry.</summary>
     public void SuppressNextCapture() => _suppressNext = true;

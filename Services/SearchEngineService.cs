@@ -146,10 +146,12 @@ public sealed class SearchEngineService : ISearchEngineService
         }
 
         // -- Clipboard ---------------------------------------------
-        bool showClip = _config.ClipboardEnabled && _config.IndexClipboard && activeCategory == "clipboard";
+        bool showClip = _config.ClipboardEnabled && _config.IndexClipboard && activeCategory is null or "clipboard";
         if (showClip)
         {
-            int limit = isBrowseMode ? 50 : _config.ResultsCount;
+            int limit = activeCategory == "clipboard"
+                ? (isBrowseMode ? 50 : _config.ResultsCount)
+                : 3; // global mode: cap at 3 to avoid cluttering results
             var clips = new List<SearchResult>(limit);
             foreach (var c in _clipboard.GetHistory())
             {
