@@ -9,6 +9,7 @@ using Spur.Extensions.AddOns.Ai;
 using Spur.Extensions.AddOns.Calculator;
 using Spur.Extensions.AddOns.Color;
 using Spur.Extensions.AddOns.Currency;
+using Spur.Extensions.AddOns.Eyedropper;
 using Spur.Extensions.AddOns.Ip;
 using Spur.Extensions.AddOns.KillProcess;
 using Spur.Extensions.AddOns.PasswordGen;
@@ -63,6 +64,7 @@ public sealed class AddOnRegistry
         _builtIn.Add(new ShellAddOn { Settings = new ShellSettings() });
         _builtIn.Add(new SystemAddOn { Settings = new SystemSettings() });
         _builtIn.Add(new SettingsNavAddOn { Settings = new SettingsNavSettings() });
+        _builtIn.Add(new EyedropperAddOn { Settings = new EyedropperSettings() });
         InvalidateCache();
     }
 
