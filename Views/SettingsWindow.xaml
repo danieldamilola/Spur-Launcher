@@ -4,7 +4,8 @@
         xmlns:views="clr-namespace:Spur.Views"
         xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="Spur Settings"
+        xmlns:res="clr-namespace:Spur.Resources"
+        Title="{x:Static res:Strings.SettingsTitle}"
         Icon="pack://application:,,,/Icons/spur-32x32.ico"
         Width="920"
         Height="760"
@@ -42,11 +43,12 @@
                 <Image Source="pack://application:,,,/Icons/spur-16x16.ico"
                        Width="16" Height="16" Margin="0,0,8,0"
                        VerticalAlignment="Center"/>
-                <TextBlock Text="Spur Settings"
-                           FontFamily="{DynamicResource Token.Font.Primary}"
+                <TextBlock FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="12"
                            Foreground="{DynamicResource TextSecondary}"
-                           VerticalAlignment="Center"/>
+                           VerticalAlignment="Center">
+                    <Run Text="Spur "/><Run Text="{x:Static res:Strings.SettingsTitle}"/>
+                </TextBlock>
             </StackPanel>
 
             <!-- Window controls (right side) -->

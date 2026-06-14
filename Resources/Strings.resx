@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Search apps, files, actions...</value>
+    <comment>Default placeholder text shown in the main search bar</comment>
+  </data>
+  <data name="ClipboardCategory" xml:space="preserve">
+    <value>Clipboard</value>
+    <comment>Category label for clipboard results</comment>
+  </data>
+  <data name="FilesCategory" xml:space="preserve">
+    <value>Files</value>
+    <comment>Category label for file results</comment>
+  </data>
+  <data name="ActionsCategory" xml:space="preserve">
+    <value>Actions</value>
+    <comment>Category label for action results</comment>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Title shown in the settings window and sidebar</comment>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>About</value>
+    <comment>Title for the About section in settings navigation</comment>
+  </data>
+  <data name="GeneralSettings" xml:space="preserve">
+    <value>General</value>
+    <comment>Settings navigation item for general preferences</comment>
+  </data>
+  <data name="SearchSettings" xml:space="preserve">
+    <value>Search</value>
+    <comment>Settings navigation item for search configuration</comment>
+  </data>
+  <data name="AiSettings" xml:space="preserve">
+    <value>AI</value>
+    <comment>Settings navigation item for AI configuration</comment>
+  </data>
+  <data name="AddOnsSettings" xml:space="preserve">
+    <value>Add-ons</value>
+    <comment>Settings navigation item for add-on management</comment>
+  </data>
+  <data name="CheckForUpdates" xml:space="preserve">
+    <value>Check for Updates</value>
+    <comment>Button label to check for application updates</comment>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No results found</value>
+    <comment>Message shown when a search yields no results</comment>
+  </data>
+  <data name="ClearHistory" xml:space="preserve">
+    <value>Clear History</value>
+    <comment>Button label to clear search/clipboard history</comment>
+  </data>
+  <data name="Pin" xml:space="preserve">
+    <value>Pin</value>
+    <comment>Context menu action to pin an item</comment>
+  </data>
+  <data name="Unpin" xml:space="preserve">
+    <value>Unpin</value>
+    <comment>Context menu action to unpin an item</comment>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+    <comment>Context menu action to copy an item</comment>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Context menu action to delete an item</comment>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Button label to cancel an operation</comment>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Button label to save changes</comment>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>Button label to close a window or dialog</comment>
+  </data>
+</root>
