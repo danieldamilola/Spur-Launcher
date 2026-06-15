@@ -54,7 +54,7 @@
                         <TextBlock Text="Model" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Select a model or type any custom model name." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ComboBox x:Name="ModelComboBox" Grid.Column="3" ItemsSource="{Binding CurrentModels}" IsEditable="True" IsTextSearchEnabled="True" VerticalAlignment="Center" Loaded="ModelComboBox_Loaded" SelectionChanged="ModelComboBox_SelectionChanged" LostFocus="ModelComboBox_LostFocus"/>
+                    <ComboBox x:Name="ModelComboBox" Grid.Column="3" ItemsSource="{Binding CurrentModels}" SelectedItem="{Binding AiModel, Mode=TwoWay}" IsEditable="True" IsTextSearchEnabled="True" VerticalAlignment="Center" LostFocus="ModelComboBox_LostFocus"/>
                 </Grid>
             </StackPanel>
         </Border>

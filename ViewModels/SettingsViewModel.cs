@@ -944,14 +944,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string[] CurrentModels => GetModelsForCurrentProvider();
 
-    private string[] GetModelsForCurrentProvider() => _config.AiProvider switch
+    private string[] GetModelsForCurrentProvider()
     {
-        AiProviders.Groq => ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b", "openai/gpt-oss-120b"],
-        AiProviders.Gemini => ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash", "gemini-3.5-flash"],
-        AiProviders.OpenRouter => ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-v4-flash", "openai/gpt-5.4-mini"],
-        AiProviders.DeepSeek => ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash", "deepseek-v4-pro"],
-        _ => [],
-    };
+        var defaults = _config.AiProvider switch
+        {
+            AiProviders.Groq => new[] {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b", "openai/gpt-oss-120b"},
+            AiProviders.Gemini => new[] {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash", "gemini-3.5-flash"},
+            AiProviders.OpenRouter => new[] {"google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-v4-flash", "openai/gpt-5.4-mini"},
+            AiProviders.DeepSeek => new[] {"deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash", "deepseek-v4-pro"},
+            _ => Array.Empty<string>(),
+        };
+        var current = GetModelForCurrentProvider();
+        if (!string.IsNullOrEmpty(current) && !defaults.Contains(current))
+            return [current, ..defaults];
+        return defaults;
+    }
 
     public string AiModel
     {
@@ -980,7 +987,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(AiModel));
     }
 
-    private void NotifyAiProviderPropertiesChanged()
+    public void NotifyAiProviderPropertiesChanged()
     {
         OnPropertyChanged(nameof(AiProvider));
         OnPropertyChanged(nameof(ApiKey));
