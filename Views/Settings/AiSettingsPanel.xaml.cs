@@ -44,9 +44,6 @@ public partial class AiSettingsPanel : UserControl
         {
             // Update the password box when the provider changes so it shows the right API key
             AiApiKeyBox.Password = _vm?.ApiKey ?? string.Empty;
-            // Sync model combo text when provider changes
-            if (_vm != null)
-                ModelComboBox.Text = _vm.AiModel;
         }
     }
 
@@ -54,17 +51,5 @@ public partial class AiSettingsPanel : UserControl
     {
         if (!_isLoaded || _vm == null) return;
         _vm.ApiKey = AiApiKeyBox.Password;
-    }
-
-    private void ModelComboBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        if (!_isLoaded || _vm == null) return;
-        var text = ModelComboBox.Text?.Trim();
-        if (!string.IsNullOrEmpty(text) && text != _vm.AiModel)
-        {
-            _vm.AiModel = text;
-            // Refresh the list so the custom model appears in the dropdown
-            _vm.NotifyAiProviderPropertiesChanged();
-        }
     }
 }
