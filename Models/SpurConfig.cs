@@ -98,8 +98,6 @@ public sealed class SpurConfig
     public int SearchDelay { get; set; } = 30;
 
 
-
-
     /// <summary>Glob patterns to exclude from file search (e.g. "node_modules", ".git").</summary>
     public List<string> ExclusionPatterns { get; set; } = ["node_modules", ".git", "__pycache__", "bin", "obj"];
 
