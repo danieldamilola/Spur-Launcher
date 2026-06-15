@@ -23,10 +23,15 @@ public partial class App : Application
     private IServiceProvider?   _services;
     private SettingsWindow?     _settingsWindow;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         Velopack.VelopackApp.Build().Run();
         base.OnStartup(e);
+
+        // ── Splash screen ────────────────────────────────────────────
+        var splash = new Views.SplashWindow();
+        splash.Show();
+        var splashTimer = System.Diagnostics.Stopwatch.StartNew();
 
         // ── Logging ──────────────────────────────────────────────────
         _fileLogger = new FileLogger();
@@ -181,6 +186,13 @@ public partial class App : Application
             BuildTrayIcon();
 
         _fileLogger.Info("Spur started successfully.");
+
+        // ── Close splash (enforce minimum 1.5s display) ───────────────
+        splashTimer.Stop();
+        var remaining = 1500 - (int)splashTimer.ElapsedMilliseconds;
+        if (remaining > 0)
+            await Task.Delay(remaining);
+        splash.Close();
 
         // ── Defer non-critical initialization (faster startup) ────────
         _ = Task.Run(async () =>
