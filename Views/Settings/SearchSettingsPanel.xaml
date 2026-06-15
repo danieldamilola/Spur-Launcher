@@ -238,5 +238,107 @@
                 </ItemsControl>
             </StackPanel>
         </Border>
+
+        <!-- ── Excluded Folders ── -->
+        <TextBlock Text="EXCLUDED FOLDERS"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,16,0,8"/>
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <StackPanel Margin="16,14">
+                <TextBlock Text="Folders listed here will be skipped during indexing."
+                           FontFamily="{DynamicResource Token.Font.Primary}"
+                           FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                <!-- Add excluded folder row -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
+                        <TextBox Text="{Binding NewExcludedFolderPath, UpdateSourceTrigger=PropertyChanged}" FontSize="12" VerticalContentAlignment="Center"/>
+                    </Border>
+                    <Button Grid.Column="2" Click="OnBrowseExcludedFolderClick" Style="{StaticResource SettingsSoftButton}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon Glyph="&#xE8E5;" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Browse" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <!-- Excluded folder list -->
+                <ItemsControl ItemsSource="{Binding ExcludedFoldersList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1"
+                                        Content="Remove"
+                                        Command="{Binding DataContext.RemoveExcludedFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource SettingsSoftButton}"
+                                        Height="24"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Exclusion Patterns ── -->
+        <TextBlock Text="EXCLUSION PATTERNS"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="10" FontWeight="Medium" 
+                   Foreground="{DynamicResource TextTertiary}"
+                   Margin="4,16,0,8"/>
+        <Border Background="{DynamicResource Surface}" CornerRadius="10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <StackPanel Margin="16,14">
+                <TextBlock Text="Glob patterns to exclude (e.g. *.tmp, node_modules, .git)."
+                           FontFamily="{DynamicResource Token.Font.Primary}"
+                           FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10"/>
+                <!-- Add pattern row -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{DynamicResource SelectedBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7" Height="32" Padding="10,0">
+                        <TextBox Text="{Binding NewExclusionPattern, UpdateSourceTrigger=PropertyChanged}" FontSize="12" VerticalContentAlignment="Center"/>
+                    </Border>
+                    <Button Grid.Column="2" Command="{Binding AddExclusionPatternCommand}" Style="{StaticResource SettingsSoftButton}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon Glyph="&#xE710;" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Add" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <!-- Pattern list -->
+                <ItemsControl ItemsSource="{Binding ExclusionPatternsList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1"
+                                        Content="Remove"
+                                        Command="{Binding DataContext.RemoveExclusionPatternCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource SettingsSoftButton}"
+                                        Height="24"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

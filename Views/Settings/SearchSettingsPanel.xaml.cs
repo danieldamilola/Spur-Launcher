@@ -28,4 +28,20 @@ public partial class SearchSettingsPanel : UserControl
             vm.NewFolderPath = string.Empty;
         }
     }
+
+    private void OnBrowseExcludedFolderClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel vm) return;
+        var dlg = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "Select a folder to exclude from search"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            var path = dlg.FolderName;
+            if (!vm.ExcludedFoldersList.Contains(path, StringComparer.OrdinalIgnoreCase))
+                vm.ExcludedFoldersList.Add(path);
+            vm.NewExcludedFolderPath = string.Empty;
+        }
+    }
 }
