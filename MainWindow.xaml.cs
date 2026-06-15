@@ -184,29 +184,8 @@ public partial class MainWindow : Window
 
     private void PositionWindow()
     {
-        var screen = SystemParameters.WorkArea;
-        var left = screen.Left + (screen.Width - Width) / 2;
-        var top = screen.Top + (screen.Height - ActualHeight) / 2;
-
-        switch (_vm?.Config.SearchWindowPosition)
-        {
-            case "centerTop":
-                top = screen.Top + screen.Height * 0.15;
-                break;
-            case "leftTop":
-                left = screen.Left + 32;
-                top = screen.Top + 32;
-                break;
-            case "rightTop":
-                left = screen.Right - Width - 32;
-                top = screen.Top + 32;
-                break;
-            case "custom":
-                return;
-        }
-
-        Left = left;
-        Top = top;
+        if (_vm is not null)
+            Behaviors.LauncherWindowBehavior.PositionWindow(this, _vm);
     }
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

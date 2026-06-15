@@ -752,6 +752,49 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { if (value) SearchWindowPosition = "Custom Position"; }
     }
 
+    // ── Monitor selection ──────────────────────────────────────────
+    public List<string> MonitorOptions
+    {
+        get
+        {
+            var options = new List<string> { "Primary" };
+            var monitors = Helpers.MonitorHelper.GetAllMonitors();
+            for (int i = 0; i < monitors.Count; i++)
+            {
+                if (monitors[i].IsPrimary) continue;
+                options.Add($"Monitor {i + 1}");
+            }
+            options.Add("Follow cursor");
+            return options;
+        }
+    }
+
+    public string PreferredMonitor
+    {
+        get
+        {
+            return _config.PreferredMonitor?.ToLowerInvariant() switch
+            {
+                null or "" or "primary" or "0" => "Primary",
+                "mouse" or "-1" => "Follow cursor",
+                var s when int.TryParse(s, out int idx) => $"Monitor {idx}",
+                _ => "Primary",
+            };
+        }
+        set
+        {
+            _config.PreferredMonitor = value switch
+            {
+                "Primary" => "primary",
+                "Follow cursor" => "mouse",
+                var s when s.StartsWith("Monitor ") && int.TryParse(s["Monitor ".Length..], out int idx) => idx.ToString(),
+                _ => "primary",
+            };
+            Save();
+            OnPropertyChanged();
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Actions — enable/disable (managed through AddOnRegistry now)
     // ═══════════════════════════════════════════════════════════════
