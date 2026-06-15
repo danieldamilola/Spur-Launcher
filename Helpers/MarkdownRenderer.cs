@@ -65,6 +65,7 @@ public static class MarkdownRenderer
         int numberedStart = 1;
 
         var paragraphLines = new List<string>();
+        var tableLines = new List<string>();
 
         for (int i = 0; i < lines.Length; i++)
         {
@@ -102,6 +103,27 @@ public static class MarkdownRenderer
             {
                 codeLines.Add(line);
                 continue;
+            }
+
+            // ── Markdown tables ────────────────────────────────────
+            if (line.TrimStart().StartsWith('|'))
+            {
+                if (tableLines.Count == 0)
+                {
+                    FlushParagraph(doc, paragraphLines, ctx);
+                    FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
+                    bulletItems = null;
+                    numberedItems = null;
+                }
+                tableLines.Add(line);
+                continue;
+            }
+
+            // If we were accumulating table lines and hit a non-table line, flush the table
+            if (tableLines.Count > 0)
+            {
+                EmitTable(doc, tableLines, ctx);
+                tableLines.Clear();
             }
 
             // ── Headers ────────────────────────────────────────────
@@ -178,6 +200,12 @@ public static class MarkdownRenderer
         // Flush remaining content.
         if (inCodeBlock && codeLines.Count > 0)
             EmitCodeBlock(doc, codeLines, ctx);
+
+        if (tableLines.Count > 0)
+        {
+            EmitTable(doc, tableLines, ctx);
+            tableLines.Clear();
+        }
 
         FlushParagraph(doc, paragraphLines, ctx);
         FlushList(doc, bulletItems, numberedItems, numberedStart, ctx);
@@ -455,11 +483,143 @@ public static class MarkdownRenderer
                 }
             }
 
+            // ── Links: [text](url) ─────────────────────────────────
+            if (c == '[' && i + 1 < len)
+            {
+                int closeBracket = text.IndexOf(']', i + 1);
+                if (closeBracket > i && closeBracket + 1 < len && text[closeBracket + 1] == '(')
+                {
+                    int closeParen = text.IndexOf(')', closeBracket + 2);
+                    if (closeParen > closeBracket + 2)
+                    {
+                        FlushBuffer();
+                        var linkText = text[(i + 1)..closeBracket];
+                        var linkUrl = text[(closeBracket + 2)..closeParen];
+
+                        var hyperlink = new Hyperlink(new Run(linkText))
+                        {
+                            Foreground = ctx.AccentBrush,
+                            TextDecorations = null,
+                            Cursor = System.Windows.Input.Cursors.Hand,
+                        };
+                        var capturedUrl = linkUrl;
+                        hyperlink.Click += (_, _) =>
+                        {
+                            try
+                            {
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(capturedUrl)
+                                {
+                                    UseShellExecute = true
+                                });
+                            }
+                            catch { /* invalid URL */ }
+                        };
+                        inlines.Add(hyperlink);
+                        i = closeParen + 1;
+                        continue;
+                    }
+                }
+            }
+
             buffer.Append(c);
             i++;
         }
 
         FlushBuffer();
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    //  Table rendering
+    // ────────────────────────────────────────────────────────────────────
+
+    /// <summary>Parses pipe-delimited table lines and emits a WPF Grid.</summary>
+    private static void EmitTable(FlowDocument doc, List<string> tableLines, ParseContext ctx)
+    {
+        if (tableLines.Count < 2) return; // Need at least header + separator
+
+        var rows = new List<string[]>();
+        int separatorIndex = -1;
+
+        for (int r = 0; r < tableLines.Count; r++)
+        {
+            var line = tableLines[r].Trim();
+            if (line.StartsWith('|')) line = line[1..];
+            if (line.EndsWith('|')) line = line[..^1];
+
+            var cells = line.Split('|').Select(c => c.Trim()).ToArray();
+
+            // Detect separator row (all cells are dashes/colons like "---", ":---:", etc.)
+            if (separatorIndex < 0 && cells.All(c => Regex.IsMatch(c, @"^:?-{1,}:?$")))
+            {
+                separatorIndex = r;
+                continue;
+            }
+
+            rows.Add(cells);
+        }
+
+        if (rows.Count == 0) return;
+
+        int colCount = rows.Max(r => r.Length);
+        int headerRows = separatorIndex > 0 ? separatorIndex : (separatorIndex == 1 ? 1 : 0);
+
+        var grid = new Grid
+        {
+            Margin = new Thickness(0, 4, 0, 8),
+        };
+
+        // Define columns
+        for (int c = 0; c < colCount; c++)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        // Define rows
+        for (int r = 0; r < rows.Count; r++)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        // Populate cells
+        for (int r = 0; r < rows.Count; r++)
+        {
+            bool isHeader = r < headerRows;
+            var rowCells = rows[r];
+
+            for (int c = 0; c < colCount; c++)
+            {
+                string cellText = c < rowCells.Length ? rowCells[c] : "";
+
+                var tb = new TextBlock
+                {
+                    Text = cellText,
+                    Foreground = ctx.TextBrush,
+                    FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal,
+                    Padding = new Thickness(8, 5, 8, 5),
+                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 13,
+                };
+
+                var cellBorder = new Border
+                {
+                    BorderBrush = ctx.BorderBrush,
+                    BorderThickness = new Thickness(0, 0, c < colCount - 1 ? 1 : 0, r < rows.Count - 1 ? 1 : 0),
+                    Background = isHeader ? ctx.CodeBg : Brushes.Transparent,
+                    Child = tb,
+                };
+
+                Grid.SetRow(cellBorder, r);
+                Grid.SetColumn(cellBorder, c);
+                grid.Children.Add(cellBorder);
+            }
+        }
+
+        // Wrap in a border
+        var tableBorder = new Border
+        {
+            BorderBrush = ctx.BorderBrush,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Child = grid,
+        };
+
+        doc.Blocks.Add(new BlockUIContainer(tableBorder));
     }
 
     // ────────────────────────────────────────────────────────────────────
