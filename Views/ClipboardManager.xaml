@@ -320,10 +320,11 @@
                 <Grid Margin="12,8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
                         <Button Style="{StaticResource SettingsSoftButton}"
                                 Command="{Binding CopyCommand}"
                                 CommandParameter="{Binding SelectedEntry}"
@@ -352,17 +353,45 @@
                                 Padding="6" Width="30" Height="30">
                             <ui:FontIcon Glyph="&#xE74D;" FontSize="14"/>
                         </Button>
+                        <Button Style="{StaticResource SettingsSoftButton}"
+                                Margin="4,0,0,0"
+                                Command="{Binding MergeWithAboveCommand}"
+                                ToolTip="Merge with item above"
+                                AutomationProperties.Name="Merge with above"
+                                Padding="6" Width="30" Height="30">
+                            <ui:FontIcon Glyph="&#xE8D5;" FontSize="14"/>
+                        </Button>
                     </StackPanel>
 
-                    <ScrollViewer Grid.Row="1"
+                    <!-- Metadata -->
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding SelectedMetadata}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,0,0,6"/>
+
+                    <ScrollViewer Grid.Row="2"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <TextBlock Text="{Binding SelectedContent}"
-                                   FontFamily="{DynamicResource Token.Font.Mono}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   TextWrapping="Wrap"
-                                   TextTrimming="CharacterEllipsis"/>
+                        <StackPanel>
+                            <!-- Image detail preview -->
+                            <Image Source="{Binding SelectedEntry.Image}"
+                                   MaxHeight="300"
+                                   Stretch="Uniform"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Margin="0,4,0,0"
+                                   Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibility}}"/>
+
+                            <!-- Text detail -->
+                            <TextBlock Text="{Binding SelectedContent}"
+                                       FontFamily="{DynamicResource Token.Font.Mono}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       TextWrapping="Wrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToInverseVisibility}}"/>
+                        </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Border>

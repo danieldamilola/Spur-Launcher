@@ -57,11 +57,37 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     partial void OnSelectedEntryChanged(ClipboardEntry? value)
     {
         OnPropertyChanged(nameof(SelectedContent));
+        OnPropertyChanged(nameof(SelectedMetadata));
         IsImageSelected = value?.IsImage ?? false;
     }
 
     /// <summary>Full text of the selected entry (shown in detail area).</summary>
     public string? SelectedContent => SelectedEntry?.Content;
+
+    /// <summary>Metadata string for the detail panel (type, char/word/line counts, or image dims).</summary>
+    public string? SelectedMetadata
+    {
+        get
+        {
+            var entry = SelectedEntry;
+            if (entry is null) return null;
+
+            if (entry.IsImage)
+            {
+                var img = entry.Image;
+                return img is not null ? $"Image · {img.PixelWidth} × {img.PixelHeight}" : "Image";
+            }
+
+            var content = entry.Content ?? "";
+            var chars = content.Length;
+            var words = content.Split(default(char[]), StringSplitOptions.RemoveEmptyEntries).Length;
+            var lines = content.Split('\n').Length;
+            var type = DetectContentType(content);
+            return $"{type} · {chars:N0} chars · {words:N0} words · {lines:N0} lines";
+        }
+    }
+
+    public bool HasPinnedEntries => Entries.Any(e => e.IsPinned);
 
     [ObservableProperty]
     private bool _isImageSelected;
@@ -87,11 +113,13 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
             ? [.. history]
             : history.Where(e => e.Preview.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        SyncEntries(desired);
-
-        // Stamp pin status so the UI can bind to it directly.
-        foreach (var entry in Entries)
+        // Stamp pin status BEFORE sorting so pinned items float to the top.
+        foreach (var entry in desired)
             entry.IsPinned = IsPinned(entry);
+
+        desired = desired.OrderByDescending(e => e.IsPinned).ToList();
+
+        SyncEntries(desired);
 
         // Always select the first item so the selection rail starts at the top
         if (Entries.Count > 0)
@@ -99,6 +127,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         else
             SelectedEntry = null;
 
+        OnPropertyChanged(nameof(HasPinnedEntries));
         UpdateStatus();
     }
 
@@ -169,6 +198,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
             });
 
         _configSvc.Save(_config);
+        OnPropertyChanged(nameof(HasPinnedEntries));
         Refresh();
     }
 
@@ -245,6 +275,50 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         StatusText = string.IsNullOrWhiteSpace(FilterText)
             ? $"{total} item{(total == 1 ? "" : "s")}"
             : $"{shown} of {total} item{(total == 1 ? "" : "s")}";
+    }
+
+    private static string DetectContentType(string content)
+    {
+        var trimmed = content.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) && (uri.Scheme == "http" || uri.Scheme == "https"))
+            return "\U0001F517 URL";
+        if ((trimmed.StartsWith('{') && trimmed.EndsWith('}')) || (trimmed.StartsWith('[') && trimmed.EndsWith(']')))
+        {
+            try { System.Text.Json.JsonDocument.Parse(trimmed); return "\U0001F4CB JSON"; } catch { }
+        }
+        if (trimmed.Contains('@') && trimmed.Contains('.') && !trimmed.Contains(' ') && trimmed.Length < 320)
+            return "\U0001F4E7 Email";
+        if (trimmed.Contains("function ") || trimmed.Contains("class ") || trimmed.Contains("def ") ||
+            trimmed.Contains("const ") || trimmed.Contains("var ") || trimmed.Contains("public ") ||
+            trimmed.Contains("import ") || trimmed.Contains("#include") || trimmed.Contains("using "))
+            return "\U0001F4BB Code";
+        if (System.IO.Path.IsPathFullyQualified(trimmed) || trimmed.StartsWith("C:\\") || trimmed.StartsWith("/"))
+            return "\U0001F4C1 Path";
+        return "\U0001F4DD Text";
+    }
+
+    /// <summary>Merge the selected entry with the entry directly above it.</summary>
+    [RelayCommand]
+    public void MergeWithAbove()
+    {
+        if (SelectedEntry is null || SelectedEntry.IsImage) return;
+        var idx = Entries.IndexOf(SelectedEntry);
+        if (idx <= 0) return;
+        var above = Entries[idx - 1];
+        if (above.IsImage) return;
+
+        var merged = above.Content + Environment.NewLine + SelectedEntry.Content;
+
+        _clipboard.RemoveById(above.Id);
+        _clipboard.RemoveById(SelectedEntry.Id);
+
+        if (_clipboard is ClipboardServiceImpl impl)
+            impl.SuppressNextCapture();
+        _clipboard.Add(merged);
+
+        StatusText = "Merged ✓";
+        _lastCopyTimestamp = DateTime.UtcNow;
+        Refresh();
     }
 
     // ── Cleanup ─────────────────────────────────────────────────────
