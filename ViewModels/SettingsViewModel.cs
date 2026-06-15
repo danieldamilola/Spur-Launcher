@@ -946,10 +946,10 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private string[] GetModelsForCurrentProvider() => _config.AiProvider switch
     {
-        AiProviders.Groq => ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b"],
-        AiProviders.Gemini => ["gemini-2.0-flash", "gemini-2.5-pro-exp-03-25", "gemini-1.5-flash"],
-        AiProviders.OpenRouter => ["google/gemini-2.0-flash-001", "meta-llama/llama-3.1-8b-instruct", "deepseek/deepseek-chat"],
-        AiProviders.DeepSeek => ["deepseek-chat", "deepseek-reasoner"],
+        AiProviders.Groq => ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b", "openai/gpt-oss-120b"],
+        AiProviders.Gemini => ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash", "gemini-3.5-flash"],
+        AiProviders.OpenRouter => ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-v4-flash", "openai/gpt-5.4-mini"],
+        AiProviders.DeepSeek => ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash", "deepseek-v4-pro"],
         _ => [],
     };
 

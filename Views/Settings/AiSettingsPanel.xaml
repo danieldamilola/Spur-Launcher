@@ -52,9 +52,9 @@
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Model" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
-                        <TextBlock Text="Select the model for the chosen provider." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                        <TextBlock Text="Select a model or type any custom model name." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <ComboBox Grid.Column="3" ItemsSource="{Binding CurrentModels}" SelectedItem="{Binding AiModel, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding CurrentModels}" Text="{Binding AiModel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" IsEditable="True" IsTextSearchEnabled="True" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>
