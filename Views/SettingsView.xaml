@@ -4,7 +4,8 @@
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              xmlns:local="clr-namespace:Spur.Views"
              xmlns:conv="clr-namespace:Spur.Converters"
-             xmlns:settings="clr-namespace:Spur.Views.Settings">
+             xmlns:settings="clr-namespace:Spur.Views.Settings"
+             xmlns:res="clr-namespace:Spur.Resources">
 
     <UserControl.Resources>
         <local:SectionVisibilityConverter x:Key="SectionVisibility"/>
@@ -58,7 +59,7 @@
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="14" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Text="Settings"
+                <TextBlock Text="{x:Static res:Strings.SettingsTitle}"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="11"
                            Foreground="{DynamicResource TextTertiary}"
