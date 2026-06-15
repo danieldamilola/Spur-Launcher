@@ -557,6 +557,134 @@ public sealed partial class MainViewModel : ObservableObject
     {
         UpdateFooterHint();
         UpdateActionPreview();
+        UpdateFilePreview();
+    }
+
+    // ── File Preview ─────────────────────────────────────────────────
+
+    private static readonly HashSet<string> TextExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt", ".cs", ".py", ".js", ".json", ".xml", ".md", ".log", ".cfg", ".ini",
+        ".ts", ".html", ".css", ".yaml", ".yml", ".toml", ".sh", ".bat", ".ps1",
+        ".java", ".cpp", ".c", ".h", ".hpp", ".rs", ".go", ".rb", ".php", ".sql",
+        ".csv", ".env", ".gitignore", ".editorconfig", ".sln", ".csproj", ".xaml",
+    };
+
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico",
+    };
+
+    private string? _previewContent;
+    public string? PreviewContent
+    {
+        get => _previewContent;
+        set => SetProperty(ref _previewContent, value);
+    }
+
+    private System.Windows.Media.Imaging.BitmapImage? _previewImage;
+    public System.Windows.Media.Imaging.BitmapImage? PreviewImage
+    {
+        get => _previewImage;
+        set { if (SetProperty(ref _previewImage, value)) OnPropertyChanged(nameof(HasPreviewImage)); }
+    }
+
+    private string? _previewFileName;
+    public string? PreviewFileName
+    {
+        get => _previewFileName;
+        set => SetProperty(ref _previewFileName, value);
+    }
+
+    private string? _previewFileInfo;
+    public string? PreviewFileInfo
+    {
+        get => _previewFileInfo;
+        set => SetProperty(ref _previewFileInfo, value);
+    }
+
+    private bool _isPreviewVisible;
+    public bool IsPreviewVisible
+    {
+        get => _isPreviewVisible;
+        set => SetProperty(ref _isPreviewVisible, value);
+    }
+
+    public bool HasPreviewImage => PreviewImage is not null;
+
+    private void UpdateFilePreview()
+    {
+        if (!Config.FilePreviewEnabled)
+        {
+            IsPreviewVisible = false;
+            return;
+        }
+
+        var result = SelectedResult;
+        if (result is null || result.Type != ResultType.File || string.IsNullOrEmpty(result.FilePath))
+        {
+            IsPreviewVisible = false;
+            PreviewContent = null;
+            PreviewImage = null;
+            PreviewFileName = null;
+            PreviewFileInfo = null;
+            return;
+        }
+
+        var filePath = result.FilePath;
+        if (!File.Exists(filePath))
+        {
+            IsPreviewVisible = false;
+            return;
+        }
+
+        var ext = Path.GetExtension(filePath);
+        PreviewFileName = Path.GetFileName(filePath);
+
+        try
+        {
+            var fileInfo = new FileInfo(filePath);
+            var sizeStr = fileInfo.Length < 1024 ? $"{fileInfo.Length} B"
+                        : fileInfo.Length < 1024 * 1024 ? $"{fileInfo.Length / 1024.0:F1} KB"
+                        : $"{fileInfo.Length / (1024.0 * 1024.0):F1} MB";
+            PreviewFileInfo = $"{sizeStr}  ·  {fileInfo.LastWriteTime:g}";
+
+            if (TextExtensions.Contains(ext) && fileInfo.Length <= 50 * 1024)
+            {
+                // Text file preview — first 100 lines
+                var lines = File.ReadLines(filePath).Take(100);
+                PreviewContent = string.Join(Environment.NewLine, lines);
+                PreviewImage = null;
+                IsPreviewVisible = true;
+            }
+            else if (ImageExtensions.Contains(ext))
+            {
+                // Image preview
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(filePath);
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.DecodePixelWidth = 400;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                PreviewImage = bitmap;
+                PreviewContent = null;
+                IsPreviewVisible = true;
+            }
+            else
+            {
+                // Unsupported file — show info only
+                PreviewContent = null;
+                PreviewImage = null;
+                IsPreviewVisible = true;
+            }
+        }
+        catch
+        {
+            PreviewContent = "Preview unavailable";
+            PreviewImage = null;
+            IsPreviewVisible = true;
+        }
     }
 
     partial void OnActiveScopeIdChanged(string value)
