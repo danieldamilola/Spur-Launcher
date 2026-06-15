@@ -15,6 +15,7 @@ public partial class App : Application
     private MainWindow?         _window;
     private MainViewModel?      _vm;
     private IHotkeyService?     _hotkey;
+    private IHotkeyService?     _clipboardHotkey;
     private ClipboardWatcher?   _clipboard;
     private TaskbarIcon?        _trayIcon;
     private ILogger?            _fileLogger;
@@ -117,7 +118,7 @@ public partial class App : Application
             ShowSettingsWindow();
         };
 
-        // ── Register global hotkey ────────────────────────────────────
+        // ── Register global hotkeys ───────────────────────────────────
         var hwnd = new WindowInteropHelper(_window).EnsureHandle();
 
         if (config.HotkeyEnabled)
@@ -126,6 +127,16 @@ public partial class App : Application
             if (!_hotkey.Register(hwnd, config.Shortcut, ToggleWindow))
             {
                 _notification?.Show("Hotkey unavailable", $"Unable to register {config.Shortcut}. Another app may already be using it.");
+            }
+
+            // Register clipboard hotkey (separate service instance for independent lifecycle)
+            if (!string.IsNullOrWhiteSpace(config.ClipboardShortcut))
+            {
+                _clipboardHotkey = new HotkeyService(_fileLogger);
+                if (!_clipboardHotkey.Register(hwnd, config.ClipboardShortcut, ToggleClipboardWindow))
+                {
+                    _notification?.Show("Clipboard hotkey unavailable", $"Unable to register {config.ClipboardShortcut}. Another app may already be using it.");
+                }
             }
         }
 
@@ -229,11 +240,24 @@ public partial class App : Application
                         {
                             _notification?.Show("Hotkey unavailable", $"Unable to register {settings.Shortcut}. Another app may already be using it.");
                         }
+
+                        // Re-register clipboard hotkey
+                        _clipboardHotkey?.Dispose();
+                        if (!string.IsNullOrWhiteSpace(settings.ClipboardShortcut))
+                        {
+                            _clipboardHotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
+                            if (!_clipboardHotkey.Register(hwnd, settings.ClipboardShortcut, ToggleClipboardWindow))
+                            {
+                                _notification?.Show("Clipboard hotkey unavailable", $"Unable to register {settings.ClipboardShortcut}. Another app may already be using it.");
+                            }
+                        }
                     }
                     else
                     {
                         _hotkey?.Dispose();
                         _hotkey = null;
+                        _clipboardHotkey?.Dispose();
+                        _clipboardHotkey = null;
                     }
                     break;
 
@@ -246,6 +270,26 @@ public partial class App : Application
                         if (!_hotkey.Register(h, settings.Shortcut, ToggleWindow))
                         {
                             _notification?.Show("Hotkey unavailable", $"Unable to register {settings.Shortcut}. Another app may already be using it.");
+                        }
+                    }
+                    break;
+
+                case nameof(SettingsViewModel.ClipboardShortcut):
+                    if (_window is not null && settings.HotkeyEnabled)
+                    {
+                        _clipboardHotkey?.Dispose();
+                        if (!string.IsNullOrWhiteSpace(settings.ClipboardShortcut))
+                        {
+                            _clipboardHotkey = new HotkeyService(_fileLogger ?? NullLogger.Instance);
+                            var ch = new WindowInteropHelper(_window).EnsureHandle();
+                            if (!_clipboardHotkey.Register(ch, settings.ClipboardShortcut, ToggleClipboardWindow))
+                            {
+                                _notification?.Show("Clipboard hotkey unavailable", $"Unable to register {settings.ClipboardShortcut}. Another app may already be using it.");
+                            }
+                        }
+                        else
+                        {
+                            _clipboardHotkey = null;
                         }
                     }
                     break;
@@ -292,6 +336,27 @@ public partial class App : Application
             {
                 // Low-latency GC while launcher is visible — reduces pause time during typing
                 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+                _window.ShowWindow();
+            }
+        });
+    }
+
+    // ── Clipboard hotkey toggle ───────────────────────────────────────
+    private void ToggleClipboardWindow()
+    {
+        if (_window is null || _vm is null) return;
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (_window.IsVisible)
+            {
+                _window.HideWindow();
+                GCSettings.LatencyMode = GCLatencyMode.Interactive;
+                TrimMemoryAsync();
+            }
+            else
+            {
+                GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+                _vm.ActiveCategory = "clipboard";
                 _window.ShowWindow();
             }
         });
@@ -397,6 +462,7 @@ public partial class App : Application
         _vm?.Shutdown();
         _trayIcon?.Dispose();
         _hotkey?.Dispose();
+        _clipboardHotkey?.Dispose();
         _clipboard?.Dispose();
         // Close and dispose settings window
         _settingsWindow?.Close();

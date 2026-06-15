@@ -547,6 +547,18 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.HotkeyEnabled = value; Save(); OnPropertyChanged(); }
     }
 
+    public string ClipboardShortcut
+    {
+        get => _config.ClipboardShortcut;
+        set
+        {
+            if (_config.ClipboardShortcut == value || string.IsNullOrWhiteSpace(value)) return;
+            _config.ClipboardShortcut = value;
+            SaveAndApply();
+            OnPropertyChanged();
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Startup & Performance
     // ═══════════════════════════════════════════════════════════════
