@@ -17,7 +17,7 @@ public sealed class ScreenshotAddOn : IAddOn
     public string Name => "Screenshot";
     public string Description => "Capture and save screenshots.";
     public string IconGlyph => "\ue722";
-    public string? IconPath => "/Assets/Icons/image.png";
+    public string? IconPath => "/Assets/Icons/screenshot.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

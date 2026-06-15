@@ -17,7 +17,7 @@ public sealed class CurrencyAddOn : IAddOn
     public string Name => "Currency";
     public string Description => "Real-time currency conversion.";
     public string IconGlyph => "\ue12c";
-    public string? IconPath => "/Assets/Icons/url.png";
+    public string? IconPath => "/Assets/Icons/currency.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

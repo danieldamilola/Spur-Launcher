@@ -14,7 +14,7 @@ public sealed class QuickNoteAddOn : IAddOn
     public string Name => "Quick Note";
     public string Description => "Save quick notes instantly.";
     public string IconGlyph => "\ue70b";
-    public string? IconPath => "/Assets/Icons/copy.png";
+    public string? IconPath => "/Assets/Icons/note.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

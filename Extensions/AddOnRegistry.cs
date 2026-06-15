@@ -56,20 +56,20 @@ public sealed class AddOnRegistry
         // the real add-on instance is only created when a behaviour method
         // (CanHandle, GetResults, ExecuteAsync, …) is first called.
         RegisterLazy("calc",     "Calculator",    "Evaluate math expressions inline.",               "\ue1d0", "/Assets/Icons/calculator.png",  true,  "",         new CalculatorSettings(),    () => new CalculatorAddOn());
-        RegisterLazy("timer",    "Timer",         "Start a countdown directly from the launcher.",   "\ue121", "/Assets/Icons/history.png",     false, "timer",    new TimerSettings(),         () => new TimerAddOn());
-        RegisterLazy("kill",     "Kill",          "Find and terminate running processes by name.",    "\ue711", "/Assets/Icons/shutdown.png",    false, "kill",     new KillProcessSettings(),   () => new KillProcessAddOn());
-        RegisterLazy("pw",       "Password",      "Generate strong random passwords.",               "\ue8d7", "/Assets/Icons/lock.png",        false, "pw",       new PasswordGenSettings(),   () => new PasswordGenAddOn());
-        RegisterLazy("ss",       "Screenshot",    "Capture and save screenshots.",                   "\ue722", "/Assets/Icons/image.png",       false, "ss",       new ScreenshotSettings(),    () => new ScreenshotAddOn());
-        RegisterLazy("note",     "Quick Note",    "Save quick notes instantly.",                     "\ue70b", "/Assets/Icons/copy.png",        false, "note",     new QuickNoteSettings(),     () => new QuickNoteAddOn());
-        RegisterLazy("cur",      "Currency",      "Real-time currency conversion.",                  "\ue12c", "/Assets/Icons/url.png",         false, "cur",      new CurrencySettings(),      () => new CurrencyAddOn());
+        RegisterLazy("timer",    "Timer",         "Start a countdown directly from the launcher.",   "\ue121", "/Assets/Icons/timer.png",       false, "timer",    new TimerSettings(),         () => new TimerAddOn());
+        RegisterLazy("kill",     "Kill",          "Find and terminate running processes by name.",    "\ue711", "/Assets/Icons/kill.png",        false, "kill",     new KillProcessSettings(),   () => new KillProcessAddOn());
+        RegisterLazy("pw",       "Password",      "Generate strong random passwords.",               "\ue8d7", "/Assets/Icons/password.png",    false, "pw",       new PasswordGenSettings(),   () => new PasswordGenAddOn());
+        RegisterLazy("ss",       "Screenshot",    "Capture and save screenshots.",                   "\ue722", "/Assets/Icons/screenshot.png",  false, "ss",       new ScreenshotSettings(),    () => new ScreenshotAddOn());
+        RegisterLazy("note",     "Quick Note",    "Save quick notes instantly.",                     "\ue70b", "/Assets/Icons/note.png",        false, "note",     new QuickNoteSettings(),     () => new QuickNoteAddOn());
+        RegisterLazy("cur",      "Currency",      "Real-time currency conversion.",                  "\ue12c", "/Assets/Icons/currency.png",    false, "cur",      new CurrencySettings(),      () => new CurrencyAddOn());
         RegisterLazy("color",    "Color",         "Hex/RGB/HSL color conversion and preview.",       "\ue790", "/Assets/Icons/color.png",       false, "color",    new ColorSettings(),         () => new ColorAddOn());
-        RegisterLazy("ip",       "IP",            "Show local and public IP addresses.",             "\ue717", "/Assets/Icons/info.png",        false, "ip",       new IpSettings(),            () => new IpAddOn());
+        RegisterLazy("ip",       "IP",            "Show local and public IP addresses.",             "\ue717", "/Assets/Icons/ip.png",          false, "ip",       new IpSettings(),            () => new IpAddOn());
         RegisterLazy("ai",       "AI Assistant",  "Ask the configured AI provider.",                 "\ue270", "/Assets/Icons/ai.png",          false, "ai",       new AiSettings(),            () => new AiAddOn());
         RegisterLazy("shell",    "Shell",         "Run commands through your configured terminal.",   "\ue765", "/Assets/Icons/shell.png",       false, ">",        new ShellSettings(),         () => new ShellAddOn());
-        RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/settings.png",    false, "sys",      new SystemSettings(),        () => new SystemAddOn());
+        RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/system.png",      false, "sys",      new SystemSettings(),        () => new SystemAddOn());
         RegisterLazy("settings", "Settings",      "Open Spur settings.",                             "\ue713", "/Assets/Icons/settings.png",    false, "settings", new SettingsNavSettings(),   () => new SettingsNavAddOn());
-        RegisterLazy("eyedropper","Eyedropper",   "Pick any color from screen.",                     "\ue790", "/Assets/Icons/color.png",       false, "pick",     new EyedropperSettings(),    () => new EyedropperAddOn());
-        RegisterLazy("ocr",       "OCR",           "Extract text from clipboard screenshots.",        "\ue8ba", "/Assets/Icons/image.png",       false, "ocr",      new OcrSettings(),           () => new OcrAddOn());
+        RegisterLazy("eyedropper","Eyedropper",   "Pick any color from screen.",                     "\ue790", "/Assets/Icons/eyedropper.png",  false, "pick",     new EyedropperSettings(),    () => new EyedropperAddOn());
+        RegisterLazy("ocr",       "OCR",           "Extract text from clipboard screenshots.",        "\ue8ba", "/Assets/Icons/ocr.png",         false, "ocr",      new OcrSettings(),           () => new OcrAddOn());
         InvalidateCache();
 
     }

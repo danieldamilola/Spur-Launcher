@@ -14,7 +14,7 @@ public sealed class SystemAddOn : IAddOn
     public string Name => "System";
     public string Description => "Shutdown, restart, sleep, lock, sign out.";
     public string IconGlyph => "\ue7e8";
-    public string? IconPath => "/Assets/Icons/settings.png";
+    public string? IconPath => "/Assets/Icons/system.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

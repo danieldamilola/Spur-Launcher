@@ -15,7 +15,7 @@ public sealed class PasswordGenAddOn : IAddOn
     public string Name => "Password";
     public string Description => "Generate strong random passwords.";
     public string IconGlyph => "\ue8d7";
-    public string? IconPath => "/Assets/Icons/lock.png";
+    public string? IconPath => "/Assets/Icons/password.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;

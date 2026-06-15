@@ -14,7 +14,7 @@ public sealed class TimerAddOn : IAddOn
     public string Name => "Timer";
     public string Description => "Start a countdown directly from the launcher.";
     public string IconGlyph => "\ue121";
-    public string? IconPath => "/Assets/Icons/history.png";
+    public string? IconPath => "/Assets/Icons/timer.png";
     public string Author => "Built-in";
     public string Version => "2.0.0";
     public bool IsBuiltIn => true;
