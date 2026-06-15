@@ -48,7 +48,7 @@ public sealed class AiService : IAiService
 
     // Owned here so callers never need to supply or duplicate it.
     private const string SystemPrompt =
-        "You are a helpful assistant. Be concise. You may use markdown formatting like **bold**, *italic*, `code`, code blocks, and lists when helpful.";
+        "You are a helpful assistant inside a desktop launcher app called Spur. Give clear, complete answers. You may use markdown formatting like **bold**, *italic*, `code`, code blocks, and lists when helpful.";
 
     public string[] SupportedProviders => [.. Providers.Keys];
 
@@ -91,7 +91,7 @@ public sealed class AiService : IAiService
             msgList.Add(new { role, content });
         }
 
-        var body = new { model, stream = true, messages = msgList };
+        var body = new { model, stream = true, max_tokens = 2048, messages = msgList };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
