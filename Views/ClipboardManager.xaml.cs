@@ -161,4 +161,14 @@ public partial class ClipboardManager : UserControl
 
     /// <summary>Called from the keyboard handler when Enter is pressed in clipboard mode.</summary>
     public void PasteSelected() => PasteAndHide(_vm?.SelectedEntry);
+
+    private void OnMergeClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.ContextMenu is not null)
+        {
+            btn.ContextMenu.PlacementTarget = btn;
+            btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            btn.ContextMenu.IsOpen = true;
+        }
+    }
 }

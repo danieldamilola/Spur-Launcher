@@ -353,13 +353,27 @@
                                 Padding="6" Width="30" Height="30">
                             <ui:FontIcon Glyph="&#xE74D;" FontSize="14"/>
                         </Button>
-                        <Button Style="{StaticResource SettingsSoftButton}"
+                        <Button x:Name="MergeBtn"
+                                Style="{StaticResource SettingsSoftButton}"
                                 Margin="4,0,0,0"
-                                Command="{Binding MergeWithAboveCommand}"
                                 ToolTip="Merge with item above"
                                 AutomationProperties.Name="Merge with above"
-                                Padding="6" Width="30" Height="30">
+                                Padding="6" Width="30" Height="30"
+                                Click="OnMergeClick">
                             <ui:FontIcon Glyph="&#xE8D5;" FontSize="14"/>
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="No separator (concatenate)"
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="none"/>
+                                    <MenuItem Header="Space"
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="space"/>
+                                    <MenuItem Header="New line"
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="newline"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
                         </Button>
                     </StackPanel>
 

@@ -297,9 +297,9 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         return "\U0001F4DD Text";
     }
 
-    /// <summary>Merge the selected entry with the entry directly above it.</summary>
+    /// <summary>Merge the selected entry with the entry directly above it using the given separator.</summary>
     [RelayCommand]
-    public void MergeWithAbove()
+    public void MergeWith(string? separator)
     {
         if (SelectedEntry is null || SelectedEntry.IsImage) return;
         var idx = Entries.IndexOf(SelectedEntry);
@@ -307,7 +307,14 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         var above = Entries[idx - 1];
         if (above.IsImage) return;
 
-        var merged = above.Content + Environment.NewLine + SelectedEntry.Content;
+        var sep = separator switch
+        {
+            "space"   => " ",
+            "newline" => Environment.NewLine,
+            _         => ""   // "none" or default — direct concatenation
+        };
+
+        var merged = above.Content + sep + SelectedEntry.Content;
 
         _clipboard.RemoveById(above.Id);
         _clipboard.RemoveById(SelectedEntry.Id);
