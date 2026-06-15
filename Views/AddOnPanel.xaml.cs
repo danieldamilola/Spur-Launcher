@@ -390,7 +390,7 @@ public partial class AddOnPanel : UserControl
                 timerStack.Children.Add(display);
 
                 // Status text
-                var statusText = timer.IsPaused ? "Paused" : "Running";
+                var statusText = timer.IsPaused ? "Paused" : timer.IsRunning ? "Counting down" : "Finished";
                 var statusLabel = new TextBlock
                 {
                     Text = statusText, FontSize = 10, Foreground = mutedBrush,
@@ -399,7 +399,7 @@ public partial class AddOnPanel : UserControl
                 timer.PropertyChanged += (s, e) =>
                 {
                     if (s is TimerInstance inst && (e.PropertyName == nameof(TimerInstance.IsPaused) || e.PropertyName == nameof(TimerInstance.IsRunning)))
-                        Dispatcher.InvokeAsync(() => statusLabel.Text = inst.IsPaused ? "Paused" : inst.IsRunning ? "Running" : "Done");
+                        Dispatcher.InvokeAsync(() => statusLabel.Text = inst.IsPaused ? "Paused" : inst.IsRunning ? "Counting down" : "Finished");
                 };
                 timerStack.Children.Add(statusLabel);
 

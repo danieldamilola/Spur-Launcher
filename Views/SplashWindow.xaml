@@ -10,17 +10,17 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False">
+    <Window.Resources>
+        <DropShadowEffect x:Key="PopupShadow"
+                          ShadowDepth="0"
+                          BlurRadius="20"
+                          Color="#000000"
+                          Opacity="0.5"/>
+    </Window.Resources>
     <Border Background="#1A1A2E"
             CornerRadius="16"
             Margin="10"
             Effect="{StaticResource PopupShadow}">
-        <Border.Resources>
-            <DropShadowEffect x:Key="PopupShadow"
-                              ShadowDepth="0"
-                              BlurRadius="20"
-                              Color="#000000"
-                              Opacity="0.5"/>
-        </Border.Resources>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
