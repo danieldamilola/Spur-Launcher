@@ -67,6 +67,23 @@ public sealed class AddOnRegistry
         RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/settings.png",    false, "sys",      new SystemSettings(),        () => new SystemAddOn());
         RegisterLazy("settings", "Settings",      "Open Spur settings.",                             "\ue713", "/Assets/Icons/settings.png",    false, "settings", new SettingsNavSettings(),   () => new SettingsNavAddOn());
         InvalidateCache();
+
+    }
+
+    private void RegisterLazy(
+        string id, string name, string description,
+        string iconGlyph, string? iconPath,
+        bool isGlobal, string keyword,
+        object? defaultSettings,
+        Func<IAddOn> factory)
+    {
+        _builtIn.Add(new LazyAddOn(
+            id, name, description,
+            iconGlyph, iconPath,
+            "Built-in", "2.0.0",
+            isBuiltIn: true, isGlobal,
+            isEnabled: true, keyword,
+            defaultSettings, factory));
     }
 
     private void RegisterLazy(

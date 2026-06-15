@@ -1,3 +1,4 @@
+using System.Media;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
@@ -16,6 +17,7 @@ public sealed partial class TimerViewModel : ObservableObject
     [ObservableProperty] private string _timerStatus = "Choose a duration";
     [ObservableProperty] private double _timerProgress = 100;
     [ObservableProperty] private bool   _timerRunning = false;
+    [ObservableProperty] private bool   _isPaused = false;
 
     private TimeSpan _timerRemaining;
     private TimeSpan _timerTotal;
@@ -26,10 +28,14 @@ public sealed partial class TimerViewModel : ObservableObject
         _notification = notification;
         StartCommand  = new RelayCommand(Start);
         CancelCommand = new RelayCommand(Cancel);
+        PauseCommand  = new RelayCommand(Pause);
+        ResumeCommand = new RelayCommand(Resume);
     }
 
     public IRelayCommand StartCommand  { get; }
     public IRelayCommand CancelCommand { get; }
+    public IRelayCommand PauseCommand  { get; }
+    public IRelayCommand ResumeCommand { get; }
 
     public bool StartTimerPreview(string query)
     {
@@ -63,11 +69,30 @@ public sealed partial class TimerViewModel : ObservableObject
         }
         _timerRemaining = _timerTotal;
         TimerRunning    = true;
+        IsPaused        = false;
         TimerStatus = "Counting down";
 
         _timerTick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _timerTick.Tick += OnTimerTick;
         _timerTick.Start();
+    }
+
+    /// <summary>Pause the running timer, preserving remaining time.</summary>
+    public void Pause()
+    {
+        if (!TimerRunning || IsPaused) return;
+        _timerTick?.Stop();
+        IsPaused = true;
+        TimerStatus = "Paused";
+    }
+
+    /// <summary>Resume a paused timer from where it left off.</summary>
+    public void Resume()
+    {
+        if (!TimerRunning || !IsPaused) return;
+        IsPaused = false;
+        TimerStatus = "Counting down";
+        _timerTick?.Start();
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
@@ -80,6 +105,7 @@ public sealed partial class TimerViewModel : ObservableObject
             _timerTick = null;
             TimerRunning = false;
             TimerStatus = "Finished";
+            SystemSounds.Exclamation.Play();
             _notification.Show("Spur Timer", "Your timer has finished!");
         }
         UpdateTimerDisplay();
@@ -101,13 +127,7 @@ public sealed partial class TimerViewModel : ObservableObject
         _timerTick?.Stop();
         _timerTick  = null;
         TimerRunning = false;
+        IsPaused     = false;
         TimerStatus = "Canceled";
-    }
-
-    public void Stop()
-    {
-        _timerTick?.Stop();
-        _timerTick  = null;
-        TimerRunning = false;
     }
 }

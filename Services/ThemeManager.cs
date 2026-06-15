@@ -3,7 +3,7 @@ namespace Spur.Services;
 using iNKORE.UI.WPF.Modern;
 
 /// <summary>Interface for theme switching.</summary>
-public interface IThemeManager
+public interface IThemeManager : IDisposable
 {
     void Apply(string theme);
 }
@@ -11,6 +11,7 @@ public interface IThemeManager
 /// <summary>
 /// Swaps the application's active theme resource dictionary at runtime.
 /// Applies dark, light, or system-detected theme.
+/// Listens for Windows theme changes and re-applies when config is "system".
 /// </summary>
 public sealed class ThemeManagerImpl : IThemeManager
 {
@@ -18,11 +19,14 @@ public sealed class ThemeManagerImpl : IThemeManager
     private const string LightUri = "Themes/LightTheme.xaml";
     private readonly ILogger _log;
     private readonly Spur.Models.SpurConfig _config;
+    private bool _disposed;
 
     public ThemeManagerImpl(ILogger log, Spur.Models.SpurConfig config)
     {
         _log = log;
         _config = config;
+
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
     }
 
     public void Apply(string theme)
@@ -62,6 +66,32 @@ public sealed class ThemeManagerImpl : IThemeManager
         catch (Exception ex) { _log.Warning("Failed to set iNKORE theme", ex); }
 
         _log.Info($"Theme applied: {resolved}");
+    }
+
+    /// <summary>
+    /// Handles Windows theme/preference changes. When the config theme is "system",
+    /// re-applies the theme so the app follows the new system setting.
+    /// </summary>
+    private void OnUserPreferenceChanged(object sender, Microsoft.Win32.UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category != Microsoft.Win32.UserPreferenceCategory.General)
+            return;
+
+        if (!string.Equals(_config.Theme, "system", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _log.Info("System theme change detected, re-applying theme");
+
+        // The event may fire on a background thread; dispatch to the UI thread.
+        Application.Current?.Dispatcher?.Invoke(() => Apply("system"));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
     }
 
     private System.Windows.Media.Color ResolveAccentColor(ResourceDictionary newDict)

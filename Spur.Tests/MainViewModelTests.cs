@@ -84,6 +84,7 @@ public class MainViewModelTests
     {
         public string? LastApplied { get; private set; }
         public void Apply(string theme) => LastApplied = theme;
+        public void Dispose() { }
     }
 
     private sealed class FakeStartup : IStartupService
