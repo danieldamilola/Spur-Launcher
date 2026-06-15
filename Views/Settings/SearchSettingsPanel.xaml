@@ -48,7 +48,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/search.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/searchengine.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Fuzzy matching" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -68,7 +68,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE8FF;" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                        <Image Source="/Assets/Icons/preview.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Show file preview" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -88,7 +88,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/settings.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/maxresults.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Result count" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -114,7 +114,7 @@
                         <ColumnDefinition Width="140"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/search.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/debounce.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Query search precision" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -154,7 +154,7 @@
                         <ColumnDefinition Width="160"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/history.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/debounce.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Search delay" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -180,7 +180,7 @@
                         <ColumnDefinition Width="140"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/url.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/web.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Web search engine" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>

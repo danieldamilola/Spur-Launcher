@@ -30,7 +30,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/color.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/theme.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Theme" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -56,7 +56,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/color.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/accent.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Accent color" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -82,7 +82,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/color.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/accent.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Custom hex color" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -102,7 +102,7 @@
                         <ColumnDefinition Width="130"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/image.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/opacity.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Window opacity" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -122,7 +122,7 @@
                         <ColumnDefinition Width="130"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/settings.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/barwidth.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Bar width" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -142,7 +142,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/image.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/viewmode.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="View mode" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -167,7 +167,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE740;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/windowmode.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Window mode" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -200,7 +200,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/keyboard.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/shortcut.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Shortcut" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -228,7 +228,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/keyboard.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/clipboard.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Clipboard Shortcut" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -255,7 +255,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/image.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/position.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Position" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -283,7 +283,7 @@
                         <ColumnDefinition Width="140"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE78B;" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                        <Image Source="/Assets/Icons/monitor.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Preferred monitor" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -340,7 +340,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/restart.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/startup.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Launch with Windows" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
@@ -360,7 +360,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <Image Source="/Assets/Icons/settings.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Image Source="/Assets/Icons/tray.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Tray icon" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
