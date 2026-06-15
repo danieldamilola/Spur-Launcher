@@ -90,21 +90,6 @@ public sealed class AddOnRegistry
             defaultSettings, factory));
     }
 
-    private void RegisterLazy(
-        string id, string name, string description,
-        string iconGlyph, string? iconPath,
-        bool isGlobal, string keyword,
-        object? defaultSettings,
-        Func<IAddOn> factory)
-    {
-        _builtIn.Add(new LazyAddOn(
-            id, name, description,
-            iconGlyph, iconPath,
-            "Built-in", "2.0.0",
-            isBuiltIn: true, isGlobal,
-            isEnabled: true, keyword,
-            defaultSettings, factory));
-    }
 
     public IAddOn? FindById(string id)
         => All.FirstOrDefault(x => x.Id.Equals(id, StringComparison.OrdinalIgnoreCase));

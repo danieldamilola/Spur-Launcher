@@ -252,25 +252,6 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>Retry the last failed query.</summary>
-    private async Task RetryLastAsync()
-    {
-        if (string.IsNullOrEmpty(_lastQuery)) return;
-
-        // If there's an existing conversation, retry as follow-up; otherwise start fresh
-        if (_aiConversation.Count > 1)
-        {
-            // Remove the last user message that failed (if it's still there without an assistant reply)
-            if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "user")
-                _aiConversation.RemoveAt(_aiConversation.Count - 1);
-            await OnAiFollowUpAsync(_lastQuery);
-        }
-        else
-        {
-            await StartAiAsync(_lastQuery);
-        }
-    }
-
     /// <summary>Trims conversation history to MaxConversationTurns, keeping the most recent turns.</summary>
     private void TrimConversationIfNeeded()
     {

@@ -302,4 +302,68 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
         var handler = ClipboardChanged;
         handler?.Invoke();
     }
+
+    // ── Persistence helpers ─────────────────────────────────────────
+
+    private void ScheduleSave()
+    {
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+
+    private void FlushSave()
+    {
+        try
+        {
+            List<ClipboardEntryDto> dtos;
+            lock (_lock)
+            {
+                dtos = _history
+                    .Where(e => !e.IsImage && !string.IsNullOrEmpty(e.Content))
+                    .Select(e => new ClipboardEntryDto { Content = e.Content, Timestamp = e.Timestamp })
+                    .ToList();
+            }
+            var dir = Path.GetDirectoryName(_savePath)!;
+            Directory.CreateDirectory(dir);
+            var json = System.Text.Json.JsonSerializer.Serialize(dtos);
+            File.WriteAllText(_savePath, json);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Failed to save clipboard history", ex);
+        }
+    }
+
+    private void LoadHistory()
+    {
+        try
+        {
+            if (!File.Exists(_savePath)) return;
+            var json = File.ReadAllText(_savePath);
+            var dtos = System.Text.Json.JsonSerializer.Deserialize<List<ClipboardEntryDto>>(json);
+            if (dtos is null) return;
+            lock (_lock)
+            {
+                foreach (var dto in dtos)
+                {
+                    if (!string.IsNullOrEmpty(dto.Content))
+                        _history.Add(new ClipboardEntry(dto.Content));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Failed to load clipboard history", ex);
+        }
+    }
+
+    /// <summary>Flushes clipboard history to disk.</summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _debounceTimer.Stop();
+        _debounceTimer.Dispose();
+        FlushSave();
+    }
 }
