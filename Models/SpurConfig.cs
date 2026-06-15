@@ -50,6 +50,9 @@ public sealed class SpurConfig
     /// <summary>Show file preview pane when a file result is selected.</summary>
     public bool FilePreviewEnabled { get; set; } = true;
 
+    /// <summary>Preview panel placement: "Floating" (separate panel) or "Inline" (inside capsule).</summary>
+    public string PreviewStyle { get; set; } = "Floating";
+
 
     // ═══════════════════════════════════════════════════════════════
     // Search

@@ -47,7 +47,7 @@
                                DataContext="{Binding}"
                                VerticalAlignment="Top"
                                Margin="8,0,0,0"
-                               Visibility="{Binding IsPreviewVisible, Converter={StaticResource BoolToVisibility}}"/>
+                               Visibility="{Binding IsFloatingPreview, Converter={StaticResource BoolToVisibility}}"/>
 
       <!-- ── Search capsule (search bar + results only, no categories) ── -->
       <Grid Grid.Column="0" Background="Transparent">
@@ -115,16 +115,60 @@
               <Border Grid.Row="0" Background="{DynamicResource Separator}"/>
 
               <Grid Grid.Row="1">
-                <views:HomePanel x:Name="HomePanelControl"
-                                 DataContext="{Binding}"
-                                 Visibility="Collapsed"/>
-                <views:UnifiedResultsView x:Name="UnifiedResultsControl" DataContext="{Binding}" />
-                <views:ClipboardManager x:Name="ClipboardManagerControl"
-                                        DataContext="{Binding Clipboard}"
-                                        Visibility="Collapsed"/>
-                <views:AddOnPanel x:Name="AddOnPanelControl"
-                                  DataContext="{Binding}"
-                                  Visibility="Collapsed"/>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                  <views:HomePanel x:Name="HomePanelControl"
+                                   DataContext="{Binding}"
+                                   Visibility="Collapsed"/>
+                  <views:UnifiedResultsView x:Name="UnifiedResultsControl" DataContext="{Binding}" />
+                  <views:ClipboardManager x:Name="ClipboardManagerControl"
+                                          DataContext="{Binding Clipboard}"
+                                          Visibility="Collapsed"/>
+                  <views:AddOnPanel x:Name="AddOnPanelControl"
+                                    DataContext="{Binding}"
+                                    Visibility="Collapsed"/>
+                </Grid>
+                <!-- Inline preview (inside capsule) -->
+                <Border Grid.Column="1"
+                        Width="1"
+                        Background="{DynamicResource Separator}"
+                        Visibility="{Binding IsInlinePreview, Converter={StaticResource BoolToVisibility}}"/>
+                <ScrollViewer Grid.Column="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              MaxHeight="424"
+                              Margin="0"
+                              Visibility="{Binding IsInlinePreview, Converter={StaticResource BoolToVisibility}}">
+                  <StackPanel Width="260" Margin="12,10">
+                    <TextBlock Text="{Binding PreviewFileName}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding PreviewFileInfo}"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,3,0,8"/>
+                    <!-- Text preview -->
+                    <TextBlock Text="{Binding PreviewContent}"
+                               FontFamily="Cascadia Code, Consolas, Courier New"
+                               FontSize="11"
+                               LineHeight="16"
+                               Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding PreviewContent, Converter={StaticResource NullToVis}}"/>
+                    <!-- Image preview -->
+                    <Image Source="{Binding PreviewImage}"
+                           MaxHeight="260"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Visibility="{Binding HasPreviewImage, Converter={StaticResource BoolToVisibility}}"/>
+                  </StackPanel>
+                </ScrollViewer>
               </Grid>
             </Grid>
 

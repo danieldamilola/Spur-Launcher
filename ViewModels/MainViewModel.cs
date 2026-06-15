@@ -607,8 +607,18 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsPreviewVisible
     {
         get => _isPreviewVisible;
-        set => SetProperty(ref _isPreviewVisible, value);
+        set
+        {
+            if (SetProperty(ref _isPreviewVisible, value))
+            {
+                OnPropertyChanged(nameof(IsFloatingPreview));
+                OnPropertyChanged(nameof(IsInlinePreview));
+            }
+        }
     }
+
+    public bool IsFloatingPreview => IsPreviewVisible && Config.PreviewStyle == "Floating";
+    public bool IsInlinePreview => Config.FilePreviewEnabled && Config.PreviewStyle == "Inline";
 
     public bool HasPreviewImage => PreviewImage is not null;
 

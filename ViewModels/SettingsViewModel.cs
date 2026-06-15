@@ -325,6 +325,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         set { _config.FilePreviewEnabled = value; Save(); OnPropertyChanged(); }
     }
 
+    public string[] PreviewStyleOptions { get; } = ["Floating", "Inline"];
+
+    public string PreviewStyle
+    {
+        get => _config.PreviewStyle;
+        set { _config.PreviewStyle = value; Save(); OnPropertyChanged(); }
+    }
+
     public string[] QuerySearchPrecisionOptions { get; } = ["Low", "Regular", "Strict"];
 
     public string QuerySearchPrecision

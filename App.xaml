@@ -18,6 +18,7 @@
             <converters:HexToColorConverter x:Key="HexToColorConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" CollapseWhenFalse="True"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToInverseVisibility" Invert="True" CollapseWhenFalse="True"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVis"/>
             <!-- Dynamic surface colors based on user background color -->
             <SolidColorBrush x:Key="DynamicSurface" Color="#141416"/>
             <SolidColorBrush x:Key="DynamicSurfaceLow" Color="#242426"/>
