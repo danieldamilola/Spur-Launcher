@@ -118,6 +118,7 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0">
                   <views:HomePanel x:Name="HomePanelControl"
@@ -131,16 +132,17 @@
                                     DataContext="{Binding}"
                                     Visibility="Collapsed"/>
                 </Grid>
-                <!-- Inline preview (inside capsule) -->
+                <!-- Inline preview divider -->
                 <Border Grid.Column="1"
                         Width="1"
+                        Margin="0,8"
                         Background="{DynamicResource Separator}"
                         Visibility="{Binding IsInlinePreview, Converter={StaticResource BoolToVisibility}}"/>
-                <ScrollViewer Grid.Column="1"
+                <!-- Inline preview content -->
+                <ScrollViewer Grid.Column="2"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               MaxHeight="424"
-                              Margin="0"
                               Visibility="{Binding IsInlinePreview, Converter={StaticResource BoolToVisibility}}">
                   <StackPanel Width="260" Margin="12,10">
                     <TextBlock Text="{Binding PreviewFileName}"
