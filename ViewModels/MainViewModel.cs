@@ -1200,6 +1200,39 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Opens the Windows file properties dialog for the selected result.</summary>
+    [RelayCommand]
+    public void ShowProperties()
+    {
+        var result = SelectedResult;
+        if (result is null) return;
+
+        string? target = result.Type switch
+        {
+            ResultType.App  => result.ExePath ?? result.LnkPath,
+            ResultType.File => result.FilePath,
+            _               => null,
+        };
+
+        if (string.IsNullOrWhiteSpace(target)) return;
+
+        try
+        {
+            var info = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"/select,\"{target}\"",
+                UseShellExecute = true,
+            };
+            // Use shell verb "properties" via ShellExecuteEx
+            Helpers.ShellProperties.Show(target);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("ShowProperties failed", ex);
+        }
+    }
+
     /// <summary>Pins or unpins the given result. Persists to config.</summary>
     [RelayCommand]
     public void TogglePin(SearchResult? result)

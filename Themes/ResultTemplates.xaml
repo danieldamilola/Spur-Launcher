@@ -79,15 +79,59 @@
 
             <Grid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Run as Administrator"
-                              Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+Enter"/>
-                    <MenuItem Header="Open file location"
+                    <!-- Open (default action — same as double-click) -->
+                    <MenuItem Header="Open"
+                              Command="{Binding DataContext.OpenSelectedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              FontWeight="SemiBold"
+                              InputGestureText="Enter">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <Separator/>
+
+                    <!-- Open file location — only visible when FilePath is not null -->
+                    <MenuItem x:Name="CtxOpenLocation"
+                              Header="Open file location"
                               Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+Shift+E"/>
+                              InputGestureText="Ctrl+Shift+E">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <!-- Copy path -->
                     <MenuItem Header="Copy path"
                               Command="{Binding DataContext.CopySelectedPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+C"/>
+                              InputGestureText="Ctrl+C">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <Separator x:Name="CtxAdminSep"/>
+
+                    <!-- Run as administrator — only for .exe results -->
+                    <MenuItem x:Name="CtxRunAsAdmin"
+                              Header="Run as administrator"
+                              Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              InputGestureText="Ctrl+Enter">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xEEA3;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <Separator x:Name="CtxPropSep"/>
+
+                    <!-- Properties — opens Windows file properties dialog -->
+                    <MenuItem x:Name="CtxProperties"
+                              Header="Properties"
+                              Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </ContextMenu>
             </Grid.ContextMenu>
 
@@ -356,7 +400,7 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- Lightweight result row (browse panels, no context menu) -->
+    <!-- Lightweight result row (browse panels) -->
     <DataTemplate x:Key="ResultRowTemplate" DataType="{x:Type models:SearchResult}">
         <Grid x:Name="RowRoot"
               Height="{DynamicResource RowHeight}"
@@ -364,6 +408,49 @@
               Cursor="Hand"
               ToolTip="{Binding Name}"
               AutomationProperties.Name="{Binding Name}">
+
+            <Grid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open"
+                              Command="{Binding DataContext.OpenSelectedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              FontWeight="SemiBold"
+                              InputGestureText="Enter">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="Open file location"
+                              Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              InputGestureText="Ctrl+Shift+E">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Copy path"
+                              Command="{Binding DataContext.CopySelectedPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              InputGestureText="Ctrl+C">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="Run as administrator"
+                              Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              InputGestureText="Ctrl+Enter">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xEEA3;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="Properties"
+                              Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </Grid.ContextMenu>
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3"/>
