@@ -139,6 +139,7 @@
             <Border Grid.Row="3"
                     x:Name="ToastBar"
                     Visibility="Collapsed"
+                    Opacity="0"
                     Height="32"
                     Background="{DynamicResource Depth2}"
                     BorderBrush="{DynamicResource Separator}"
@@ -147,7 +148,7 @@
               <TextBlock Text="{Binding ToastMessage}"
                          VerticalAlignment="Center"
                          FontFamily="{DynamicResource Token.Font.Primary}"
-                         FontSize="12"
+                         FontSize="{DynamicResource FontSm}"
                          Foreground="{DynamicResource TextSecondary}"/>
             </Border>
 
@@ -199,7 +200,7 @@
                       HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="esc"
                            FontFamily="{DynamicResource Token.Font.Mono}"
-                           FontSize="10"
+                           FontSize="{DynamicResource FontNano}"
                            Foreground="{DynamicResource TextSecondary}"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
