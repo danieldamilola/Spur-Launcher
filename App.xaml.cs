@@ -140,7 +140,7 @@ public partial class App : Application
         // ── Onboarding (first launch only) ───────────────────────────
         if (!config.OnboardingComplete)
         {
-            var onboarding = new OnboardingWindow(config, configSvc);
+            var onboarding = new OnboardingWindow(config, configSvc, themeMgr);
             onboarding.OnCompleted += () =>
             {
                 config.OnboardingComplete = true;

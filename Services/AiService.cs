@@ -48,7 +48,7 @@ public sealed class AiService : IAiService
 
     // Owned here so callers never need to supply or duplicate it.
     private const string SystemPrompt =
-        "You are a helpful assistant. Be concise and use plain text — no markdown symbols.";
+        "You are a helpful assistant. Be concise. You may use markdown formatting like **bold**, *italic*, `code`, code blocks, and lists when helpful.";
 
     public string[] SupportedProviders => [.. Providers.Keys];
 

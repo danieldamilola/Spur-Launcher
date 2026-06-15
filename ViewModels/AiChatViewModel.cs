@@ -14,6 +14,11 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     private readonly SpurConfig _config;
     private CancellationTokenSource? _aiCts;
 
+    // Track the last user action so we can retry on failure.
+    private enum MessageKind { None, Initial, FollowUp }
+    private MessageKind _lastMessageKind = MessageKind.None;
+    private string _lastMessageText = string.Empty;
+
     // Contains only "user" and "assistant" turns. The system prompt is owned by
     // AiService and must not be added here — doing so caused a duplicate system
     // prompt to be sent with conflicting instructions.
@@ -39,6 +44,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         // AsyncRelayCommand surfaces exceptions via its error path rather than
         // crashing the process (previously was async void).
         AiFollowUpCommand = new AsyncRelayCommand<string>(OnAiFollowUpAsync);
+        RetryLastCommand  = new AsyncRelayCommand(RetryLastAsync, () => !string.IsNullOrEmpty(AiError));
     }
 
     [ObservableProperty] private string _aiText    = string.Empty;
@@ -46,6 +52,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _aiError   = string.Empty;
 
     public IAsyncRelayCommand<string> AiFollowUpCommand { get; }
+    public IAsyncRelayCommand RetryLastCommand { get; }
 
     public event EventHandler? ConversationChanged;
 
@@ -97,6 +104,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             ? trimmed[3..].Trim()
             : trimmed;
 
+        _lastMessageKind = MessageKind.Initial;
+        _lastMessageText = question;
+
         AiText    = string.Empty;
         AiError   = string.Empty;
         AiLoading = true;
@@ -146,9 +156,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             ConversationChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
-        catch (HttpRequestException ex) { AiError = ex.Message; }
-        catch (Exception ex)            { AiError = $"Error: {ex.Message}"; }
+        catch (TaskCanceledException)      { AiError = ToFriendlyError(null, ct); }
+        catch (HttpRequestException)       { AiError = ToFriendlyError(typeof(HttpRequestException), ct); }
+        catch (Exception)                  { AiError = ToFriendlyError(typeof(Exception), ct); }
         finally
         {
             AiLoading = false;
@@ -170,6 +180,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 
         // Cap conversation to prevent unbounded memory growth
         TrimConversationIfNeeded();
+
+        _lastMessageKind = MessageKind.FollowUp;
+        _lastMessageText = followUp;
 
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
@@ -226,9 +239,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                 _aiConversation.Add(("assistant", finalResponse));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)   { AiError = "Request was canceled. Please try again."; }
-        catch (HttpRequestException ex) { AiError = ex.Message; }
-        catch (Exception ex)            { AiError = $"Error: {ex.Message}"; }
+        catch (TaskCanceledException)      { AiError = ToFriendlyError(null, ct); }
+        catch (HttpRequestException)       { AiError = ToFriendlyError(typeof(HttpRequestException), ct); }
+        catch (Exception)                  { AiError = ToFriendlyError(typeof(Exception), ct); }
         finally
         {
             AiLoading = false;
@@ -252,6 +265,34 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         "deepseek"   => (_secureStorage.Decrypt(_config.EncryptedDeepSeekApiKey),   _config.DeepSeekModel),
         var p        => throw new InvalidOperationException($"Unknown AI provider: {p}"),
     };
+
+    /// <summary>Replays the last user question or follow-up that failed.</summary>
+    private async Task RetryLastAsync()
+    {
+        if (_lastMessageKind == MessageKind.Initial)
+            await StartAiAsync(_lastMessageText);
+        else if (_lastMessageKind == MessageKind.FollowUp)
+            await OnAiFollowUpAsync(_lastMessageText);
+    }
+
+    /// <summary>Maps exception types to user-friendly messages.</summary>
+    private static string ToFriendlyError(Type? exType, CancellationToken ct)
+    {
+        if (exType == typeof(HttpRequestException))
+            return "Connection failed. Check your internet and API key.";
+
+        // TaskCanceledException that isn't from a user-initiated cancel
+        if (exType is null && !ct.IsCancellationRequested)
+            return "Request timed out. Try again.";
+
+        return "Something went wrong. Please try again.";
+    }
+
+    /// <summary>Notify RetryLastCommand when AiError changes so the button can react.</summary>
+    partial void OnAiErrorChanged(string value)
+    {
+        RetryLastCommand.NotifyCanExecuteChanged();
+    }
 
     public void Dispose()
     {
