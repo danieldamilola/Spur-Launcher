@@ -51,6 +51,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool   _aiLoading = false;
     [ObservableProperty] private string _aiError   = string.Empty;
 
+    /// <summary>Tracks the last user query so it can be retried on error.</summary>
+    private string? _lastQuery;
+
     public IAsyncRelayCommand<string> AiFollowUpCommand { get; }
     public IAsyncRelayCommand RetryLastCommand { get; }
 
@@ -106,7 +109,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 
         _lastMessageKind = MessageKind.Initial;
         _lastMessageText = question;
-
+        _lastQuery = question;
         AiText    = string.Empty;
         AiError   = string.Empty;
         AiLoading = true;
@@ -183,7 +186,7 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 
         _lastMessageKind = MessageKind.FollowUp;
         _lastMessageText = followUp;
-
+        _lastQuery = followUp;
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
         AiLoading = true;
@@ -246,6 +249,25 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         {
             AiLoading = false;
             ConversationChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Retry the last failed query.</summary>
+    private async Task RetryLastAsync()
+    {
+        if (string.IsNullOrEmpty(_lastQuery)) return;
+
+        // If there's an existing conversation, retry as follow-up; otherwise start fresh
+        if (_aiConversation.Count > 1)
+        {
+            // Remove the last user message that failed (if it's still there without an assistant reply)
+            if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "user")
+                _aiConversation.RemoveAt(_aiConversation.Count - 1);
+            await OnAiFollowUpAsync(_lastQuery);
+        }
+        else
+        {
+            await StartAiAsync(_lastQuery);
         }
     }
 
