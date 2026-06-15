@@ -95,7 +95,7 @@ public sealed partial class MainViewModel : ObservableObject
         _addOns = addOns;
 
         Config   = config;
-        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _addOns, storeService);
+        Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _addOns, storeService, _aiService);
 
         // Push initial config to services
         _files.MaxDepth     = Config.MaxFileDepth;

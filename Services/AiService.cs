@@ -9,6 +9,7 @@ public interface IAiService
     string[] SupportedProviders { get; }
     Task StreamAsync(string provider, string model, string apiKey, string question, Action<string> onToken, CancellationToken ct = default);
     Task StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct = default);
+    Task<string[]> FetchModelsAsync(string provider, string apiKey, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -154,6 +155,61 @@ public sealed class AiService : IAiService
 
             if (!string.IsNullOrEmpty(token))
                 onToken(token);
+        }
+    }
+
+    /// <summary>
+    /// Fetches available model IDs from the provider's API using the user's key.
+    /// Returns an empty array on failure (no crash).
+    /// </summary>
+    public async Task<string[]> FetchModelsAsync(string provider, string apiKey, CancellationToken ct = default)
+    {
+        var normalized = provider.ToLowerInvariant();
+
+        // Map provider to its models endpoint
+        var modelsUrl = normalized switch
+        {
+            "groq"       => "https://api.groq.com/openai/v1/models",
+            "gemini"     => "https://generativelanguage.googleapis.com/v1beta/openai/models",
+            "openrouter" => "https://openrouter.ai/api/v1/models",
+            "deepseek"   => "https://api.deepseek.com/v1/models",
+            _ => null,
+        };
+
+        if (modelsUrl is null) return [];
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, modelsUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+            var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode) return [];
+
+            var json = await response.Content.ReadAsStringAsync(ct);
+            using var doc = JsonDocument.Parse(json);
+
+            var models = new List<string>();
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in data.EnumerateArray())
+                {
+                    if (item.TryGetProperty("id", out var id))
+                    {
+                        var modelId = id.GetString();
+                        if (!string.IsNullOrEmpty(modelId))
+                            models.Add(modelId);
+                    }
+                }
+            }
+
+            models.Sort();
+            return models.ToArray();
+        }
+        catch (Exception ex)
+        {
+            _log.Debug($"Failed to fetch models from {provider}: {ex.Message}");
+            return [];
         }
     }
 }

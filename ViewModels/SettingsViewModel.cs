@@ -44,6 +44,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IStartupService  _startupService;
     private readonly IFrequencyService _frequencyService;
     private readonly ISecureStorageService _secureStorage;
+    private readonly IAiService       _aiService;
     private          SpurConfig       _config;
 
     public Spur.Extensions.AddOnRegistry Registry { get; }
@@ -53,7 +54,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(SpurConfig config, IConfigService configService, MainViewModel main,
                              IThemeManager themeManager, IStartupService startupService, IFrequencyService frequencyService,
                              ISecureStorageService secureStorage, Spur.Extensions.AddOnRegistry registry,
-                             Spur.Services.AddOnStoreService storeService)
+                             Spur.Services.AddOnStoreService storeService, IAiService aiService)
     {
         _config          = config;
         Registry         = registry;
@@ -64,6 +65,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _startupService  = startupService;
         _frequencyService = frequencyService;
         _secureStorage   = secureStorage;
+        _aiService       = aiService;
 
         // Init sidebar — features.md §6
         Sections = new ObservableCollection<SettingsSection>
@@ -940,24 +942,60 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         SaveAndApply();
         OnPropertyChanged(nameof(ApiKey));
+        RefreshModelsFromApi(); // Fetch models for the new key
     }
 
-    public string[] CurrentModels => GetModelsForCurrentProvider();
+    public string[] CurrentModels => _fetchedModels.Length > 0 ? _fetchedModels : GetFallbackModels();
 
-    private string[] GetModelsForCurrentProvider()
+    // Cached fetched models — populated from the API
+    private string[] _fetchedModels = [];
+
+    private static readonly Dictionary<string, string[]> FallbackModels = new()
     {
-        var defaults = _config.AiProvider switch
-        {
-            AiProviders.Groq => new[] {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"},
-            AiProviders.Gemini => new[] {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"},
-            AiProviders.OpenRouter => new[] {"google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat", "meta-llama/llama-3.3-70b-instruct"},
-            AiProviders.DeepSeek => new[] {"deepseek-chat", "deepseek-reasoner"},
-            _ => Array.Empty<string>(),
-        };
+        [AiProviders.Groq] = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"],
+        [AiProviders.Gemini] = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+        [AiProviders.OpenRouter] = ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat"],
+        [AiProviders.DeepSeek] = ["deepseek-chat", "deepseek-reasoner"],
+    };
+
+    private string[] GetFallbackModels()
+    {
+        var defaults = FallbackModels.GetValueOrDefault(_config.AiProvider, []);
         var current = GetModelForCurrentProvider();
         if (!string.IsNullOrEmpty(current) && !defaults.Contains(current))
             return [current, ..defaults];
         return defaults;
+    }
+
+    /// <summary>Fetches models from the API using the current key. Non-blocking, updates UI when done.</summary>
+    public async void RefreshModelsFromApi()
+    {
+        var key = ApiKey;
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            _fetchedModels = [];
+            OnPropertyChanged(nameof(CurrentModels));
+            return;
+        }
+
+        try
+        {
+            var models = await _aiService.FetchModelsAsync(_config.AiProvider, key);
+            if (models.Length > 0)
+            {
+                _fetchedModels = models;
+                OnPropertyChanged(nameof(CurrentModels));
+                // Auto-select first model if current model is empty or not in list
+                var current = GetModelForCurrentProvider();
+                if (string.IsNullOrEmpty(current) || !models.Contains(current))
+                {
+                    // Keep current if it was set, otherwise pick first
+                    if (string.IsNullOrEmpty(current))
+                        SetModelForCurrentProvider(models[0]);
+                }
+            }
+        }
+        catch { /* Silently fall back to defaults */ }
     }
 
     public string AiModel
@@ -989,10 +1027,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public void NotifyAiProviderPropertiesChanged()
     {
+        _fetchedModels = []; // Clear cache when provider changes
         OnPropertyChanged(nameof(AiProvider));
         OnPropertyChanged(nameof(ApiKey));
         OnPropertyChanged(nameof(AiModel));
         OnPropertyChanged(nameof(CurrentModels));
+        RefreshModelsFromApi(); // Fetch models for the new provider
     }
 
     // ═══════════════════════════════════════════════════════════════
