@@ -12,6 +12,7 @@ using Spur.Extensions.AddOns.Currency;
 using Spur.Extensions.AddOns.Eyedropper;
 using Spur.Extensions.AddOns.Ip;
 using Spur.Extensions.AddOns.KillProcess;
+using Spur.Extensions.AddOns.Ocr;
 using Spur.Extensions.AddOns.PasswordGen;
 using Spur.Extensions.AddOns.QuickNote;
 using Spur.Extensions.AddOns.Screenshot;
@@ -68,6 +69,7 @@ public sealed class AddOnRegistry
         RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/settings.png",    false, "sys",      new SystemSettings(),        () => new SystemAddOn());
         RegisterLazy("settings", "Settings",      "Open Spur settings.",                             "\ue713", "/Assets/Icons/settings.png",    false, "settings", new SettingsNavSettings(),   () => new SettingsNavAddOn());
         RegisterLazy("eyedropper","Eyedropper",   "Pick any color from screen.",                     "\ue790", "/Assets/Icons/color.png",       false, "pick",     new EyedropperSettings(),    () => new EyedropperAddOn());
+        RegisterLazy("ocr",       "OCR",           "Extract text from clipboard screenshots.",        "\ue8ba", "/Assets/Icons/image.png",       false, "ocr",      new OcrSettings(),           () => new OcrAddOn());
         InvalidateCache();
 
     }
