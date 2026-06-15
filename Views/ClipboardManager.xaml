@@ -278,6 +278,7 @@
 
             <!-- Vertical separator between list and detail -->
             <Border Grid.Column="1"
+                    x:Name="DetailSeparator"
                     Width="1"
                     Background="{DynamicResource Separator}"
                     VerticalAlignment="Stretch"/>

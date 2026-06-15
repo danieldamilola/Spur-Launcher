@@ -171,4 +171,11 @@ public partial class ClipboardManager : UserControl
             btn.ContextMenu.IsOpen = true;
         }
     }
+
+    /// <summary>Hides the inline detail panel when floating mode is active.</summary>
+    public void SetFloatingMode(bool floating)
+    {
+        DetailSeparator.Visibility = floating ? Visibility.Collapsed : Visibility.Visible;
+        DetailPanel.Visibility = floating ? Visibility.Collapsed : Visibility.Visible;
+    }
 }

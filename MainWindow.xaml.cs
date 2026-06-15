@@ -114,6 +114,7 @@ public partial class MainWindow : Window
         DataContext = _vm;
         _vm.PropertyChanged += OnVmChanged;
         _vm.RequestHide += HideWindow;
+        _vm.Clipboard.PropertyChanged += OnClipboardVmPropertyChanged;
         
         ApplyConfigWidth();
         UpdateCategoryVisuals();
@@ -270,6 +271,7 @@ public partial class MainWindow : Window
     private void UpdatePanelVisibility(bool isBrowse, bool isExpandedHome)
     {
         bool isClipboard = _vm!.ActiveCategory == "clipboard";
+        bool isFloating = _vm.Config.PreviewStyle == "Floating";
 
         // Homepage is shown in expanded mode with empty query
         HomePanelControl.Visibility = isExpandedHome ? Visibility.Visible : Visibility.Collapsed;
@@ -279,6 +281,75 @@ public partial class MainWindow : Window
             ? Visibility.Collapsed : Visibility.Visible;
         AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
         AnimateToast(_vm.IsToastVisible);
+
+        // Clipboard preview: floating vs inline
+        if (isClipboard)
+        {
+            ClipboardManagerControl.SetFloatingMode(isFloating);
+            if (isFloating)
+                UpdateFloatingClipboardPreview();
+            else
+                ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void OnClipboardVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ClipboardViewModel.SelectedEntry) &&
+            _vm?.ActiveCategory == "clipboard" && _vm.Config.PreviewStyle == "Floating")
+        {
+            Dispatcher.InvokeAsync(UpdateFloatingClipboardPreview);
+        }
+    }
+
+    private void UpdateFloatingClipboardPreview()
+    {
+        var entry = _vm?.Clipboard.SelectedEntry;
+        if (entry is null || _vm?.ActiveCategory != "clipboard" || _vm.Config.PreviewStyle != "Floating")
+        {
+            ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        ClipboardPreviewFloat.Visibility = Visibility.Visible;
+        ClipFloatMetadata.Text = _vm.Clipboard.SelectedMetadata ?? "";
+
+        if (entry.IsImage && entry.Image != null)
+        {
+            ClipFloatImage.Source = entry.Image;
+            ClipFloatImage.Visibility = Visibility.Visible;
+            ClipFloatText.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            ClipFloatText.Text = entry.Content ?? "";
+            ClipFloatText.Visibility = Visibility.Visible;
+            ClipFloatImage.Visibility = Visibility.Collapsed;
+        }
+
+        bool isPinned = _vm.Clipboard.IsPinned(entry);
+        ClipFloatPinGlyph.Glyph = isPinned ? "\uE841" : "\uE718";
+        ClipFloatPinBtn.ToolTip = isPinned ? "Unpin" : "Pin";
+    }
+
+    private void OnFloatCopyClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.Clipboard.CopyCommand.Execute(_vm.Clipboard.SelectedEntry);
+    }
+
+    private void OnFloatPinClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.Clipboard.TogglePinCommand.Execute(_vm.Clipboard.SelectedEntry);
+        Dispatcher.InvokeAsync(UpdateFloatingClipboardPreview);
+    }
+
+    private void OnFloatDeleteClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.Clipboard.DeleteCommand.Execute(_vm.Clipboard.SelectedEntry);
     }
 
     /// <summary>Fades the toast bar in or out with an opacity animation.</summary>
