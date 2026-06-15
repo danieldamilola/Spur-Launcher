@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Spur.Views"
              xmlns:conv="clr-namespace:Spur.Converters"
+             xmlns:controls="clr-namespace:Spur.Views.Controls"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel>
         <!-- Page heading -->
@@ -87,7 +88,7 @@
                         <TextBlock Text="Custom hex color" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="e.g. #D7CFC2 or #0078D7" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <TextBox Grid.Column="3" Width="100" Text="{Binding CustomAccentColor, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                    <controls:ColorPickerControl Grid.Column="3" ColorHex="{Binding CustomAccentColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>

@@ -1,0 +1,103 @@
+<UserControl x:Class="Spur.Views.Controls.ColorPickerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="PickerRoot">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="8"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="8"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Color preview swatch -->
+        <Border x:Name="PreviewBorder"
+                Grid.Column="0"
+                Width="28" Height="28"
+                CornerRadius="6"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                Background="#0078D7"
+                VerticalAlignment="Center"
+                Cursor="Hand"
+                MouseLeftButtonDown="OnPreviewClick"/>
+
+        <!-- Hex text input -->
+        <TextBox Grid.Column="2"
+                 x:Name="HexTextBox"
+                 Width="90"
+                 Text="{Binding ColorHex, ElementName=PickerRoot, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 VerticalAlignment="Center"
+                 MaxLength="7"/>
+
+        <!-- Dropdown toggle button -->
+        <Border Grid.Column="4"
+                Width="28" Height="28"
+                CornerRadius="6"
+                Background="{DynamicResource SurfaceRaised}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                VerticalAlignment="Center"
+                Cursor="Hand"
+                MouseLeftButtonDown="OnDropdownClick">
+            <TextBlock Text="&#xE790;"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="12"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextSecondary}"/>
+        </Border>
+
+        <!-- Popup with preset swatches -->
+        <Popup x:Name="SwatchPopup"
+               PlacementTarget="{Binding ElementName=PreviewBorder}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               VerticalOffset="4">
+            <Border Background="{DynamicResource Surface}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="8"
+                    Effect="{DynamicResource PopupShadow}">
+                <StackPanel>
+                    <TextBlock Text="Preset colors"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="11"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMuted}"
+                               Margin="2,0,0,6"/>
+                    <UniformGrid Columns="5" x:Name="SwatchGrid">
+                        <!-- Row 1: Blues -->
+                        <Border Background="#0078D7" Style="{x:Null}" Tag="#0078D7" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#0099BC" Style="{x:Null}" Tag="#0099BC" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#2D7D9A" Style="{x:Null}" Tag="#2D7D9A" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#4A90D9" Style="{x:Null}" Tag="#4A90D9" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#6B5CE7" Style="{x:Null}" Tag="#6B5CE7" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <!-- Row 2: Purples & Pinks -->
+                        <Border Background="#8764B8" Style="{x:Null}" Tag="#8764B8" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#B146C2" Style="{x:Null}" Tag="#B146C2" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#C239B3" Style="{x:Null}" Tag="#C239B3" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#E3008C" Style="{x:Null}" Tag="#E3008C" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#EA005E" Style="{x:Null}" Tag="#EA005E" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <!-- Row 3: Reds & Oranges -->
+                        <Border Background="#E81123" Style="{x:Null}" Tag="#E81123" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#D13438" Style="{x:Null}" Tag="#D13438" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#FF8C00" Style="{x:Null}" Tag="#FF8C00" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#F7630C" Style="{x:Null}" Tag="#F7630C" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#CA5010" Style="{x:Null}" Tag="#CA5010" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <!-- Row 4: Greens & Teals -->
+                        <Border Background="#10893E" Style="{x:Null}" Tag="#10893E" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#107C10" Style="{x:Null}" Tag="#107C10" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#018574" Style="{x:Null}" Tag="#018574" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#00B294" Style="{x:Null}" Tag="#00B294" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                        <Border Background="#847545" Style="{x:Null}" Tag="#847545" MouseLeftButtonDown="OnSwatchClick" Width="32" Height="32" CornerRadius="6" Margin="2" Cursor="Hand"/>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>
