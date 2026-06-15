@@ -572,7 +572,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico",
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp",
     };
 
     private string? _previewContent;
@@ -673,10 +673,12 @@ public sealed partial class MainViewModel : ObservableObject
             }
             else
             {
-                // Unsupported file — show info only
+                // Unsupported file — don't show preview at all
                 PreviewContent = null;
                 PreviewImage = null;
-                IsPreviewVisible = true;
+                PreviewFileName = null;
+                PreviewFileInfo = null;
+                IsPreviewVisible = false;
             }
         }
         catch

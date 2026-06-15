@@ -54,6 +54,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
 
     // ── Persistence ──────────────────────────────────────────────────
     private readonly string _savePath;
+    private volatile bool _savePending;
     private readonly System.Timers.Timer _debounceTimer;
     private bool _disposed;
 

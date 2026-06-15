@@ -27,7 +27,7 @@
         <TextBox Grid.Column="2"
                  x:Name="HexTextBox"
                  Width="90"
-                 Text="{Binding ColorHex, ElementName=PickerRoot, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Text="{Binding ColorHex, ElementName=PickerRoot, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                  VerticalAlignment="Center"
                  MaxLength="7"/>
 
