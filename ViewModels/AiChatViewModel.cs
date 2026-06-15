@@ -24,9 +24,11 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     // prompt to be sent with conflicting instructions.
     private readonly List<(string Role, string Content)> _aiConversation = [];
 
-    // Performance: use StringBuilder to avoid O(n²) string concatenation during streaming
-    private readonly StringBuilder _aiTextBuilder = new();
-    private readonly StringBuilder _responseBuilder = new();
+    // Thread-safe token accumulation — written from HTTP thread, read from UI thread.
+    // Using lock(_tokenLock) instead of StringBuilder because SB is not thread-safe.
+    private readonly object _tokenLock = new();
+    private readonly StringBuilder _fullResponseBuilder = new();   // Entire conversation display text
+    private readonly StringBuilder _currentResponseBuilder = new(); // Current assistant response only
 
     // Debounce UI updates — max ~60fps instead of per-token
     private DateTime _lastUiUpdate = DateTime.MinValue;
@@ -72,8 +74,11 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     {
         CancelPending();
         _aiConversation.Clear();
-        _aiTextBuilder.Clear();
-        _responseBuilder.Clear();
+        lock (_tokenLock)
+        {
+            _fullResponseBuilder.Clear();
+            _currentResponseBuilder.Clear();
+        }
         AiText    = string.Empty;
         AiLoading = false;
         AiError   = string.Empty;
@@ -96,6 +101,60 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         return sb.ToString().TrimEnd();
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Core streaming — handles both initial and follow-up queries
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Accumulates a streaming token. Called from HTTP thread pool — must be thread-safe.
+    /// Appends to builders under lock, then schedules a debounced UI update.
+    /// </summary>
+    private void OnTokenReceived(string token, bool isFollowUp)
+    {
+        // 1. Thread-safe accumulation (no dispatcher needed)
+        lock (_tokenLock)
+        {
+            _fullResponseBuilder.Append(token);
+            _currentResponseBuilder.Append(token);
+        }
+
+        // 2. Debounced UI update via dispatcher
+        var now = DateTime.UtcNow;
+        if (now - _lastUiUpdate < UiUpdateInterval) return;
+        _lastUiUpdate = now;
+
+        Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            FlushToUi();
+        });
+    }
+
+    /// <summary>
+    /// Reads accumulated tokens and pushes them to UI-bound properties.
+    /// Must run on UI thread.
+    /// </summary>
+    private void FlushToUi()
+    {
+        string fullText;
+        string currentResponse;
+        lock (_tokenLock)
+        {
+            fullText = _fullResponseBuilder.ToString();
+            currentResponse = _currentResponseBuilder.ToString();
+        }
+
+        AiText = fullText;
+        AiLoading = fullText.Length == 0;
+
+        // Update conversation history with latest response
+        if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "assistant")
+            _aiConversation[^1] = ("assistant", currentResponse);
+        else
+            _aiConversation.Add(("assistant", currentResponse));
+
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public async Task StartAiAsync(string query)
     {
         CancelPending();
@@ -116,8 +175,11 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
 
         _aiConversation.Clear();
         _aiConversation.Add(("user", question));
-        _aiTextBuilder.Clear();
-        _responseBuilder.Clear();
+        lock (_tokenLock)
+        {
+            _fullResponseBuilder.Clear();
+            _currentResponseBuilder.Clear();
+        }
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         try
@@ -131,32 +193,13 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
-            {
-                Application.Current?.Dispatcher.InvokeAsync(() =>
-                {
-                    _aiTextBuilder.Append(token);
+            // Stream tokens — OnTokenReceived accumulates them thread-safely
+            await _aiService.StreamAsync(
+                _config.AiProvider, model, key, _aiConversation,
+                token => OnTokenReceived(token, isFollowUp: false), ct);
 
-                    // Debounce UI updates — skip if less than 16ms since last update
-                    var now = DateTime.UtcNow;
-                    if (now - _lastUiUpdate < UiUpdateInterval) return;
-                    _lastUiUpdate = now;
-
-                    AiText    = _aiTextBuilder.ToString();
-                    AiLoading = AiText.Length == 0;
-                    if (_aiConversation.Count == 1)
-                        _aiConversation.Add(("assistant", AiText));
-                    else if (_aiConversation.Count > 0)
-                        _aiConversation[^1] = ("assistant", AiText);
-                    ConversationChanged?.Invoke(this, EventArgs.Empty);
-                });
-            }, ct);
-
-            // Final flush — ensure last tokens are displayed
-            AiText = _aiTextBuilder.ToString();
-            if (_aiConversation.Count > 0)
-                _aiConversation[^1] = ("assistant", AiText);
-            ConversationChanged?.Invoke(this, EventArgs.Empty);
+            // Final flush on UI thread — all tokens are already accumulated
+            await Application.Current.Dispatcher.InvokeAsync(FlushToUi);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)        { AiError = ToFriendlyError(null, null, ct); }
@@ -190,7 +233,13 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
         _aiConversation.Add(("user", followUp));
         AiError   = string.Empty;
         AiLoading = true;
-        _responseBuilder.Clear();
+
+        // Add separator and prepare for new response
+        lock (_tokenLock)
+        {
+            _fullResponseBuilder.Append("\n\n");
+            _currentResponseBuilder.Clear();
+        }
         ConversationChanged?.Invoke(this, EventArgs.Empty);
 
         try
@@ -204,42 +253,13 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            bool isFirstToken = true;
-            await _aiService.StreamAsync(_config.AiProvider, model, key, _aiConversation, token =>
-            {
-                Application.Current?.Dispatcher.InvokeAsync(() =>
-                {
-                    if (isFirstToken)
-                    {
-                        isFirstToken = false;
-                        _aiTextBuilder.Append("\n\n");
-                    }
-                    _responseBuilder.Append(token);
-                    _aiTextBuilder.Append(token);
+            // Stream tokens — OnTokenReceived accumulates them thread-safely
+            await _aiService.StreamAsync(
+                _config.AiProvider, model, key, _aiConversation,
+                token => OnTokenReceived(token, isFollowUp: true), ct);
 
-                    // Debounce UI updates
-                    var now = DateTime.UtcNow;
-                    if (now - _lastUiUpdate < UiUpdateInterval) return;
-                    _lastUiUpdate = now;
-
-                    var response = _responseBuilder.ToString();
-                    AiText = _aiTextBuilder.ToString();
-                    if (isFirstToken || _aiConversation[^1].Role != "assistant")
-                        _aiConversation.Add(("assistant", response));
-                    else
-                        _aiConversation[^1] = ("assistant", response);
-                    AiLoading = false;
-                    ConversationChanged?.Invoke(this, EventArgs.Empty);
-                });
-            }, ct);
-
-            // Final flush
-            var finalResponse = _responseBuilder.ToString();
-            AiText = _aiTextBuilder.ToString();
-            if (_aiConversation.Count > 0 && _aiConversation[^1].Role == "assistant")
-                _aiConversation[^1] = ("assistant", finalResponse);
-            else
-                _aiConversation.Add(("assistant", finalResponse));
+            // Final flush on UI thread — all tokens are already accumulated
+            await Application.Current.Dispatcher.InvokeAsync(FlushToUi);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (TaskCanceledException)        { AiError = ToFriendlyError(null, null, ct); }
