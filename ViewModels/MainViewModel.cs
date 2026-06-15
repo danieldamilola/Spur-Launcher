@@ -520,7 +520,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            await Task.Delay(150, ct);
+            await Task.Delay(Config.SearchDelay, ct);
             if (Application.Current is not null)
                 await Application.Current.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
             else

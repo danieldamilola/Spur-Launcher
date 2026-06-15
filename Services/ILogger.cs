@@ -36,7 +36,52 @@ public sealed class FileLogger : ILogger, IDisposable
         
         _writer = new StreamWriter(_logPath, append: true) { AutoFlush = true };
         
+        CleanupOldLogs(logDirectory);
+        
         Info($"Logger initialized. Log file: {_logPath}");
+    }
+
+    /// <summary>
+    /// Deletes log files older than 7 days to prevent unbounded log accumulation.
+    /// Errors are caught silently so cleanup never disrupts application startup.
+    /// </summary>
+    private void CleanupOldLogs(string logDirectory)
+    {
+        try
+        {
+            var cutoff = DateTime.Now.AddDays(-7);
+            var logFiles = Directory.GetFiles(logDirectory, "spur_*.log");
+            var deleted = 0;
+
+            foreach (var file in logFiles)
+            {
+                // Skip the current session's log file
+                if (string.Equals(file, _logPath, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                try
+                {
+                    if (File.GetLastWriteTime(file) < cutoff)
+                    {
+                        File.Delete(file);
+                        deleted++;
+                    }
+                }
+                catch
+                {
+                    // Individual file deletion failure should not stop cleanup of remaining files
+                }
+            }
+
+            if (deleted > 0)
+            {
+                Info($"Log cleanup: deleted {deleted} log file(s) older than 7 days.");
+            }
+        }
+        catch
+        {
+            // Cleanup is best-effort; never disrupt startup
+        }
     }
 
     private void WriteLog(string level, string message, Exception? exception = null)

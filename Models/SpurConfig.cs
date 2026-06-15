@@ -94,8 +94,8 @@ public sealed class SpurConfig
     /// <summary>Debounce delay in milliseconds before search starts (0–500). Lower = faster but more CPU.</summary>
     public int SearchDelay { get; set; } = 30;
 
-    /// <summary>Maximum results per section before truncation (3–20).</summary>
-    public int MaxResultsPerSection { get; set; } = 5;
+
+
 
     /// <summary>Glob patterns to exclude from file search (e.g. "node_modules", ".git").</summary>
     public List<string> ExclusionPatterns { get; set; } = ["node_modules", ".git", "__pycache__", "bin", "obj"];

@@ -42,11 +42,35 @@ public sealed class ConfigService : IConfigService
                 return JsonSerializer.Deserialize<SpurConfig>(json) ?? new SpurConfig();
             }
         }
+        catch (JsonException ex)
+        {
+            _log.Warning("Config file is corrupted — renaming to .bak and using defaults", ex);
+            RenameCorruptedConfig();
+        }
         catch (Exception ex) { _log.Warning("Config load failed — using defaults", ex); }
 
         var defaults = new SpurConfig();
         Save(defaults);
         return defaults;
+    }
+
+    /// <summary>
+    /// Renames the corrupted config file to <c>.bak</c> so the user can inspect it later.
+    /// If a previous <c>.bak</c> already exists it is overwritten.
+    /// </summary>
+    private void RenameCorruptedConfig()
+    {
+        try
+        {
+            var backupPath = _path + ".bak";
+            File.Copy(_path, backupPath, overwrite: true);
+            File.Delete(_path);
+            _log.Info($"Corrupted config backed up to: {backupPath}");
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Failed to rename corrupted config file", ex);
+        }
     }
 
     /// <summary>
