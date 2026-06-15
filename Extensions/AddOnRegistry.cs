@@ -50,20 +50,39 @@ public sealed class AddOnRegistry
 
     private void RegisterBuiltIn()
     {
-        _builtIn.Add(new CalculatorAddOn { Settings = new CalculatorSettings() });
-        _builtIn.Add(new TimerAddOn { Settings = new TimerSettings() });
-        _builtIn.Add(new KillProcessAddOn { Settings = new KillProcessSettings() });
-        _builtIn.Add(new PasswordGenAddOn { Settings = new PasswordGenSettings() });
-        _builtIn.Add(new ScreenshotAddOn { Settings = new ScreenshotSettings() });
-        _builtIn.Add(new QuickNoteAddOn { Settings = new QuickNoteSettings() });
-        _builtIn.Add(new CurrencyAddOn { Settings = new CurrencySettings() });
-        _builtIn.Add(new ColorAddOn { Settings = new ColorSettings() });
-        _builtIn.Add(new IpAddOn { Settings = new IpSettings() });
-        _builtIn.Add(new AiAddOn { Settings = new AiSettings() });
-        _builtIn.Add(new ShellAddOn { Settings = new ShellSettings() });
-        _builtIn.Add(new SystemAddOn { Settings = new SystemSettings() });
-        _builtIn.Add(new SettingsNavAddOn { Settings = new SettingsNavSettings() });
+        // Lazy registration: identity metadata is stored directly on the proxy;
+        // the real add-on instance is only created when a behaviour method
+        // (CanHandle, GetResults, ExecuteAsync, …) is first called.
+        RegisterLazy("calc",     "Calculator",    "Evaluate math expressions inline.",               "\ue1d0", "/Assets/Icons/calculator.png",  true,  "",         new CalculatorSettings(),    () => new CalculatorAddOn());
+        RegisterLazy("timer",    "Timer",         "Start a countdown directly from the launcher.",   "\ue121", "/Assets/Icons/history.png",     false, "timer",    new TimerSettings(),         () => new TimerAddOn());
+        RegisterLazy("kill",     "Kill",          "Find and terminate running processes by name.",    "\ue711", "/Assets/Icons/shutdown.png",    false, "kill",     new KillProcessSettings(),   () => new KillProcessAddOn());
+        RegisterLazy("pw",       "Password",      "Generate strong random passwords.",               "\ue8d7", "/Assets/Icons/lock.png",        false, "pw",       new PasswordGenSettings(),   () => new PasswordGenAddOn());
+        RegisterLazy("ss",       "Screenshot",    "Capture and save screenshots.",                   "\ue722", "/Assets/Icons/image.png",       false, "ss",       new ScreenshotSettings(),    () => new ScreenshotAddOn());
+        RegisterLazy("note",     "Quick Note",    "Save quick notes instantly.",                     "\ue70b", "/Assets/Icons/copy.png",        false, "note",     new QuickNoteSettings(),     () => new QuickNoteAddOn());
+        RegisterLazy("cur",      "Currency",      "Real-time currency conversion.",                  "\ue12c", "/Assets/Icons/url.png",         false, "cur",      new CurrencySettings(),      () => new CurrencyAddOn());
+        RegisterLazy("color",    "Color",         "Hex/RGB/HSL color conversion and preview.",       "\ue790", "/Assets/Icons/color.png",       false, "color",    new ColorSettings(),         () => new ColorAddOn());
+        RegisterLazy("ip",       "IP",            "Show local and public IP addresses.",             "\ue717", "/Assets/Icons/info.png",        false, "ip",       new IpSettings(),            () => new IpAddOn());
+        RegisterLazy("ai",       "AI Assistant",  "Ask the configured AI provider.",                 "\ue270", "/Assets/Icons/ai.png",          false, "ai",       new AiSettings(),            () => new AiAddOn());
+        RegisterLazy("shell",    "Shell",         "Run commands through your configured terminal.",   "\ue765", "/Assets/Icons/shell.png",       false, ">",        new ShellSettings(),         () => new ShellAddOn());
+        RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/settings.png",    false, "sys",      new SystemSettings(),        () => new SystemAddOn());
+        RegisterLazy("settings", "Settings",      "Open Spur settings.",                             "\ue713", "/Assets/Icons/settings.png",    false, "settings", new SettingsNavSettings(),   () => new SettingsNavAddOn());
         InvalidateCache();
+    }
+
+    private void RegisterLazy(
+        string id, string name, string description,
+        string iconGlyph, string? iconPath,
+        bool isGlobal, string keyword,
+        object? defaultSettings,
+        Func<IAddOn> factory)
+    {
+        _builtIn.Add(new LazyAddOn(
+            id, name, description,
+            iconGlyph, iconPath,
+            "Built-in", "2.0.0",
+            isBuiltIn: true, isGlobal,
+            isEnabled: true, keyword,
+            defaultSettings, factory));
     }
 
     public IAddOn? FindById(string id)
