@@ -31,6 +31,28 @@ public static class FuzzySearch
 
     private static double ScoreCore(ReadOnlySpan<char> query, ReadOnlySpan<char> target)
     {
+        // --- Acronym / initials matching ---
+        // If the query matches the first letters of each word in the target,
+        // award a significant bonus. E.g. "vsc" matching "Visual Studio Code".
+        double acronymBonus = 0;
+        var initials = ExtractInitials(target);
+        if (initials.Length > 0 && query.Length <= initials.Length)
+        {
+            bool prefixMatch = true;
+            for (int i = 0; i < query.Length; i++)
+            {
+                if (char.ToLowerInvariant(query[i]) != char.ToLowerInvariant(initials[i]))
+                {
+                    prefixMatch = false;
+                    break;
+                }
+            }
+            if (prefixMatch)
+            {
+                acronymBonus = 50;
+            }
+        }
+
         int qi = 0, ti = 0;
         int consecutive = 0;
         double score = 0;
@@ -76,7 +98,48 @@ public static class FuzzySearch
 
         // Prefer shorter targets (tighter match)
         double coverageBonus = (double)query.Length / target.Length;
-        return score + coverageBonus;
+        return score + coverageBonus + acronymBonus;
+    }
+
+    /// <summary>
+    /// Extracts the initials (first letter of each word) from the target string.
+    /// Words are delimited by spaces, hyphens, underscores, dots, slashes, and
+    /// camelCase transitions (lowercase → uppercase).
+    /// </summary>
+    private static string ExtractInitials(ReadOnlySpan<char> target)
+    {
+        if (target.IsEmpty) return string.Empty;
+
+        // Use a stack-allocated buffer for typical short initial sequences
+        Span<char> buf = stackalloc char[target.Length];
+        int count = 0;
+
+        bool newWord = true;
+        for (int i = 0; i < target.Length; i++)
+        {
+            char c = target[i];
+
+            // Separator characters start a new word
+            if (c is ' ' or '-' or '_' or '.' or '/' or '\\')
+            {
+                newWord = true;
+                continue;
+            }
+
+            // CamelCase boundary: lowercase followed by uppercase
+            if (i > 0 && char.IsUpper(c) && char.IsLower(target[i - 1]))
+            {
+                newWord = true;
+            }
+
+            if (newWord)
+            {
+                buf[count++] = c;
+                newWord = false;
+            }
+        }
+
+        return new string(buf[..count]);
     }
 
     /// <summary>

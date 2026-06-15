@@ -74,10 +74,18 @@
 
                                 <!-- Name + Description -->
                                 <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,2,12,2">
-                                    <TextBlock Text="{Binding Name}"
-                                               FontFamily="{DynamicResource Token.Font.Primary}"
-                                               FontSize="13" FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimary}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontFamily="{DynamicResource Token.Font.Primary}"
+                                                   FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="{Binding Version, StringFormat='v{0}'}"
+                                                   FontFamily="{DynamicResource Token.Font.Primary}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiary}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0,0,0"/>
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Description}"
                                                FontFamily="{DynamicResource Token.Font.Primary}"
                                                FontSize="11"
