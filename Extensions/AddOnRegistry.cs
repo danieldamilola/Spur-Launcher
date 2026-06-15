@@ -9,6 +9,7 @@ using Spur.Extensions.AddOns.Ai;
 using Spur.Extensions.AddOns.Calculator;
 using Spur.Extensions.AddOns.Color;
 using Spur.Extensions.AddOns.Currency;
+using Spur.Extensions.AddOns.Eyedropper;
 using Spur.Extensions.AddOns.Ip;
 using Spur.Extensions.AddOns.KillProcess;
 using Spur.Extensions.AddOns.PasswordGen;
@@ -66,6 +67,7 @@ public sealed class AddOnRegistry
         RegisterLazy("shell",    "Shell",         "Run commands through your configured terminal.",   "\ue765", "/Assets/Icons/shell.png",       false, ">",        new ShellSettings(),         () => new ShellAddOn());
         RegisterLazy("system",   "System",        "Shutdown, restart, sleep, lock, sign out.",       "\ue7e8", "/Assets/Icons/settings.png",    false, "sys",      new SystemSettings(),        () => new SystemAddOn());
         RegisterLazy("settings", "Settings",      "Open Spur settings.",                             "\ue713", "/Assets/Icons/settings.png",    false, "settings", new SettingsNavSettings(),   () => new SettingsNavAddOn());
+        RegisterLazy("eyedropper","Eyedropper",   "Pick any color from screen.",                     "\ue790", "/Assets/Icons/color.png",       false, "pick",     new EyedropperSettings(),    () => new EyedropperAddOn());
         InvalidateCache();
 
     }
