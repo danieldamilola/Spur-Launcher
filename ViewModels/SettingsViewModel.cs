@@ -948,10 +948,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         var defaults = _config.AiProvider switch
         {
-            AiProviders.Groq => new[] {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b", "openai/gpt-oss-120b"},
-            AiProviders.Gemini => new[] {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash", "gemini-3.5-flash"},
-            AiProviders.OpenRouter => new[] {"google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-v4-flash", "openai/gpt-5.4-mini"},
-            AiProviders.DeepSeek => new[] {"deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash", "deepseek-v4-pro"},
+            AiProviders.Groq => new[] {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"},
+            AiProviders.Gemini => new[] {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"},
+            AiProviders.OpenRouter => new[] {"google/gemini-2.5-flash", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat", "meta-llama/llama-3.3-70b-instruct"},
+            AiProviders.DeepSeek => new[] {"deepseek-chat", "deepseek-reasoner"},
             _ => Array.Empty<string>(),
         };
         var current = GetModelForCurrentProvider();

@@ -159,9 +159,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
             ConversationChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)      { AiError = ToFriendlyError(null, ct); }
-        catch (HttpRequestException)       { AiError = ToFriendlyError(typeof(HttpRequestException), ct); }
-        catch (Exception)                  { AiError = ToFriendlyError(typeof(Exception), ct); }
+        catch (TaskCanceledException)        { AiError = ToFriendlyError(null, null, ct); }
+        catch (HttpRequestException ex)        { AiError = ToFriendlyError(typeof(HttpRequestException), ex.Message, ct); }
+        catch (Exception ex)                   { AiError = ToFriendlyError(typeof(Exception), ex.Message, ct); }
         finally
         {
             AiLoading = false;
@@ -242,9 +242,9 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
                 _aiConversation.Add(("assistant", finalResponse));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-        catch (TaskCanceledException)      { AiError = ToFriendlyError(null, ct); }
-        catch (HttpRequestException)       { AiError = ToFriendlyError(typeof(HttpRequestException), ct); }
-        catch (Exception)                  { AiError = ToFriendlyError(typeof(Exception), ct); }
+        catch (TaskCanceledException)        { AiError = ToFriendlyError(null, null, ct); }
+        catch (HttpRequestException ex)        { AiError = ToFriendlyError(typeof(HttpRequestException), ex.Message, ct); }
+        catch (Exception ex)                   { AiError = ToFriendlyError(typeof(Exception), ex.Message, ct); }
         finally
         {
             AiLoading = false;
@@ -279,10 +279,14 @@ public sealed partial class AiChatViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Maps exception types to user-friendly messages.</summary>
-    private static string ToFriendlyError(Type? exType, CancellationToken ct)
+    private static string ToFriendlyError(Type? exType, string? message, CancellationToken ct)
     {
         if (exType == typeof(HttpRequestException))
+        {
+            if (!string.IsNullOrEmpty(message))
+                return message.Length > 120 ? message[..120] + "…" : message;
             return "Connection failed. Check your internet and API key.";
+        }
 
         // TaskCanceledException that isn't from a user-initiated cancel
         if (exType is null && !ct.IsCancellationRequested)
