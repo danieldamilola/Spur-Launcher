@@ -48,7 +48,7 @@ public sealed class SpurConfig
     public string PreferredMonitor { get; set; } = "primary";
 
     /// <summary>Show file preview pane when a file result is selected.</summary>
-    public bool FilePreviewEnabled { get; set; } = false;
+    public bool FilePreviewEnabled { get; set; } = true;
 
 
     // ═══════════════════════════════════════════════════════════════
