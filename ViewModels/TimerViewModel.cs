@@ -9,7 +9,7 @@ namespace Spur.ViewModels;
 /// label, duration, remaining time, and DispatcherTimer.
 /// Implements INotifyPropertyChanged so the UI can bind to individual timer properties.
 /// </summary>
-public sealed class TimerInstance : INotifyPropertyChanged
+public sealed class TimerInstance : INotifyPropertyChanged, IDisposable
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -21,6 +21,7 @@ public sealed class TimerInstance : INotifyPropertyChanged
     private double _progress = 100;
     private string _displayTime = "00:00";
     private DispatcherTimer? _tick;
+    private DateTime _endTime;
 
     /// <summary>User-visible label, e.g. "Timer 1".</summary>
     public string Label
@@ -79,9 +80,11 @@ public sealed class TimerInstance : INotifyPropertyChanged
     {
         if (IsRunning && !IsPaused) return;
 
+        _tick?.Stop();  // stop any existing timer to prevent leaks
         IsRunning = true;
         IsPaused = false;
-        _tick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _endTime = DateTime.UtcNow + Remaining;
+        _tick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         _tick.Tick += OnTick;
         _tick.Start();
     }
@@ -91,6 +94,8 @@ public sealed class TimerInstance : INotifyPropertyChanged
     {
         if (!IsRunning || IsPaused) return;
         _tick?.Stop();
+        Remaining = _endTime - DateTime.UtcNow;
+        if (Remaining < TimeSpan.Zero) Remaining = TimeSpan.Zero;
         IsPaused = true;
     }
 
@@ -99,6 +104,7 @@ public sealed class TimerInstance : INotifyPropertyChanged
     {
         if (!IsRunning || !IsPaused) return;
         IsPaused = false;
+        _endTime = DateTime.UtcNow + Remaining;
         _tick?.Start();
     }
 
@@ -111,9 +117,17 @@ public sealed class TimerInstance : INotifyPropertyChanged
         IsPaused = false;
     }
 
+    /// <summary>Dispose of managed resources (DispatcherTimer).</summary>
+    public void Dispose()
+    {
+        _tick?.Stop();
+        _tick = null;
+    }
+
     private void OnTick(object? sender, EventArgs e)
     {
-        Remaining -= TimeSpan.FromMilliseconds(100);
+        var now = DateTime.UtcNow;
+        Remaining = _endTime - now;
         if (Remaining <= TimeSpan.Zero)
         {
             Remaining = TimeSpan.Zero;
@@ -132,9 +146,13 @@ public sealed class TimerInstance : INotifyPropertyChanged
     /// <summary>Recalculate the formatted display time.</summary>
     public void UpdateDisplay()
     {
-        DisplayTime = Remaining.TotalHours >= 1
+        var newDisplay = Remaining.TotalHours >= 1
             ? Remaining.ToString(@"hh\:mm\:ss")
             : Remaining.ToString(@"mm\:ss");
+        if (newDisplay != _displayTime)
+        {
+            DisplayTime = newDisplay;
+        }
     }
 
     private void OnPropertyChanged(string propertyName)
@@ -270,10 +288,11 @@ public sealed partial class TimerViewModel : ObservableObject
     /// <summary>Cancel a specific timer instance.</summary>
     public void Cancel(TimerInstance instance)
     {
-        instance.StopTick();
+        instance.Dispose();
         instance.Completed -= OnTimerCompleted;
         instance.PropertyChanged -= OnBoundInstancePropertyChanged;
         ActiveTimers.Remove(instance);
+        if (ActiveTimers.Count == 0) _timerCounter = 0;
         SyncLegacyAfterRemoval();
     }
 
@@ -306,9 +325,11 @@ public sealed partial class TimerViewModel : ObservableObject
     private void OnTimerCompleted(TimerInstance instance)
     {
         _notification.Show("Spur Timer", $"{instance.Label} has finished!");
+        instance.Dispose();
         instance.Completed -= OnTimerCompleted;
         instance.PropertyChanged -= OnBoundInstancePropertyChanged;
         ActiveTimers.Remove(instance);
+        if (ActiveTimers.Count == 0) _timerCounter = 0;
         SyncLegacyAfterRemoval();
     }
 
@@ -317,11 +338,12 @@ public sealed partial class TimerViewModel : ObservableObject
     {
         foreach (var t in ActiveTimers.ToList())
         {
-            t.StopTick();
+            t.Dispose();
             t.Completed -= OnTimerCompleted;
             t.PropertyChanged -= OnBoundInstancePropertyChanged;
         }
         ActiveTimers.Clear();
+        _timerCounter = 0;
         TimerRunning = false;
     }
 

@@ -10,6 +10,10 @@ namespace Spur.Extensions.AddOns.Timer;
 
 public sealed class TimerAddOn : IAddOn
 {
+    private static readonly Regex DurationPattern = new(
+        @"^(?:(\d+)\s*h\s*)?(?:(\d+)\s*m\s*)?(?:(\d+)\s*s)?$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public string Id => "timer";
     public string Name => "Timer";
     public string Description => "Start a countdown directly from the launcher.";
@@ -87,7 +91,7 @@ public sealed class TimerAddOn : IAddOn
                 Subtitle   = "Try something like 5m, 30s, 1h, or 2h30m",
                 IconGlyph  = IconGlyph,
                 IconPath   = IconPath,
-                ActionId   = Id,
+                ActionId   = null,
             };
         }
     }
@@ -110,7 +114,7 @@ public sealed class TimerAddOn : IAddOn
         }
         else
         {
-            yield return ("Custom...", "", 0);
+            yield return ("Custom\u2026", "", 0);
         }
     }
 
@@ -138,7 +142,7 @@ public sealed class TimerAddOn : IAddOn
     public static bool TryParseDuration(string input, out int totalSeconds)
     {
         totalSeconds = 0;
-        var match = Regex.Match(input.Trim(), @"^(?:(\d+)\s*h\s*)?(?:(\d+)\s*m\s*)?(?:(\d+)\s*s)?$", RegexOptions.IgnoreCase);
+        var match = DurationPattern.Match(input.Trim());
         if (!match.Success || (match.Groups[1].Value == "" && match.Groups[2].Value == "" && match.Groups[3].Value == ""))
             return false;
 

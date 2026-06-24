@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -18,6 +19,7 @@ public partial class AddOnPanel : UserControl
 
     private MainViewModel? Vm => DataContext as MainViewModel;
     private string? _lastPanel;
+    private readonly List<(INotifyPropertyChanged Source, PropertyChangedEventHandler Handler)> _timerSubscriptions = [];
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
@@ -273,6 +275,11 @@ public partial class AddOnPanel : UserControl
     // ─── TIMER ───────────────────────────────────────────────
     private void BuildTimerContent()
     {
+        // Unsubscribe previous timer PropertyChanged handlers to prevent memory leaks
+        foreach (var (source, handler) in _timerSubscriptions)
+            source.PropertyChanged -= handler;
+        _timerSubscriptions.Clear();
+
         ModelLabel.Visibility = Visibility.Collapsed;
         if (Vm is null) return;
 
@@ -382,11 +389,13 @@ public partial class AddOnPanel : UserControl
                     Tag = timer
                 };
                 // Live update via PropertyChanged
-                timer.PropertyChanged += (s, e) =>
+                PropertyChangedEventHandler displayHandler = (s, e) =>
                 {
                     if (e.PropertyName == nameof(TimerInstance.DisplayTime) && s is TimerInstance inst)
                         Dispatcher.InvokeAsync(() => display.Text = inst.DisplayTime);
                 };
+                timer.PropertyChanged += displayHandler;
+                _timerSubscriptions.Add((timer, displayHandler));
                 timerStack.Children.Add(display);
 
                 // Status text
@@ -396,11 +405,13 @@ public partial class AddOnPanel : UserControl
                     Text = statusText, FontSize = 10, Foreground = mutedBrush,
                     HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4)
                 };
-                timer.PropertyChanged += (s, e) =>
+                PropertyChangedEventHandler statusHandler = (s, e) =>
                 {
                     if (s is TimerInstance inst && (e.PropertyName == nameof(TimerInstance.IsPaused) || e.PropertyName == nameof(TimerInstance.IsRunning)))
                         Dispatcher.InvokeAsync(() => statusLabel.Text = inst.IsPaused ? "Paused" : inst.IsRunning ? "Running" : "Done");
                 };
+                timer.PropertyChanged += statusHandler;
+                _timerSubscriptions.Add((timer, statusHandler));
                 timerStack.Children.Add(statusLabel);
 
                 // Progress bar
@@ -409,11 +420,13 @@ public partial class AddOnPanel : UserControl
                     Minimum = 0, Maximum = 100, Value = timer.Progress,
                     Height = 4, Margin = new Thickness(0, 4, 0, 0)
                 };
-                timer.PropertyChanged += (s, e) =>
+                PropertyChangedEventHandler progressHandler = (s, e) =>
                 {
                     if (e.PropertyName == nameof(TimerInstance.Progress) && s is TimerInstance inst)
                         Dispatcher.InvokeAsync(() => progress.Value = inst.Progress);
                 };
+                timer.PropertyChanged += progressHandler;
+                _timerSubscriptions.Add((timer, progressHandler));
                 timerStack.Children.Add(progress);
 
                 timerCard.Child = timerStack;
@@ -421,6 +434,7 @@ public partial class AddOnPanel : UserControl
             }
 
             // Status row: "X/3 timers active"
+            // TODO: reference TimerViewModel.MaxTimers when made public
             ContentArea.Children.Add(new TextBlock
             {
                 Text = $"{activeTimers.Count}/3 timers active",
@@ -698,7 +712,7 @@ public partial class AddOnPanel : UserControl
         {
             "ai" => "/Assets/Icons/find.png",
             "calc" => "/Assets/Icons/calculator.png",
-            "timer" => "/Assets/Icons/history.png",
+            "timer" => "/Assets/Icons/timer.png",
             "color" => "/Assets/Icons/color.png",
             "ip" => "/Assets/Icons/url.png",
             "currency" => "/Assets/Icons/calculator.png",
