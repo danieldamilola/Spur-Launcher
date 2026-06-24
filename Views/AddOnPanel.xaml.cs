@@ -444,7 +444,12 @@ public partial class AddOnPanel : UserControl
             });
         }
 
-        // ── New timer card (always shown) ──────────────────
+        // ── New timer card (shown only when no timers are active) ──────────────────
+        // When timers are running, the per-instance cards above already show
+        // the countdown. The legacy preview mirrors the latest timer and would
+        // create a confusing duplicate display.
+        if (activeTimers.Count > 0) { return; }
+
         var card = new Border
         {
             CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
