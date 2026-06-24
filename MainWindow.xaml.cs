@@ -675,7 +675,7 @@ public partial class MainWindow : Window
     {
         base.OnMouseLeftButtonDown(e);
         if (e.Source is System.Windows.Controls.TextBox or System.Windows.Controls.Primitives.ScrollBar) return;
-        try { DragMove(); } catch { /* intentional: DragMove throws if button released mid-drag */ }
+        try { DragMove(); } catch (InvalidOperationException) { /* DragMove throws if button released mid-drag */ }
     }
 
 

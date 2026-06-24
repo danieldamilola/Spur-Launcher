@@ -139,10 +139,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
 
         _lastCopyTimestamp = DateTime.UtcNow;
 
-        // Suppress the ClipboardWatcher so our own CopyToSystem doesn't
-        // re-add the entry as a duplicate.
-        if (_clipboard is ClipboardServiceImpl impl)
-            impl.SuppressNextCapture();
+        _clipboard.SuppressNextCapture();
 
         // Move existing entry to the top (remove + re-insert)
         _clipboard.RemoveById(entry.Id);
@@ -284,7 +281,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
             return "\U0001F517 URL";
         if ((trimmed.StartsWith('{') && trimmed.EndsWith('}')) || (trimmed.StartsWith('[') && trimmed.EndsWith(']')))
         {
-            try { System.Text.Json.JsonDocument.Parse(trimmed); return "\U0001F4CB JSON"; } catch { }
+            try { System.Text.Json.JsonDocument.Parse(trimmed); return "\U0001F4CB JSON"; } catch { /* not valid JSON */ }
         }
         if (trimmed.Contains('@') && trimmed.Contains('.') && !trimmed.Contains(' ') && trimmed.Length < 320)
             return "\U0001F4E7 Email";
@@ -319,8 +316,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         _clipboard.RemoveById(above.Id);
         _clipboard.RemoveById(SelectedEntry.Id);
 
-        if (_clipboard is ClipboardServiceImpl impl)
-            impl.SuppressNextCapture();
+        _clipboard.SuppressNextCapture();
         _clipboard.Add(merged);
 
         StatusText = "Merged ✓";

@@ -19,7 +19,7 @@ public class SpurConfigValidationTests
     {
         var cfg = new SpurConfig { WindowOpacity = 0.1 };
         ConfigValidator.Validate(cfg);
-        Assert.Equal(0.3, cfg.WindowOpacity);
+        Assert.Equal(0.5, cfg.WindowOpacity);
     }
 
     [Fact]

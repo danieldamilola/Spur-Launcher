@@ -1088,9 +1088,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (result.ClipContent is not null)
         {
-            // Suppress the watcher to prevent duplicate entries
-            if (_clipboard is ClipboardServiceImpl impl)
-                impl.SuppressNextCapture();
+            _clipboard.SuppressNextCapture();
 
             _clipboard.Add(result.ClipContent);   // promote to top first
             _clipboard.CopyTextToSystem(result.ClipContent);
@@ -1200,11 +1198,15 @@ public sealed partial class MainViewModel : ObservableObject
                 await Task.Delay(durationMs, token);
                 if (!token.IsCancellationRequested)
                 {
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    var app = System.Windows.Application.Current;
+                    if (app?.Dispatcher is { } dispatcher && !dispatcher.HasShutdownStarted)
                     {
-                        IsToastVisible = false;
-                        ToastMessage = null;
-                    });
+                        dispatcher.Invoke(() =>
+                        {
+                            IsToastVisible = false;
+                            ToastMessage = null;
+                        });
+                    }
                 }
             }
             catch (TaskCanceledException) { /* Intentional: toast dismissed early */ }

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
+using Spur.Extensions;
 using Velopack;
 
 namespace Spur.ViewModels;
@@ -256,7 +257,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             "spacious" => 56.0,
             _          => 44.0, // comfortable (default)
         };
-        Application.Current.Resources["RowHeight"] = rowHeight;
+        if (Application.Current is not null)
+            Application.Current.Resources["RowHeight"] = rowHeight;
     }
 
     // ── Window Mode (compact / expanded) ─────────────────────────
@@ -1065,8 +1067,25 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void ResetToDefaults()
     {
         var preserveOnboarding = _config.OnboardingComplete;
+        var addOnsState = Registry.All.ToDictionary(
+            a => a.Id,
+            a => (a.IsEnabled, a.Keyword));
+
         _config = new SpurConfig();
-        _config.OnboardingComplete = preserveOnboarding; // Never re-show onboarding
+        _config.OnboardingComplete = preserveOnboarding;
+        foreach (var (id, (isEnabled, keyword)) in addOnsState)
+        {
+            if (_config.AddOns.TryGetValue(id, out var entry))
+            {
+                entry.Enabled = isEnabled;
+                entry.Keyword = keyword;
+            }
+            else
+            {
+                _config.AddOns[id] = new AddOnEntryConfig { Enabled = isEnabled, Keyword = keyword };
+            }
+        }
+        Registry.LoadSettings(_config);
         SaveAndApply();
         LoadStartupState();
 
@@ -1075,7 +1094,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _exclusionPatternsList = null;
         _fileTypesList = null;
 
-        // Notify all properties changed
         OnPropertyChanged(string.Empty);
     }
 

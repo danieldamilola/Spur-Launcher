@@ -72,6 +72,7 @@ public class MainViewModelTests
         public void Clear() { }
         public void KeepOnly(ISet<string> contentToKeep) { }
         public void RemoveById(Guid id) { }
+        public void SuppressNextCapture() { }
     }
 
     private sealed class FakeNotify : INotificationService { public void Show(string t, string m) { } }
@@ -80,6 +81,7 @@ public class MainViewModelTests
         public string[] SupportedProviders => new string[0];
         public Task StreamAsync(string provider, string model, string apiKey, string question, Action<string> onToken, CancellationToken ct = default) => Task.CompletedTask;
         public Task StreamAsync(string provider, string model, string apiKey, IEnumerable<(string Role, string Content)> messages, Action<string> onToken, CancellationToken ct = default) => Task.CompletedTask;
+        public Task<string[]> FetchModelsAsync(string provider, string apiKey, CancellationToken ct = default) => Task.FromResult(Array.Empty<string>());
     }
 
     private sealed class FakeTheme : IThemeManager

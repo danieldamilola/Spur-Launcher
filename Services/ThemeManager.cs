@@ -109,7 +109,7 @@ public sealed class ThemeManagerImpl : IThemeManager
                     return System.Windows.Media.Color.FromRgb(r, g, b);
                 }
             }
-            catch { }
+            catch (Exception ex) { _log.Warning("Failed to read DWM accent color", ex); }
         }
         else if (_config.AccentColorMode == "custom")
         {
@@ -117,7 +117,7 @@ public sealed class ThemeManagerImpl : IThemeManager
             {
                 return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_config.CustomAccentColor);
             }
-            catch { }
+            catch (Exception ex) { _log.Warning($"Failed to parse custom accent color '{_config.CustomAccentColor}'", ex); }
         }
 
         if (newDict["Accent"] is System.Windows.Media.SolidColorBrush brush)

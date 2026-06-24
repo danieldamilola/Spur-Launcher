@@ -164,14 +164,7 @@ public partial class App : Application
         // ── Force reindex if configured ───────────────────────────────
         if (config.ReIndexOnStartup)
         {
-            try
-            {
-                var cachePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Spur", "spur.catalog.json");
-                if (File.Exists(cachePath)) File.Delete(cachePath);
-            }
-            catch (Exception ex) { _fileLogger.Warning("Cache delete failed", ex); }
+            _services.GetRequiredService<IAppDiscoveryService>().ClearCache();
         }
 
         // ── Settings → behaviour bridge ───────────────────────────────
@@ -182,7 +175,7 @@ public partial class App : Application
             BuildTrayIcon();
 
         _fileLogger.Info("Spur started successfully.");
-
+        await Task.CompletedTask; // satisfy async method requirement — real awaits are in deferred init
 
         // ── Defer non-critical initialization (faster startup) ────────
         _ = Task.Run(async () =>
@@ -383,7 +376,7 @@ public partial class App : Application
                 using var process = System.Diagnostics.Process.GetCurrentProcess();
                 process.MinWorkingSet = process.MinWorkingSet; // Triggers OS working set trim
             }
-            catch { /* best-effort */ }
+            catch { /* best-effort: memory trimming is non-critical */ }
         });
     }
 

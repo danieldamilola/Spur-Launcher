@@ -34,7 +34,7 @@ public sealed class FileLogger : ILogger, IDisposable
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         _logPath = Path.Combine(logDirectory, $"spur_{timestamp}.log");
         
-        _writer = new StreamWriter(_logPath, append: true) { AutoFlush = true };
+        _writer = new StreamWriter(_logPath, append: true) { AutoFlush = false };
         
         CleanupOldLogs(logDirectory);
         
@@ -84,6 +84,9 @@ public sealed class FileLogger : ILogger, IDisposable
         }
     }
 
+    private int _writeCount;
+    private const int FlushInterval = 5;
+
     private void WriteLog(string level, string message, Exception? exception = null)
     {
         if (_disposed) return;
@@ -100,6 +103,8 @@ public sealed class FileLogger : ILogger, IDisposable
         lock (_lock)
         {
             _writer?.WriteLine(logLine);
+            if (++_writeCount % FlushInterval == 0)
+                _writer?.Flush();
         }
         
         System.Diagnostics.Debug.WriteLine(logLine);
@@ -118,6 +123,7 @@ public sealed class FileLogger : ILogger, IDisposable
         
         lock (_lock)
         {
+            _writer?.Flush();
             _writer?.Dispose();
             _writer = null;
         }

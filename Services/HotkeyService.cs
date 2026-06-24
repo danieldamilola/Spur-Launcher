@@ -26,6 +26,7 @@ public sealed class HotkeyService : IHotkeyService, IDisposable
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
+    private static int _nextId;
     private IntPtr _hwnd;
     private int _id;
     private Action? _callback;
@@ -43,7 +44,7 @@ public sealed class HotkeyService : IHotkeyService, IDisposable
     {
         _hwnd = hwnd;
         _callback = callback;
-        _id = GetHashCode();
+        _id = Interlocked.Increment(ref _nextId);
 
         ParseShortcut(shortcutString, out var mod, out var vk);
 

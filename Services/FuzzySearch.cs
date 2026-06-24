@@ -13,16 +13,13 @@ public static class FuzzySearch
 {
     /// <summary>
     /// Scores how well <paramref name="query"/> matches <paramref name="target"/>.
-    /// Uses pre-lowered strings to avoid per-character ToLowerInvariant overhead.
+    /// Case-insensitive. Avoids allocations by comparing characters directly.
     /// </summary>
     public static double Score(string query, string target)
     {
         if (string.IsNullOrEmpty(query)) return 0;
         if (string.IsNullOrEmpty(target)) return -1;
-
-        // Pre-lowercase once instead of per-character — saves significant
-        // CPU when scoring thousands of candidates per keystroke.
-        return ScoreCore(query.ToLowerInvariant(), target.ToLowerInvariant());
+        return ScoreCore(query.AsSpan(), target.AsSpan());
     }
 
     /// <summary>Span-based overload for advanced callers.</summary>
@@ -67,7 +64,7 @@ public static class FuzzySearch
             char qc = query[qi];
             char tc = target[ti];
 
-            if (qc == tc)
+            if (char.ToLowerInvariant(qc) == char.ToLowerInvariant(tc))
             {
                 consecutive++;
 

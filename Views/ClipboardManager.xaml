@@ -37,12 +37,12 @@
                        Margin="8,0,0,0"/>
         </StackPanel>
 
-        <!-- ═══ Content area: list + detail side by side ═══ -->
-        <Grid Grid.Row="2">
+        <!-- ═══ Content area: list + detail panel ═══ -->
+        <Grid Grid.Row="2" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="55*"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="45*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- ═══ Entry list ═══ -->
@@ -243,8 +243,47 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
+            <!-- ═══ Detail panel separator ═══ -->
+            <Border x:Name="DetailSeparator"
+                    Grid.Column="1"
+                    Width="1"
+                    Margin="12,0"
+                    Background="{DynamicResource GlassBorder}"
+                    VerticalAlignment="Stretch"/>
+
+            <!-- ═══ Detail panel (inline mode) ═══ -->
+            <Border x:Name="DetailPanel"
+                    Grid.Column="2"
+                    Width="240"
+                    Margin="8,0,0,0"
+                    Padding="12"
+                    CornerRadius="{DynamicResource RadiusRow}"
+                    Background="{DynamicResource SurfaceLow}"
+                    VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="Details"
+                               FontFamily="{DynamicResource Token.Font.Primary}"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               Margin="0,0,0,8"/>
+                    <Button x:Name="DetailPinBtn"
+                            Height="28"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Padding="4,0"
+                            HorizontalAlignment="Left"
+                            AutomationProperties.Name="Toggle pin">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
+                            <TextBlock Text="Pin to top" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
             <!-- ═══ Empty state ═══ -->
-            <StackPanel Grid.Column="0"
+            <StackPanel Grid.ColumnSpan="3"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center"
                         x:Name="EmptyState">
@@ -275,141 +314,6 @@
                            HorizontalAlignment="Center"
                            Margin="0,4,0,0"/>
             </StackPanel>
-
-            <!-- Vertical separator between list and detail -->
-            <Border Grid.Column="1"
-                    x:Name="DetailSeparator"
-                    Width="1"
-                    Background="{DynamicResource Separator}"
-                    VerticalAlignment="Stretch"/>
-
-            <!-- ═══ Detail preview (right side) ═══ -->
-            <Border Grid.Column="2"
-                    x:Name="DetailPanel"
-                    Background="{DynamicResource Depth2}">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Visible"/>
-                        <Setter Property="Opacity" Value="0"/>
-                        <Setter Property="RenderTransform">
-                            <Setter.Value>
-                                <TranslateTransform X="12"/>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <!-- Hide when nothing is selected -->
-                            <DataTrigger Binding="{Binding SelectedEntry}" Value="{x:Null}">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
-                            <Trigger Property="Visibility" Value="Visible">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="1" Duration="0:0:0.16"
-                                                             EasingFunction="{StaticResource AnimEaseOut}"/>
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                             To="0" Duration="0:0:0.16"
-                                                             EasingFunction="{StaticResource AnimEaseOut}"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <Grid Margin="12,8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-                        <Button Style="{StaticResource SettingsSoftButton}"
-                                Command="{Binding CopyCommand}"
-                                CommandParameter="{Binding SelectedEntry}"
-                                ToolTip="Copy"
-                                AutomationProperties.Name="Copy selected entry"
-                                Padding="6" Width="30" Height="30">
-                            <ui:FontIcon Glyph="&#xE8C8;" FontSize="14"/>
-                        </Button>
-                        <Button x:Name="DetailPinBtn"
-                                Style="{StaticResource SettingsSoftButton}"
-                                Margin="4,0,0,0"
-                                Tag="{Binding SelectedEntry}"
-                                ToolTip="Pin"
-                                AutomationProperties.Name="Pin selected entry"
-                                Click="OnPinClick"
-                                Padding="6" Width="30" Height="30">
-                            <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="14"/>
-                        </Button>
-                        <Button Style="{StaticResource SettingsSoftButton}"
-                                Margin="4,0,0,0"
-                                Command="{Binding DeleteCommand}"
-                                CommandParameter="{Binding SelectedEntry}"
-                                ToolTip="Delete"
-                                Foreground="{DynamicResource TextMuted}"
-                                AutomationProperties.Name="Delete selected entry"
-                                Padding="6" Width="30" Height="30">
-                            <ui:FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                        </Button>
-                        <Button x:Name="MergeBtn"
-                                Style="{StaticResource SettingsSoftButton}"
-                                Margin="4,0,0,0"
-                                ToolTip="Merge with item above"
-                                AutomationProperties.Name="Merge with above"
-                                Padding="6" Width="30" Height="30"
-                                Click="OnMergeClick">
-                            <ui:FontIcon Glyph="&#xE8D5;" FontSize="14"/>
-                            <Button.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="No separator (concatenate)"
-                                              Command="{Binding MergeWithCommand}"
-                                              CommandParameter="none"/>
-                                    <MenuItem Header="Space"
-                                              Command="{Binding MergeWithCommand}"
-                                              CommandParameter="space"/>
-                                    <MenuItem Header="New line"
-                                              Command="{Binding MergeWithCommand}"
-                                              CommandParameter="newline"/>
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                        </Button>
-                    </StackPanel>
-
-                    <!-- Metadata -->
-                    <TextBlock Grid.Row="1"
-                               Text="{Binding SelectedMetadata}"
-                               FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="11"
-                               Foreground="{DynamicResource TextTertiary}"
-                               Margin="0,0,0,6"/>
-
-                    <ScrollViewer Grid.Row="2"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel>
-                            <!-- Image detail preview -->
-                            <Image Source="{Binding SelectedEntry.Image}"
-                                   MaxHeight="300"
-                                   Stretch="Uniform"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   Margin="0,4,0,0"
-                                   Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibility}}"/>
-
-                            <!-- Text detail -->
-                            <TextBlock Text="{Binding SelectedContent}"
-                                       FontFamily="{DynamicResource Token.Font.Mono}"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       TextWrapping="Wrap"
-                                       TextTrimming="CharacterEllipsis"
-                                       Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToInverseVisibility}}"/>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
         </Grid>
     </Grid>
 

@@ -22,6 +22,8 @@ public interface IClipboardService
     void KeepOnly(ISet<string> contentToKeep);
     /// <summary>Removes the single entry with the given ID.</summary>
     void RemoveById(Guid id);
+    /// <summary>Call before CopyToSystem to prevent the watcher from re-adding the entry.</summary>
+    void SuppressNextCapture();
     event Action? ClipboardChanged;
 }
 
@@ -54,7 +56,6 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
 
     // ── Persistence ──────────────────────────────────────────────────
     private readonly string _savePath;
-    private volatile bool _savePending;
     private readonly System.Timers.Timer _debounceTimer;
     private bool _disposed;
 
@@ -219,12 +220,16 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     }
 
     /// <summary>
-    /// Copies the entry to the system clipboard. Must be called from an STA thread
-    /// (the WPF UI thread). Internally uses <c>System.Windows.Clipboard</c> which
-    /// throws if called from MTA.
+    /// Copies the entry to the system clipboard. Internally uses <c>System.Windows.Clipboard</c>
+    /// which requires STA. If called from MTA, marshals to the WPF dispatcher thread.
     /// </summary>
     public void CopyToSystem(ClipboardEntry entry)
     {
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() => CopyToSystem(entry));
+            return;
+        }
         try
         {
             if (entry.IsImage && entry.Image is not null)
