@@ -18,7 +18,8 @@
         <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type models:ScopeFilterItem}">
                 <Button Tag="{Binding Id}"
-                        Click="OnScopeClick">
+                        Click="OnScopeClick"
+                        AutomationProperties.Name="{Binding Label}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ScopeChip}">
                             <Style.Triggers>

@@ -35,7 +35,7 @@
                     <!-- Magnifying glass icon -->
                     <ui:FontIcon Grid.Column="0"
                                    Glyph="&#xE11A;"
-                                   FontSize="16"
+                                   FontSize="{DynamicResource FontHeading}"
                                    Foreground="{DynamicResource TextTertiary}"
                                    Margin="12,0,8,0"
                                    VerticalAlignment="Center"/>
@@ -46,7 +46,7 @@
                              Background="Transparent"
                              BorderThickness="0"
                              FontFamily="{DynamicResource Token.Font.Primary}"
-                             FontSize="14"
+                             FontSize="{DynamicResource FontBase}"
                              Foreground="{DynamicResource TextPrimary}"
                              CaretBrush="{DynamicResource TextPrimary}"
                              Padding="0,8,0,8"
@@ -67,7 +67,7 @@
                             Click="OnClearClick"
                             AutomationProperties.Name="Clear filter">
                         <ui:FontIcon Glyph="&#xE711;"
-                                       FontSize="14"
+                                       FontSize="{DynamicResource FontBase}"
                                        Foreground="{DynamicResource TextTertiary}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
@@ -98,6 +98,19 @@
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="BorderThickness" Value="0"/>
                         <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="FocusVisualStyle">
+                            <Setter.Value>
+                                <Style>
+                                    <Setter Property="Control.Template">
+                                        <Setter.Value>
+                                            <ControlTemplate>
+                                                <Border BorderBrush="{DynamicResource Accent}" BorderThickness="1" CornerRadius="{DynamicResource RadiusRow}" Margin="1" SnapsToDevicePixels="True"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Setter.Value>
+                        </Setter>
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
@@ -146,7 +159,7 @@
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
                                     <ui:FontIcon Glyph="{Binding IconGlyph}"
-                                                   FontSize="16"
+                                                   FontSize="{DynamicResource FontHeading}"
                                                    Foreground="{DynamicResource TextSecondary}"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center">
@@ -168,13 +181,13 @@
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Label}"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="13"
+                                           FontSize="{DynamicResource FontBody}"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding Description}"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource FontCaption}"
                                            Foreground="{DynamicResource TextTertiary}"
                                            TextTrimming="CharacterEllipsis"
                                            Margin="0,1,0,0"/>
@@ -186,7 +199,7 @@
                                        Text="↵"
                                        Margin="10,0,0,0"
                                        FontFamily="{DynamicResource Token.Font.Primary}"
-                                       FontSize="13"
+                                       FontSize="{DynamicResource FontBody}"
                                        Foreground="{DynamicResource TextTertiary}"
                                        VerticalAlignment="Center"
                                        Visibility="Collapsed"/>
@@ -207,10 +220,11 @@
                     Margin="12,0,12,12"
                     Background="{DynamicResource Depth2}"
                     CornerRadius="{DynamicResource RadiusMd}"
-                    Visibility="{Binding ShowNoMatch, Converter={StaticResource BoolToVisibility}}">
+                    Visibility="{Binding ShowNoMatch, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.LiveSetting="Polite">
                 <TextBlock Text="No matching commands"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="12"
+                           FontSize="{DynamicResource FontSm}"
                            Foreground="{DynamicResource TextTertiary}"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"/>

@@ -116,8 +116,4 @@
     <!-- ── Other ── -->
     <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
 
-    <!-- ── Onboarding preview colors (always hardcoded) ── -->
-    <SolidColorBrush x:Key="OnboardingPreviewDark" Color="#1C1C1F"/>
-    <SolidColorBrush x:Key="OnboardingPreviewLight" Color="#F2F2F4"/>
-
 </ResourceDictionary>

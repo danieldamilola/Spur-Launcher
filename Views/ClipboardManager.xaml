@@ -55,9 +55,25 @@
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      VirtualizingStackPanel.IsVirtualizing="True"
-                     FocusVisualStyle="{x:Null}"
                      PreviewMouseLeftButtonUp="OnListMouseClick"
                      AutomationProperties.Name="Clipboard history">
+                <ListBox.Style>
+                    <Style TargetType="ListBox">
+                        <Setter Property="FocusVisualStyle">
+                            <Setter.Value>
+                                <Style>
+                                    <Setter Property="Control.Template">
+                                        <Setter.Value>
+                                            <ControlTemplate>
+                                                <Border BorderBrush="{DynamicResource Accent}" BorderThickness="1" CornerRadius="{DynamicResource RadiusRow}" Margin="1" SnapsToDevicePixels="True"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.Style>
 
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:ClipboardEntry}">
@@ -111,7 +127,7 @@
                                 <Border x:Name="ImgBox"
                                         Grid.Column="0"
                                         Width="32" Height="32"
-                                        CornerRadius="8"
+                                        CornerRadius="{DynamicResource RadiusMd}"
                                         Background="{DynamicResource SurfaceLow}"
                                         VerticalAlignment="Center"
                                         Visibility="Collapsed">
@@ -125,7 +141,7 @@
                                 <Border x:Name="TextIconBox"
                                         Grid.Column="0"
                                         Width="32" Height="32"
-                                        CornerRadius="8"
+                                        CornerRadius="{DynamicResource RadiusMd}"
                                         Background="{DynamicResource SurfaceLow}"
                                         VerticalAlignment="Center">
                                     <ui:FontIcon Glyph="&#xE8C8;" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -286,7 +302,8 @@
             <StackPanel Grid.ColumnSpan="3"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center"
-                        x:Name="EmptyState">
+                        x:Name="EmptyState"
+                        AutomationProperties.LiveSetting="Polite">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Setter Property="Visibility" Value="Collapsed"/>

@@ -9,8 +9,8 @@
     Duration constants (mirror SpurMotion.cs):
       ShowDurationMs       200   — window appear (ease-out, scale 0.97→1, opacity 0→1)
       HideDurationMs       140   — window dismiss (ease-in,  scale 1→0.98, opacity 1→0)
-      HoverEnterMs         150   — result hover overlay fade in
-      HoverExitMs          200   — result hover overlay fade out
+      HoverEnterMs          80   — result hover overlay fade in
+      HoverExitMs           80   — result hover overlay fade out
       FocusPulseMs         300   — input focus pulse
       CrossfadeMs          120   — view transitions
       AnchorRevealMs       150   — category column reveal

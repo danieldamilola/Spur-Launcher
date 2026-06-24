@@ -30,5 +30,6 @@
              VirtualizingStackPanel.IsVirtualizing="True"
              VirtualizingStackPanel.VirtualizationMode="Recycling"
              ScrollViewer.CanContentScroll="True"
-             AutomationProperties.Name="Search results"/>
+             AutomationProperties.Name="Search results"
+             AutomationProperties.LiveSetting="Polite"/>
 </UserControl>

@@ -29,7 +29,7 @@
             <StackPanel Grid.Row="0" Margin="14,12,14,8">
                 <TextBlock Text="{Binding PreviewFileName}"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="13" FontWeight="SemiBold"
+                           FontSize="13" FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimary}"
                            TextTrimming="CharacterEllipsis"/>
                 <TextBlock Text="{Binding PreviewFileInfo}"

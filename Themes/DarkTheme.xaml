@@ -34,8 +34,8 @@
     <!-- ── Text colors ── -->
     <SolidColorBrush x:Key="TextPrimary"     Color="#F7F3EC"/>
     <SolidColorBrush x:Key="TextSecondary"   Color="#B2ADA4"/>
-    <SolidColorBrush x:Key="TextMuted"       Color="#87827A"/>
-    <SolidColorBrush x:Key="TextTertiary"    Color="#6B665F"/>
+    <SolidColorBrush x:Key="TextMuted"       Color="#9B9693"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="#8A857D"/>
     <SolidColorBrush x:Key="TextInverse"     Color="#101012"/>
 
     <!-- ── Border colors ── -->

@@ -32,141 +32,153 @@
                 <Border x:Name="FilesCard" Cursor="Hand"
                         Background="{DynamicResource SurfaceLow}"
                         CornerRadius="{DynamicResource RadiusRow}"
-                        Margin="0,0,5,0" Padding="12,10"
-                        MouseLeftButtonDown="OnCategoryCardClick" Tag="files">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="0.75" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <ui:FontIcon Glyph="&#xE8B7;" FontSize="18"
-                                     Foreground="{DynamicResource Accent}"
-                                     HorizontalAlignment="Left"/>
-                        <TextBlock Text="Files"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   Margin="0,6,0,0"/>
-                        <TextBlock Text="Search your files"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontMeta}"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   Margin="0,1,0,0"/>
-                    </StackPanel>
+                        Margin="0,0,5,0"
+                        MouseLeftButtonDown="OnCategoryCardClick" Tag="files"
+                        AutomationProperties.Name="Files">
+                    <Grid>
+                        <!-- Hover overlay -->
+                        <Border x:Name="FilesHoverOverlay"
+                                Background="{DynamicResource HoverBg}"
+                                CornerRadius="{DynamicResource RadiusRow}"
+                                Opacity="0"/>
+                        <StackPanel Margin="12,10">
+                            <ui:FontIcon Glyph="&#xE8B7;" FontSize="18"
+                                         Foreground="{DynamicResource Accent}"
+                                         HorizontalAlignment="Left"/>
+                            <TextBlock Text="Files"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontSm}" FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       Margin="0,6,0,0"/>
+                            <TextBlock Text="Search your files"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontMeta}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="FilesHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="FilesHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
                 </Border>
 
                 <!-- Clipboard -->
                 <Border x:Name="ClipCard" Cursor="Hand"
                         Background="{DynamicResource SurfaceLow}"
                         CornerRadius="{DynamicResource RadiusRow}"
-                        Margin="3,0,3,0" Padding="12,10"
-                        MouseLeftButtonDown="OnCategoryCardClick" Tag="clipboard">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="0.75" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <ui:FontIcon Glyph="&#xE77F;" FontSize="18"
-                                     Foreground="{DynamicResource Accent}"
-                                     HorizontalAlignment="Left"/>
-                        <TextBlock Text="Clipboard"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   Margin="0,6,0,0"/>
-                        <TextBlock Text="History &amp; pins"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontMeta}"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   Margin="0,1,0,0"/>
-                    </StackPanel>
+                        Margin="3,0,3,0"
+                        MouseLeftButtonDown="OnCategoryCardClick" Tag="clipboard"
+                        AutomationProperties.Name="Clipboard history">
+                    <Grid>
+                        <!-- Hover overlay -->
+                        <Border x:Name="ClipHoverOverlay"
+                                Background="{DynamicResource HoverBg}"
+                                CornerRadius="{DynamicResource RadiusRow}"
+                                Opacity="0"/>
+                        <StackPanel Margin="12,10">
+                            <ui:FontIcon Glyph="&#xE77F;" FontSize="18"
+                                         Foreground="{DynamicResource Accent}"
+                                         HorizontalAlignment="Left"/>
+                            <TextBlock Text="Clipboard"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontSm}" FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       Margin="0,6,0,0"/>
+                            <TextBlock Text="History &amp; pins"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontMeta}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ClipHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ClipHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
                 </Border>
 
                 <!-- Commands -->
                 <Border x:Name="CmdsCard" Cursor="Hand"
                         Background="{DynamicResource SurfaceLow}"
                         CornerRadius="{DynamicResource RadiusRow}"
-                        Margin="5,0,0,0" Padding="12,10"
-                        MouseLeftButtonDown="OnCategoryCardClick" Tag="actions">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="0.75" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 To="1" Duration="0:0:0.12"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <ui:FontIcon Glyph="&#xE756;" FontSize="18"
-                                     Foreground="{DynamicResource Accent}"
-                                     HorizontalAlignment="Left"/>
-                        <TextBlock Text="Commands"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   Margin="0,6,0,0"/>
-                        <TextBlock Text="System actions"
-                                   FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontMeta}"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   Margin="0,1,0,0"/>
-                    </StackPanel>
+                        Margin="5,0,0,0"
+                        MouseLeftButtonDown="OnCategoryCardClick" Tag="actions"
+                        AutomationProperties.Name="Commands">
+                    <Grid>
+                        <!-- Hover overlay -->
+                        <Border x:Name="CmdsHoverOverlay"
+                                Background="{DynamicResource HoverBg}"
+                                CornerRadius="{DynamicResource RadiusRow}"
+                                Opacity="0"/>
+                        <StackPanel Margin="12,10">
+                            <ui:FontIcon Glyph="&#xE756;" FontSize="18"
+                                         Foreground="{DynamicResource Accent}"
+                                         HorizontalAlignment="Left"/>
+                            <TextBlock Text="Commands"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontSm}" FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       Margin="0,6,0,0"/>
+                            <TextBlock Text="System actions"
+                                       FontFamily="{DynamicResource Token.Font.Primary}"
+                                       FontSize="{DynamicResource FontMeta}"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="CmdsHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="CmdsHoverOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
                 </Border>
             </UniformGrid>
 
@@ -203,7 +215,7 @@
                                 <!-- Icon -->
                                 <Border Grid.Column="0"
                                         Width="30" Height="30"
-                                        CornerRadius="8"
+                                        CornerRadius="{DynamicResource RadiusMd}"
                                         Background="Transparent"
                                         VerticalAlignment="Center">
                                     <Grid>

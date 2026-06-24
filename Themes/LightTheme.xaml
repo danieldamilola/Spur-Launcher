@@ -35,7 +35,7 @@
     <SolidColorBrush x:Key="TextPrimary"     Color="#171719"/>
     <SolidColorBrush x:Key="TextSecondary"   Color="#6E6E73"/>
     <SolidColorBrush x:Key="TextMuted"       Color="#6E6E73"/>
-    <SolidColorBrush x:Key="TextTertiary"    Color="#AEAEB2"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="#7C7C80"/>
     <SolidColorBrush x:Key="TextInverse"     Color="#FFFFFF"/>
 
     <!-- ── Border colors ── -->

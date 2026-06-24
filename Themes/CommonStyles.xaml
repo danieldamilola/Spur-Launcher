@@ -262,7 +262,7 @@
                                             Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                             BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                             BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                            CornerRadius="6">
+                                            CornerRadius="{DynamicResource RadiusSm}">
                                         <!-- chevron pinned to right edge -->
                                         <ui:FontIcon Glyph="&#xE70D;" FontSize="10"
                                                      Foreground="{DynamicResource TextTertiary}"
@@ -302,7 +302,7 @@
                             <Border Background="{DynamicResource Surface}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
-                                    CornerRadius="6"
+                                    CornerRadius="{DynamicResource RadiusSm}"
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Opacity="0.4" Color="Black"/>
@@ -452,7 +452,7 @@
 
     <!-- ===== Settings Styles ===== -->
     <Style x:Key="SettingsNavButton" TargetType="Button">
-        <Setter Property="Height" Value="34"/>
+        <Setter Property="Height" Value="36"/>
         <Setter Property="Padding" Value="12,0"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -573,7 +573,7 @@
     <Style x:Key="SettingsToken" TargetType="Button" BasedOn="{StaticResource SettingsSoftButton}">
         <Setter Property="Height" Value="26"/>
         <Setter Property="Padding" Value="9,0"/>
-        <Setter Property="Margin" Value="0,0,6,6"/>
+        <Setter Property="Margin" Value="0,0,4,4"/>
     </Style>
 
     <!-- ── Homepage category pill button ── -->
@@ -589,7 +589,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceLow}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}"/>
         <Setter Property="Height" Value="32"/>
         <Setter Property="Padding" Value="10,0"/>
     </Style>
@@ -648,10 +648,11 @@
 
     <!-- ── Scope chip (pill-shaped filter toggle) ── -->
     <Style x:Key="ScopeChip" TargetType="Button">
-        <Setter Property="Height" Value="24"/>
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="Padding" Value="8,6"/>
         <Setter Property="MinWidth" Value="44"/>
-        <Setter Property="Padding" Value="10,0"/>
-        <Setter Property="Margin" Value="0,0,5,0"/>
+
+        <Setter Property="Margin" Value="0,0,4,0"/>
         <Setter Property="FontFamily" Value="{DynamicResource Token.Font.Primary}"/>
         <Setter Property="FontSize" Value="{DynamicResource FontHint}"/>
         <Setter Property="FontWeight" Value="Normal"/>
@@ -667,7 +668,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="999"
+                            CornerRadius="{DynamicResource RadiusPill}"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>

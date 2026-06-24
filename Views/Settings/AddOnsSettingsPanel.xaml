@@ -12,7 +12,7 @@
         <!-- Page heading -->
         <TextBlock Text="Add-ons"
                    FontFamily="{DynamicResource Token.Font.Primary}"
-                   FontSize="22" FontWeight="SemiBold"
+                   FontSize="{DynamicResource FontXl}" FontWeight="Medium"
                    Foreground="{DynamicResource TextPrimary}"
                    Margin="0,0,0,20"/>
 

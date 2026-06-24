@@ -8,7 +8,7 @@
         <!-- Page heading -->
         <TextBlock Text="About"
                    FontFamily="{DynamicResource Token.Font.Primary}"
-                   FontSize="22" FontWeight="SemiBold"
+                   FontSize="{DynamicResource FontXl}" FontWeight="Medium"
                    Foreground="{DynamicResource TextPrimary}"
                    Margin="0,0,0,20"/>
 
@@ -149,7 +149,7 @@
                 <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Version}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="16" FontWeight="SemiBold"
+                               FontSize="16" FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"/>
                     <TextBlock Text="{Binding Credits}"
                                FontFamily="{DynamicResource Token.Font.Primary}"

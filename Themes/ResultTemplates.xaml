@@ -41,7 +41,7 @@
             <Button Grid.Column="1"
                     Content="Clear"
                     FontFamily="{DynamicResource Token.Font.Primary}"
-                    FontSize="10"
+                    FontSize="{DynamicResource FontCaption}"
                     Foreground="{DynamicResource TextMuted}"
                     Background="Transparent"
                     BorderThickness="0"
@@ -169,7 +169,7 @@
                 <!-- Icon container — no background pill, just the icon itself -->
                 <Border Grid.Column="0"
                         Width="32" Height="32"
-                        CornerRadius="8"
+                        CornerRadius="{DynamicResource RadiusMd}"
                         Background="Transparent"
                         VerticalAlignment="Center">
                     <Grid>
@@ -269,7 +269,7 @@
                                 CommandParameter="{Binding}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="{DynamicResource RadiusSm}" Padding="4">
                                         <ui:FontIcon x:Name="PinIcon" Glyph="&#xE718;" FontSize="11">
                                             <ui:FontIcon.Style>
                                                 <Style TargetType="ui:FontIcon">
@@ -299,7 +299,7 @@
                                 CommandParameter="{Binding}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="4">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="{DynamicResource RadiusSm}" Padding="4">
                                         <Path Width="11" Height="11" Stretch="Uniform"
                                               Stroke="{DynamicResource TextMuted}" StrokeThickness="1.5"
                                               StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"

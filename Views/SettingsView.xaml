@@ -19,7 +19,19 @@
             <Setter Property="Margin"                     Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment"   Value="Center"/>
-            <Setter Property="FocusVisualStyle"           Value="{x:Null}"/>
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style>
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <Border BorderBrush="{DynamicResource Accent}" BorderThickness="1" CornerRadius="{DynamicResource RadiusRow}" Margin="1" SnapsToDevicePixels="True"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Cursor"                     Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -57,7 +69,7 @@
                        RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="Spur"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="14" FontWeight="SemiBold"
+                           FontSize="14" FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock Text="{x:Static res:Strings.SettingsTitle}"
                            FontFamily="{DynamicResource Token.Font.Primary}"

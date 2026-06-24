@@ -44,7 +44,7 @@
                      Margin="0,0,8,0"/>
           <TextBlock x:Name="ModelLabel" Text=""
                      FontFamily="{DynamicResource Token.Font.Primary}"
-                     FontSize="11"
+                     FontSize="{DynamicResource FontCaption}"
                      Foreground="{DynamicResource TextTertiary}"
                      VerticalAlignment="Center"
                      Visibility="Collapsed"/>
@@ -62,7 +62,7 @@
                            Foreground="{DynamicResource TextTertiary}"/>
               <TextBlock Text="Clear"
                          FontFamily="{DynamicResource Token.Font.Primary}"
-                         FontSize="11"
+                         FontSize="{DynamicResource FontCaption}"
                          Foreground="{DynamicResource TextTertiary}"
                          VerticalAlignment="Center"/>
             </StackPanel>
@@ -81,13 +81,13 @@
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="Copy"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="11"
+                       FontSize="{DynamicResource FontCaption}"
                        Foreground="{DynamicResource TextTertiary}"
                        VerticalAlignment="Center"
                        Margin="0,0,4,0"/>
             <TextBlock Text="Ctrl+C"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="10"
+                       FontSize="{DynamicResource FontNano}"
                        Foreground="{DynamicResource TextTertiary}"
                        VerticalAlignment="Center"
                        Opacity="0.6"/>

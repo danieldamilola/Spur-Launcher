@@ -9,7 +9,7 @@
         <!-- Page heading -->
         <TextBlock Text="General"
                    FontFamily="{DynamicResource Token.Font.Primary}"
-                   FontSize="22" FontWeight="SemiBold"
+                   FontSize="{DynamicResource FontXl}" FontWeight="Medium"
                    Foreground="{DynamicResource TextPrimary}"
                    Margin="0,0,0,20"/>
 
@@ -387,7 +387,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="1" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="1" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Grid.Column="2" Text="Slot 1" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                     <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
@@ -406,7 +406,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="2" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="2" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Grid.Column="2" Text="Slot 2" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                     <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
@@ -425,7 +425,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Center">
-                        <TextBlock Text="3" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="3" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Grid.Column="2" Text="Slot 3" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                     <ComboBox Grid.Column="3" ItemsSource="{Binding AvailableCategories}" DisplayMemberPath="Name"
