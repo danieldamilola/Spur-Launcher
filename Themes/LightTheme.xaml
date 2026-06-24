@@ -11,9 +11,10 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════════════════════════════════════════════════════
-         LIGHT THEME — Semantic aliases
-         Exact mirror of DarkTheme.xaml — same keys, same structure,
-         same count. Only color values differ.
+         LIGHT THEME — Canonical token definitions
+         Colors, font sizes, radii, and layout values are defined here.
+         Font families are in Tokens.xaml (shared between themes).
+         This file and DarkTheme.xaml have the EXACT same key list.
          ═══════════════════════════════════════════════════════════ -->
 
     <!-- ── Surface colors ── -->
@@ -69,30 +70,27 @@
     <SolidColorBrush x:Key="ToggleKnob"      Color="#FFFFFF"/>
     <SolidColorBrush x:Key="ToggleTrackOff"  Color="#AEAEB2"/>
 
-    <!-- ── Font sizes (legacy aliases — shared values from Tokens.xaml) ── -->
+    <!-- ── Font sizes ── -->
     <sys:Double x:Key="FontNano">10</sys:Double>
-    <sys:Double x:Key="FontXxs">10</sys:Double>
-    <sys:Double x:Key="FontMicro">11</sys:Double>
-    <sys:Double x:Key="FontXs">11</sys:Double>
-    <sys:Double x:Key="FontCaption">12</sys:Double>
+    <sys:Double x:Key="FontCaption">11</sys:Double>
     <sys:Double x:Key="FontSm">12</sys:Double>
     <sys:Double x:Key="FontBody">13</sys:Double>
-    <sys:Double x:Key="FontMono13">13</sys:Double>
     <sys:Double x:Key="FontBase">14</sys:Double>
     <sys:Double x:Key="FontMd">15</sys:Double>
     <sys:Double x:Key="FontHeading">16</sys:Double>
-    <sys:Double x:Key="FontIp">16</sys:Double>
-    <sys:Double x:Key="FontLg">17</sys:Double>
     <sys:Double x:Key="FontSearch">18</sys:Double>
+    <sys:Double x:Key="FontXl">20</sys:Double>
+    <sys:Double x:Key="FontTitle">24</sys:Double>
+    <sys:Double x:Key="FontXxl">32</sys:Double>
+    <sys:Double x:Key="FontDisplay">48</sys:Double>
+    <!-- Semantic aliases -->
     <sys:Double x:Key="FontResult">13</sys:Double>
     <sys:Double x:Key="FontMeta">11</sys:Double>
     <sys:Double x:Key="FontHint">11</sys:Double>
     <sys:Double x:Key="FontLabel">11</sys:Double>
-    <sys:Double x:Key="FontTitle">24</sys:Double>
-    <sys:Double x:Key="FontXl">20</sys:Double>
-    <sys:Double x:Key="FontXxl">32</sys:Double>
-    <sys:Double x:Key="FontHero">48</sys:Double>
-    <sys:Double x:Key="FontDisplay">48</sys:Double>
+    <sys:Double x:Key="FontMono13">13</sys:Double>
+    <sys:Double x:Key="FontXs">11</sys:Double>
+    <sys:Double x:Key="FontLg">17</sys:Double>
 
     <!-- ── Radii ── -->
     <CornerRadius x:Key="RadiusSm">6</CornerRadius>

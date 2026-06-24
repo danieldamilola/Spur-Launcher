@@ -62,7 +62,7 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:ClipboardEntry}">
                         <Grid x:Name="RowRoot"
-                              Height="56"
+                              Height="{DynamicResource RowHeightTall}"
                               Background="Transparent"
                               Cursor="Hand"
                               AutomationProperties.Name="{Binding Preview}">
@@ -135,13 +135,13 @@
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,2,0,0">
                                     <TextBlock Text="{Binding Preview}"
                                                FontFamily="{DynamicResource Token.Font.Primary}"
-                                               FontSize="14"
+                                               FontSize="{DynamicResource FontBase}"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimary}"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding TimeAgo}"
                                                FontFamily="{DynamicResource Token.Font.Secondary}"
-                                               FontSize="12"
+                                               FontSize="{DynamicResource FontSm}"
                                                Foreground="{DynamicResource TextTertiary}"
                                                Margin="0,1,0,0"/>
                                 </StackPanel>
@@ -186,7 +186,7 @@
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                                              Storyboard.TargetProperty="Opacity"
-                                                             To="1" Duration="0:0:0.15"
+                                                             To="1" Duration="0:0:0.08"
                                                              EasingFunction="{StaticResource AnimEaseOut}"/>
                                         </Storyboard>
                                     </BeginStoryboard>
@@ -196,7 +196,7 @@
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                                              Storyboard.TargetProperty="Opacity"
-                                                             To="0" Duration="0:0:0.2"
+                                                             To="0" Duration="0:0:0.08"
                                                              EasingFunction="{StaticResource AnimEaseIn}"/>
                                         </Storyboard>
                                     </BeginStoryboard>
@@ -263,7 +263,7 @@
                 <StackPanel>
                     <TextBlock Text="Details"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="13" FontWeight="SemiBold"
+                               FontSize="{DynamicResource FontBody}" FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                Margin="0,0,0,8"/>
                     <Button x:Name="DetailPinBtn"
@@ -276,7 +276,7 @@
                             AutomationProperties.Name="Toggle pin">
                         <StackPanel Orientation="Horizontal">
                             <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
-                            <TextBlock Text="Pin to top" FontSize="12"/>
+                            <TextBlock Text="Pin to top" FontSize="{DynamicResource FontSm}"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -298,18 +298,18 @@
                     </Style>
                 </StackPanel.Style>
                 <TextBlock Text="📋"
-                           FontSize="36"
+                           FontSize="{DynamicResource FontXxl}"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,8"/>
                 <TextBlock Text="Clipboard is empty"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
+                           FontSize="{DynamicResource FontHeading}"
+                           FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimary}"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="Copy something to get started"
                            FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="13"
+                           FontSize="{DynamicResource FontBody}"
                            Foreground="{DynamicResource TextTertiary}"
                            HorizontalAlignment="Center"
                            Margin="0,4,0,0"/>

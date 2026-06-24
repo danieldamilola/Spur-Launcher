@@ -63,7 +63,7 @@
               MaxWidth="320"
               MinWidth="260">
         <Border.Effect>
-          <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.4" Color="#000000"/>
+          <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.4" Color="Black"/>
         </Border.Effect>
         <Grid>
           <Grid.RowDefinitions>
@@ -77,11 +77,11 @@
           <StackPanel Grid.Row="0" Margin="14,12,14,8">
             <TextBlock Text="Preview"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="13" FontWeight="SemiBold"
+                       FontSize="{DynamicResource FontBody}" FontWeight="Medium"
                        Foreground="{DynamicResource TextPrimary}"/>
             <TextBlock x:Name="ClipFloatMetadata"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="11"
+                       FontSize="{DynamicResource FontCaption}"
                        Foreground="{DynamicResource TextTertiary}"
                        Margin="0,3,0,0"/>
           </StackPanel>
@@ -125,7 +125,7 @@
                      Visibility="Collapsed"/>
               <TextBlock x:Name="ClipFloatText"
                          FontFamily="{DynamicResource Token.Font.Mono}"
-                         FontSize="11"
+                         FontSize="{DynamicResource FontCaption}"
                          Foreground="{DynamicResource TextSecondary}"
                          TextWrapping="Wrap"/>
             </Grid>
@@ -144,7 +144,7 @@
                 SnapsToDevicePixels="True"
                 Margin="0,0,0,8">
           <Border.Effect>
-          <DropShadowEffect BlurRadius="20" ShadowDepth="0" Direction="0" Opacity="0.5" Color="#000000"/>
+          <DropShadowEffect BlurRadius="20" ShadowDepth="0" Direction="0" Opacity="0.5" Color="Black"/>
           </Border.Effect>
 
           <Grid x:Name="CapsuleRoot" ClipToBounds="True">
@@ -231,18 +231,18 @@
                   <StackPanel Width="260" Margin="12,10">
                     <TextBlock Text="{Binding PreviewFileName}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="13" FontWeight="SemiBold"
+                               FontSize="{DynamicResource FontBody}" FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding PreviewFileInfo}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="11"
+                               FontSize="{DynamicResource FontCaption}"
                                Foreground="{DynamicResource TextTertiary}"
                                Margin="0,3,0,8"/>
                     <!-- Text preview -->
                     <TextBlock Text="{Binding PreviewContent}"
-                               FontFamily="Cascadia Code, Consolas, Courier New"
-                               FontSize="11"
+                               FontFamily="{DynamicResource Token.Font.Mono}"
+                               FontSize="{DynamicResource FontCaption}"
                                LineHeight="16"
                                Foreground="{DynamicResource TextSecondary}"
                                TextWrapping="Wrap"

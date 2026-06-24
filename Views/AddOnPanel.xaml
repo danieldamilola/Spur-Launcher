@@ -38,7 +38,7 @@
                  Margin="0,0,6,0" VerticalAlignment="Center"/>
           <TextBlock x:Name="FooterLabel" Text="Add-on"
                      FontFamily="{DynamicResource Token.Font.Primary}"
-                     FontWeight="SemiBold" FontSize="12"
+                     FontWeight="Medium" FontSize="{DynamicResource FontSm}"
                      Foreground="{DynamicResource TextSecondary}"
                      VerticalAlignment="Center"
                      Margin="0,0,8,0"/>

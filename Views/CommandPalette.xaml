@@ -8,7 +8,7 @@
              IsVisibleChanged="OnIsVisibleChanged">
 
     <Border Background="{DynamicResource Surface}"
-            CornerRadius="12"
+            CornerRadius="{DynamicResource RadiusLg}"
             Margin="8,8,8,0">
 
         <Grid>
@@ -24,7 +24,7 @@
                     Background="{DynamicResource Depth2}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8">
+                    CornerRadius="{DynamicResource RadiusMd}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -103,7 +103,7 @@
                                 <ControlTemplate TargetType="ListBoxItem">
                                     <Border x:Name="ItemBorder"
                                             Background="{TemplateBinding Background}"
-                                            CornerRadius="6"
+                                            CornerRadius="{DynamicResource RadiusSm}"
                                             Padding="{TemplateBinding Padding}"
                                             Margin="{TemplateBinding Margin}"
                                             BorderThickness="0">
@@ -206,7 +206,7 @@
                     Height="40"
                     Margin="12,0,12,12"
                     Background="{DynamicResource Depth2}"
-                    CornerRadius="8"
+                    CornerRadius="{DynamicResource RadiusMd}"
                     Visibility="{Binding ShowNoMatch, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="No matching commands"
                            FontFamily="{DynamicResource Token.Font.Primary}"

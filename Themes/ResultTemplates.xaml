@@ -82,7 +82,7 @@
                     <!-- Open (default action — same as double-click) -->
                     <MenuItem Header="Open"
                               Command="{Binding DataContext.OpenSelectedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              FontWeight="SemiBold"
+                              FontWeight="Medium"
                               InputGestureText="Enter">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
@@ -250,7 +250,7 @@
                     <TextBlock x:Name="EnterHint"
                                Text="↵"
                                FontFamily="{DynamicResource Token.Font.Mono}"
-                               FontSize="13"
+                               FontSize="{DynamicResource FontMono13}"
                                Foreground="{DynamicResource TextTertiary}"
                                VerticalAlignment="Center"
                                Visibility="Collapsed"/>
@@ -413,7 +413,7 @@
                 <ContextMenu>
                     <MenuItem Header="Open"
                               Command="{Binding DataContext.OpenSelectedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              FontWeight="SemiBold"
+                              FontWeight="Medium"
                               InputGestureText="Enter">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
@@ -537,7 +537,7 @@
                            Grid.Column="3"
                            Text="↵"
                            FontFamily="{DynamicResource Token.Font.Mono}"
-                           FontSize="13"
+                           FontSize="{DynamicResource FontMono13}"
                            Foreground="{DynamicResource TextTertiary}"
                            VerticalAlignment="Center"
                            Margin="6,0,0,0"

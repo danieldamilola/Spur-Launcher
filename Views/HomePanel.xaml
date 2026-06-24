@@ -64,7 +64,7 @@
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Files"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="Search your files"
@@ -111,7 +111,7 @@
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Clipboard"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="History &amp; pins"
@@ -158,7 +158,7 @@
                                      HorizontalAlignment="Left"/>
                         <TextBlock Text="Commands"
                                    FontFamily="{DynamicResource Token.Font.Primary}"
-                                   FontSize="{DynamicResource FontSm}" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FontSm}" FontWeight="Medium"
                                    Foreground="{DynamicResource TextPrimary}"
                                    Margin="0,6,0,0"/>
                         <TextBlock Text="System actions"
@@ -173,7 +173,7 @@
             <!-- ═══ Quick Actions label ═══ -->
             <TextBlock Text="QUICK ACTIONS"
                        FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="{DynamicResource FontNano}" FontWeight="SemiBold"
+                       FontSize="{DynamicResource FontNano}" FontWeight="Medium"
                        Foreground="{DynamicResource TextMuted}"
                        Margin="18,14,0,4"
                        Opacity="0.7"/>

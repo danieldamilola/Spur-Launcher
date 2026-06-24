@@ -32,8 +32,8 @@
                            Source="pack://application:,,,/Icons/spur-64x64.ico"/>
                     <TextBlock Text="Spur"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="36"
-                               FontWeight="SemiBold"
+                               FontSize="{DynamicResource FontXxl}"
+                               FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,4"/>
@@ -58,7 +58,7 @@
                     <TextBlock Text="Choose your shortcut"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
-                               FontWeight="SemiBold"
+                               FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
@@ -88,8 +88,8 @@
                             <TextBlock x:Name="KeyCaptureText"
                                        Text="Alt + Space"
                                        FontFamily="{DynamicResource Token.Font.Mono}"
-                                       FontSize="26"
-                                       FontWeight="SemiBold"
+                                       FontSize="{DynamicResource FontTitle}"
+                                       FontWeight="Medium"
                                        Foreground="{DynamicResource TextPrimary}"
                                        HorizontalAlignment="Center"/>
                             <TextBlock x:Name="KeyCaptureHint"
@@ -115,7 +115,7 @@
                     <TextBlock Text="Pick your look"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
-                               FontWeight="SemiBold"
+                               FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
@@ -154,7 +154,7 @@
                                 <TextBlock Text="Dark"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
-                                           FontWeight="SemiBold"
+                                           FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
@@ -187,7 +187,7 @@
                                 <TextBlock Text="Light"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
-                                           FontWeight="SemiBold"
+                                           FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
@@ -222,7 +222,7 @@
                                 <TextBlock Text="System"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="13"
-                                           FontWeight="SemiBold"
+                                           FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
@@ -236,7 +236,7 @@
                                Text="You're all set."
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="22"
-                               FontWeight="SemiBold"
+                               FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,12"/>

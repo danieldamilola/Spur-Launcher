@@ -5,75 +5,17 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          TOKENS — Spur Design System Shared Primitives
-         These values are THE SAME in both dark and light themes.
-         Theme-specific values (colors) live in DarkTheme/LightTheme.
+         Font families live here because they are shared between themes.
+         All other tokens (colors, font sizes, radii, layout) are
+         defined in DarkTheme.xaml / LightTheme.xaml.
          ═══════════════════════════════════════════════════════════════ -->
 
-    <!-- ──────────── 1. TYPOGRAPHY — Font families ─────────── -->
+    <!-- ──────────── TYPOGRAPHY — Font families ──────────────── -->
     <FontFamily x:Key="Token.Font.Primary">pack://application:,,,/Themes/Fonts/#Inter, Segoe UI Variable, Segoe UI</FontFamily>
+    <FontFamily x:Key="Token.Font.Secondary">pack://application:,,,/Themes/Fonts/#Inter, Segoe UI Variable, Segoe UI</FontFamily>
     <FontFamily x:Key="Token.Font.Mono">Cascadia Code, JetBrains Mono, Fira Code, Consolas</FontFamily>
 
-    <!-- ──────────── 2. TYPOGRAPHY — Font size primitives ──── -->
-    <sys:Double x:Key="Token.FontSize.Nano">10</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Xxs">10</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Micro">11</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Xs">11</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Caption">12</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Sm">12</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Base">14</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Md">15</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Ip">16</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Lg">17</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Xl">20</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Xxl">32</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Display">48</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Title">24</sys:Double>
-
-    <!-- ──────────── 3. TYPOGRAPHY — Semantic font sizes ───── -->
-    <sys:Double x:Key="Token.FontSize.Search">18</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Result">13</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Meta">11</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Body">14</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Heading">22</sys:Double>
-    <sys:Double x:Key="Token.FontSize.Mono">13</sys:Double>
-
-    <!-- ──────────── 4. SPACING — 4px grid scale ───────────── -->
-    <sys:Double x:Key="Token.Spacing.2">2</sys:Double>
-    <sys:Double x:Key="Token.Spacing.4">4</sys:Double>
-    <sys:Double x:Key="Token.Spacing.6">6</sys:Double>
-    <sys:Double x:Key="Token.Spacing.8">8</sys:Double>
-    <sys:Double x:Key="Token.Spacing.12">12</sys:Double>
-    <sys:Double x:Key="Token.Spacing.16">16</sys:Double>
-    <sys:Double x:Key="Token.Spacing.20">20</sys:Double>
-    <sys:Double x:Key="Token.Spacing.24">24</sys:Double>
-    <sys:Double x:Key="Token.Spacing.32">32</sys:Double>
-    <sys:Double x:Key="Token.Spacing.40">40</sys:Double>
-    <sys:Double x:Key="Token.Spacing.48">48</sys:Double>
-    <sys:Double x:Key="Token.Spacing.56">56</sys:Double>
-    <sys:Double x:Key="Token.Spacing.64">64</sys:Double>
-
-    <!-- ──────────── 5. LAYOUT CONSTANTS ───────────────────── -->
-    <sys:Double x:Key="Token.Layout.SearchBarHeight">56</sys:Double>
-    <sys:Double x:Key="Token.Layout.RowHeight">44</sys:Double>
-    <sys:Double x:Key="Token.Layout.RowHeightTall">52</sys:Double>
-    <sys:Double x:Key="Token.Layout.CategoryButtonSize">36</sys:Double>
-    <sys:Double x:Key="Token.Layout.AnchorHitSize">40</sys:Double>
-    <sys:Double x:Key="Token.Layout.WindowWidth">640</sys:Double>
-    <sys:Double x:Key="Token.Layout.WindowWidthCompact">640</sys:Double>
-    <sys:Double x:Key="Token.Layout.WindowWidthExpanded">640</sys:Double>
-
-    <!-- ──────────── 6. RADII — Corner radius scale ────────── -->
-    <CornerRadius x:Key="Token.Radius.Sm">6</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Md">8</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Lg">12</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Xl">16</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Pill">16</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Window">8</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Row">8</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Button">6</CornerRadius>
-    <CornerRadius x:Key="Token.Radius.Circle">18</CornerRadius>
-
-    <!-- ──────────── 7. MISC ───────────────────────────────── -->
+    <!-- ──────────── MISC ────────────────────────────────────── -->
     <sys:Double x:Key="Token.Misc.TextSelectionOpacity">0.25</sys:Double>
 
 </ResourceDictionary>
