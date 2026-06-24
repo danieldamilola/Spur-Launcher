@@ -16,6 +16,7 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     private readonly SpurConfig _config;
     private readonly IConfigService _configSvc;
     private readonly Action _clipboardChangedHandler;
+    private System.Windows.Threading.DispatcherTimer? _filterDebounce;
 
     // Timestamp of the last Copy() call. UpdateStatus() will not overwrite
     // "Copied ✓" for 500ms after this, giving any queued Refresh handlers
@@ -49,7 +50,23 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _filterText = string.Empty;
 
-    partial void OnFilterTextChanged(string value) => Refresh();
+    partial void OnFilterTextChanged(string value)
+    {
+        if (_filterDebounce is null)
+        {
+            _filterDebounce = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(100)
+            };
+            _filterDebounce.Tick += (_, _) =>
+            {
+                _filterDebounce.Stop();
+                Refresh();
+            };
+        }
+        _filterDebounce.Stop();
+        _filterDebounce.Start();
+    }
 
     [ObservableProperty]
     private ClipboardEntry? _selectedEntry;
@@ -114,8 +131,12 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
             : history.Where(e => e.Preview.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
 
         // Stamp pin status BEFORE sorting so pinned items float to the top.
+        var pinnedSet = _config.PinnedClipboard
+            .Select(p => p.Content)
+            .ToHashSet(StringComparer.Ordinal);
+
         foreach (var entry in desired)
-            entry.IsPinned = IsPinned(entry);
+            entry.IsPinned = !entry.IsImage && pinnedSet.Contains(entry.Content);
 
         desired = desired.OrderByDescending(e => e.IsPinned).ToList();
 
@@ -138,23 +159,32 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         if (entry is null) return;
 
         _lastCopyTimestamp = DateTime.UtcNow;
-
         _clipboard.SuppressNextCapture();
 
-        // Move existing entry to the top (remove + re-insert)
+        // Try clipboard write first — if it fails, don't reorder history
+        try
+        {
+            _clipboard.CopyToSystem(entry);
+        }
+        catch
+        {
+            StatusText = "Copy failed ✗";
+            return;
+        }
+
+        // Success — promote to top of history
         _clipboard.RemoveById(entry.Id);
         if (entry.IsImage)
         {
-            if (entry.Image is null) return;
-            _clipboard.AddImage(entry.Image);
+            if (entry.Image is not null)
+                _clipboard.AddImage(entry.Image);
         }
         else
         {
-            if (entry.Content is null) return;
-            _clipboard.Add(entry.Content);
+            if (entry.Content is not null)
+                _clipboard.Add(entry.Content);
         }
 
-        _clipboard.CopyToSystem(entry);
         StatusText = "Copied ✓";
     }
 
@@ -295,10 +325,15 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         }
         if (trimmed.Contains('@') && trimmed.Contains('.') && !trimmed.Contains(' ') && trimmed.Length < 320)
             return "\U0001F4E7 Email";
-        if (trimmed.Contains("function ") || trimmed.Contains("class ") || trimmed.Contains("def ") ||
-            trimmed.Contains("const ") || trimmed.Contains("var ") || trimmed.Contains("public ") ||
-            trimmed.Contains("import ") || trimmed.Contains("#include") || trimmed.Contains("using "))
+
+        // Require 2+ signals to reduce false positives
+        int codeSignals = 0;
+        ReadOnlySpan<string> codeKeywords = ["function ", "class ", "def ", "const ", "var ", "public ", "private ", "import ", "#include", "using ", "return ", "if (", "for (", "while ("];
+        foreach (var kw in codeKeywords)
+            if (trimmed.Contains(kw)) codeSignals++;
+        if (codeSignals >= 2)
             return "\U0001F4BB Code";
+
         if (System.IO.Path.IsPathFullyQualified(trimmed) || trimmed.StartsWith("C:\\") || trimmed.StartsWith("/"))
             return "\U0001F4C1 Path";
         return "\U0001F4DD Text";
@@ -339,5 +374,6 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _clipboard.ClipboardChanged -= _clipboardChangedHandler;
+        _filterDebounce?.Stop();
     }
 }

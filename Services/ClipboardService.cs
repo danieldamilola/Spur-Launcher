@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Spur.Helpers;
 using Spur.Models;
 
 namespace Spur.Services;
@@ -122,11 +123,14 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
         }
 
         var textHash = text.GetHashCode(StringComparison.Ordinal);
+        var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
+            ? text[..ClipboardEntry.MaxStoredTextChars]
+            : text;
 
         lock (_lock)
         {
             // Dedup: if the same text already exists anywhere, move it to the top
-            var existingIdx = _history.FindIndex(e => !e.IsImage && e.FullTextHash == textHash);
+            var existingIdx = _history.FindIndex(e => !e.IsImage && e.FullTextHash == textHash && e.Content == storedText);
             if (existingIdx >= 0)
             {
                 // Already at the top — nothing to do
@@ -134,14 +138,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
                 _history.RemoveAt(existingIdx);
             }
 
-            var storedText = text.Length > ClipboardEntry.MaxStoredTextChars
-                ? text[..ClipboardEntry.MaxStoredTextChars]
-                : text;
-
             _history.Insert(0, new ClipboardEntry(storedText));
             EnforceLimits();
         }
         RaiseClipboardChanged();
+        ScheduleSave();
     }
 
     public void AddImage(System.Windows.Media.Imaging.BitmapSource image)
@@ -176,20 +177,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
 
     /// <summary>Fast image fingerprint: dimensions + first row sample.</summary>
     private static int ComputeImageFingerprint(System.Windows.Media.Imaging.BitmapSource img)
-    {
-        int w   = img.PixelWidth;
-        int h   = img.PixelHeight;
-        int bpp = Math.Max(1, img.Format.BitsPerPixel / 8);
-        int sampleWidth = Math.Min(w, 128 / bpp);
-        var buf = new byte[sampleWidth * bpp];
-        img.CopyPixels(new System.Windows.Int32Rect(0, 0, sampleWidth, 1), buf, buf.Length, 0);
-
-        var hash = new HashCode();
-        hash.Add(w);
-        hash.Add(h);
-        foreach (var b in buf) hash.Add(b);
-        return hash.ToHashCode();
-    }
+        => ImageFingerprintHelper.Compute(img);
 
     private void TrimImages()
     {
@@ -266,6 +254,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     {
         lock (_lock) _history.Clear();
         RaiseClipboardChanged();
+        ScheduleSave();
     }
 
     /// <summary>
@@ -281,7 +270,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
                 e.IsImage || !contentToKeep.Contains(e.Content ?? string.Empty));
             changed = removed > 0;
         }
-        if (changed) RaiseClipboardChanged();
+        if (changed)
+        {
+            RaiseClipboardChanged();
+            ScheduleSave();
+        }
     }
 
     /// <summary>
@@ -297,7 +290,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
             int removed = _history.RemoveAll(e => e.Id == id);
             changed = removed > 0;
         }
-        if (changed) RaiseClipboardChanged();
+        if (changed)
+        {
+            RaiseClipboardChanged();
+            ScheduleSave();
+        }
     }
 
     // Captures the delegate before null-checking to eliminate the race between
@@ -352,7 +349,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
                 foreach (var dto in dtos)
                 {
                     if (!string.IsNullOrEmpty(dto.Content))
-                        _history.Add(new ClipboardEntry(dto.Content));
+                        _history.Add(new ClipboardEntry(dto.Content, dto.Timestamp));
                 }
             }
         }

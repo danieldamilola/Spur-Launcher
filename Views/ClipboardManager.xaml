@@ -186,6 +186,12 @@
                                                FontSize="{DynamicResource FontSm}"
                                                Foreground="{DynamicResource TextTertiary}"
                                                Margin="0,1,0,0"/>
+                                    <TextBlock x:Name="TruncWarning" Text="⚠ Truncated" 
+                                               FontFamily="{DynamicResource Token.Font.Primary}"
+                                               FontSize="{DynamicResource FontCaption}"
+                                               Foreground="#E5A100"
+                                               Visibility="Collapsed"
+                                               Margin="6,1,0,0"/>
                                 </StackPanel>
 
                                 <!-- Pin + Delete buttons -->
@@ -198,9 +204,9 @@
                                             Cursor="Hand"
                                             Margin="2,0"
                                             ToolTip="Pin"
-                                            Tag="{Binding}"
                                             AutomationProperties.Name="Pin entry"
-                                            Click="OnPinClick">
+                                            Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}">
                                         <ui:FontIcon x:Name="PinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                     </Button>
 
@@ -289,6 +295,10 @@
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                                 <Setter TargetName="ActionButtons" Property="Opacity" Value="1"/>
                             </DataTrigger>
+                            <!-- Truncation indicator -->
+                            <DataTrigger Binding="{Binding IsTruncated}" Value="True">
+                                <Setter TargetName="TruncWarning" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
                             <!-- Always show for pinned items -->
                             <DataTrigger Binding="{Binding IsPinned}" Value="True">
                                 <Setter TargetName="ActionButtons" Property="Opacity" Value="1"/>
@@ -359,6 +369,32 @@
                             <StackPanel Orientation="Horizontal">
                                 <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
                                 <TextBlock Text="Pin to top" FontSize="{DynamicResource FontSm}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Padding="4,0"
+                                Margin="8,0,0,0"
+                                AutomationProperties.Name="Merge with above"
+                                Click="OnMergeClick">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Merge (no separator)" 
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="none"/>
+                                    <MenuItem Header="Merge with space" 
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="space"/>
+                                    <MenuItem Header="Merge with newline" 
+                                              Command="{Binding MergeWithCommand}"
+                                              CommandParameter="newline"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FontIcon Glyph="&#xE8D6;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
+                                <TextBlock Text="Merge ▾" FontSize="{DynamicResource FontSm}"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>

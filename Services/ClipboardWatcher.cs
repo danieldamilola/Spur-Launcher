@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using Spur.Helpers;
 
 namespace Spur.Services;
 
@@ -59,7 +60,7 @@ public sealed class ClipboardWatcher : IDisposable
         var img = _clipboard.ReadImageFromSystem();
         if (img is not null)
         {
-            var fp = ComputeImageFingerprint(img);
+            var fp = ImageFingerprintHelper.Compute(img);
             if (fp != _lastImageFingerprint)
             {
                 _lastImageFingerprint = fp;
@@ -80,27 +81,7 @@ public sealed class ClipboardWatcher : IDisposable
         return IntPtr.Zero;
     }
 
-    /// <summary>
-    /// Computes a fast fingerprint by sampling image dimensions and the first
-    /// row of pixels (up to 128 bytes). Much more reliable than dimension-only
-    /// comparison, and cheap enough to run on the UI thread.
-    /// </summary>
-    private static int ComputeImageFingerprint(BitmapSource img)
-    {
-        int w   = img.PixelWidth;
-        int h   = img.PixelHeight;
-        int bpp = Math.Max(1, img.Format.BitsPerPixel / 8);
 
-        int sampleWidth = Math.Min(w, 128 / bpp);
-        var buf         = new byte[sampleWidth * bpp];
-        img.CopyPixels(new System.Windows.Int32Rect(0, 0, sampleWidth, 1), buf, buf.Length, 0);
-
-        var hash = new HashCode();
-        hash.Add(w);
-        hash.Add(h);
-        foreach (var b in buf) hash.Add(b);
-        return hash.ToHashCode();
-    }
 
     public void Dispose()
     {

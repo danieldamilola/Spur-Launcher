@@ -1,10 +1,14 @@
+using System.ComponentModel;
 using System.Windows.Media.Imaging;
 
 namespace Spur.Models;
 
 /// <summary>A single clipboard history entry — either text or an image.</summary>
-public sealed class ClipboardEntry
+public sealed class ClipboardEntry : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     public const int MaxStoredTextChars = 20_000;
 
     /// <summary>Text constructor.</summary>
@@ -18,6 +22,19 @@ public sealed class ClipboardEntry
         IsImage       = false;
         var display   = Content.Replace('\n', ' ').Replace('\r', ' ');
         Preview      = display.Length > 80 ? display[..80] + "..." : display;
+    }
+
+    /// <summary>Deserialization constructor — restores the original timestamp.</summary>
+    internal ClipboardEntry(string content, DateTime timestamp)
+    {
+        Id            = Guid.NewGuid();
+        FullTextHash  = content.GetHashCode(StringComparison.Ordinal);
+        IsTruncated   = content.Length > MaxStoredTextChars;
+        Content       = IsTruncated ? content[..MaxStoredTextChars] : content;
+        Timestamp     = timestamp;
+        IsImage       = false;
+        var display   = Content.Replace('\n', ' ').Replace('\r', ' ');
+        Preview       = display.Length > 80 ? display[..80] + "..." : display;
     }
 
     /// <summary>Image constructor. The BitmapSource must already be frozen.</summary>
@@ -46,7 +63,17 @@ public sealed class ClipboardEntry
     public string Preview { get; }
 
     /// <summary>Whether this entry is pinned. Set by the ViewModel during refresh.</summary>
-    public bool IsPinned { get; set; }
+    private bool _isPinned;
+    public bool IsPinned
+    {
+        get => _isPinned;
+        set
+        {
+            if (_isPinned == value) return;
+            _isPinned = value;
+            OnPropertyChanged(nameof(IsPinned));
+        }
+    }
 
     public string TimeAgo
     {

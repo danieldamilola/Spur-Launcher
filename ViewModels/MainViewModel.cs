@@ -1412,8 +1412,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void ClearClipboard()
     {
-        var pinned = Config.PinnedClipboard.Select(p => p.Content).ToHashSet();
-        _clipboard.KeepOnly(pinned);
+        _clipboardVm.ClearAll();
         OnQueryChanged(Query ?? string.Empty);
     }
 

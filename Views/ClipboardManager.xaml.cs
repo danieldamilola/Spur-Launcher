@@ -10,7 +10,7 @@ namespace Spur.Views;
 
 /// <summary>
 /// Code-behind for ClipboardManager.xaml. Refreshes the ViewModel on load
-/// and handles the pin button click (event-based, not command-based).
+/// and handles paste-on-click and merge button interactions.
 /// </summary>
 public partial class ClipboardManager : UserControl
 {
@@ -74,6 +74,9 @@ public partial class ClipboardManager : UserControl
     {
         if (e.OriginalSource is DependencyObject src)
         {
+            // Don't trigger paste if the click was on an action button
+            if (FindAncestor<Button>(src) is not null) return;
+
             var item = ItemsControl.ContainerFromElement(ClipList, src) as ListBoxItem;
             if (item?.DataContext is ClipboardEntry entry && _vm != null)
             {
@@ -82,6 +85,16 @@ public partial class ClipboardManager : UserControl
                 e.Handled = true;
             }
         }
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
+    {
+        while (obj is not null)
+        {
+            if (obj is T target) return target;
+            obj = System.Windows.Media.VisualTreeHelper.GetParent(obj);
+        }
+        return null;
     }
 
     /// <summary>
@@ -159,15 +172,6 @@ public partial class ClipboardManager : UserControl
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
-    private void OnPinClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: ClipboardEntry entry })
-        {
-            _vm?.TogglePinCommand.Execute(entry);
-            // Refresh the detail pin state after toggling
-            Dispatcher.InvokeAsync(UpdateDetailPinState);
-        }
-    }
 
     public void MoveSelection(int delta) => _vm?.MoveSelection(delta);
 
