@@ -1,0 +1,123 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/Tokens.xaml"/>
+        <ResourceDictionary Source="/Themes/Animations.xaml"/>
+        <ResourceDictionary Source="/Themes/CommonStyles.xaml"/>
+        <ResourceDictionary Source="/Themes/ResultTemplates.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         HIGH CONTRAST THEME — Canonical token definitions
+         Uses SystemColors for full Windows high-contrast support.
+         Font families are in Tokens.xaml (shared between themes).
+         This file has the EXACT same key list as Dark/LightTheme.xaml.
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- ── Surface colors ── -->
+    <SolidColorBrush x:Key="Void"            Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="Depth1"          Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="Depth2"          Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="Depth3"          Color="{x:Static SystemColors.ControlColor}"/>
+    <SolidColorBrush x:Key="Depth4"          Color="{x:Static SystemColors.ControlColor}"/>
+    <SolidColorBrush x:Key="GlassBg"         Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="GlassBorder"     Color="{x:Static SystemColors.WindowFrameColor}"/>
+    <SolidColorBrush x:Key="PreviewBg"       Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="Surface"         Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="SurfaceAcrylic"  Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="SurfaceLow"      Color="{x:Static SystemColors.WindowColor}"/>
+    <SolidColorBrush x:Key="SurfaceRaised"   Color="{x:Static SystemColors.ControlColor}"/>
+
+    <!-- ── Text colors ── -->
+    <SolidColorBrush x:Key="TextPrimary"     Color="{x:Static SystemColors.WindowTextColor}"/>
+    <SolidColorBrush x:Key="TextSecondary"   Color="{x:Static SystemColors.WindowTextColor}"/>
+    <SolidColorBrush x:Key="TextMuted"       Color="{x:Static SystemColors.GrayTextColor}"/>
+    <SolidColorBrush x:Key="TextTertiary"    Color="{x:Static SystemColors.GrayTextColor}"/>
+    <SolidColorBrush x:Key="TextInverse"     Color="{x:Static SystemColors.HighlightTextColor}"/>
+
+    <!-- ── Border colors ── -->
+    <SolidColorBrush x:Key="BorderBrush"     Color="{x:Static SystemColors.WindowFrameColor}"/>
+    <SolidColorBrush x:Key="BorderStrong"    Color="{x:Static SystemColors.WindowFrameColor}"/>
+    <SolidColorBrush x:Key="Separator"       Color="{x:Static SystemColors.WindowFrameColor}"/>
+
+    <!-- ── Selection colors ── -->
+    <SolidColorBrush x:Key="SelectedBg"      Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="SelectedText"    Color="{x:Static SystemColors.HighlightTextColor}"/>
+    <SolidColorBrush x:Key="SelectedMuted"   Color="{x:Static SystemColors.HighlightTextColor}"/>
+    <SolidColorBrush x:Key="HoverBg"         Color="{x:Static SystemColors.ControlColor}"/>
+
+    <!-- ── Accent colors ── -->
+    <SolidColorBrush x:Key="Accent"          Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="BrandHighlight"  Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentWash"      Color="{x:Static SystemColors.ControlColor}"/>
+    <SolidColorBrush x:Key="AccentGhost"     Color="{x:Static SystemColors.ControlColor}"/>
+
+    <!-- ── Category accent colors ── -->
+    <SolidColorBrush x:Key="AccentTime"      Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentAi"        Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentMath"      Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentNetwork"   Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentFiles"     Color="{x:Static SystemColors.HighlightColor}"/>
+    <SolidColorBrush x:Key="AccentClipboard" Color="{x:Static SystemColors.HighlightColor}"/>
+
+    <!-- ── Semantic colors ── -->
+    <SolidColorBrush x:Key="Green"           Color="{x:Static SystemColors.WindowTextColor}"/>
+    <SolidColorBrush x:Key="Orange"          Color="{x:Static SystemColors.WindowTextColor}"/>
+    <SolidColorBrush x:Key="Red"             Color="{x:Static SystemColors.WindowTextColor}"/>
+    <SolidColorBrush x:Key="ToggleKnob"      Color="{x:Static SystemColors.HighlightTextColor}"/>
+    <SolidColorBrush x:Key="ToggleTrackOff"  Color="{x:Static SystemColors.GrayTextColor}"/>
+
+    <!-- ── Font sizes ── -->
+    <sys:Double x:Key="FontNano">10</sys:Double>
+    <sys:Double x:Key="FontCaption">11</sys:Double>
+    <sys:Double x:Key="FontSm">12</sys:Double>
+    <sys:Double x:Key="FontBody">13</sys:Double>
+    <sys:Double x:Key="FontBase">14</sys:Double>
+    <sys:Double x:Key="FontMd">15</sys:Double>
+    <sys:Double x:Key="FontHeading">16</sys:Double>
+    <sys:Double x:Key="FontSearch">18</sys:Double>
+    <sys:Double x:Key="FontXl">20</sys:Double>
+    <sys:Double x:Key="FontTitle">24</sys:Double>
+    <sys:Double x:Key="FontXxl">32</sys:Double>
+    <sys:Double x:Key="FontDisplay">48</sys:Double>
+    <!-- Semantic aliases -->
+    <sys:Double x:Key="FontResult">13</sys:Double>
+    <sys:Double x:Key="FontMeta">11</sys:Double>
+    <sys:Double x:Key="FontHint">11</sys:Double>
+    <sys:Double x:Key="FontLabel">11</sys:Double>
+    <sys:Double x:Key="FontMono13">13</sys:Double>
+    <sys:Double x:Key="FontXs">11</sys:Double>
+    <sys:Double x:Key="FontLg">17</sys:Double>
+
+    <!-- ── Radii ── -->
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">12</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">16</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">16</CornerRadius>
+    <CornerRadius x:Key="RadiusWindow">8</CornerRadius>
+    <CornerRadius x:Key="RadiusRow">8</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">6</CornerRadius>
+    <CornerRadius x:Key="RadiusCircle">18</CornerRadius>
+
+    <!-- ── Layout ── -->
+    <sys:Double x:Key="SearchBarHeight">56</sys:Double>
+    <sys:Double x:Key="RowHeight">44</sys:Double>
+    <sys:Double x:Key="RowHeightTall">52</sys:Double>
+    <sys:Double x:Key="CategoryButtonSize">36</sys:Double>
+    <sys:Double x:Key="AnchorHitSize">40</sys:Double>
+    <sys:Double x:Key="WindowWidth">640</sys:Double>
+    <sys:Double x:Key="WindowWidthCompact">640</sys:Double>
+    <sys:Double x:Key="WindowWidthExpanded">640</sys:Double>
+
+    <!-- ── Other ── -->
+    <sys:Double x:Key="TextSelectionOpacity">0.25</sys:Double>
+
+    <!-- ── Onboarding preview colors (always hardcoded) ── -->
+    <SolidColorBrush x:Key="OnboardingPreviewDark" Color="#1C1C1F"/>
+    <SolidColorBrush x:Key="OnboardingPreviewLight" Color="#F2F2F4"/>
+
+</ResourceDictionary>

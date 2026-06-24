@@ -1,12 +1,15 @@
 namespace Spur.Models;
 
+/// <summary>Marker interface for items in the unified results list.</summary>
+public interface IResultItem { }
+
 /// <summary>Result type discriminator.</summary>
 public enum ResultType { App, File, Clipboard, Action }
 
 /// <summary>
 /// Unified search result for apps, files, clipboard items, and built-in actions.
 /// </summary>
-public class SearchResult
+public class SearchResult : IResultItem
 {
     public string Id { get; set; } = string.Empty;
     public ResultType Type { get; set; }
@@ -76,7 +79,7 @@ public class SearchResult
 }
 
 /// <summary>Section header shown between groups of results (e.g. "APPLICATIONS", "FILES").</summary>
-public record SectionLabel(string Title);
+public record SectionLabel(string Title) : IResultItem;
 
 /// <summary>
 /// JSON-safe subset of SearchResult — no WPF types, no computed properties.

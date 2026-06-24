@@ -272,7 +272,8 @@
                           FontFamily="{DynamicResource Token.Font.Primary}"
                           FontSize="{DynamicResource FontHint}"
                          Foreground="{DynamicResource TextTertiary}"
-                         Text="{Binding FooterHint}"/>
+                         Text="{Binding FooterHint}"
+                         AutomationProperties.LiveSetting="Polite"/>
             </Border>
 
             <!-- ═══ Toast notification bar ═══ -->
@@ -289,7 +290,8 @@
                          VerticalAlignment="Center"
                          FontFamily="{DynamicResource Token.Font.Primary}"
                          FontSize="{DynamicResource FontSm}"
-                         Foreground="{DynamicResource TextSecondary}"/>
+                         Foreground="{DynamicResource TextSecondary}"
+                         AutomationProperties.LiveSetting="Assertive"/>
             </Border>
 
             <!-- Command palette overlay -->

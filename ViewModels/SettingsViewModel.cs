@@ -288,43 +288,43 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IndexApps
     {
         get => _config.IndexApps;
-        set { _config.IndexApps = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.IndexApps, v => _config.IndexApps = v, value);
     }
 
     public bool IndexFiles
     {
         get => _config.IndexFiles;
-        set { _config.IndexFiles = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.IndexFiles, v => _config.IndexFiles = v, value);
     }
 
     public bool IndexFolders
     {
         get => _config.IndexFolders;
-        set { _config.IndexFolders = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.IndexFolders, v => _config.IndexFolders = v, value);
     }
 
     public bool IndexClipboard
     {
         get => _config.IndexClipboard;
-        set { _config.IndexClipboard = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.IndexClipboard, v => _config.IndexClipboard = v, value);
     }
 
     public bool IndexCalculator
     {
         get => _config.IndexCalculator;
-        set { _config.IndexCalculator = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.IndexCalculator, v => _config.IndexCalculator = v, value);
     }
 
     public bool FuzzySearch
     {
         get => _config.FuzzySearch;
-        set { _config.FuzzySearch = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.FuzzySearch, v => _config.FuzzySearch = v, value);
     }
 
     public bool FilePreviewEnabled
     {
         get => _config.FilePreviewEnabled;
-        set { _config.FilePreviewEnabled = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.FilePreviewEnabled, v => _config.FilePreviewEnabled = v, value);
     }
 
     public string[] PreviewStyleOptions { get; } = ["Floating", "Inline"];
@@ -332,7 +332,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string PreviewStyle
     {
         get => _config.PreviewStyle;
-        set { _config.PreviewStyle = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.PreviewStyle, v => _config.PreviewStyle = v, value);
     }
 
     public string[] QuerySearchPrecisionOptions { get; } = ["Low", "Regular", "Strict"];
@@ -387,31 +387,31 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool IndexShell
     {
         get => _config.IndexShell;
-        set { _config.IndexShell = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.IndexShell, v => _config.IndexShell = v, value);
     }
 
     public bool IndexSystemCommands
     {
         get => _config.IndexSystemCommands;
-        set { _config.IndexSystemCommands = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.IndexSystemCommands, v => _config.IndexSystemCommands = v, value);
     }
 
     public bool IndexUrls
     {
         get => _config.IndexUrls;
-        set { _config.IndexUrls = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.IndexUrls, v => _config.IndexUrls = v, value);
     }
 
     public bool IndexWebSearches
     {
         get => _config.IndexWebSearches;
-        set { _config.IndexWebSearches = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.IndexWebSearches, v => _config.IndexWebSearches = v, value);
     }
 
     public bool IndexWindowsSettings
     {
         get => _config.IndexWindowsSettings;
-        set { _config.IndexWindowsSettings = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.IndexWindowsSettings, v => _config.IndexWindowsSettings = v, value);
     }
 
     public int MaxFileDepth
@@ -626,7 +626,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool HotkeyEnabled
     {
         get => _config.HotkeyEnabled;
-        set { _config.HotkeyEnabled = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.HotkeyEnabled, v => _config.HotkeyEnabled = v, value);
     }
 
     public string ClipboardShortcut
@@ -663,19 +663,19 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool MinimizeToTray
     {
         get => _config.MinimizeToTray;
-        set { _config.MinimizeToTray = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.MinimizeToTray, v => _config.MinimizeToTray = v, value);
     }
 
     public bool ShowTrayIcon
     {
         get => _config.ShowTrayIcon;
-        set { _config.ShowTrayIcon = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.ShowTrayIcon, v => _config.ShowTrayIcon = v, value);
     }
 
     public bool ReIndexOnStartup
     {
         get => _config.ReIndexOnStartup;
-        set { _config.ReIndexOnStartup = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.ReIndexOnStartup, v => _config.ReIndexOnStartup = v, value);
     }
 
     public int ReIndexIntervalHours
@@ -702,7 +702,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool BackgroundIndexing
     {
         get => _config.BackgroundIndexing;
-        set { _config.BackgroundIndexing = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.BackgroundIndexing, v => _config.BackgroundIndexing = v, value);
     }
 
     public int ClipboardHistorySize
@@ -718,19 +718,19 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool ExcludeSensitiveFolders
     {
         get => _config.ExcludeSensitiveFolders;
-        set { _config.ExcludeSensitiveFolders = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.ExcludeSensitiveFolders, v => _config.ExcludeSensitiveFolders = v, value);
     }
 
     public bool ClearClipboardOnExit
     {
         get => _config.ClearClipboardOnExit;
-        set { _config.ClearClipboardOnExit = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.ClearClipboardOnExit, v => _config.ClearClipboardOnExit = v, value);
     }
 
     public bool LogSearchHistory
     {
         get => _config.LogSearchHistory;
-        set { _config.LogSearchHistory = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.LogSearchHistory, v => _config.LogSearchHistory = v, value);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -740,31 +740,31 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool OpenWithEnter
     {
         get => _config.OpenWithEnter;
-        set { _config.OpenWithEnter = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.OpenWithEnter, v => _config.OpenWithEnter = v, value);
     }
 
     public bool CloseAfterLaunch
     {
         get => _config.CloseAfterLaunch;
-        set { _config.CloseAfterLaunch = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.CloseAfterLaunch, v => _config.CloseAfterLaunch = v, value);
     }
 
     public bool ShowRecentFirst
     {
         get => _config.ShowRecentFirst;
-        set { _config.ShowRecentFirst = value; Save(); OnPropertyChanged(); }
+        set => SetAndSave(() => _config.ShowRecentFirst, v => _config.ShowRecentFirst = v, value);
     }
 
     public bool AnimationEnabled
     {
         get => _config.AnimationEnabled;
-        set { _config.AnimationEnabled = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.AnimationEnabled, v => _config.AnimationEnabled = v, value);
     }
 
     public bool SoundEffectEnabled
     {
         get => _config.SoundEffectEnabled;
-        set { _config.SoundEffectEnabled = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.SoundEffectEnabled, v => _config.SoundEffectEnabled = v, value);
     }
 
     public string[] SearchWindowPositions { get; } = ["Center", "Center Top", "Left Top", "Right Top", "Custom Position"];
@@ -877,20 +877,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Actions — enable/disable (managed through AddOnRegistry now)
-    // ═══════════════════════════════════════════════════════════════
-
-    public bool ActionCalc
-    {
-        get => _config.IndexCalculator;
-        set { _config.IndexCalculator = value; SaveAndApply(); OnPropertyChanged(); }
-    }
-    public bool ActionSystem
-    {
-        get => _config.IndexSystemCommands;
-        set { _config.IndexSystemCommands = value; SaveAndApply(); OnPropertyChanged(); }
-    }
+    // ActionCalc and ActionSystem removed: they were unused duplicates
+    // of IndexCalculator and IndexSystemCommands respectively.
 
     // ═══════════════════════════════════════════════════════════════
     // Per-action settings (canonical)
@@ -908,7 +897,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public bool AiEnabled
     {
         get => _config.AiEnabled;
-        set { _config.AiEnabled = value; SaveAndApply(); OnPropertyChanged(); }
+        set => SetAndApply(() => _config.AiEnabled, v => _config.AiEnabled = v, value);
     }
 
     public string[] Providers { get; } = ["groq", "gemini", "openrouter", "deepseek"];
@@ -1373,6 +1362,28 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         Save();
         _main.Config = _config.Clone();
+    }
+
+    /// <summary>
+    /// Sets a config value and saves. Call from property setters to reduce boilerplate.
+    /// </summary>
+    private void SetAndSave<T>(Func<T> getter, Action<T> setter, T value, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(getter(), value)) return;
+        setter(value);
+        Save();
+        OnPropertyChanged(name);
+    }
+
+    /// <summary>
+    /// Sets a config value, saves, and pushes a clone to MainVM.
+    /// </summary>
+    private void SetAndApply<T>(Func<T> getter, Action<T> setter, T value, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(getter(), value)) return;
+        setter(value);
+        SaveAndApply();
+        OnPropertyChanged(name);
     }
 
     private static string ToTitle(string value)

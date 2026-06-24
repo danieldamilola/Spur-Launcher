@@ -13,7 +13,7 @@
 
         <local:ResultTemplateSelector x:Key="TemplateSelector"
                                       SectionTemplate="{StaticResource SectionTemplate}"
-                                      ResultTemplate="{StaticResource ResultRowTemplate}"/>
+                                      ResultTemplate="{StaticResource ResultTemplate}"/>
     </UserControl.Resources>
 
     <ListBox x:Name="ResultsBox"

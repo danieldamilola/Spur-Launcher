@@ -272,6 +272,7 @@ public sealed partial class TimerViewModel : ObservableObject
     {
         instance.StopTick();
         instance.Completed -= OnTimerCompleted;
+        instance.PropertyChanged -= OnBoundInstancePropertyChanged;
         ActiveTimers.Remove(instance);
         SyncLegacyAfterRemoval();
     }
@@ -306,6 +307,7 @@ public sealed partial class TimerViewModel : ObservableObject
     {
         _notification.Show("Spur Timer", $"{instance.Label} has finished!");
         instance.Completed -= OnTimerCompleted;
+        instance.PropertyChanged -= OnBoundInstancePropertyChanged;
         ActiveTimers.Remove(instance);
         SyncLegacyAfterRemoval();
     }
@@ -317,6 +319,7 @@ public sealed partial class TimerViewModel : ObservableObject
         {
             t.StopTick();
             t.Completed -= OnTimerCompleted;
+            t.PropertyChanged -= OnBoundInstancePropertyChanged;
         }
         ActiveTimers.Clear();
         TimerRunning = false;
@@ -330,6 +333,10 @@ public sealed partial class TimerViewModel : ObservableObject
     /// </summary>
     private void BindLegacyToInstance(TimerInstance instance)
     {
+        // Detach from any previously-bound instance to prevent leak
+        foreach (var t in ActiveTimers)
+            t.PropertyChanged -= OnBoundInstancePropertyChanged;
+
         // Directly show current values
         TimerDisplay  = instance.DisplayTime;
         TimerProgress = instance.Progress;

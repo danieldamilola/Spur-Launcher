@@ -15,8 +15,9 @@ public interface IThemeManager : IDisposable
 /// </summary>
 public sealed class ThemeManagerImpl : IThemeManager
 {
-    private const string DarkUri  = "Themes/DarkTheme.xaml";
-    private const string LightUri = "Themes/LightTheme.xaml";
+    private const string DarkUri         = "Themes/DarkTheme.xaml";
+    private const string LightUri        = "Themes/LightTheme.xaml";
+    private const string HighContrastUri = "Themes/HighContrastTheme.xaml";
     private readonly ILogger _log;
     private readonly Spur.Models.SpurConfig _config;
     private bool _disposed;
@@ -27,12 +28,25 @@ public sealed class ThemeManagerImpl : IThemeManager
         _config = config;
 
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+        SystemParameters.StaticPropertyChanged += OnHighContrastChanged;
     }
 
     public void Apply(string theme)
     {
+        // High contrast always wins — regardless of user preference
+        if (SystemParameters.HighContrast)
+        {
+            ApplyThemeUri(HighContrastUri, "highcontrast");
+            return;
+        }
+
         var resolved = theme == "system" ? GetSystemTheme() : theme;
         var uri = resolved == "light" ? LightUri : DarkUri;
+        ApplyThemeUri(uri, resolved);
+    }
+
+    private void ApplyThemeUri(string uri, string resolved)
+    {
 
         var dicts = Application.Current.Resources.MergedDictionaries;
         var existing = dicts.FirstOrDefault(d =>
@@ -83,13 +97,27 @@ public sealed class ThemeManagerImpl : IThemeManager
         _log.Info("System theme change detected, re-applying theme");
 
         // The event may fire on a background thread; dispatch to the UI thread.
-        Application.Current?.Dispatcher?.Invoke(() => Apply("system"));
+        Application.Current?.Dispatcher?.Invoke(() => Apply(_config.Theme));
+    }
+
+    /// <summary>
+    /// Handles Windows high-contrast mode toggling.
+    /// Re-applies theme to switch to/from HighContrastTheme.
+    /// </summary>
+    private void OnHighContrastChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SystemParameters.HighContrast))
+            return;
+
+        _log.Info($"High contrast mode changed: {SystemParameters.HighContrast}");
+        Application.Current?.Dispatcher?.Invoke(() => Apply(_config.Theme));
     }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+        SystemParameters.StaticPropertyChanged -= OnHighContrastChanged;
 
         Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
     }

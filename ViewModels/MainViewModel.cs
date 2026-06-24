@@ -212,7 +212,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Flat list: items are either <see cref="SectionLabel"/> or <see cref="SearchResult"/>.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasResults))]
-    private ObservableCollection<object> _results = [];
+    private ObservableCollection<IResultItem> _results = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedResult))]
@@ -231,7 +231,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<Spur.Models.ScopeFilterItem> _scopeFilters = [];
 
-    private List<object> _rawResults = [];
+    private List<IResultItem> _rawResults = [];
 
     /// <summary>Null = all categories. Values: "apps" | "files" | "clipboard" | "actions".</summary>
     [ObservableProperty]
@@ -730,9 +730,9 @@ public sealed partial class MainViewModel : ObservableObject
         ActiveScopeId = currentIdx + 1 >= ScopeFilters.Count ? "all" : ScopeFilters[currentIdx + 1].Id;
     }
 
-    private void CommitResults(List<object> items)
+    private void CommitResults(List<IResultItem> items)
     {
-        var deduped = new List<object>();
+        var deduped = new List<IResultItem>();
         var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var item in items)
@@ -745,7 +745,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         // Clean up any empty section labels left over after deduplication
-        var cleaned = new List<object>();
+        var cleaned = new List<IResultItem>();
         for (int i = 0; i < deduped.Count; i++)
         {
             if (deduped[i] is SectionLabel)
@@ -777,11 +777,11 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateFooterHint();
     }
 
-    private static List<object> FilterResultsByScope(List<object> source, string scopeId)
+    private static List<IResultItem> FilterResultsByScope(List<IResultItem> source, string scopeId)
     {
-        var result = new List<object>();
+        var result = new List<IResultItem>();
         string? currentSection = null;
-        var sectionItems = new List<object>();
+        var sectionItems = new List<IResultItem>();
 
         void FlushSection()
         {

@@ -6,7 +6,7 @@ namespace Spur.Services;
 
 public interface ISearchEngineService
 {
-    Task<List<object>> SearchAsync(string query, string? activeCategory, CancellationToken ct);
+    Task<List<IResultItem>> SearchAsync(string query, string? activeCategory, CancellationToken ct);
 }
 
 public sealed class SearchEngineService : ISearchEngineService
@@ -53,9 +53,9 @@ public sealed class SearchEngineService : ISearchEngineService
         }
     }
 
-    public async Task<List<object>> SearchAsync(string query, string? activeCategory, CancellationToken ct)
+    public async Task<List<IResultItem>> SearchAsync(string query, string? activeCategory, CancellationToken ct)
     {
-        var newResults = new List<object>();
+        var newResults = new List<IResultItem>();
         bool isBrowseMode = activeCategory is not null;
 
         // -- Keyword-scoped action (e.g. "sys ", "timer ") ----------
@@ -358,7 +358,7 @@ public sealed class SearchEngineService : ISearchEngineService
         return q.StartsWith('?') ? q[1..].Trim() : q;
     }
 
-    private static bool ShouldOfferWebFallback(string query, List<object> results)
+    private static bool ShouldOfferWebFallback(string query, List<IResultItem> results)
     {
         if (string.IsNullOrWhiteSpace(query)) return false;
         int localCount = 0;
