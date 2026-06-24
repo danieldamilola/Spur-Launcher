@@ -15,12 +15,19 @@ namespace Spur.Views;
 public partial class ClipboardManager : UserControl
 {
     private ClipboardViewModel? _vm;
+    private readonly System.Windows.Threading.DispatcherTimer _refreshTimer;
 
     public ClipboardManager()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
         IsVisibleChanged += OnIsVisibleChanged;
+
+        _refreshTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(60)
+        };
+        _refreshTimer.Tick += (_, _) => _vm?.RefreshTimestamps();
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -55,6 +62,11 @@ public partial class ClipboardManager : UserControl
         if (IsVisible && _vm is not null)
         {
             _vm.Refresh();
+            _refreshTimer.Start();
+        }
+        else
+        {
+            _refreshTimer.Stop();
         }
     }
 

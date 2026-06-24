@@ -18,6 +18,32 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- ═══ Filter bar ═══ -->
+        <Border Grid.Row="0" Margin="12,10,12,0" Padding="8,6"
+                Background="{DynamicResource SurfaceLow}"
+                CornerRadius="{DynamicResource RadiusMd}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ui:FontIcon Glyph="&#xE721;" FontSize="14"
+                             Foreground="{DynamicResource TextMuted}"
+                             VerticalAlignment="Center"
+                             Margin="4,0,8,0"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="{DynamicResource Token.Font.Primary}"
+                         FontSize="{DynamicResource FontBase}"
+                         Foreground="{DynamicResource TextPrimary}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         VerticalAlignment="Center"
+                         CaretBrush="{DynamicResource TextPrimary}"
+                         AutomationProperties.Name="Filter clipboard"/>
+            </Grid>
+        </Border>
+
         <!-- ═══ Actions bar ═══ -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,10,12,8">
             <Button Style="{StaticResource SettingsSoftButton}"
@@ -26,7 +52,7 @@
                     Padding="10,6">
                 <StackPanel Orientation="Horizontal">
                     <ui:FontIcon Glyph="&#xE74D;" FontSize="13" Margin="0,0,6,0"/>
-                    <TextBlock Text="Clear all" VerticalAlignment="Center"/>
+                    <TextBlock Text="Clear unpinned" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
             <TextBlock Text="{Binding StatusText}"
@@ -163,10 +189,10 @@
                                 </StackPanel>
 
                                 <!-- Pin + Delete buttons -->
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel x:Name="ActionButtons" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Opacity="0">
                                     <!-- Pin button -->
                                     <Button x:Name="PinBtn"
-                                            Width="24" Height="24"
+                                            Width="28" Height="28"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Cursor="Hand"
@@ -179,7 +205,7 @@
                                     </Button>
 
                                     <!-- Delete button -->
-                                    <Button Width="24" Height="24"
+                                    <Button Width="28" Height="28"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Cursor="Hand"
@@ -254,6 +280,19 @@
                                 <Setter TargetName="PinGlyph" Property="Foreground" Value="{DynamicResource Accent}"/>
                                 <Setter TargetName="PinBtn" Property="ToolTip" Value="Unpin"/>
                             </DataTrigger>
+
+                            <!-- Show action buttons on hover -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                                <Setter TargetName="ActionButtons" Property="Opacity" Value="1"/>
+                            </DataTrigger>
+                            <!-- Show action buttons when selected -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="ActionButtons" Property="Opacity" Value="1"/>
+                            </DataTrigger>
+                            <!-- Always show for pinned items -->
+                            <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                <Setter TargetName="ActionButtons" Property="Opacity" Value="1"/>
+                            </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -277,24 +316,67 @@
                     Background="{DynamicResource SurfaceLow}"
                     VerticalAlignment="Top">
                 <StackPanel>
-                    <TextBlock Text="Details"
+                    <!-- Metadata -->
+                    <TextBlock Text="{Binding SelectedMetadata}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
-                               FontSize="{DynamicResource FontBody}" FontWeight="Medium"
-                               Foreground="{DynamicResource TextPrimary}"
-                               Margin="0,0,0,8"/>
-                    <Button x:Name="DetailPinBtn"
-                            Height="28"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Padding="4,0"
-                            HorizontalAlignment="Left"
-                            AutomationProperties.Name="Toggle pin">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
-                            <TextBlock Text="Pin to top" FontSize="{DynamicResource FontSm}"/>
-                        </StackPanel>
-                    </Button>
+                               FontSize="{DynamicResource FontSm}"
+                               Foreground="{DynamicResource TextTertiary}"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap"/>
+
+                    <!-- Content preview -->
+                    <ScrollViewer MaxHeight="200"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock Text="{Binding SelectedContent}"
+                                   FontFamily="{DynamicResource Token.Font.Mono}"
+                                   FontSize="{DynamicResource FontSm}"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   TextWrapping="Wrap"
+                                   Padding="0,0,4,0"/>
+                    </ScrollViewer>
+
+                    <!-- Image preview (when image is selected) -->
+                    <Image x:Name="DetailImage"
+                           MaxHeight="160"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Left"
+                           Margin="0,8,0,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Source="{Binding SelectedEntry.Image}"
+                           Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibility}}"/>
+
+                    <!-- Actions -->
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button x:Name="DetailPinBtn"
+                                Height="28"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Padding="4,0"
+                                HorizontalAlignment="Left"
+                                AutomationProperties.Name="Toggle pin">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
+                                <TextBlock Text="Pin to top" FontSize="{DynamicResource FontSm}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Keyboard hints -->
+                    <StackPanel Margin="0,12,0,0" Opacity="0.7">
+                        <TextBlock FontFamily="{DynamicResource Token.Font.Primary}"
+                                   FontSize="{DynamicResource FontCaption}"
+                                   Foreground="{DynamicResource TextMuted}">
+                            <Run Text="Enter"/> <Run Text="Paste" Foreground="{DynamicResource TextTertiary}"/>
+                        </TextBlock>
+                        <TextBlock FontFamily="{DynamicResource Token.Font.Primary}"
+                                   FontSize="{DynamicResource FontCaption}"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Margin="0,2,0,0">
+                            <Run Text="Del"/> <Run Text="Remove" Foreground="{DynamicResource TextTertiary}"/>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -314,10 +396,10 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <TextBlock Text="📋"
-                           FontSize="{DynamicResource FontXxl}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,8"/>
+                <ui:FontIcon Glyph="&#xE77F;" FontSize="32"
+                             Foreground="{DynamicResource TextMuted}"
+                             HorizontalAlignment="Center"
+                             Margin="0,0,0,8"/>
                 <TextBlock Text="Clipboard is empty"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="{DynamicResource FontHeading}"

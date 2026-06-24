@@ -259,6 +259,16 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         SelectedEntry = Entries[Math.Clamp(idx + delta, 0, Entries.Count - 1)];
     }
 
+    /// <summary>Forces re-evaluation of TimeAgo bindings by triggering a collection replace notification.</summary>
+    public void RefreshTimestamps()
+    {
+        for (int i = 0; i < Entries.Count; i++)
+        {
+            var entry = Entries[i];
+            Entries[i] = entry; // Replace-in-place triggers binding refresh
+        }
+    }
+
     private void UpdateStatus()
     {
         // Preserve "Copied ✓" for 500ms after the last Copy() call,
