@@ -6,7 +6,8 @@ public class ClipboardServiceTests
 {
     private static ClipboardServiceImpl CreateService(int maxItems = 50)
     {
-        var svc = new ClipboardServiceImpl(NullLogger.Instance);
+        var savePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"spur_clip_test_{System.Guid.NewGuid():n}.json");
+        var svc = new ClipboardServiceImpl(NullLogger.Instance, savePath);
         svc.MaxItems = maxItems;
         return svc;
     }

@@ -43,42 +43,43 @@ internal sealed class ClipboardEntryDto
     public DateTime Timestamp { get; set; }
 }
 
-/// <summary>
-/// In-memory clipboard history with JSON persistence for text entries.
-/// Thread-safe. Deduplicates consecutive identical text entries. Max items
-/// is configurable via <see cref="MaxItems"/> (default 10, settable from settings).
-/// Text entries are persisted to <c>%LocalAppData%\Spur\clipboard_history.json</c>.
-/// </summary>
-public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
-{
-    private int _maxItems = 10;
-    private const int MaxImageEntries = 5;
-    private readonly List<ClipboardEntry> _history = [];
-    private readonly object _lock = new();
-    private readonly ILogger _log;
-
-    // ── Persistence ──────────────────────────────────────────────────
-    private readonly string _savePath;
-    private readonly System.Timers.Timer _debounceTimer;
-    private bool _disposed;
-
     /// <summary>
-    /// When true, the next Add/AddImage call from the ClipboardWatcher will be
-    /// silently ignored. Reset to false after one suppression. This prevents
-    /// duplication when Copy() puts an entry on the system clipboard.
+    /// In-memory clipboard history with JSON persistence for text entries.
+    /// Thread-safe. Deduplicates consecutive identical text entries. Max items
+    /// is configurable via <see cref="MaxItems"/> (default 10, settable from settings).
+    /// Text entries are persisted to <c>%LocalAppData%\Spur\clipboard_history.json</c>.
+    /// Pass an alternative <paramref name="savePath"/> for test isolation.
     /// </summary>
-    private volatile bool _suppressNext;
-    private HashSet<string>? _pinnedContents;
-
-    public event Action? ClipboardChanged;
-
-    public ClipboardServiceImpl(ILogger log)
+    public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     {
-        _log = log;
+        private int _maxItems = 10;
+        private const int MaxImageEntries = 5;
+        private readonly List<ClipboardEntry> _history = [];
+        private readonly object _lock = new();
+        private readonly ILogger _log;
 
-        _savePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Spur", "clipboard_history.json");
+        // ── Persistence ──────────────────────────────────────────────────
+        private readonly string _savePath;
+        private readonly System.Timers.Timer _debounceTimer;
+        private bool _disposed;
+
+        /// <summary>
+        /// When true, the next Add/AddImage call from the ClipboardWatcher will be
+        /// silently ignored. Reset to false after one suppression. This prevents
+        /// duplication when Copy() puts an entry on the system clipboard.
+        /// </summary>
+        private volatile bool _suppressNext;
+        private HashSet<string>? _pinnedContents;
+
+        public event Action? ClipboardChanged;
+
+        public ClipboardServiceImpl(ILogger log, string? savePath = null)
+        {
+            _log = log;
+
+            _savePath = savePath ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Spur", "clipboard_history.json");
 
         // Debounce timer: saves at most once every 2 seconds
         _debounceTimer = new System.Timers.Timer(2000) { AutoReset = false };

@@ -27,8 +27,17 @@ public sealed class AiAddOn : IAddOn
 
     public IEnumerable<SearchResult> GetResults(string subQuery)
     {
-        // AI UI is being redesigned — no search results surfaced for now.
-        yield break;
+        yield return new SearchResult
+        {
+            Id = $"addon:{Id}",
+            Type = ResultType.Action,
+            Name = Name,
+            Subtitle = Description,
+            IconGlyph = IconGlyph,
+            IconPath = IconPath,
+            ActionId = Id,
+            Score = 1000,
+        };
     }
 
     public bool CanHandle(string query) => false;

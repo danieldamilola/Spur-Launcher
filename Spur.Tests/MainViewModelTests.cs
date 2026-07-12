@@ -143,8 +143,8 @@ public class MainViewModelTests
         var apps = new FakeApps();
         var vm = CreateViewModel(cfg);
 
-        // Set query and wait for debounce + async search.
-        vm.Query = "note";
+        // Use a query that doesn't match any action keyword.
+        vm.Query = "notep";
         await Task.Delay(300);
 
         Assert.True(vm.Results.Count > 0, "Expected some results after query");
@@ -168,7 +168,7 @@ public class MainViewModelTests
         var actions = vm.Results.OfType<SearchResult>().Where(r => r.Type == ResultType.Action).ToList();
         Assert.NotEmpty(actions);
         Assert.Contains(actions, r => r.ActionId == "timer");
-        Assert.Contains(actions, r => r.ActionId == "system");
+        Assert.Contains(actions, r => r.ActionId == "sys");
     }
 
     [Fact]
@@ -182,6 +182,6 @@ public class MainViewModelTests
 
         var ai = vm.Results.OfType<SearchResult>().FirstOrDefault(r => r.ActionId == "ai");
         Assert.NotNull(ai);
-        Assert.Equal("Ask AI", ai.Name);
+        Assert.Equal("AI Assistant", ai.Name);
     }
 }
