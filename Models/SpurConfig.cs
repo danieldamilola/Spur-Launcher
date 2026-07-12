@@ -156,6 +156,17 @@ public sealed class SpurConfig
     /// <summary>Whether the global hotkey is enabled.</summary>
     public bool HotkeyEnabled { get; set; } = true;
 
+    public string PreviewToggleShortcut { get; set; } = "F3";
+    public string CategoryFilesShortcut { get; set; } = "Ctrl+D1";
+    public string CategoryAiShortcut { get; set; } = "Ctrl+D2";
+    public string CategoryClipboardShortcut { get; set; } = "Ctrl+D3";
+    public string TogglePinShortcut { get; set; } = "Ctrl+P";
+    public string CommandPaletteShortcut { get; set; } = "Ctrl+Shift+P";
+    public string CopyPathShortcut { get; set; } = "Ctrl+C";
+    public string OpenFolderLocationShortcut { get; set; } = "Ctrl+Shift+E";
+    public string RunAsAdminShortcut { get; set; } = "Ctrl+Enter";
+    public string OpenSettingsShortcut { get; set; } = "Ctrl+OemComma";
+
     // ═══════════════════════════════════════════════════════════════
     // Startup & Performance
     // ═══════════════════════════════════════════════════════════════
@@ -279,6 +290,16 @@ public sealed class SpurConfig
         clone.PinnedClipboard = PinnedClipboard.Select(p => new PinnedClipboardItem { Id = p.Id, Content = p.Content, Preview = p.Preview, Timestamp = p.Timestamp }).ToList();
         clone.AddOns = new Dictionary<string, AddOnEntryConfig>(AddOns, StringComparer.OrdinalIgnoreCase);
         clone.ExclusionPatterns = new List<string>(ExclusionPatterns);
+        clone.PreviewToggleShortcut = PreviewToggleShortcut;
+        clone.CategoryFilesShortcut = CategoryFilesShortcut;
+        clone.CategoryAiShortcut = CategoryAiShortcut;
+        clone.CategoryClipboardShortcut = CategoryClipboardShortcut;
+        clone.TogglePinShortcut = TogglePinShortcut;
+        clone.CommandPaletteShortcut = CommandPaletteShortcut;
+        clone.CopyPathShortcut = CopyPathShortcut;
+        clone.OpenFolderLocationShortcut = OpenFolderLocationShortcut;
+        clone.RunAsAdminShortcut = RunAsAdminShortcut;
+        clone.OpenSettingsShortcut = OpenSettingsShortcut;
         return clone;
     }
 }

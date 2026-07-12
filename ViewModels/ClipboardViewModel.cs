@@ -133,10 +133,18 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         // Stamp pin status BEFORE sorting so pinned items float to the top.
         var pinnedSet = _config.PinnedClipboard
             .Select(p => p.Content)
+            .Where(c => !string.IsNullOrEmpty(c))
             .ToHashSet(StringComparer.Ordinal);
+        var pinnedImageIds = _config.PinnedClipboard
+            .Where(p => p.EntryId != Guid.Empty)
+            .Select(p => p.EntryId)
+            .ToHashSet();
+        _clipboard.SetPinnedSet(pinnedSet);
 
         foreach (var entry in desired)
-            entry.IsPinned = !entry.IsImage && pinnedSet.Contains(entry.Content);
+            entry.IsPinned = string.IsNullOrEmpty(entry.Content)
+                ? pinnedImageIds.Contains(entry.Id)
+                : pinnedSet.Contains(entry.Content);
 
         desired = desired.OrderByDescending(e => e.IsPinned).ToList();
 
@@ -202,26 +210,35 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
     public void ClearAll()
     {
         var pinned = _config.PinnedClipboard.Select(p => p.Content).ToHashSet();
-        _clipboard.KeepOnly(pinned);
+        var pinnedImageIds = _config.PinnedClipboard
+            .Where(p => p.EntryId != Guid.Empty)
+            .Select(p => p.EntryId)
+            .ToHashSet();
+        _clipboard.KeepOnly(pinned, pinnedImageIds);
         Refresh();
     }
 
-    /// <summary>Toggle pin status for an entry. Images cannot be pinned.</summary>
+    /// <summary>Toggle pin status for an entry.</summary>
     [RelayCommand]
     public void TogglePin(ClipboardEntry? entry)
     {
-        if (entry is null || entry.IsImage) return;
+        if (entry is null) return;
 
-        var existing = _config.PinnedClipboard.FirstOrDefault(p => p.Content == entry.Content);
+        // Match by Content for text entries, EntryId for images
+        var existing = string.IsNullOrEmpty(entry.Content)
+            ? _config.PinnedClipboard.FirstOrDefault(p => p.EntryId == entry.Id)
+            : _config.PinnedClipboard.FirstOrDefault(p => p.Content == entry.Content);
+
         if (existing is not null)
             _config.PinnedClipboard.Remove(existing);
         else
             _config.PinnedClipboard.Add(new PinnedClipboardItem
             {
                 Id        = $"clip:{entry.Timestamp.Ticks}",
-                Content   = entry.Content,
+                Content   = entry.Content ?? string.Empty,
                 Preview   = entry.Preview,
                 Timestamp = entry.Timestamp,
+                EntryId   = entry.Id,
             });
 
         _configSvc.Save(_config);
@@ -229,11 +246,12 @@ public sealed partial class ClipboardViewModel : ObservableObject, IDisposable
         Refresh();
     }
 
-    /// <summary>Returns true if the given entry is pinned. Always false for images.</summary>
+    /// <summary>Returns true if the given entry is pinned.</summary>
     public bool IsPinned(ClipboardEntry entry)
     {
-        if (entry.IsImage) return false;
-        return _config.PinnedClipboard.Any(p => p.Content == entry.Content);
+        return string.IsNullOrEmpty(entry.Content)
+            ? _config.PinnedClipboard.Any(p => p.EntryId == entry.Id)
+            : _config.PinnedClipboard.Any(p => p.Content == entry.Content);
     }
 
     // ── Internals ───────────────────────────────────────────────────

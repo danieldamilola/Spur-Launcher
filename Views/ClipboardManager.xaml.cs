@@ -53,7 +53,7 @@ public partial class ClipboardManager : UserControl
     {
         var entry = _vm?.SelectedEntry;
         bool isPinned = entry?.IsPinned == true;
-        DetailPinGlyph.Glyph = isPinned ? "\uE841" : "\uE718";
+        DetailPinGlyph.Text = isPinned ? "Unpin" : "Pin to top";
         DetailPinBtn.ToolTip = isPinned ? "Unpin" : "Pin";
     }
 
@@ -177,6 +177,16 @@ public partial class ClipboardManager : UserControl
 
     /// <summary>Called from the keyboard handler when Enter is pressed in clipboard mode.</summary>
     public void PasteSelected() => PasteAndHide(_vm?.SelectedEntry);
+
+    private void OnPreviewClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.CommandParameter is ClipboardEntry entry && _vm is not null)
+        {
+            _vm.SelectedEntry = entry;
+            if (Window.GetWindow(this) is MainWindow win)
+                win.ShowClipboardPreview();
+        }
+    }
 
     private void OnMergeClick(object sender, RoutedEventArgs e)
     {

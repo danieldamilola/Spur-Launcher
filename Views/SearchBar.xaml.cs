@@ -36,4 +36,20 @@ public partial class SearchBar : UserControl
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
+
+    private void OnClipboardCloseClick(object sender, RoutedEventArgs e)
+    {
+        if (_vm is not null)
+            _vm.ActiveCategory = null;
+    }
+
+    private void OnClipMoreClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.ContextMenu is not null)
+        {
+            btn.ContextMenu.PlacementTarget = btn;
+            btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            btn.ContextMenu.IsOpen = true;
+        }
+    }
 }

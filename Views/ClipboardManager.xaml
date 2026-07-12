@@ -13,58 +13,11 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══ Filter bar ═══ -->
-        <Border Grid.Row="0" Margin="12,10,12,0" Padding="8,6"
-                Background="{DynamicResource SurfaceLow}"
-                CornerRadius="{DynamicResource RadiusMd}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <ui:FontIcon Glyph="&#xE721;" FontSize="14"
-                             Foreground="{DynamicResource TextMuted}"
-                             VerticalAlignment="Center"
-                             Margin="4,0,8,0"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                         FontFamily="{DynamicResource Token.Font.Primary}"
-                         FontSize="{DynamicResource FontBase}"
-                         Foreground="{DynamicResource TextPrimary}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         VerticalAlignment="Center"
-                         CaretBrush="{DynamicResource TextPrimary}"
-                         AutomationProperties.Name="Filter clipboard"/>
-            </Grid>
-        </Border>
-
-        <!-- ═══ Actions bar ═══ -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,10,12,8">
-            <Button Style="{StaticResource SettingsSoftButton}"
-                    Command="{Binding ClearAllCommand}"
-                    AutomationProperties.Name="Clear all clipboard entries"
-                    Padding="10,6">
-                <StackPanel Orientation="Horizontal">
-                    <ui:FontIcon Glyph="&#xE74D;" FontSize="13" Margin="0,0,6,0"/>
-                    <TextBlock Text="Clear unpinned" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Button>
-            <TextBlock Text="{Binding StatusText}"
-                       FontFamily="{DynamicResource Token.Font.Primary}"
-                       FontSize="{DynamicResource FontXs}"
-                       Foreground="{DynamicResource TextMuted}"
-                       VerticalAlignment="Center"
-                       Margin="8,0,0,0"/>
-        </StackPanel>
-
         <!-- ═══ Content area: list + detail panel ═══ -->
-        <Grid Grid.Row="2" Margin="0,0,0,12">
+        <Grid Grid.Row="0" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -170,7 +123,7 @@
                                         CornerRadius="{DynamicResource RadiusMd}"
                                         Background="{DynamicResource SurfaceLow}"
                                         VerticalAlignment="Center">
-                                    <ui:FontIcon Glyph="&#xE8C8;" FontSize="16" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Image Source="/Assets/Icons/copy.png" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <!-- Content -->
@@ -186,28 +139,84 @@
                                                FontSize="{DynamicResource FontSm}"
                                                Foreground="{DynamicResource TextTertiary}"
                                                Margin="0,1,0,0"/>
-                                    <TextBlock x:Name="TruncWarning" Text="⚠ Truncated" 
-                                               FontFamily="{DynamicResource Token.Font.Primary}"
-                                               FontSize="{DynamicResource FontCaption}"
-                                               Foreground="#E5A100"
-                                               Visibility="Collapsed"
-                                               Margin="6,1,0,0"/>
-                                </StackPanel>
+                                     <TextBlock x:Name="TruncWarning" Text="⚠ Truncated" 
+                                                FontFamily="{DynamicResource Token.Font.Primary}"
+                                                FontSize="{DynamicResource FontCaption}"
+                                                Foreground="#E5A100"
+                                                Visibility="Collapsed"
+                                                Margin="6,1,0,0"/>
+                                     <TextBlock x:Name="PinnedIndicator" Text="◉ Pinned"
+                                                FontFamily="{DynamicResource Token.Font.Primary}"
+                                                FontSize="{DynamicResource FontCaption}"
+                                                Foreground="{DynamicResource Accent}"
+                                                Visibility="Collapsed"
+                                                Margin="6,1,0,0"/>
+                                 </StackPanel>
 
-                                <!-- Pin + Delete buttons -->
+                                <!-- Preview + Pin + Delete buttons -->
                                 <StackPanel x:Name="ActionButtons" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Opacity="0">
+                                    <!-- Preview button -->
+                                    <Button x:Name="PreviewBtn"
+                                            Width="28" Height="28"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            Margin="1,0"
+                                            ToolTip="Preview"
+                                            AutomationProperties.Name="Preview entry"
+                                            Click="OnPreviewClick"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="◉" FontSize="14" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="Bd" Width="28" Height="28" CornerRadius="6" Background="Transparent">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
                                     <!-- Pin button -->
                                     <Button x:Name="PinBtn"
                                             Width="28" Height="28"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Cursor="Hand"
-                                            Margin="2,0"
+                                            Margin="1,0"
                                             ToolTip="Pin"
                                             AutomationProperties.Name="Pin entry"
                                             Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                             CommandParameter="{Binding}">
-                                        <ui:FontIcon x:Name="PinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock x:Name="PinGlyph" Text="●" FontSize="12" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="Bd" Width="28" Height="28" CornerRadius="6" Background="Transparent">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
                                     </Button>
 
                                     <!-- Delete button -->
@@ -215,12 +224,30 @@
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Cursor="Hand"
-                                            Margin="2,0"
+                                            Margin="1,0"
                                             ToolTip="Remove"
                                             AutomationProperties.Name="Delete entry"
                                             Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                             CommandParameter="{Binding}">
-                                        <ui:FontIcon Glyph="&#xE711;" FontSize="14" Foreground="{DynamicResource TextMuted}"/>
+                                        <TextBlock Text="✕" FontSize="13" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="Bd" Width="28" Height="28" CornerRadius="6" Background="Transparent">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
                                     </Button>
                                 </StackPanel>
                             </Grid>
@@ -282,9 +309,10 @@
 
                             <!-- Pin visual indicator: swap glyph + color when pinned -->
                             <DataTrigger Binding="{Binding IsPinned}" Value="True">
-                                <Setter TargetName="PinGlyph" Property="Glyph" Value="&#xE841;"/>
+                                <Setter TargetName="PinGlyph" Property="Text" Value="◉"/>
                                 <Setter TargetName="PinGlyph" Property="Foreground" Value="{DynamicResource Accent}"/>
                                 <Setter TargetName="PinBtn" Property="ToolTip" Value="Unpin"/>
+                                <Setter TargetName="PinnedIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
 
                             <!-- Show action buttons on hover -->
@@ -367,8 +395,7 @@
                                 HorizontalAlignment="Left"
                                 AutomationProperties.Name="Toggle pin">
                             <StackPanel Orientation="Horizontal">
-                                <ui:FontIcon x:Name="DetailPinGlyph" Glyph="&#xE718;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
-                                <TextBlock Text="Pin to top" FontSize="{DynamicResource FontSm}"/>
+                                <TextBlock x:Name="DetailPinGlyph" Text="Pin to top" FontSize="{DynamicResource FontSm}" Foreground="{DynamicResource TextMuted}"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28"
@@ -393,7 +420,7 @@
                                 </ContextMenu>
                             </Button.ContextMenu>
                             <StackPanel Orientation="Horizontal">
-                                <ui:FontIcon Glyph="&#xE8D6;" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,6,0"/>
+                                <Image Source="/Assets/Icons/copy.png" Width="12" Height="12" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,6,0"/>
                                 <TextBlock Text="Merge ▾" FontSize="{DynamicResource FontSm}"/>
                             </StackPanel>
                         </Button>
@@ -432,10 +459,7 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <ui:FontIcon Glyph="&#xE77F;" FontSize="32"
-                             Foreground="{DynamicResource TextMuted}"
-                             HorizontalAlignment="Center"
-                             Margin="0,0,0,8"/>
+                <Image Source="/Assets/Icons/clipboard.png" Width="32" Height="32" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" Margin="0,0,0,8" Opacity="0.5"/>
                 <TextBlock Text="Clipboard is empty"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="{DynamicResource FontHeading}"

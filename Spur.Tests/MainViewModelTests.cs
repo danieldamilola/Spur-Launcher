@@ -70,9 +70,10 @@ public class MainViewModelTests
         public string? ReadFromSystem() => null;
         public System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem() => null;
         public void Clear() { }
-        public void KeepOnly(ISet<string> contentToKeep) { }
+        public void KeepOnly(ISet<string> contentToKeep, ISet<Guid>? imageEntryIdsToKeep = null) { }
         public void RemoveById(Guid id) { }
         public void SuppressNextCapture() { }
+        public void SetPinnedSet(HashSet<string> pinnedContents) { }
     }
 
     private sealed class FakeNotify : INotificationService { public void Show(string t, string m) { } }

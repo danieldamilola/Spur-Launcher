@@ -433,26 +433,26 @@ public sealed partial class MainViewModel : ObservableObject
                 return _activeFullPanel switch
                 {
                     "ai"         => _ai.AiConversation.Count > 0 ? "Ask follow-up…" : "Ask anything…",
-                    "calc"       => "Type a math expression…",
-                    "timer"      => "e.g. 5m, 30s, 1h…",
-                    "color"      => "Type a hex code like #ff0055…",
-                    "ip"         => "IP Address",
-                    "currency"   => "e.g. 100 usd to eur…",
-                    "pw"         => "e.g. pw 16…",
-                    "kill"       => "Search processes…",
-                    "note"       => "Type a note…",
+                    "calc"       => "Math…",
+                    "timer"      => "5m, 30s…",
+                    "color"      => "#ff0055…",
+                    "ip"         => "IP address…",
+                    "currency"   => "100 usd to eur…",
+                    "pw"         => "pw 16…",
+                    "kill"       => "Process…",
+                    "note"       => "Note…",
                     "screenshot" => "Screenshot",
-                    "system"     => "System commands…",
-                    "shell"      => "Type a command…",
+                    "system"     => "System…",
+                    "shell"      => "Command…",
                     _            => "Search",
                 };
             }
 
             return ActiveCategory switch
             {
-                "files"     => "Search files…",
-                "actions"   => "Search actions…",
-                "clipboard" => "Filter clipboard…",
+                "files"     => "Files",
+                "actions"   => "Actions",
+                "clipboard" => "Clipboard",
                 _           => "Search",
             };
         }
@@ -475,6 +475,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
+            // In clipboard mode, route query to clipboard filter
+            if (ActiveCategory == "clipboard")
+            {
+                if (IsFullPanelActive) return;
+                _clipboardVm.FilterText = value;
+                return;
+            }
+
             // In full panel mode (AI, Timer), the panel owns input — skip search
             if (IsFullPanelActive) return;
 
@@ -557,7 +565,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         UpdateFooterHint();
         UpdateActionPreview();
-        UpdateFilePreview();
+        IsPreviewVisible = false;
     }
 
     // ── File Preview ─────────────────────────────────────────────────
@@ -622,7 +630,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasPreviewImage => PreviewImage is not null;
 
-    private void UpdateFilePreview()
+    internal void UpdateFilePreview()
     {
         if (!Config.FilePreviewEnabled)
         {
@@ -1401,10 +1409,16 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Called when the user clicks the clipboard category button.</summary>
     public void ActivateClipboardCategory()
     {
-        ActiveCategory = ActiveCategory == "clipboard" ? null : "clipboard";
-        if (ActiveCategory == "clipboard" && !string.IsNullOrEmpty(Query))
+        var wasClipboard = ActiveCategory == "clipboard";
+        ActiveCategory = wasClipboard ? null : "clipboard";
+        if (wasClipboard)
         {
+            _clipboardVm.FilterText = string.Empty;
             Query = string.Empty;
+        }
+        else
+        {
+            _clipboardVm.FilterText = Query;
         }
     }
 

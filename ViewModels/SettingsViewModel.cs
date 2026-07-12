@@ -73,6 +73,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             new("General",  "\ue713", "/Assets/Icons/general.png"),
             new("Search",   "\ue11A", "/Assets/Icons/searchnav.png"),
+            new("Hotkeys",  "\ue70F", "/Assets/Icons/shortcut.png"),
             new("AI",       "\ue2b1", "/Assets/Icons/ainav.png"),
             new("Add-ons",  "\ue113", "/Assets/Icons/addonsnav.png"),
             new("Store",    "\ue719", "/Assets/Icons/storenav.png"),
@@ -639,6 +640,66 @@ public sealed partial class SettingsViewModel : ObservableObject
             SaveAndApply();
             OnPropertyChanged();
         }
+    }
+
+    public string PreviewToggleShortcut
+    {
+        get => _config.PreviewToggleShortcut;
+        set { if (_config.PreviewToggleShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.PreviewToggleShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string CategoryFilesShortcut
+    {
+        get => _config.CategoryFilesShortcut;
+        set { if (_config.CategoryFilesShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.CategoryFilesShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string CategoryAiShortcut
+    {
+        get => _config.CategoryAiShortcut;
+        set { if (_config.CategoryAiShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.CategoryAiShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string CategoryClipboardShortcut
+    {
+        get => _config.CategoryClipboardShortcut;
+        set { if (_config.CategoryClipboardShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.CategoryClipboardShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string TogglePinShortcut
+    {
+        get => _config.TogglePinShortcut;
+        set { if (_config.TogglePinShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.TogglePinShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string CommandPaletteShortcut
+    {
+        get => _config.CommandPaletteShortcut;
+        set { if (_config.CommandPaletteShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.CommandPaletteShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string CopyPathShortcut
+    {
+        get => _config.CopyPathShortcut;
+        set { if (_config.CopyPathShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.CopyPathShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string OpenFolderLocationShortcut
+    {
+        get => _config.OpenFolderLocationShortcut;
+        set { if (_config.OpenFolderLocationShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.OpenFolderLocationShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string RunAsAdminShortcut
+    {
+        get => _config.RunAsAdminShortcut;
+        set { if (_config.RunAsAdminShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.RunAsAdminShortcut = value; SaveAndApply(); OnPropertyChanged(); }
+    }
+
+    public string OpenSettingsShortcut
+    {
+        get => _config.OpenSettingsShortcut;
+        set { if (_config.OpenSettingsShortcut == value || string.IsNullOrWhiteSpace(value)) return; _config.OpenSettingsShortcut = value; SaveAndApply(); OnPropertyChanged(); }
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -20,9 +20,11 @@ public interface IClipboardService
     System.Windows.Media.Imaging.BitmapSource? ReadImageFromSystem();
     void Clear();
     /// <summary>Removes all entries whose text content is not in the keep set. Images are always removed.</summary>
-    void KeepOnly(ISet<string> contentToKeep);
+    void KeepOnly(ISet<string> contentToKeep, ISet<Guid>? imageEntryIdsToKeep = null);
     /// <summary>Removes the single entry with the given ID.</summary>
     void RemoveById(Guid id);
+    /// <summary>Sets the set of pinned entry contents. Only entries in this set will be persisted to disk.</summary>
+    void SetPinnedSet(HashSet<string> pinnedContents);
     /// <summary>Call before CopyToSystem to prevent the watcher from re-adding the entry.</summary>
     void SuppressNextCapture();
     event Action? ClipboardChanged;
@@ -66,6 +68,7 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     /// duplication when Copy() puts an entry on the system clipboard.
     /// </summary>
     private volatile bool _suppressNext;
+    private HashSet<string>? _pinnedContents;
 
     public event Action? ClipboardChanged;
 
@@ -86,6 +89,11 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
 
     /// <summary>Call this before CopyToSystem to prevent the watcher from re-adding the entry.</summary>
     public void SuppressNextCapture() => _suppressNext = true;
+
+    public void SetPinnedSet(HashSet<string> pinnedContents)
+    {
+        _pinnedContents = pinnedContents;
+    }
 
     public int MaxItems
     {
@@ -261,13 +269,17 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
     /// Retains only text entries whose content appears in <paramref name="contentToKeep"/>.
     /// Image entries are always removed because they cannot be pinned.
     /// </summary>
-    public void KeepOnly(ISet<string> contentToKeep)
+    public void KeepOnly(ISet<string> contentToKeep, ISet<Guid>? imageEntryIdsToKeep = null)
     {
         bool changed = false;
         lock (_lock)
         {
             int removed = _history.RemoveAll(e =>
-                e.IsImage || !contentToKeep.Contains(e.Content ?? string.Empty));
+            {
+                if (e.IsImage)
+                    return imageEntryIdsToKeep is null || !imageEntryIdsToKeep.Contains(e.Id);
+                return !contentToKeep.Contains(e.Content ?? string.Empty);
+            });
             changed = removed > 0;
         }
         if (changed)
@@ -320,8 +332,10 @@ public sealed class ClipboardServiceImpl : IClipboardService, IDisposable
             List<ClipboardEntryDto> dtos;
             lock (_lock)
             {
+                var pinned = _pinnedContents;
                 dtos = _history
                     .Where(e => !e.IsImage && !string.IsNullOrEmpty(e.Content))
+                    .Where(e => pinned is null || pinned.Contains(e.Content ?? string.Empty))
                     .Select(e => new ClipboardEntryDto { Content = e.Content, Timestamp = e.Timestamp })
                     .ToList();
             }

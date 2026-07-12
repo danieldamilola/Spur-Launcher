@@ -286,21 +286,15 @@ public partial class MainWindow : Window
         if (isClipboard)
         {
             ClipboardManagerControl.SetFloatingMode(isFloating);
-            if (isFloating)
-                UpdateFloatingClipboardPreview();
-            else
-                ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
         }
-        else
-        {
-            ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
-        }
+        ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
     }
 
     private void OnClipboardVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ClipboardViewModel.SelectedEntry) &&
-            _vm?.ActiveCategory == "clipboard" && _vm.Config.PreviewStyle == "Floating")
+        // Update the floating preview when selection changes while preview is open
+        if (e.PropertyName is nameof(ClipboardViewModel.SelectedEntry)
+            && ClipboardPreviewFloat.Visibility == Visibility.Visible)
         {
             Dispatcher.InvokeAsync(UpdateFloatingClipboardPreview);
         }
@@ -311,9 +305,12 @@ public partial class MainWindow : Window
         var entry = _vm?.Clipboard.SelectedEntry;
         if (entry is null || _vm?.ActiveCategory != "clipboard" || _vm.Config.PreviewStyle != "Floating")
         {
-            ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
+            if (ClipboardPreviewFloat.Visibility == Visibility.Visible)
+                AnimatePreviewHide();
             return;
         }
+
+        bool wasHidden = ClipboardPreviewFloat.Visibility != Visibility.Visible;
 
         ClipboardPreviewFloat.Visibility = Visibility.Visible;
         ClipFloatMetadata.Text = _vm.Clipboard.SelectedMetadata ?? "";
@@ -334,6 +331,32 @@ public partial class MainWindow : Window
         bool isPinned = _vm.Clipboard.IsPinned(entry);
         ClipFloatPinGlyph.Glyph = isPinned ? "\uE841" : "\uE718";
         ClipFloatPinBtn.ToolTip = isPinned ? "Unpin" : "Pin";
+
+        if (wasHidden && _vm.Config.AnimationEnabled)
+            AnimatePreviewShow();
+    }
+
+    private void AnimatePreviewShow()
+    {
+        var slide = new DoubleAnimation(-12, 0, TimeSpan.FromSeconds(0.12))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ClipboardPreviewFloat.RenderTransform.BeginAnimation(TranslateTransform.YProperty, slide);
+    }
+
+    private void AnimatePreviewHide()
+    {
+        var slide = new DoubleAnimation(0, -12, TimeSpan.FromSeconds(0.1))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+        slide.Completed += (_, _) =>
+        {
+            ClipboardPreviewFloat.Visibility = Visibility.Collapsed;
+            ClipboardPreviewFloat.RenderTransform.BeginAnimation(TranslateTransform.YProperty, null);
+        };
+        ClipboardPreviewFloat.RenderTransform.BeginAnimation(TranslateTransform.YProperty, slide);
     }
 
     private void OnFloatCopyClick(object sender, RoutedEventArgs e)
@@ -585,6 +608,8 @@ public partial class MainWindow : Window
         base.OnKeyDown(e);
         if (_vm is null) return;
 
+        var mods = Keyboard.Modifiers;
+
         switch (e.Key)
         {
             case Key.Escape:
@@ -610,7 +635,6 @@ public partial class MainWindow : Window
                 break;
 
             case Key.Enter:
-                // In AI mode, Enter sends the query to AI
                 if (_vm.IsFullPanelActive)
                 {
                     var aiQuery = _vm.Query?.Trim();
@@ -622,46 +646,121 @@ public partial class MainWindow : Window
                     e.Handled = true;
                     break;
                 }
-                if (Keyboard.Modifiers == ModifierKeys.Control)
+                if (_vm.ActiveCategory == "clipboard")
+                {
+                    ClipboardManagerControl.PasteSelected();
+                    e.Handled = true;
+                    break;
+                }
+                if (MatchShortcut(_vm.Config.RunAsAdminShortcut, e.Key, mods))
                     _vm.RunAsAdminCommand.Execute(null);
-                else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+                else if (MatchShortcut(_vm.Config.OpenFolderLocationShortcut, e.Key, mods))
                     _vm.OpenFolderCommand.Execute(null);
                 else
                     _vm.OpenSelectedCommand.Execute(null);
                 e.Handled = true;
                 break;
 
-            case Key.P when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
-                _vm.CommandPalette.IsOpen = !_vm.CommandPalette.IsOpen;
-                e.Handled = true;
+            default:
+                if (MatchShortcut(_vm.Config.PreviewToggleShortcut, e.Key, mods))
+                {
+                    TogglePreview();
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.CommandPaletteShortcut, e.Key, mods))
+                {
+                    _vm.CommandPalette.IsOpen = !_vm.CommandPalette.IsOpen;
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.TogglePinShortcut, e.Key, mods))
+                {
+                    _vm.TogglePinCommand.Execute(_vm.SelectedResult);
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.CategoryFilesShortcut, e.Key, mods))
+                {
+                    _vm.ActiveCategory = _vm.ActiveCategory == "files" ? null : "files";
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.CategoryAiShortcut, e.Key, mods))
+                {
+                    _vm.ActiveCategory = _vm.ActiveCategory == "ai" ? null : "ai";
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.CategoryClipboardShortcut, e.Key, mods))
+                {
+                    _vm.ActivateClipboardCategory();
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.OpenSettingsShortcut, e.Key, mods))
+                {
+                    _vm.OpenSettingsCommand.Execute(null);
+                    e.Handled = true;
+                }
+                else if (MatchShortcut(_vm.Config.CopyPathShortcut, e.Key, mods))
+                {
+                    _vm.CopySelectedPathCommand.Execute(null);
+                    e.Handled = true;
+                }
                 break;
+        }
+    }
 
-            case Key.P when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.TogglePinCommand.Execute(_vm.SelectedResult);
-                e.Handled = true;
-                break;
+    private static bool MatchShortcut(string shortcut, Key key, ModifierKeys modifiers)
+    {
+        ModifierKeys required = ModifierKeys.None;
+        Key? target = null;
 
-            case Key.D1 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActiveCategory = _vm.ActiveCategory == "files" ? null : "files";
-                e.Handled = true; break;
-            case Key.D2 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActiveCategory = _vm.ActiveCategory == "ai" ? null : "ai";
-                e.Handled = true; break;
-            case Key.D3 when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.ActivateClipboardCategory();
-                e.Handled = true; break;
+        foreach (var part in shortcut.Split('+'))
+        {
+            var t = part.Trim();
+            if      (t.Equals("Ctrl",  StringComparison.OrdinalIgnoreCase)) required |= ModifierKeys.Control;
+            else if (t.Equals("Alt",   StringComparison.OrdinalIgnoreCase)) required |= ModifierKeys.Alt;
+            else if (t.Equals("Shift", StringComparison.OrdinalIgnoreCase)) required |= ModifierKeys.Shift;
+            else if (t.Equals("Win",   StringComparison.OrdinalIgnoreCase)) required |= ModifierKeys.Windows;
+            else if (Enum.TryParse<Key>(t, true, out var k))                target = k;
+        }
 
-            case Key.OemComma when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.OpenSettingsCommand.Execute(null);
-                e.Handled = true; break;
+        return target == key && required == modifiers;
+    }
 
-            case Key.C when Keyboard.Modifiers == ModifierKeys.Control:
-                _vm.CopySelectedPathCommand.Execute(null);
-                e.Handled = true; break;
+    /// <summary>Shows the clipboard floating preview for the selected entry.</summary>
+    public void ShowClipboardPreview()
+    {
+        if (_vm?.ActiveCategory == "clipboard" && _vm.Config.PreviewStyle == "Floating")
+        {
+            UpdateFloatingClipboardPreview();
+        }
+    }
 
-            case Key.E when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
-                _vm.OpenFolderCommand.Execute(null);
-                e.Handled = true; break;
+    /// <summary>Toggles the preview panel for the currently selected result.</summary>
+    private void TogglePreview()
+    {
+        if (_vm is null) return;
+
+        if (_vm.ActiveCategory == "clipboard")
+        {
+            if (ClipboardPreviewFloat.Visibility == Visibility.Visible)
+            {
+                AnimatePreviewHide();
+            }
+            else
+            {
+                UpdateFloatingClipboardPreview();
+            }
+        }
+        else if (_vm.SelectedResult?.Type == ResultType.File && _vm.Config.FilePreviewEnabled)
+        {
+            if (_vm.IsPreviewVisible)
+            {
+                _vm.IsPreviewVisible = false;
+            }
+            else
+            {
+                _vm.UpdateFilePreview();
+                if (!_vm.IsPreviewVisible)
+                    _vm.IsPreviewVisible = true;
+            }
         }
     }
 

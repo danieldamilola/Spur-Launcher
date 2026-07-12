@@ -60,8 +60,10 @@
               BorderBrush="{DynamicResource GlassBorder}"
               BorderThickness="1"
               CornerRadius="{DynamicResource RadiusWindow}"
-              MaxWidth="320"
-              MinWidth="260">
+               Width="300">
+        <Border.RenderTransform>
+          <TranslateTransform/>
+        </Border.RenderTransform>
         <Border.Effect>
           <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.4" Color="Black"/>
         </Border.Effect>

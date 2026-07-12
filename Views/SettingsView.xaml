@@ -200,6 +200,13 @@
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Hotkeys">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <settings:HotkeySettingsPanel/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding SelectedSection.Name}" Value="AI">
                                 <Setter Property="Content">
                                     <Setter.Value>
