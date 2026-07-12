@@ -95,7 +95,7 @@
                     <MenuItem x:Name="CtxOpenLocation"
                               Header="Open file location"
                               Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+Shift+E">
+                              InputGestureText="{Binding DataContext.Config.OpenFolderLocationShortcut, RelativeSource={RelativeSource AncestorType=Window}}">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
                         </MenuItem.Icon>
@@ -104,7 +104,7 @@
                     <!-- Copy path -->
                     <MenuItem Header="Copy path"
                               Command="{Binding DataContext.CopySelectedPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+C">
+                              InputGestureText="{Binding DataContext.Config.CopyPathShortcut, RelativeSource={RelativeSource AncestorType=Window}}">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
                         </MenuItem.Icon>
@@ -116,7 +116,7 @@
                     <MenuItem x:Name="CtxRunAsAdmin"
                               Header="Run as administrator"
                               Command="{Binding DataContext.RunAsAdminCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              InputGestureText="Ctrl+Enter">
+                              InputGestureText="{Binding DataContext.Config.RunAsAdminShortcut, RelativeSource={RelativeSource AncestorType=Window}}">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xEEA3;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
                         </MenuItem.Icon>

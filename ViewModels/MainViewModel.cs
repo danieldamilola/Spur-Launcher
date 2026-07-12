@@ -879,9 +879,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         FooterHint = r.Type switch
         {
-            ResultType.App       => "↵ Open  ·  Ctrl+↵ Admin  ·  Ctrl+Shift+E Reveal",
-            ResultType.File      => "↵ Open  ·  Ctrl+Shift+E Reveal  ·  Ctrl+C Copy path",
-            ResultType.Clipboard => "↵ Paste  ·  Ctrl+P Pin  ·  Delete Remove",
+            ResultType.App       => $"↵ Open  ·  {Config.RunAsAdminShortcut} Admin  ·  {Config.OpenFolderLocationShortcut} Reveal",
+            ResultType.File      => $"↵ Open  ·  {Config.OpenFolderLocationShortcut} Reveal  ·  {Config.CopyPathShortcut} Copy path",
+            ResultType.Clipboard => $"↵ Paste  ·  {Config.TogglePinShortcut} Pin  ·  Delete Remove",
             ResultType.Action    => r.ActionId switch
             {
                 "calc" or "color" or "currency" => "↵ Copy result",
