@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Spur.Actions;
@@ -237,6 +239,17 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsExpandedHome))]
     private string? _activeCategory;
+
+    /// <summary>Current directory being browsed in file nav mode.</summary>
+    private string? _fileNavPath;
+    public string? FileNavPath
+    {
+        get => _fileNavPath;
+        set { _fileNavPath = value; OnPropertyChanged(); }
+    }
+
+    public bool IsFileNavMode => ActiveCategory == "files"
+        && Query?.StartsWith("/") == true;
 
     /// <summary>Lucide icon glyph shown in the search bar when a keyword scope is active.</summary>
     [ObservableProperty]
@@ -483,6 +496,14 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
+            // In file nav mode (path starting with /), route to directory browser
+            if (ActiveCategory == "files" && value is not null && value.StartsWith("/"))
+            {
+                if (IsFullPanelActive) return;
+                HandleFileNavQuery(value);
+                return;
+            }
+
             // In full panel mode (AI, Timer), the panel owns input — skip search
             if (IsFullPanelActive) return;
 
@@ -540,6 +561,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsBrowsePanelVisible));
         OnPropertyChanged(nameof(SearchPlaceholder));
+        if (value != "files") FileNavPath = null;
         OnQueryChanged(Query ?? string.Empty);
     }
 
@@ -1052,6 +1074,201 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // File system navigation (path-based browsing)
+    // ═══════════════════════════════════════════════════════════════
+
+    private void HandleFileNavQuery(string query)
+    {
+        var (dir, filter) = ResolveFileNavQuery(query);
+        if (dir is null)
+        {
+            FileNavPath = null;
+            ShowRootDirectories(filter);
+            return;
+        }
+        FileNavPath = dir;
+        if (filter is null)
+            ShowDirectoryContents(dir);
+        else
+            ShowDirectoryContents(dir, filter);
+    }
+
+    /// <summary>Resolves a file nav query into a (directoryPath, filter) pair.</summary>
+    private (string? dir, string? filter) ResolveFileNavQuery(string query)
+    {
+        var path = query.TrimStart('/').Replace('\\', '/');
+        if (string.IsNullOrEmpty(path))
+            return (null, null);
+
+        var hasTrailingSlash = path.EndsWith('/');
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (segments.Length == 0)
+            return (null, null);
+
+        // Resolve the first segment as a root directory
+        var root = _files.ResolveRootSegment(segments[0]);
+        if (root is null)
+            return (null, segments[0]); // filter roots with this text
+
+        if (segments.Length == 1 && !hasTrailingSlash)
+            return (root, null); // show root contents
+
+        // Resolve remaining segments as subdirectories
+        var dirPath = root;
+        var remaining = segments.Skip(1).ToArray();
+
+        if (hasTrailingSlash)
+        {
+            foreach (var seg in remaining)
+            {
+                dirPath = Path.Combine(dirPath, seg);
+                if (!Directory.Exists(dirPath)) return (dirPath, seg);
+            }
+            return (dirPath, null);
+        }
+
+        if (remaining.Length == 0)
+            return (dirPath, null);
+
+        // Last segment is a filter
+        var parent = dirPath;
+        for (int i = 0; i < remaining.Length - 1; i++)
+        {
+            parent = Path.Combine(parent, remaining[i]);
+            if (!Directory.Exists(parent)) return (dirPath, null);
+        }
+
+        var last = remaining[^1];
+        var candidate = Path.Combine(parent, last);
+        if (Directory.Exists(candidate))
+            return (candidate, null);
+
+        return (parent, last);
+    }
+
+    /// <summary>Navigates into a specific directory and updates query.</summary>
+    public void NavigateToDirectory(string dirPath)
+    {
+        FileNavPath = dirPath;
+        // Reconstruct query from the full path
+        var roots = _files.GetRootDirectories();
+        foreach (var root in roots)
+        {
+            if (dirPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = dirPath.Substring(root.Length).TrimStart('\\', '/');
+                Query = "/" + Path.GetFileName(root) + "/" + relative;
+                return;
+            }
+        }
+        Query = "/" + dirPath;
+    }
+
+    private void ShowRootDirectories(string? filter = null)
+    {
+        var results = new List<IResultItem>();
+        foreach (var root in _files.GetRootDirectories())
+        {
+            if (!Directory.Exists(root)) continue;
+            var name = Path.GetFileName(root);
+            if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
+
+            results.Add(new SearchResult
+            {
+                Id = $"file:{root}",
+                Type = ResultType.File,
+                Name = name,
+                Subtitle = root,
+                IconPath = root,
+                FilePath = root,
+                IsDirectory = true,
+                Score = 1000,
+            });
+        }
+
+        if (Application.Current is not null)
+            Application.Current.Dispatcher.Invoke(() => CommitResults(results));
+        else
+            CommitResults(results);
+    }
+
+    private void ShowDirectoryContents(string dirPath, string? filter = null)
+    {
+        var entries = _files.ListDirectory(dirPath, filter);
+        if (entries is null)
+        {
+            ShowRootDirectories();
+            return;
+        }
+
+        var results = new List<IResultItem>(entries);
+        if (Application.Current is not null)
+            Application.Current.Dispatcher.Invoke(() => CommitResults(results));
+        else
+            CommitResults(results);
+    }
+
+    /// <summary>Completes the current path segment and navigates (called from Tab key).</summary>
+    public void CompleteFileNavPath()
+    {
+        if (!IsFileNavMode) return;
+
+        var query = Query?.TrimStart('/') ?? "";
+        var hasTrailingSlash = query.EndsWith('/');
+        var segments = query.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (segments.Length == 0) return;
+
+        var lastSegment = segments[^1];
+
+        // At root level — try to complete a root directory name
+        if (segments.Length == 1 && !hasTrailingSlash)
+        {
+            var best = FindLongestPrefixMatch(segments[0], _files.GetRootDirectories().Select(Path.GetFileName));
+            if (best is not null)
+            {
+                Query = "/" + best + "/";
+            }
+            return;
+        }
+
+        if (hasTrailingSlash && segments.Length == 1)
+        {
+            // Already have a root selected and trailing slash; nothing to complete
+            return;
+        }
+
+        // Try to complete the last segment against subdirectories of its parent
+        var resolved = ResolveFileNavQuery(Query!);
+        var (parentDir, _) = resolved;
+        if (parentDir is null) return;
+
+        var match = FindLongestPrefixMatch(lastSegment, Directory.EnumerateDirectories(parentDir).Select(Path.GetFileName));
+        if (match is not null)
+        {
+            // Rebuild query with completion
+            var prefix = "/" + string.Join("/", segments[..^1]);
+            if (prefix == "/") prefix = "";
+            Query = prefix + "/" + match + "/";
+        }
+    }
+
+    private static string? FindLongestPrefixMatch(string prefix, IEnumerable<string?> candidates)
+    {
+        string? best = null;
+        foreach (var c in candidates)
+        {
+            if (c is null) continue;
+            if (c.Equals(prefix, StringComparison.OrdinalIgnoreCase))
+                return c;
+            if (c.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                best ??= c;
+        }
+        return best;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Open / Execute
     // ═══════════════════════════════════════════════════════════════
 
@@ -1087,8 +1304,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OpenFileResult(SearchResult result)
     {
-        if (result.FilePath is not null)
-            Launch(result.FilePath);
+        if (result.FilePath is null) return;
+
+        // In file nav mode, pressing Enter on a directory navigates into it
+        if (IsFileNavMode && result.IsDirectory)
+        {
+            NavigateToDirectory(result.FilePath);
+            return;
+        }
+
+        Launch(result.FilePath);
         HideAfterLaunch();
     }
 

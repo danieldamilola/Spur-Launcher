@@ -11,6 +11,15 @@ public interface IFileSearchService
 
     /// <summary>Returns recently modified user files (for browse mode).</summary>
     Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50);
+
+    /// <summary>Lists files/folders inside a directory. Returns null if inaccessible.</summary>
+    List<SearchResult>? ListDirectory(string dirPath, string? filter = null);
+
+    /// <summary>Resolves the first path segment to a matching root directory.</summary>
+    string? ResolveRootSegment(string segment);
+
+    /// <summary>Returns the root search directories (Desktop, Documents, etc.).</summary>
+    string[] GetRootDirectories();
 }
 
 /// <summary>
@@ -424,6 +433,89 @@ public sealed class FileSearchService : IFileSearchService
 
         return score;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Folder navigation
+    // ═══════════════════════════════════════════════════════════════
+
+    public List<SearchResult>? ListDirectory(string dirPath, string? filter = null)
+    {
+        if (!Directory.Exists(dirPath)) return null;
+
+        var results = new List<SearchResult>();
+        try
+        {
+            var entries = Directory.EnumerateFileSystemEntries(dirPath).ToList();
+            entries.Sort((a, b) =>
+            {
+                bool aIsDir = Directory.Exists(a);
+                bool bIsDir = Directory.Exists(b);
+                if (aIsDir != bIsDir) return aIsDir ? -1 : 1;
+                return string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase);
+            });
+
+            foreach (var entry in entries)
+            {
+                var name = Path.GetFileName(entry);
+                if (SkipNames.Contains(name)) continue;
+                if (name.StartsWith(".", StringComparison.Ordinal)) continue;
+                var attrs = File.GetAttributes(entry);
+                if ((attrs & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
+
+                bool isDir = (attrs & FileAttributes.Directory) == FileAttributes.Directory;
+
+                if (isDir)
+                {
+                    if (SkipDirs.Contains(name)) continue;
+                }
+                else
+                {
+                    var ext = Path.GetExtension(entry);
+                    if (!AllowedExtensions.Contains(ext)) continue;
+                }
+
+                if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
+
+                results.Add(new SearchResult
+                {
+                    Id = $"{FileIdPrefix}{entry}",
+                    Type = ResultType.File,
+                    Name = name,
+                    Subtitle = dirPath,
+                    IconPath = entry,
+                    FilePath = entry,
+                    FileExtension = Path.GetExtension(entry),
+                    IsDirectory = isDir,
+                    Score = isDir ? 1000 : 0,
+                });
+            }
+        }
+        catch { return null; }
+
+        return results;
+    }
+
+    public string? ResolveRootSegment(string segment)
+    {
+        if (string.IsNullOrWhiteSpace(segment)) return null;
+
+        // Try exact match first, then prefix match against root directory names
+        string? bestMatch = null;
+        foreach (var root in SearchRoots)
+        {
+            if (!Directory.Exists(root)) continue;
+            var dirName = Path.GetFileName(root);
+
+            if (dirName.Equals(segment, StringComparison.OrdinalIgnoreCase))
+                return root;
+
+            if (dirName.StartsWith(segment, StringComparison.OrdinalIgnoreCase))
+                bestMatch ??= root;
+        }
+        return bestMatch;
+    }
+
+    public string[] GetRootDirectories() => SearchRoots;
 
     // ═══════════════════════════════════════════════════════════════
     // File filtering

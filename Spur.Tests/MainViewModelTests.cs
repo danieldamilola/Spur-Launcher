@@ -37,6 +37,9 @@ public class MainViewModelTests
             => Task.FromResult(new List<SearchResult>());
         public Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50)
             => Task.FromResult(new List<SearchResult>());
+        public string? ResolveRootSegment(string segment) => null;
+        public string[] GetRootDirectories() => [];
+        public List<SearchResult>? ListDirectory(string dirPath, string? filter = null) => null;
     }
 
     private sealed class FakeFreq : IFrequencyService

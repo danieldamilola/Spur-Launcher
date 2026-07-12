@@ -596,6 +596,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (e.Key == Key.Tab && _vm.IsFileNavMode)
+        {
+            _vm.CompleteFileNavPath();
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Tab && _vm.IsScopeBarVisible)
         {
             _vm.CycleScope();
