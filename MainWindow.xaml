@@ -60,7 +60,7 @@
               BorderBrush="{DynamicResource GlassBorder}"
               BorderThickness="1"
               CornerRadius="{DynamicResource RadiusWindow}"
-               Width="300">
+                Width="300">
         <Border.RenderTransform>
           <TranslateTransform/>
         </Border.RenderTransform>
@@ -137,7 +137,7 @@
 
       <!-- ── Search capsule (search bar + results only, no categories) ── -->
       <Grid Grid.Column="0" Background="Transparent">
-        <Border x:Name="Capsule"
+          <Border x:Name="Capsule"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
                 CornerRadius="{DynamicResource RadiusWindow}"

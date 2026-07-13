@@ -29,7 +29,7 @@
              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
              VirtualizingStackPanel.IsVirtualizing="True"
              VirtualizingStackPanel.VirtualizationMode="Recycling"
-             ScrollViewer.CanContentScroll="True"
-             AutomationProperties.Name="Search results"
+             ScrollViewer.CanContentScroll="False"
+              AutomationProperties.Name="Search results"
              AutomationProperties.LiveSetting="Polite"/>
 </UserControl>

@@ -25,15 +25,16 @@
             </Grid.ColumnDefinitions>
 
             <!-- ═══ Entry list ═══ -->
-            <ListBox x:Name="ClipList"
-                     Grid.Column="0"
-                     ItemsSource="{Binding Entries}"
-                     SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     VirtualizingStackPanel.IsVirtualizing="True"
+             <ListBox x:Name="ClipList"
+                      Grid.Column="0"
+                      ItemsSource="{Binding Entries}"
+                      SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                      BorderThickness="0"
+                      Background="Transparent"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.CanContentScroll="False"
+                      VirtualizingStackPanel.IsVirtualizing="True"
                      PreviewMouseLeftButtonUp="OnListMouseClick"
                      AutomationProperties.Name="Clipboard history">
                 <ListBox.Style>
