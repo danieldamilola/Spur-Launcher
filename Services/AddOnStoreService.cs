@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +12,7 @@ using Spur.Models;
 
 namespace Spur.Services;
 
-public sealed class AddOnStoreService
+public sealed class AddOnStoreService : INotifyPropertyChanged
 {
     // B4: HttpClient is injected rather than constructed here, preventing socket
     // exhaustion. The caller registers a named client via IHttpClientFactory or
@@ -19,6 +21,34 @@ public sealed class AddOnStoreService
     private readonly ILogger _logger;
     private readonly string _addOnsDir;
     private const string ManifestUrl = "https://raw.githubusercontent.com/danieldamilola/Spur-Extras-Manifest/main/manifest.json";
+
+    // ── Manifest cache (5-minute TTL) ──────────────────────────────
+    private List<StoreManifestEntry>? _cachedManifest;
+    private DateTime _cacheTimestamp = DateTime.MinValue;
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
+
+    // ── Restart required notification ──────────────────────────────
+    private bool _restartRequired;
+
+    /// <summary>
+    /// Set to true after a successful install or uninstall. The UI can bind
+    /// to this property to show a "Restart Required" notice.
+    /// </summary>
+    public bool RestartRequired
+    {
+        get => _restartRequired;
+        private set
+        {
+            if (_restartRequired == value) return;
+            _restartRequired = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     public AddOnStoreService(HttpClient httpClient, ILogger logger)
     {
@@ -32,17 +62,37 @@ public sealed class AddOnStoreService
 
     public async Task<List<StoreManifestEntry>> GetManifestAsync(CancellationToken ct = default)
     {
+        // Return cached manifest if still within the TTL window
+        if (_cachedManifest != null && DateTime.UtcNow - _cacheTimestamp < CacheTtl)
+        {
+            _logger.Debug("Returning cached add-ons manifest.");
+            return _cachedManifest;
+        }
+
         try
         {
             var json    = await _httpClient.GetStringAsync(ManifestUrl, ct);
             var entries = JsonSerializer.Deserialize<List<StoreManifestEntry>>(json);
-            return entries ?? [];
+            _cachedManifest  = entries ?? [];
+            _cacheTimestamp  = DateTime.UtcNow;
+            return _cachedManifest;
         }
         catch (Exception ex)
         {
             _logger.Error("Failed to fetch add-ons manifest.", ex);
-            return [];
+            // Fall back to stale cache if available, otherwise return empty
+            return _cachedManifest ?? [];
         }
+    }
+
+    /// <summary>
+    /// Forces a fresh manifest fetch, bypassing the in-memory cache.
+    /// </summary>
+    public async Task<List<StoreManifestEntry>> ForceRefreshManifestAsync(CancellationToken ct = default)
+    {
+        _cachedManifest  = null;
+        _cacheTimestamp  = DateTime.MinValue;
+        return await GetManifestAsync(ct);
     }
 
     public async Task<bool> InstallAddOnAsync(StoreManifestEntry entry, CancellationToken ct = default)
@@ -59,6 +109,9 @@ public sealed class AddOnStoreService
             await File.WriteAllBytesAsync(zipPath, zipBytes, ct);
 
             ZipFile.ExtractToDirectory(zipPath, targetDir, overwriteFiles: true);
+
+            RestartRequired = true;
+            _logger.Info($"Add-on {entry.Id} installed successfully. Restart required.");
             return true;
         }
         catch (Exception ex)
@@ -80,6 +133,9 @@ public sealed class AddOnStoreService
             var targetDir = Path.Combine(_addOnsDir, addOnId);
             if (Directory.Exists(targetDir))
                 Directory.Delete(targetDir, true);
+
+            RestartRequired = true;
+            _logger.Info($"Add-on {addOnId} uninstalled successfully. Restart required.");
         }
         catch (Exception ex)
         {

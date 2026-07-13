@@ -319,15 +319,19 @@ internal sealed class ClipboardEntryDto
     }
 
     // ── Persistence helpers ─────────────────────────────────────────
+    private bool _savePending;
 
     private void ScheduleSave()
     {
+        _savePending = true;
         _debounceTimer.Stop();
         _debounceTimer.Start();
     }
 
     private void FlushSave()
     {
+        if (!_savePending) return;
+        _savePending = false;
         try
         {
             List<ClipboardEntryDto> dtos;
@@ -374,13 +378,14 @@ internal sealed class ClipboardEntryDto
         }
     }
 
-    /// <summary>Flushes clipboard history to disk.</summary>
+    /// <summary>Stops the debounce timer and performs a final synchronous save.</summary>
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         _debounceTimer.Stop();
         _debounceTimer.Dispose();
+        _savePending = true;
         FlushSave();
     }
 }

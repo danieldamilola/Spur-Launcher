@@ -1818,6 +1818,12 @@ public sealed partial class MainViewModel : ObservableObject
         _freq.Dispose();
         _searchCts?.Dispose();
         _ai.Dispose();
+        _timer.Stop();
+
+        // Flush clipboard history to disk before tearing down the VM
+        if (_clipboard is ClipboardServiceImpl clipSvc)
+            clipSvc.Dispose();
+
         _clipboardVm.Dispose();
     }
 

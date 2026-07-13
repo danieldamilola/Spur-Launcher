@@ -12,6 +12,22 @@
         <StackPanel Grid.Row="0">
             <TextBlock Text="Add-on Store" Style="{StaticResource SettingsKicker}"/>
             <TextBlock Text="Discover and install community add-ons." Style="{StaticResource SettingsHint}" Margin="0,0,0,16"/>
+
+            <!-- Restart Required notice — bound to StoreService.RestartRequired -->
+            <Border x:Name="RestartBanner"
+                    Background="{DynamicResource SelectedBg}"
+                    CornerRadius="8"
+                    Padding="14,10"
+                    Margin="0,0,0,12"
+                    Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal">
+                    <ui:FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{DynamicResource Accent}" Margin="0,0,8,0"/>
+                    <TextBlock Text="Restart Spur to load add-on changes."
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondary}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
 
         <!-- Loading State -->
