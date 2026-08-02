@@ -16,8 +16,6 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-
-
         <TextBox x:Name="SearchInput"
                  Grid.Column="1"
                  VerticalAlignment="Center"
@@ -28,11 +26,10 @@
                  Background="Transparent"
                  BorderThickness="0"
                  Padding="0"
+                 TextOptions.TextFormattingMode="Display"
                  AutomationProperties.Name="Search query"
                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                 TextChanged="OnTextChanged">
-
-        </TextBox>
+                 TextChanged="OnTextChanged"/>
 
         <TextBlock x:Name="Placeholder"
                    Grid.Column="1"

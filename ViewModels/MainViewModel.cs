@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Channels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Spur.Actions;
@@ -10,6 +11,8 @@ using Spur.Actions.Handlers;
 using Spur.Extensions;
 using Spur.Services;
 using Spur.Models;
+using Spur.Core;
+using Spur.Plugin;
 
 namespace Spur.ViewModels;
 
@@ -39,6 +42,11 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ISearchEngineService _searchEngine;
     private readonly ISecureStorageService _secureStorage;
     private readonly AddOnRegistry        _addOns;
+    private readonly Spur.Core.PluginManager _pluginManager;
+
+    // ── Flow-style result update pipeline ───────────────────────────
+    private readonly Channel<ResultsForUpdate> _updateChannel;
+    private readonly Dictionary<string, int> _selectionCounts = [];
 
     // ── Sub-ViewModels ───────────────────────────────────────────────
     private readonly AiChatViewModel    _ai;
@@ -57,6 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ── Search debounce ──────────────────────────────────────────────
     private CancellationTokenSource? _searchCts;
+    private CancellationToken _searchToken;
 
     // ── Keyword mapping cache ──────────────────────────────────────
     private Dictionary<string, (string actionId, string icon)>? _keywordMap;
@@ -79,7 +88,8 @@ public sealed partial class MainViewModel : ObservableObject
         ISearchEngineService  searchEngine,
         ISecureStorageService secureStorage,
         AddOnRegistry         addOns,
-        Spur.Services.AddOnStoreService storeService)
+        Spur.Services.AddOnStoreService storeService,
+        Spur.Core.PluginManager pluginManager)
     {
         _log          = log;
         _apps         = apps;
@@ -95,6 +105,7 @@ public sealed partial class MainViewModel : ObservableObject
         _searchEngine = searchEngine;
         _secureStorage = secureStorage;
         _addOns = addOns;
+        _pluginManager = pluginManager;
 
         Config   = config;
         Settings = new SettingsViewModel(Config, _configSvc, this, _themeManager, _startupService, _freq, _secureStorage, _addOns, storeService, _aiService);
@@ -121,9 +132,68 @@ public sealed partial class MainViewModel : ObservableObject
 
         _apps.CatalogRefreshed += HandleCatalogRefreshed;
 
+        _activeResults = ResultsVm;
         Helpers.SafeFireAndForget.Run(LoadAppsAsync, _log, "LoadApps");
-        Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
+        _ = _pluginManager.InitializeAllAsync();
+        foreach (var rvm in new[] { ResultsVm, ContextMenuVm, HistoryVm })
+            rvm.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ResultsViewModel.Results) ||
+                    args.PropertyName == nameof(ResultsViewModel.HasResults))
+                    OnPropertyChanged("HasResults");
+            };
         UpdatePinnedCategories();
+        _updateChannel = Channel.CreateBounded<ResultsForUpdate>(
+            new BoundedChannelOptions(_pluginManager.AllPlugins.Count())
+            { FullMode = BoundedChannelFullMode.DropWrite });
+        RegisterViewUpdate();
+    }
+
+    private void RegisterViewUpdate()
+    {
+        var reader = _updateChannel.Reader;
+        _ = Task.Run(async () =>
+        {
+            var queue = new Dictionary<string, ResultsForUpdate>();
+            try
+            {
+                while (await reader.WaitToReadAsync())
+                {
+                    await Task.Delay(20);
+                    while (reader.TryRead(out var item))
+                        queue[item.PluginId] = item;
+
+                    if (queue.Count == 0) continue;
+
+                    var batch = queue.Values.ToArray();
+                    queue.Clear();
+
+                    if (Application.Current is not null)
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            ResultsVm.AddResults(batch);
+                            UpdateFooterHint();
+                        });
+                    else
+                    {
+                        ResultsVm.AddResults(batch);
+                        UpdateFooterHint();
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                _log.Warning("ViewUpdate consumer error", ex);
+            }
+        });
+    }
+
+    /// <summary>Tracks which results the user selects for score boosting.</summary>
+    public void RecordSelection(SearchResult result)
+    {
+        var key = $"{result.PluginId}::{result.Id}";
+        _selectionCounts[key] = _selectionCounts.TryGetValue(key, out var c) ? c + 1 : 1;
     }
 
     private ActionDispatcher CreateActionDispatcher()
@@ -201,7 +271,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasQuery))]
-    [NotifyPropertyChangedFor(nameof(HasResults))]
     [NotifyPropertyChangedFor(nameof(IsExpandedHome))]
     private string _query = string.Empty;
 
@@ -211,29 +280,58 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private SettingsViewModel _settings;
 
-    /// <summary>Flat list: items are either <see cref="SectionLabel"/> or <see cref="SearchResult"/>.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasResults))]
-    private ObservableCollection<IResultItem> _results = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SelectedResult))]
-    [NotifyPropertyChangedFor(nameof(FooterHint))]
-    private int _selectedIndex = -1;
-
     [ObservableProperty]
     private string _footerHint = string.Empty;
 
-    [ObservableProperty]
-    private string _activeScopeId = "all";
+    public string SuggestionText
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Query) || SelectedResult is null) return string.Empty;
+            var name = SelectedResult.Name;
+            if (name.Length <= Query.Length) return string.Empty;
+            if (!name.StartsWith(Query, StringComparison.OrdinalIgnoreCase)) return string.Empty;
+            return name;
+        }
+    }
+
+    public int SelectedIndex
+    {
+        get => ActiveResults.SelectedIndex;
+        set
+        {
+            if (ActiveResults.SelectedIndex != value)
+            {
+                ActiveResults.SelectedIndex = value;
+                OnPropertyChanged();
+                OnSelectedIndexChanged(value);
+            }
+        }
+    }
+
+    public SearchResult? SelectedResult
+    {
+        get
+        {
+            var idx = ActiveResults.SelectedIndex;
+            if (idx < 0 || idx >= ActiveResults.Results.Count) return null;
+            return ActiveResults.Results[idx] as SearchResult;
+        }
+    }
 
     [ObservableProperty]
     private ObservableCollection<PinnedCategoryItem> _pinnedCategories = [];
 
-    [ObservableProperty]
-    private ObservableCollection<Spur.Models.ScopeFilterItem> _scopeFilters = [];
+    public ResultsViewModel ResultsVm { get; } = new();
+    public ResultsViewModel ContextMenuVm { get; } = new();
+    public ResultsViewModel HistoryVm { get; } = new();
 
-    private List<IResultItem> _rawResults = [];
+    private ResultsViewModel _activeResults;
+    public ResultsViewModel ActiveResults
+    {
+        get => _activeResults;
+        set => SetProperty(ref _activeResults, value);
+    }
 
     /// <summary>Null = all categories. Values: "apps" | "files" | "clipboard" | "actions".</summary>
     [ObservableProperty]
@@ -411,7 +509,6 @@ public sealed partial class MainViewModel : ObservableObject
     // ═══════════════════════════════════════════════════════════════
 
     public bool HasQuery          => !string.IsNullOrEmpty(Query);
-    public bool HasResults         => Results.Count > 0;
     public bool IsBrowsePanelVisible => ActiveCategory is not null;
 
     /// <summary>True when expanded mode should show the homepage (empty query, no category, no full panel).</summary>
@@ -434,8 +531,6 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Hub removed per ux.md.</summary>
     public bool IsHubVisible => false;
 
-    /// <summary>Scope bar controlled dynamically by UpdateScopeFilters.</summary>
-    public bool IsScopeBarVisible => false;
 
     public string SearchPlaceholder
     {
@@ -471,21 +566,13 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public SearchResult? SelectedResult
-    {
-        get
-        {
-            if (SelectedIndex < 0 || SelectedIndex >= Results.Count) return null;
-            return Results[SelectedIndex] as SearchResult;
-        }
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // Query change handler — debounced search
     // ═══════════════════════════════════════════════════════════════
 
     partial void OnQueryChanged(string value)
     {
+        OnPropertyChanged(nameof(SuggestionText));
         try
         {
             // In clipboard mode, route query to clipboard filter
@@ -510,7 +597,8 @@ public sealed partial class MainViewModel : ObservableObject
             _searchCts?.Cancel();
             _searchCts?.Dispose();
             _searchCts = new CancellationTokenSource();
-            var ct = _searchCts.Token;
+            _searchToken = _searchCts.Token;
+            var ct = _searchToken;
 
             // Detect action keyword -> lock scope
             var effectiveQuery = value;
@@ -549,11 +637,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            await Task.Delay(Config.SearchDelay, ct);
-            if (Application.Current is not null)
-                await Application.Current.Dispatcher.InvokeAsync(() => RunSearch(effectiveQuery, ct));
-            else
-                RunSearch(effectiveQuery, ct);
+            await Task.Delay(Config.SearchDelay, ct).ConfigureAwait(false);
+            RunSearch(effectiveQuery, ct);
         }
         catch (OperationCanceledException) { /* expected on new keystroke */ }
     }
@@ -570,21 +655,18 @@ public sealed partial class MainViewModel : ObservableObject
     {
         CancelActionWork();
         _searchCts?.Cancel();
-        _rawResults.Clear();
-        ScopeFilters.Clear();
-        ActiveScopeId = "all";
-        OnPropertyChanged(nameof(IsScopeBarVisible));
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            Results.Clear();
+            ResultsVm.Clear();
             SelectedIndex = -1;
             FooterHint = string.Empty;
         });
     }
 
-    partial void OnSelectedIndexChanged(int value)
+    private void OnSelectedIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(SuggestionText));
         UpdateFooterHint();
         UpdateActionPreview();
         IsPreviewVisible = false;
@@ -691,7 +773,6 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (TextExtensions.Contains(ext) && fileInfo.Length <= 50 * 1024)
             {
-                // Text file preview — first 100 lines
                 var lines = File.ReadLines(filePath).Take(100);
                 PreviewContent = string.Join(Environment.NewLine, lines);
                 PreviewImage = null;
@@ -699,7 +780,6 @@ public sealed partial class MainViewModel : ObservableObject
             }
             else if (ImageExtensions.Contains(ext))
             {
-                // Image preview
                 var bitmap = new System.Windows.Media.Imaging.BitmapImage();
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(filePath);
@@ -713,7 +793,6 @@ public sealed partial class MainViewModel : ObservableObject
             }
             else
             {
-                // Unsupported file — don't show preview at all
                 PreviewContent = null;
                 PreviewImage = null;
                 PreviewFileName = null;
@@ -729,151 +808,23 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    partial void OnActiveScopeIdChanged(string value)
+    private void CommitResults(List<IResultItem> batch)
     {
-        ApplyScopeFilter();
-        OnPropertyChanged(nameof(IsScopeBarVisible));
-    }
-
-    public void SetActiveScope(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return;
-        ActiveScopeId = id;
-    }
-
-    public void CycleScope()
-    {
-        if (ScopeFilters.Count < 2) return;
-
-        if (ActiveScopeId == "all")
-        {
-            ActiveScopeId = ScopeFilters[0].Id;
-            return;
-        }
-
-        // Find current index without allocating a list copy
-        int currentIdx = -1;
-        for (int i = 0; i < ScopeFilters.Count; i++)
-        {
-            if (ScopeFilters[i].Id == ActiveScopeId) { currentIdx = i; break; }
-        }
-        ActiveScopeId = currentIdx + 1 >= ScopeFilters.Count ? "all" : ScopeFilters[currentIdx + 1].Id;
-    }
-
-    private void CommitResults(List<IResultItem> items)
-    {
-        var deduped = new List<IResultItem>();
-        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var item in items)
-        {
-            if (item is SearchResult sr)
-            {
-                if (!seenIds.Add(sr.Id)) continue;
-            }
-            deduped.Add(item);
-        }
-
-        // Clean up any empty section labels left over after deduplication
-        var cleaned = new List<IResultItem>();
-        for (int i = 0; i < deduped.Count; i++)
-        {
-            if (deduped[i] is SectionLabel)
-            {
-                // If this is the last item, or the next item is also a SectionLabel, skip it
-                if (i == deduped.Count - 1 || deduped[i + 1] is SectionLabel) continue;
-            }
-            cleaned.Add(deduped[i]);
-        }
-
-        _rawResults = cleaned;
-        UpdateScopeFilters();
-        ApplyScopeFilter();
-    }
-
-    private void ApplyScopeFilter()
-    {
-        var display = ActiveScopeId == "all"
-            ? _rawResults
-            : FilterResultsByScope(_rawResults, ActiveScopeId);
-
-        Results.Clear();
-        foreach (var item in display)
-            Results.Add(item);
-
-        SelectedIndex = Results.Count > 0 ? FindFirstResultIndex() : -1;
-        OnPropertyChanged(nameof(HasResults));
-        OnPropertyChanged(nameof(IsScopeBarVisible));
+        ResultsVm.CommitResults(batch);
+        SelectedIndex = ResultsVm.Results.Count > 0 ? 0 : -1;
         UpdateFooterHint();
     }
-
-    private static List<IResultItem> FilterResultsByScope(List<IResultItem> source, string scopeId)
-    {
-        var result = new List<IResultItem>();
-        string? currentSection = null;
-        var sectionItems = new List<IResultItem>();
-
-        void FlushSection()
-        {
-            if (currentSection is null || sectionItems.Count == 0) return;
-            if (SectionMatchesScope(currentSection, scopeId))
-            {
-                result.Add(new SectionLabel(currentSection));
-                result.AddRange(sectionItems);
-            }
-            sectionItems.Clear();
-        }
-
-        foreach (var item in source)
-        {
-            if (item is SectionLabel label)
-            {
-                FlushSection();
-                currentSection = label.Title;
-            }
-            else
-            {
-                sectionItems.Add(item);
-            }
-        }
-        FlushSection();
-        return result;
-    }
-
-    private static bool SectionMatchesScope(string sectionTitle, string scopeId) => scopeId switch
-    {
-        "apps"      => sectionTitle is "Applications" or "Settings",
-        "files"     => sectionTitle == "Files",
-        "clipboard" => sectionTitle == "Clipboard",
-        "commands"  => sectionTitle == "Commands",
-        "web"       => sectionTitle == "Web",
-        _           => true,
-    };
-
-    private static string? SectionToScopeId(string title) => title switch
-    {
-        "Applications" or "Settings" => "apps",
-        "Files" => "files",
-        "Clipboard" => "clipboard",
-        "Commands" => "commands",
-        "Web"      => "web",
-        _ => null,
-    };
-
-    private static string SectionToScopeLabel(string title) => title switch
-    {
-        "Applications" or "Settings" => "Apps",
-        "Commands" or "Actions"      => "Actions",
-        "Web"                          => "Web",
-        _                              => title,
-    };
 
     private void UpdateFooterHint()
     {
         var r = SelectedResult;
         if (r is null)
         {
-            FooterHint = string.Empty;
+            // Default hint when no result is selected
+            if (ResultsVm.HasResults)
+                FooterHint = $"↑↓ Navigate  ·  ↵ Open  ·  {Config.CommandPaletteShortcut} Commands";
+            else
+                FooterHint = $"Type to search  ·  {Config.CommandPaletteShortcut} Commands";
             return;
         }
 
@@ -942,52 +893,7 @@ public sealed partial class MainViewModel : ObservableObject
         ActionPreviewQuery = string.Empty;
     }
 
-    private void UpdateScopeFilters()
-    {
-        var counts = new Dictionary<string, (string Label, int Count)>();
-        string? section = null;
-        int sectionCount = 0;
 
-        void AddSection()
-        {
-            if (section is null || sectionCount == 0) return;
-            var id = SectionToScopeId(section);
-            if (id is null) return;
-            if (counts.TryGetValue(id, out var existing))
-                counts[id] = (existing.Label, existing.Count + sectionCount);
-            else
-                counts[id] = (SectionToScopeLabel(section), sectionCount);
-        }
-
-        foreach (var item in _rawResults)
-        {
-            if (item is SectionLabel label)
-            {
-                AddSection();
-                section = label.Title;
-                sectionCount = 0;
-            }
-            else if (item is SearchResult)
-            {
-                sectionCount++;
-            }
-        }
-        AddSection();
-
-        ScopeFilters.Clear();
-        if (counts.Count < 2) return;
-
-        bool activeScopeStillValid = ActiveScopeId == "all";
-
-        foreach (var (id, (label, count)) in counts)
-        {
-            ScopeFilters.Add(new Spur.Models.ScopeFilterItem { Id = id, Label = label, Count = count });
-            if (id == ActiveScopeId) activeScopeStillValid = true;
-        }
-
-        if (!activeScopeStillValid)
-            ActiveScopeId = "all";
-    }
 
 
 
@@ -1059,18 +965,118 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            var newResults = await _searchEngine.SearchAsync(query, ActiveCategory, ct);
-            if (ct.IsCancellationRequested) return;
+            if (ActiveCategory is not null)
+            {
+                ResultsVm.Clear();
+                // Scoped search still uses the legacy engine
+                var channel = Channel.CreateUnbounded<IResultItem>();
+                var reader = channel.Reader;
+                var writer = channel.Writer;
+                var consumer = ConsumeResultsAsync(reader, ct);
+                await _searchEngine.SearchAsync(query, ActiveCategory, writer, ct);
+                await consumer;
+                return;
+            }
 
-            if (Application.Current is not null)
-                Application.Current.Dispatcher.Invoke(() => CommitResults(newResults));
-            else
-                CommitResults(newResults);
+            // Global search via plugins (Flow model).
+            // Each plugin writes to the update channel as it completes;
+            // the consumer merges batches with a 20ms debounce.
+            // Task.Run forces thread-pool parallelism — most plugins
+            // return Task.FromResult (no async yielding), which would
+            // otherwise make Task.WhenAll run them sequentially.
+            var updateWriter = _updateChannel.Writer;
+            var pairs = _pluginManager.AllPlugins.ToList();
+            var tasks = pairs.Select(p => Task.Run(() => QueryAndWriteAsync(p, query, updateWriter, ct), ct)).ToList();
+            await Task.WhenAll(tasks);
         }
+        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
             _log.Warning("SearchAsync error", ex);
         }
+    }
+
+    private async Task QueryAndWriteAsync(
+        PluginPair pair, string query, ChannelWriter<ResultsForUpdate> updateWriter, CancellationToken ct)
+    {
+        try
+        {
+            // Per-plugin search delay (Flow model)
+            var delay = pair.Metadata.SearchDelayTime;
+            if (delay > 0)
+            {
+                await Task.Delay(delay, ct);
+                if (ct.IsCancellationRequested) return;
+            }
+
+            var queryObj = new Query
+            {
+                RawQuery = query,
+                Search = query,
+                ActionKeyword = string.Empty,
+            };
+            var pluginResults = await pair.Plugin.QueryAsync(queryObj, ct);
+            if (pluginResults is null || pluginResults.Count == 0) return;
+
+            var items = new List<SearchResult>(pluginResults.Count);
+            foreach (var r in pluginResults)
+            {
+                SearchResult sr;
+                if (r.Source is SearchResult existing)
+                {
+                    existing.PluginId = pair.Metadata.Id;
+                    existing.SectionName = pair.Metadata.Name;
+                    sr = existing;
+                }
+                else
+                {
+                    sr = new SearchResult
+                    {
+                        Id = r.Id,
+                        PluginId = pair.Metadata.Id,
+                        SectionName = pair.Metadata.Name,
+                        Name = r.Title,
+                        Subtitle = r.Subtitle,
+                        IconGlyph = r.IconGlyph,
+                        IconPath = r.IconPath,
+                        Score = r.Score,
+                    };
+                }
+
+                // Score boost from user selection count
+                var key = $"{pair.Metadata.Id}::{sr.Id}";
+                if (_selectionCounts.TryGetValue(key, out var count) && count > 0)
+                    sr.Score += count * 10;
+
+                items.Add(sr);
+            }
+
+            updateWriter.TryWrite(new ResultsForUpdate(items, pair.Metadata.Id));
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task ConsumeResultsAsync(ChannelReader<IResultItem> reader, CancellationToken ct)
+    {
+        try
+        {
+            while (await reader.WaitToReadAsync(ct).ConfigureAwait(false))
+            {
+                await Task.Delay(20, ct).ConfigureAwait(false);
+
+                var batch = new List<IResultItem>();
+                while (reader.TryRead(out var item))
+                    batch.Add(item);
+
+                if (batch.Count == 0) continue;
+
+                if (Application.Current is not null)
+                    await Application.Current.Dispatcher.InvokeAsync(() => CommitResults(batch));
+                else
+                    CommitResults(batch);
+            }
+        }
+        catch (OperationCanceledException) { }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1188,7 +1194,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         if (Application.Current is not null)
-            Application.Current.Dispatcher.Invoke(() => CommitResults(results));
+            _ = Application.Current.Dispatcher.InvokeAsync(() => CommitResults(results));
         else
             CommitResults(results);
     }
@@ -1204,7 +1210,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         var results = new List<IResultItem>(entries);
         if (Application.Current is not null)
-            Application.Current.Dispatcher.Invoke(() => CommitResults(results));
+            _ = Application.Current.Dispatcher.InvokeAsync(() => CommitResults(results));
         else
             CommitResults(results);
     }
@@ -1277,6 +1283,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var result = SelectedResult;
         if (result is null) return;
+        RecordSelection(result);
         var actionInput = GetActionExecutionInput(result);
 
         switch (result.Type)
@@ -1621,11 +1628,11 @@ public sealed partial class MainViewModel : ObservableObject
         result.IsPinned = Config.PinnedItems.Contains(result.Id);
         _configSvc.Save(Config);
 
-        var idx = Results.IndexOf(result);
+        var idx = ResultsVm.Results.IndexOf(result);
         if (idx >= 0)
         {
-            Results.RemoveAt(idx);
-            Results.Insert(idx, result);
+            ResultsVm.Results.RemoveAt(idx);
+            ResultsVm.Results.Insert(idx, result);
         }
     }
 
@@ -1685,14 +1692,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void MoveSelection(int delta)
     {
-        if (Results.Count == 0) return;
+        var results = ActiveResults.Results;
+        if (results.Count == 0) return;
 
-        var next = SelectedIndex + delta;
-        // Skip section labels
-        while (next >= 0 && next < Results.Count && Results[next] is SectionLabel)
-            next += delta;
-
-        if (next >= 0 && next < Results.Count)
+        var next = ActiveResults.SelectedIndex + delta;
+        if (next >= 0 && next < results.Count)
             SelectedIndex = next;
     }
 
@@ -1761,9 +1765,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Id = "cycle-scope",
             Label = "Cycle Search Scope",
-            Description = "Switch between All, Files, Commands, Clipboard",
+            Description = "Switch search domains (disabled with flat results)",
             IconGlyph = "\ue72c",
-            Execute = CycleScope
+            Execute = () => { }
         });
 
         _registry.Register(new CommandPaletteEntry
@@ -1832,7 +1836,6 @@ public sealed partial class MainViewModel : ObservableObject
         if (Config.LastQueryStyle == "clear")
             Query = string.Empty;
         ActiveCategory = null;
-        ActiveScopeId = "all";
         IsSettingsOpen = false;
         CancelActionWork();
 
@@ -1888,7 +1891,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ClearAll()
     {
-        Results.Clear();
+        ResultsVm.Results.Clear();
         SelectedIndex = -1;
         CancelActionWork();
     }
@@ -1901,10 +1904,4 @@ public sealed partial class MainViewModel : ObservableObject
         // Only the user's explicit Cancel command stops it.
     }
 
-    private int FindFirstResultIndex()
-    {
-        for (int i = 0; i < Results.Count; i++)
-            if (Results[i] is SearchResult) return i;
-        return -1;
-    }
 }

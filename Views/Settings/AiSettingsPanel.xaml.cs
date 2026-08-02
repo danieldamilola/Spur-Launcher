@@ -7,6 +7,7 @@ namespace Spur.Views.Settings;
 public partial class AiSettingsPanel : UserControl
 {
     private bool _isLoaded;
+    private bool _isKeyVisible;
     private SettingsViewModel? _vm;
 
     public AiSettingsPanel()
@@ -51,5 +52,33 @@ public partial class AiSettingsPanel : UserControl
     {
         if (!_isLoaded || _vm == null) return;
         _vm.ApiKey = AiApiKeyBox.Password;
+    }
+
+    private void OnToggleApiKeyVisibility(object sender, RoutedEventArgs e)
+    {
+        _isKeyVisible = !_isKeyVisible;
+
+        if (_isKeyVisible)
+        {
+            // Show plain text
+            AiApiKeyTextBox.Text = AiApiKeyBox.Password;
+            ApiKeyBorder.Visibility = Visibility.Collapsed;
+            ApiKeyTextBorder.Visibility = Visibility.Visible;
+            ApiKeyToggleIcon.Glyph = "\uE890"; // Eye icon (hiding)
+        }
+        else
+        {
+            // Show password
+            AiApiKeyBox.Password = AiApiKeyTextBox.Text;
+            ApiKeyTextBorder.Visibility = Visibility.Collapsed;
+            ApiKeyBorder.Visibility = Visibility.Visible;
+            ApiKeyToggleIcon.Glyph = "\uE8F2"; // Eye icon (showing)
+        }
+    }
+
+    private void OnApiKeyTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_isLoaded || _vm == null) return;
+        _vm.ApiKey = AiApiKeyTextBox.Text;
     }
 }

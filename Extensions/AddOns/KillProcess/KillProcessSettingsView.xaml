@@ -12,7 +12,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Show window titles in results" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowWindowTitles, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding ShowWindowTitles, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
                 
                 <Grid>
@@ -21,7 +21,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Prioritize processes with visible windows" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding PrioritizeVisibleWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding PrioritizeVisibleWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>

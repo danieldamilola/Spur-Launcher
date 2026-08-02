@@ -10,7 +10,7 @@
     <AssemblyName>Spur</AssemblyName>
     <RootNamespace>Spur</RootNamespace>
     <ApplicationIcon>Icons\spur-256x256.ico</ApplicationIcon>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     
     <!-- CPU/Memory Optimizations -->
@@ -92,6 +92,27 @@
     <Resource Include="Icons\spur-1024x1024.ico" />
     <!-- Legacy copy for publish.ps1 / Velopack (synced from 256px source) -->
     <Content Include="Assets\spur.ico" CopyToOutputDirectory="Never" />
+    <!-- Everything SDK native DLL — copied to output for P/Invoke -->
+    <Content Include="Everything.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.OleDb" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- Build Spur.Core/Infrastructure/Plugin first, then reference as binaries to avoid WPF _wpftmp source embedding -->
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Spur.Plugin\Spur.Plugin.csproj" ReferenceOutputAssembly="true" OutputItemType="Reference" />
+  </ItemGroup>
+
+  <Target Name="BuildDependencies" BeforeTargets="BeforeBuild">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Spur.Core\Spur.Core.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Spur.Infrastructure\Spur.Infrastructure.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="Spur.Core" HintPath="$(MSBuildThisFileDirectory)Spur.Core\bin\$(Configuration)\net9.0-windows10.0.17763.0\Spur.Core.dll" Private="true" />
+    <Reference Include="Spur.Infrastructure" HintPath="$(MSBuildThisFileDirectory)Spur.Infrastructure\bin\$(Configuration)\net9.0-windows10.0.17763.0\Spur.Infrastructure.dll" Private="true" />
   </ItemGroup>
 
 </Project>

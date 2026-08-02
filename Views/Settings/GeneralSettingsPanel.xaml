@@ -4,7 +4,6 @@
              xmlns:local="clr-namespace:Spur.Views"
              xmlns:controls="clr-namespace:Spur.Views.Controls"
              xmlns:conv="clr-namespace:Spur.Converters"
-             xmlns:controls="clr-namespace:Spur.Views.Controls"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
     <StackPanel>
         <!-- Page heading -->
@@ -208,7 +207,7 @@
                         <TextBlock Text="{Binding Shortcut}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
-                        <local:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" AutomationProperties.Name="Enable hotkey"/>
+                        <ui:ToggleSwitch IsOn="{Binding HotkeyEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" AutomationProperties.Name="Enable hotkey"/>
                         <Button x:Name="EditShortcutBtn" Click="OnEditShortcutClick" Style="{StaticResource SettingsSoftButton}" AutomationProperties.Name="Edit shortcut" Padding="12,6">
                             <StackPanel Orientation="Horizontal">
                                 <ui:FontIcon Glyph="&#xE70F;" FontSize="13" Margin="0,0,6,0"/>
@@ -315,9 +314,9 @@
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
                         <TextBlock Text="Motion" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <local:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                        <ui:ToggleSwitch IsOn="{Binding AnimationEnabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,20,0"/>
                         <TextBlock Text="Sound" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <local:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        <ui:ToggleSwitch IsOn="{Binding SoundEffectEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
 
@@ -347,7 +346,7 @@
                         <TextBlock Text="Launch with Windows" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Make Spur available as soon as you sign in." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="3" IsOn="{Binding LaunchOnStartup, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Height="1" Background="{DynamicResource Separator}" Margin="0"/>
@@ -367,7 +366,7 @@
                         <TextBlock Text="Tray icon" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimary}"/>
                         <TextBlock Text="Keep Spur reachable without cluttering the taskbar." FontFamily="{DynamicResource Token.Font.Primary}" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <local:ToggleSwitch Grid.Column="3" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="3" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>

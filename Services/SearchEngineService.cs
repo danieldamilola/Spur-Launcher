@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Channels;
 using Spur.Models;
 using Spur.Extensions;
 
@@ -6,7 +7,7 @@ namespace Spur.Services;
 
 public interface ISearchEngineService
 {
-    Task<List<IResultItem>> SearchAsync(string query, string? activeCategory, CancellationToken ct);
+    Task SearchAsync(string query, string? activeCategory, ChannelWriter<IResultItem> writer, CancellationToken ct);
 }
 
 public sealed class SearchEngineService : ISearchEngineService
@@ -53,222 +54,245 @@ public sealed class SearchEngineService : ISearchEngineService
         }
     }
 
-    public async Task<List<IResultItem>> SearchAsync(string query, string? activeCategory, CancellationToken ct)
+    public async Task SearchAsync(string query, string? activeCategory, ChannelWriter<IResultItem> writer, CancellationToken ct)
     {
-        var newResults = new List<IResultItem>();
-        bool isBrowseMode = activeCategory is not null;
-
-        // -- Keyword-scoped action (e.g. "sys ", "timer ") ----------
-        if (activeCategory is not null)
+        try
         {
-            if (activeCategory == "actions")
+            if (activeCategory is not null)
             {
-                var actionCatalog = BuildActionCatalog(query).ToList();
-                if (actionCatalog.Count > 0)
+                await WriteScopedResultsAsync(query, activeCategory, writer, ct);
+                return;
+            }
+
+            await WriteParallelResultsAsync(query, writer, ct);
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            writer.TryComplete();
+        }
+    }
+
+    private async Task WriteScopedResultsAsync(string query, string activeCategory, ChannelWriter<IResultItem> writer, CancellationToken ct)
+    {
+        if (activeCategory == "actions")
+        {
+            var actionCatalog = BuildActionCatalog(query).ToList();
+            if (actionCatalog.Count > 0)
+            {
+                foreach (var r in actionCatalog)
+                    await writer.WriteAsync(r, ct);
+            }
+            return;
+        }
+
+        var scopedExtra = _addOns.FindById(activeCategory);
+        if (scopedExtra is not null)
+        {
+            var actionResults = scopedExtra.GetResults(query).ToList();
+            if (actionResults.Count > 0)
+            {
+                foreach (var r in actionResults)
+                    await writer.WriteAsync(r, ct);
+            }
+        }
+    }
+
+    private async Task WriteParallelResultsAsync(string query, ChannelWriter<IResultItem> writer, CancellationToken ct)
+    {
+        int resultCount = 0;
+
+        var tasks = new List<Task>();
+
+        if (_config.IndexApps && _appCatalog.Count > 0)
+            tasks.Add(RunSourceAsync(0, async (w, t) =>
+            {
+                var items = SearchApps(query);
+                if (items.Count == 0) return;
+                foreach (var r in items)
                 {
-                    newResults.Add(new SectionLabel("Commands"));
-                    newResults.AddRange(actionCatalog);
+                    await w.WriteAsync(r, t);
+                    Interlocked.Increment(ref resultCount);
                 }
-                return newResults;
-            }
+            }, writer, ct));
 
-            var scopedExtra = _addOns.FindById(activeCategory);
-            if (scopedExtra is not null)
+        if (_config.FileSearchEnabled)
+            tasks.Add(RunSourceAsync(80, async (w, t) =>
             {
-                var actionResults = scopedExtra.GetResults(query).ToList();
-                if (actionResults.Count > 0)
+                int limit = _config.ResultsCount;
+                var items = string.IsNullOrEmpty(query)
+                    ? await _files.BrowseRecentAsync(limit)
+                    : await _files.SearchAsync(query, limit, t);
+                if (items.Count == 0) return;
+                foreach (var r in items)
                 {
-                    newResults.Add(new SectionLabel(scopedExtra.Name));
-                    newResults.AddRange(actionResults);
+                    await w.WriteAsync(r, t);
+                    Interlocked.Increment(ref resultCount);
                 }
-                return newResults;
-            }
-        }
+            }, writer, ct));
 
-        // -- Apps --------------------------------------------------
-        bool showApps = _config.IndexApps && (activeCategory is null or "apps");
-        if (showApps && _appCatalog is not null)
-        {
-            var appMatches = new List<SearchResult>(_appCatalog.Count);
-            foreach (var a in _appCatalog)
+        if (_config.ClipboardEnabled && _config.IndexClipboard)
+            tasks.Add(RunSourceAsync(0, async (w, t) =>
             {
-                var score = MatchScore(query, a.Name);
-                if (score < 0) continue;
-                var clone = Clone(a);
-                var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
-                clone.Score = score + freqBoost;
-                if (_config.PinnedItems.Contains(a.Id))
+                var items = SearchClipboard(query, 3);
+                if (items.Count == 0) return;
+                foreach (var r in items)
                 {
-                    clone.IsPinned = true;
-                    clone.Score += 10000;
+                    await w.WriteAsync(r, t);
+                    Interlocked.Increment(ref resultCount);
                 }
-                appMatches.Add(clone);
-            }
-            appMatches.Sort((x, y) => y.Score.CompareTo(x.Score));
+            }, writer, ct));
 
-            var appList = isBrowseMode
-                ? appMatches
-                : appMatches.Take(_config.ResultsCount).ToList();
-
-            if (appList.Count > 0)
-            {
-                newResults.Add(new SectionLabel("Applications"));
-                newResults.AddRange(appList);
-            }
-        }
-
-        if (ct.IsCancellationRequested) return newResults;
-
-
-
-        // -- Files -------------------------------------------------
-        bool showFiles = _config.FileSearchEnabled && (activeCategory is null or "files");
-        if (showFiles)
+        tasks.Add(RunSourceAsync(0, async (w, t) =>
         {
-            int fileLimit = isBrowseMode ? 50 : _config.ResultsCount;
-
-            List<SearchResult> fileMatches;
-            if (string.IsNullOrEmpty(query) && activeCategory == "files")
+            var items = SearchGlobalActions(query);
+            if (items.Count == 0) return;
+            foreach (var r in items)
             {
-                fileMatches = await _files.BrowseRecentAsync(fileLimit);
+                await w.WriteAsync(r, t);
+                Interlocked.Increment(ref resultCount);
             }
-            else
-            {
-                fileMatches = await _files.SearchAsync(query, fileLimit, ct);
-            }
+        }, writer, ct));
 
-            if (ct.IsCancellationRequested) return newResults;
-            if (fileMatches.Count > 0)
+        if (_config.IndexWindowsSettings && !string.IsNullOrEmpty(query))
+            tasks.Add(RunSourceAsync(0, async (w, t) =>
             {
-                newResults.Add(new SectionLabel("Files"));
-                newResults.AddRange(fileMatches);
-            }
-        }
-
-        // -- Clipboard ---------------------------------------------
-        bool showClip = _config.ClipboardEnabled && _config.IndexClipboard && activeCategory is null or "clipboard";
-        if (showClip)
-        {
-            int limit = activeCategory == "clipboard"
-                ? (isBrowseMode ? 50 : _config.ResultsCount)
-                : 3; // global mode: cap at 3 to avoid cluttering results
-            var clips = new List<SearchResult>(limit);
-            foreach (var c in _clipboard.GetHistory())
-            {
-                if (clips.Count >= limit) break;
-                if (!string.IsNullOrEmpty(query) && MatchScore(query, c.Preview) < 0) continue;
-
-                var sr = new SearchResult
+                var items = SearchSettings(query);
+                if (items.Count == 0) return;
+                foreach (var r in items)
                 {
-                    Id         = $"clip:{c.Timestamp.Ticks}",
-                    Type       = ResultType.Clipboard,
-                    Name       = c.Preview,
-                    Subtitle   = c.TimeAgo,
-                    IconGlyph = c.IsImage ? "image" : "clipboard",
-                IconPath = "/Assets/Icons/copy.png",
-                    ClipContent = c.Content,
-                    ClipTimestamp = c.Timestamp,
-                    ClipImage = c.Image,
-                };
-                if (_config.PinnedItems.Contains(sr.Id))
-                {
-                    sr.IsPinned = true;
-                    sr.Score = 10000;
+                    await w.WriteAsync(r, t);
+                    Interlocked.Increment(ref resultCount);
                 }
-                clips.Add(sr);
-            }
-            clips.Sort((x, y) => y.IsPinned.CompareTo(x.IsPinned));
+            }, writer, ct));
 
-            if (clips.Count > 0)
-            {
-                newResults.Add(new SectionLabel("Clipboard"));
-                newResults.AddRange(clips);
-            }
-        }
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        if (ct.IsCancellationRequested) return;
 
-        // -- Global actions (global search only) --------------------
-        if (activeCategory is null)
-        {
-            var globalActionResults = new List<SearchResult>();
-
-            foreach (var extra in _addOns.GetGlobalEnabled())
-            {
-                if (!extra.CanHandle(query)) continue;
-                var r = extra.BuildResult(query);
-                r.Score = MatchScore(query, r.Name);
-                globalActionResults.Add(r);
-            }
-
-            // Also include non-global add-ons when query matches their name/keyword
-            foreach (var extra in _addOns.GetEnabled())
-            {
-                if (extra.IsGlobal) continue;
-                if (string.IsNullOrWhiteSpace(query)) continue;
-                if (!extra.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
-                    && !extra.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
-                    && !(extra.Id == "ai" && "ask ai".Contains(query, StringComparison.OrdinalIgnoreCase)))
-                    continue;
-
-                globalActionResults.Add(new SearchResult
-                {
-                    Id = $"action-catalog:{extra.Id}",
-                    Type = ResultType.Action,
-                    Name = extra.Name,
-                    Subtitle = extra.Description,
-                    IconGlyph = extra.IconGlyph,
-                    IconPath = extra.IconPath,
-                    ActionId = extra.Id,
-                    Score = 500,
-                });
-            }
-
-            var url = BuildUrlAction(query);
-            if (url is not null) globalActionResults.Add(url);
-
-            globalActionResults.Sort((x, y) => y.Score.CompareTo(x.Score));
-
-            if (globalActionResults.Count > 0)
-            {
-                newResults.Add(new SectionLabel("Commands"));
-                newResults.AddRange(globalActionResults);
-            }
-        }
-
-        // -- Windows Settings --------------------------------------
-        if (_config.IndexWindowsSettings && !string.IsNullOrEmpty(query) && (activeCategory is null or "apps"))
-        {
-            var settingsMatches = new List<SearchResult>(SpurConstants.WindowsSettings.Length);
-            foreach (var s in SpurConstants.WindowsSettings)
-            {
-                var sc = MatchScore(query, s.Name);
-                if (sc < 0) continue;
-                var c = Clone(s); c.Score = sc;
-                settingsMatches.Add(c);
-            }
-            settingsMatches.Sort((x, y) => y.Score.CompareTo(x.Score));
-            if (settingsMatches.Count > 4)
-                settingsMatches.RemoveRange(4, settingsMatches.Count - 4);
-
-            if (settingsMatches.Count > 0)
-            {
-                newResults.Add(new SectionLabel("Settings"));
-                newResults.AddRange(settingsMatches);
-            }
-        }
-
-        if (ct.IsCancellationRequested) return newResults;
-
-        if (activeCategory is null && ShouldOfferWebFallback(query, newResults))
+        if (resultCount < 3)
         {
             var web = BuildWebSearchAction(query);
             if (web is not null)
-            {
-                newResults.Add(new SectionLabel("Web"));
-                newResults.Add(web);
-            }
+                await writer.WriteAsync(web, ct);
         }
+    }
 
-        return newResults;
+    private static async Task RunSourceAsync(
+        int staggerMs,
+        Func<ChannelWriter<IResultItem>, CancellationToken, Task> source,
+        ChannelWriter<IResultItem> writer,
+        CancellationToken ct)
+    {
+        if (ct.IsCancellationRequested) return;
+        if (staggerMs > 0)
+        {
+            try { await Task.Delay(staggerMs, ct).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+        }
+        await source(writer, ct).ConfigureAwait(false);
+    }
+
+    private List<SearchResult> SearchApps(string query)
+    {
+        var matches = new List<SearchResult>(_appCatalog.Count);
+        foreach (var a in _appCatalog)
+        {
+            var clone = Clone(a);
+            var score = MatchScore(query, a.Name, clone);
+            if (score < 0) continue;
+            var freqBoost = Math.Log2(a.FrequencyScore + 1) * 0.5;
+            clone.Score = score + freqBoost;
+            if (_config.PinnedItems.Contains(a.Id))
+            {
+                clone.IsPinned = true;
+                clone.Score += 10000;
+            }
+            matches.Add(clone);
+        }
+        matches.Sort((x, y) => y.Score.CompareTo(x.Score));
+        return matches.Take(_config.ResultsCount).ToList();
+    }
+
+    private List<SearchResult> SearchClipboard(string query, int limit)
+    {
+        var clips = new List<SearchResult>(limit);
+        foreach (var c in _clipboard.GetHistory())
+        {
+            if (clips.Count >= limit) break;
+            var sr = new SearchResult
+            {
+                Id = $"clip:{c.Timestamp.Ticks}",
+                Type = ResultType.Clipboard,
+                Name = c.Preview,
+                Subtitle = c.TimeAgo,
+                IconGlyph = c.IsImage ? "image" : "clipboard",
+                IconPath = "/Assets/Icons/copy.png",
+                ClipContent = c.Content,
+                ClipTimestamp = c.Timestamp,
+                ClipImage = c.Image,
+            };
+            if (!string.IsNullOrEmpty(query) && MatchScore(query, c.Preview, sr) < 0) continue;
+            if (_config.PinnedItems.Contains(sr.Id))
+            {
+                sr.IsPinned = true;
+                sr.Score = 10000;
+            }
+            clips.Add(sr);
+        }
+        clips.Sort((x, y) => y.IsPinned.CompareTo(x.IsPinned));
+        return clips;
+    }
+
+    private List<SearchResult> SearchGlobalActions(string query)
+    {
+        var results = new List<SearchResult>();
+        foreach (var extra in _addOns.GetGlobalEnabled())
+        {
+            if (!extra.CanHandle(query)) continue;
+            var r = extra.BuildResult(query);
+            r.Score = MatchScore(query, r.Name, r);
+            results.Add(r);
+        }
+        foreach (var extra in _addOns.GetEnabled())
+        {
+            if (extra.IsGlobal) continue;
+            if (string.IsNullOrWhiteSpace(query)) continue;
+            if (!extra.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !extra.Keyword.Contains(query, StringComparison.OrdinalIgnoreCase)
+                && !(extra.Id == "ai" && "ask ai".Contains(query, StringComparison.OrdinalIgnoreCase)))
+                continue;
+            results.Add(new SearchResult
+            {
+                Id = $"action-catalog:{extra.Id}",
+                Type = ResultType.Action,
+                Name = extra.Name,
+                Subtitle = extra.Description,
+                IconGlyph = extra.IconGlyph,
+                IconPath = extra.IconPath,
+                ActionId = extra.Id,
+                Score = 500,
+            });
+        }
+        var url = BuildUrlAction(query);
+        if (url is not null) results.Add(url);
+        results.Sort((x, y) => y.Score.CompareTo(x.Score));
+        return results;
+    }
+
+    private List<SearchResult> SearchSettings(string query)
+    {
+        var matches = new List<SearchResult>(SpurConstants.WindowsSettings.Length);
+        foreach (var s in SpurConstants.WindowsSettings)
+        {
+            var c = Clone(s);
+            var sc = MatchScore(query, s.Name, c);
+            if (sc < 0) continue;
+            c.Score = sc;
+            matches.Add(c);
+        }
+        matches.Sort((x, y) => y.Score.CompareTo(x.Score));
+        if (matches.Count > 4) matches.RemoveRange(4, matches.Count - 4);
+        return matches;
     }
 
     private IEnumerable<SearchResult> BuildActionCatalog(string query)
@@ -299,13 +323,16 @@ public sealed class SearchEngineService : ISearchEngineService
         }
     }
 
-    private double MatchScore(string query, string target)
+    private double MatchScore(string query, string target, SearchResult? result = null)
     {
         if (string.IsNullOrEmpty(query)) return 0;
-        var score = _config.FuzzySearch
-            ? FuzzySearch.Score(query, target)
-            : (target.Contains(query, StringComparison.OrdinalIgnoreCase) ? 1 : -1);
-        return score >= MinMatchScore() ? score : -1;
+        if (!_config.FuzzySearch)
+            return target.Contains(query, StringComparison.OrdinalIgnoreCase) ? 1 : -1;
+
+        var match = FuzzySearch.Match(query, target);
+        if (result is not null && match.Success)
+            result.TitleHighlightData = match.MatchedIndices as HashSet<int>;
+        return match.Score >= MinMatchScore() ? match.Score : -1;
     }
 
     private double MinMatchScore() => _config.QuerySearchPrecision switch

@@ -31,7 +31,8 @@
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="13" FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimary}"
-                           TextTrimming="CharacterEllipsis"/>
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding PreviewFileName}"/>
                 <TextBlock Text="{Binding PreviewFileInfo}"
                            FontFamily="{DynamicResource Token.Font.Primary}"
                            FontSize="11"

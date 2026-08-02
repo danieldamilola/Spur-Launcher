@@ -85,6 +85,15 @@ public partial class App : Application
         services.AddSingleton<ISearchEngineService, SearchEngineService>();
         services.AddSingleton<ISecureStorageService, SecureStorageService>();
 
+        // Plugin system
+        services.AddSingleton<Spur.Core.PluginManager>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.AppsPlugin>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.FilesPlugin>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.ClipboardPlugin>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.CommandsPlugin>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.SettingsPlugin>();
+        services.AddSingleton<Spur.Plugin.IPlugin, Plugins.WebPlugin>();
+
         // ViewModels
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<ICommandRegistry, CommandRegistry>();

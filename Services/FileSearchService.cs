@@ -1,3 +1,5 @@
+using Spur.Services.FileSearch;
+
 namespace Spur.Services;
 
 /// <summary>Interface for file/folder search.</summary>
@@ -36,7 +38,6 @@ public sealed class FileSearchService : IFileSearchService
 {
     // ── Result ID and Type Constants ──────────────────────────────
     private const string FileIdPrefix = "file:";
-    private const string FileSectionLabel = "Files";
 
     private static readonly string[] SearchRoots =
     [
@@ -262,8 +263,70 @@ public sealed class FileSearchService : IFileSearchService
     }
 
     /// <summary>Searches for <paramref name="query"/> across user directories.</summary>
-    public Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default)
-        => Task.Run(() => SearchCached(query, maxReturn, ct), ct);
+    public async Task<List<SearchResult>> SearchAsync(string query, int maxReturn = 20, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return [];
+
+        // Try Everything first (fastest)
+        if (EverythingProvider.IsAvailable)
+        {
+            var everythingPaths = await EverythingProvider.SearchAsync(query, maxReturn, ct);
+            if (everythingPaths.Count > 0)
+            {
+                var results = new List<SearchResult>(everythingPaths.Count);
+                foreach (var path in everythingPaths)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    var isDir = Directory.Exists(path);
+                    var name = Path.GetFileName(path);
+                    results.Add(new SearchResult
+                    {
+                        Id = $"{FileIdPrefix}{path}",
+                        Type = ResultType.File,
+                        Name = name,
+                        Subtitle = Path.GetDirectoryName(path) ?? "",
+                        IconPath = path,
+                        FilePath = path,
+                        FileExtension = Path.GetExtension(path),
+                        IsDirectory = isDir,
+                        Score = 1000,
+                    });
+                }
+                return results;
+            }
+        }
+
+        // Try Windows Search Index next
+        if (WindowsIndexProvider.IsAvailable)
+        {
+            var wsiResults = await WindowsIndexProvider.SearchAsync(query, maxReturn, ct);
+            if (wsiResults.Count > 0)
+            {
+                var results = new List<SearchResult>(wsiResults.Count);
+                foreach (var (path, isFolder) in wsiResults)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    if (!File.Exists(path) && !Directory.Exists(path)) continue;
+                    results.Add(new SearchResult
+                    {
+                        Id = $"{FileIdPrefix}{path}",
+                        Type = ResultType.File,
+                        Name = Path.GetFileName(path),
+                        Subtitle = Path.GetDirectoryName(path) ?? "",
+                        IconPath = path,
+                        FilePath = path,
+                        FileExtension = Path.GetExtension(path),
+                        IsDirectory = isFolder,
+                        Score = 1000,
+                    });
+                }
+                if (results.Count > 0) return results;
+            }
+        }
+
+        // Fall back to cached file system walk
+        return await Task.Run(() => SearchCached(query, maxReturn, ct), ct);
+    }
 
     /// <summary>Returns recently modified user files (for browse mode).</summary>
     public Task<List<SearchResult>> BrowseRecentAsync(int maxReturn = 50)
@@ -348,28 +411,24 @@ public sealed class FileSearchService : IFileSearchService
         {
             if (ct.IsCancellationRequested) break;
 
-            double score;
-
-            // Fast substring check using pre-lowered strings
-            if (item.NameLower.Contains(queryLower, StringComparison.Ordinal))
+            if (!item.NameLower.Contains(queryLower, StringComparison.Ordinal))
             {
-                // Contains match — FuzzySearch will return a high score for
-                // substring matches, so use it directly
-                score = ScoreResult(query, item.Name, item.IsDirectory, item.LastWriteTime);
-            }
-            else
-            {
-                // Skip fuzzy matching if strings are vastly different lengths
                 if (Math.Abs(item.Name.Length - query.Length) > 15) continue;
 
-                // Fuzzy match — pass pre-lowered spans to avoid per-char ToLowerInvariant
-                var fuzzy = FuzzySearch.Score(queryLower.AsSpan(), item.NameLower.AsSpan());
-                if (fuzzy < 20) continue;
-
-                score = ScoreResult(item.IsDirectory, item.LastWriteTime, fuzzy);
+                var pre = FuzzySearch.Score(queryLower.AsSpan(), item.NameLower.AsSpan());
+                if (pre < 20) continue;
             }
 
-            if (score < 0) continue;
+            var match = FuzzySearch.Match(query, item.Name);
+            if (!match.Success) continue;
+
+            double score = match.Score;
+            if (item.IsDirectory) score += 1000;
+            if (string.Equals(item.Name, query, StringComparison.OrdinalIgnoreCase)) score += 500;
+            else if (item.Name.StartsWith(query, StringComparison.OrdinalIgnoreCase)) score += 200;
+
+            double daysSinceModified = (DateTime.Now - item.LastWriteTime).TotalDays;
+            score += Math.Max(0, 100 - daysSinceModified);
 
             results.Add(new SearchResult
             {
@@ -382,6 +441,7 @@ public sealed class FileSearchService : IFileSearchService
                 FileExtension = item.Ext,
                 IsDirectory = item.IsDirectory,
                 Score = score,
+                TitleHighlightData = match.MatchedIndices as HashSet<int>,
             });
         }
 
@@ -395,44 +455,7 @@ public sealed class FileSearchService : IFileSearchService
     // Scoring
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Full scoring: runs fuzzy match internally, then adds bonuses.
-    /// Used for items that passed the substring Contains check.
-    /// </summary>
-    private static double ScoreResult(string query, string name, bool isDirectory, DateTime lastModified)
-    {
-        double score = FuzzySearch.Score(query, name);
-        if (score < 0) return -1;
 
-        if (isDirectory) score += 1000;
-        if (string.Equals(name, query, StringComparison.OrdinalIgnoreCase)) score += 500;
-        else if (name.StartsWith(query, StringComparison.OrdinalIgnoreCase)) score += 200;
-
-        double daysSinceModified = (DateTime.Now - lastModified).TotalDays;
-        score += Math.Max(0, 100 - daysSinceModified);
-
-        return score;
-    }
-
-    /// <summary>
-    /// Bonus-only scoring: takes a pre-computed fuzzy score (avoids double-scoring).
-    /// Used for items that already went through the fuzzy path in the search loop.
-    /// </summary>
-    private static double ScoreResult(bool isDirectory, DateTime lastModified, double fuzzyScore)
-    {
-        if (fuzzyScore < 0) return -1;
-
-        double score = fuzzyScore;
-        if (isDirectory) score += 1000;
-
-        // Note: exact/prefix bonuses are skipped here because the item already
-        // failed the Contains check — it can't be an exact or prefix match.
-
-        double daysSinceModified = (DateTime.Now - lastModified).TotalDays;
-        score += Math.Max(0, 100 - daysSinceModified);
-
-        return score;
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // Folder navigation

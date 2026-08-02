@@ -18,8 +18,11 @@
         SnapsToDevicePixels="True"
         Opacity="0"
         Loaded="OnLoaded"
-        MouseEnter="OnWindowMouseEnter"
-        MouseLeave="OnWindowMouseLeave">
+         MouseEnter="OnWindowMouseEnter"
+         MouseLeave="OnWindowMouseLeave">
+
+  <Window.Resources>
+  </Window.Resources>
 
   <Border x:Name="RootBorder"
           Background="Transparent"
@@ -181,15 +184,13 @@
                              Grid.Row="0"
                              DataContext="{Binding}"/>
 
-            <views:ScopeBar x:Name="ScopeBarControl"
-                            Grid.Row="1"
-                            DataContext="{Binding}"
-                            Visibility="{Binding IsScopeBarVisible, Converter={StaticResource BoolToVisibility}}"/>
 
-            <Grid Grid.Row="2"
+
+              <Grid Grid.Row="2"
                   x:Name="ContentArea"
                   Visibility="Collapsed"
-                  MaxHeight="424">
+                  MaxHeight="424"
+                  Margin="0,4,0,0">
               <Grid.LayoutTransform>
                 <ScaleTransform x:Name="ExpandedScale" ScaleY="1" />
               </Grid.LayoutTransform>
@@ -210,7 +211,104 @@
                   <views:HomePanel x:Name="HomePanelControl"
                                    DataContext="{Binding}"
                                    Visibility="Collapsed"/>
-                  <views:UnifiedResultsView x:Name="UnifiedResultsControl" DataContext="{Binding}" />
+                   <ListBox x:Name="ResultsListBox"
+                            ItemsSource="{Binding ResultsVm.GroupedView}"
+                            ItemTemplate="{StaticResource ResultTemplate}"
+                            ItemContainerStyle="{StaticResource ResultItemStyle}"
+                            SelectedIndex="{Binding ResultsVm.SelectedIndex, Mode=TwoWay}"
+                            PreviewMouseLeftButtonUp="OnResultsListMouseClick"
+                            HorizontalContentAlignment="Stretch"
+                            Padding="0"
+                            MaxHeight="352"
+                            Focusable="False"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling"
+                            ScrollViewer.CanContentScroll="False"
+                            AutomationProperties.Name="Search results"
+                            AutomationProperties.LiveSetting="Polite">
+                        <ListBox.GroupStyle>
+                          <GroupStyle>
+                            <GroupStyle.ContainerStyle>
+                              <Style TargetType="GroupItem">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Padding" Value="0"/>
+                              </Style>
+                            </GroupStyle.ContainerStyle>
+                            <GroupStyle.HeaderTemplate>
+                              <DataTemplate>
+                                <TextBlock Text="{Binding Name}"
+                                           FontFamily="{DynamicResource Token.Font.Primary}"
+                                           FontSize="{DynamicResource FontHint}"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           Padding="16,8,16,4"
+                                           TextOptions.TextFormattingMode="Display"/>
+                              </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                          </GroupStyle>
+                        </ListBox.GroupStyle>
+                     </ListBox>
+                     <!-- Empty state: shown when query is active but no results -->
+                     <TextBlock x:Name="NoResultsText"
+                                Text="No results found"
+                                FontFamily="{DynamicResource Token.Font.Primary}"
+                                FontSize="{DynamicResource FontBody}"
+                                Foreground="{DynamicResource TextMuted}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,8,0,0"
+                                Visibility="Collapsed"
+                                AutomationProperties.LiveSetting="Polite">
+                         <TextBlock.Style>
+                             <Style TargetType="TextBlock">
+                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                 <Style.Triggers>
+                                     <MultiDataTrigger>
+                                         <MultiDataTrigger.Conditions>
+                                             <Condition Binding="{Binding HasResults}" Value="False"/>
+                                             <Condition Binding="{Binding HomePanelControl.Visibility}" Value="Collapsed"/>
+                                         </MultiDataTrigger.Conditions>
+                                         <Setter Property="Visibility" Value="Visible"/>
+                                     </MultiDataTrigger>
+                                 </Style.Triggers>
+                             </Style>
+                         </TextBlock.Style>
+                     </TextBlock>
+                   <ListBox x:Name="ContextMenuListBox"
+                            ItemsSource="{Binding ContextMenuVm.Results}"
+                            ItemTemplate="{StaticResource ResultTemplate}"
+                            ItemContainerStyle="{StaticResource ResultItemStyle}"
+                            SelectedIndex="{Binding ContextMenuVm.SelectedIndex, Mode=TwoWay}"
+                           Visibility="Collapsed"
+                           HorizontalContentAlignment="Stretch"
+                           Padding="0"
+                           MaxHeight="352"
+                           Focusable="False"
+                           ScrollViewer.VerticalScrollBarVisibility="Auto"
+                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                           VirtualizingStackPanel.IsVirtualizing="True"
+                           VirtualizingStackPanel.VirtualizationMode="Recycling"
+                           ScrollViewer.CanContentScroll="False"
+                           AutomationProperties.Name="Context menu"/>
+                   <ListBox x:Name="HistoryListBox"
+                            ItemsSource="{Binding HistoryVm.Results}"
+                            ItemTemplate="{StaticResource ResultTemplate}"
+                            ItemContainerStyle="{StaticResource ResultItemStyle}"
+                            SelectedIndex="{Binding HistoryVm.SelectedIndex, Mode=TwoWay}"
+                           Visibility="Collapsed"
+                           HorizontalContentAlignment="Stretch"
+                           Padding="0"
+                           MaxHeight="352"
+                           Focusable="False"
+                           ScrollViewer.VerticalScrollBarVisibility="Auto"
+                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                           VirtualizingStackPanel.IsVirtualizing="True"
+                           VirtualizingStackPanel.VirtualizationMode="Recycling"
+                           ScrollViewer.CanContentScroll="False"
+                           AutomationProperties.Name="Search history"/>
                   <views:ClipboardManager x:Name="ClipboardManagerControl"
                                           DataContext="{Binding Clipboard}"
                                           Visibility="Collapsed"/>
@@ -235,7 +333,8 @@
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontBody}" FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimary}"
-                               TextTrimming="CharacterEllipsis"/>
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding PreviewFileName}"/>
                     <TextBlock Text="{Binding PreviewFileInfo}"
                                FontFamily="{DynamicResource Token.Font.Primary}"
                                FontSize="{DynamicResource FontCaption}"

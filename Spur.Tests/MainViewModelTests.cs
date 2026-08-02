@@ -129,11 +129,12 @@ public class MainViewModelTests
         var clip = new FakeClip();
         var addOns = new Spur.Extensions.AddOnRegistry(NullLogger.Instance);
         var searchEngine = new SearchEngineService(NullLogger.Instance, apps, files, clip, cfg, freq, addOns);
+        var pluginManager = new Spur.Core.PluginManager([new Plugins.LegacySearchAdapter(searchEngine)]);
 
         return new MainViewModel(cfg, NullLogger.Instance,
             apps, files, freq, new FakeConfigSvc(cfg),
             clip, new FakeNotify(), new FakeAi(), new FakeTheme(), new FakeStartup(),
-            registry, commandPalette, searchEngine, new FakeSecureStorage(), addOns, new Spur.Services.AddOnStoreService(new System.Net.Http.HttpClient(), NullLogger.Instance));
+            registry, commandPalette, searchEngine, new FakeSecureStorage(), addOns, new Spur.Services.AddOnStoreService(new System.Net.Http.HttpClient(), NullLogger.Instance), pluginManager);
     }
 
     [Fact]
@@ -147,8 +148,8 @@ public class MainViewModelTests
         vm.Query = "notep";
         await Task.Delay(300);
 
-        Assert.True(vm.Results.Count > 0, "Expected some results after query");
-        var found = vm.Results.OfType<SearchResult>().Any(r => r.Name.Contains("Notepad", StringComparison.OrdinalIgnoreCase));
+        Assert.True(vm.ResultsVm.Results.Count > 0, "Expected some results after query");
+        var found = vm.ResultsVm.Results.OfType<SearchResult>().Any(r => r.Name.Contains("Notepad", StringComparison.OrdinalIgnoreCase));
         Assert.True(found, "Expected Notepad to appear in results");
     }
 
@@ -165,7 +166,7 @@ public class MainViewModelTests
         vm.ActiveCategory = "actions";
         await Task.Delay(300);
 
-        var actions = vm.Results.OfType<SearchResult>().Where(r => r.Type == ResultType.Action).ToList();
+        var actions = vm.ResultsVm.Results.OfType<SearchResult>().Where(r => r.Type == ResultType.Action).ToList();
         Assert.NotEmpty(actions);
         Assert.Contains(actions, r => r.ActionId == "timer");
         Assert.Contains(actions, r => r.ActionId == "sys");
@@ -180,7 +181,7 @@ public class MainViewModelTests
         vm.ActiveCategory = "ai";
         await Task.Delay(300);
 
-        var ai = vm.Results.OfType<SearchResult>().FirstOrDefault(r => r.ActionId == "ai");
+        var ai = vm.ResultsVm.Results.OfType<SearchResult>().FirstOrDefault(r => r.ActionId == "ai");
         Assert.NotNull(ai);
         Assert.Equal("AI Assistant", ai.Name);
     }

@@ -3,242 +3,87 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
              xmlns:local="clr-namespace:Spur.Views"
-             xmlns:conv="clr-namespace:Spur.Converters"
              xmlns:settings="clr-namespace:Spur.Views.Settings"
              xmlns:res="clr-namespace:Spur.Resources">
 
-    <UserControl.Resources>
-        <local:SectionVisibilityConverter x:Key="SectionVisibility"/>
+  <ui:NavigationView x:Name="NavView"
+                     PaneDisplayMode="Left"
+                     OpenPaneLength="210"
+                     IsPaneToggleButtonVisible="False"
+                     IsBackButtonVisible="Collapsed"
+                     IsSettingsVisible="False"
+                     IsBackEnabled="False"
+                     AlwaysShowHeader="False"
+                     SelectionChanged="NavView_SelectionChanged"
+                     Background="{DynamicResource Depth2}"
+                     Foreground="{DynamicResource TextPrimary}">
 
-        <!-- Nav item style: flat, full-width, icon circle -->
-        <Style x:Key="NavItemRow" TargetType="ListBoxItem">
-            <Setter Property="Background"                 Value="Transparent"/>
-            <Setter Property="Foreground"                 Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="BorderThickness"            Value="0"/>
-            <Setter Property="Padding"                    Value="0"/>
-            <Setter Property="Margin"                     Value="0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="VerticalContentAlignment"   Value="Center"/>
-            <Setter Property="FocusVisualStyle">
-                <Setter.Value>
-                    <Style>
-                        <Setter Property="Control.Template">
-                            <Setter.Value>
-                                <ControlTemplate>
-                                    <Border BorderBrush="{DynamicResource Accent}" BorderThickness="1" CornerRadius="{DynamicResource RadiusRow}" Margin="1" SnapsToDevicePixels="True"/>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Cursor"                     Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <ContentPresenter/>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
+    <!-- Logo + app name at top of pane -->
+    <ui:NavigationView.PaneCustomContent>
+      <StackPanel Margin="0,28,0,16" HorizontalAlignment="Center">
+        <Image Source="pack://application:,,,/Icons/spur-64x64.ico"
+               Width="52" Height="52"
+               HorizontalAlignment="Center"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+        <TextBlock Text="Spur"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="14" FontWeight="Medium"
+                   Foreground="{DynamicResource TextPrimary}"
+                   HorizontalAlignment="Center"
+                   Margin="0,8,0,0"/>
+        <TextBlock Text="{x:Static res:Strings.SettingsTitle}"
+                   FontFamily="{DynamicResource Token.Font.Primary}"
+                   FontSize="11"
+                   Foreground="{DynamicResource TextTertiary}"
+                   HorizontalAlignment="Center"
+                   Margin="0,1,0,0"/>
+      </StackPanel>
+    </ui:NavigationView.PaneCustomContent>
 
-    <!-- Root: two columns — sidebar (fixed 220) + content (fill) -->
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="210"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <!-- Navigation items -->
+    <ui:NavigationView.MenuItems>
+      <ui:NavigationViewItem x:Name="NavGeneral" Content="General">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/general.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavSearch" Content="Search">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/searchnav.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavHotkeys" Content="Hotkeys">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/shortcut.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavAi" Content="AI">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/ainav.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavAddOns" Content="Add-ons">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/addonsnav.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavStore" Content="Store">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/storenav.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+      <ui:NavigationViewItem x:Name="NavAbout" Content="About">
+        <ui:NavigationViewItem.Icon>
+          <ui:BitmapIcon ShowAsMonochrome="False" UriSource="pack://application:,,,/Assets/Icons/aboutnav.png"/>
+        </ui:NavigationViewItem.Icon>
+      </ui:NavigationViewItem>
+    </ui:NavigationView.MenuItems>
 
-        <!-- ═══════════════════════════════════════════
-             SIDEBAR
-             ═══════════════════════════════════════════ -->
-        <Grid Grid.Column="0" Background="{DynamicResource Depth2}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>   <!-- logo + app name -->
-                <RowDefinition Height="*"/>      <!-- nav items -->
-            </Grid.RowDefinitions>
-
-            <!-- Logo block -->
-            <StackPanel Grid.Row="0" Margin="20,28,20,20" HorizontalAlignment="Left">
-                <!-- App icon -->
-                <Image Source="pack://application:,,,/Icons/spur-64x64.ico"
-                       Width="52" Height="52"
-                       Margin="0,0,0,10"
-                       HorizontalAlignment="Left"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                <TextBlock Text="Spur"
-                           FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="14" FontWeight="Medium"
-                           Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Text="{x:Static res:Strings.SettingsTitle}"
-                           FontFamily="{DynamicResource Token.Font.Primary}"
-                           FontSize="11"
-                           Foreground="{DynamicResource TextTertiary}"
-                           Margin="0,1,0,0"/>
-            </StackPanel>
-
-            <!-- Nav list -->
-            <ListBox Grid.Row="1"
-                     x:Name="NavList"
-                     ItemsSource="{Binding FilteredSections}"
-                     SelectedItem="{Binding SelectedSection}"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Padding="0"
-                     ItemContainerStyle="{StaticResource NavItemRow}"
-                     AutomationProperties.Name="Settings navigation">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid x:Name="NavRow" Background="Transparent" Height="40">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3"/>    <!-- accent strip -->
-                                <ColumnDefinition Width="16"/>   <!-- left pad -->
-                                <ColumnDefinition Width="32"/>   <!-- icon circle -->
-                                <ColumnDefinition Width="10"/>   <!-- gap -->
-                                <ColumnDefinition Width="*"/>    <!-- label -->
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Selected accent strip -->
-                            <Border x:Name="AccentStrip"
-                                    Grid.Column="0"
-                                    Background="Transparent"
-                                    CornerRadius="0,2,2,0"/>
-
-                            <!-- Icon circle -->
-                            <Border x:Name="IconCircle"
-                                    Grid.Column="2"
-                                    Width="28" Height="28"
-                                    CornerRadius="8"
-                                    Background="{DynamicResource SelectedBg}"
-                                    VerticalAlignment="Center">
-                                <Grid>
-                                    <!-- Colored PNG icon -->
-                                    <Image Source="{Binding IconPath}"
-                                           Width="16" Height="16"
-                                           Stretch="Uniform"
-                                           RenderOptions.BitmapScalingMode="HighQuality"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                                    <!-- Glyph fallback -->
-                                    <ui:FontIcon x:Name="NavIcon"
-                                                 Glyph="{Binding IconGlyph}"
-                                                 FontSize="13"
-                                                 Foreground="{DynamicResource TextSecondary}"
-                                                 HorizontalAlignment="Center"
-                                                 VerticalAlignment="Center">
-                                        <ui:FontIcon.Style>
-                                            <Style TargetType="ui:FontIcon">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IconPath}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ui:FontIcon.Style>
-                                    </ui:FontIcon>
-                                </Grid>
-                            </Border>
-
-                            <!-- Label -->
-                            <TextBlock x:Name="NavLabel"
-                                       Grid.Column="4"
-                                       Text="{Binding Name}"
-                                       FontFamily="{DynamicResource Token.Font.Primary}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <DataTemplate.Triggers>
-                            <!-- Selected -->
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                                <Setter TargetName="NavRow"      Property="Background" Value="{DynamicResource SelectedBg}"/>
-                                <Setter TargetName="AccentStrip" Property="Background" Value="{DynamicResource Accent}"/>
-                                <Setter TargetName="NavLabel"    Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                                <Setter TargetName="NavLabel"    Property="FontWeight" Value="Medium"/>
-                                <Setter TargetName="NavIcon"     Property="Foreground" Value="{DynamicResource Accent}"/>
-                                <Setter TargetName="IconCircle"  Property="Background" Value="{DynamicResource HoverBg}"/>
-                            </DataTrigger>
-                            <!-- Hover (unselected) -->
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"  Value="False"/>
-                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True"/>
-                                </MultiDataTrigger.Conditions>
-                                <Setter TargetName="NavRow" Property="Background" Value="{DynamicResource HoverBg}"/>
-                            </MultiDataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
-        </Grid>
-
-
-        <!-- ═══════════════════════════════════════════
-             CONTENT AREA
-             ═══════════════════════════════════════════ -->
-        <ScrollViewer Grid.Column="1"
-                      Background="{DynamicResource Depth1}"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <ContentControl Margin="36,28,36,32">
-                <ContentControl.Style>
-                    <Style TargetType="ContentControl">
-                        <Setter Property="Content">
-                            <Setter.Value>
-                                <settings:GeneralSettingsPanel/>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Search">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:SearchSettingsPanel/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Hotkeys">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:HotkeySettingsPanel/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="AI">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:AiSettingsPanel/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Add-ons">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:AddOnsSettingsPanel/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="Store">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:AddOnStoreView/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding SelectedSection.Name}" Value="About">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <settings:AboutSettingsPanel/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ContentControl.Style>
-            </ContentControl>
-        </ScrollViewer>
-    </Grid>
+    <!-- Content area -->
+    <ScrollViewer Background="{DynamicResource Depth1}"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <ContentControl x:Name="ContentPanel" Margin="36,28,36,32"/>
+    </ScrollViewer>
+  </ui:NavigationView>
 </UserControl>

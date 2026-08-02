@@ -115,7 +115,7 @@
                                 </TextBlock>
 
                                 <!-- Toggle switch -->
-                                <local:ToggleSwitch Grid.Column="5"
+                                <ui:ToggleSwitch Grid.Column="5"
                                                     IsOn="{Binding IsEnabled, Mode=TwoWay}"
                                                     VerticalAlignment="Center"/>
 

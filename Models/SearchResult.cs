@@ -14,6 +14,12 @@ public class SearchResult : IResultItem
     public string Id { get; set; } = string.Empty;
     public ResultType Type { get; set; }
 
+    /// <summary>Plugin that produced this result, for merge/replace logic.</summary>
+    public string? PluginId { get; set; }
+
+    /// <summary>Section/group name for WPF ListBox grouping (e.g. "Applications", "Files").</summary>
+    public string? SectionName { get; set; }
+
     /// <summary>Primary display name.</summary>
     public string Name { get; set; } = string.Empty;
 
@@ -76,10 +82,11 @@ public class SearchResult : IResultItem
 
     // ── Action-specific ───────────────────────────────
     public string? ActionId { get; set; }
-}
 
-/// <summary>Section header shown between groups of results (e.g. "APPLICATIONS", "FILES").</summary>
-public record SectionLabel(string Title) : IResultItem;
+    /// <summary>Character indices in Name that matched the query, for UI highlighting.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public HashSet<int>? TitleHighlightData { get; set; }
+}
 
 /// <summary>
 /// JSON-safe subset of SearchResult — no WPF types, no computed properties.

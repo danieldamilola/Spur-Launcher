@@ -184,12 +184,14 @@
                                            FontSize="{DynamicResource FontBody}"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimary}"
-                                           TextTrimming="CharacterEllipsis"/>
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Label}"/>
                                 <TextBlock Text="{Binding Description}"
                                            FontFamily="{DynamicResource Token.Font.Primary}"
                                            FontSize="{DynamicResource FontCaption}"
                                            Foreground="{DynamicResource TextTertiary}"
                                            TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Description}"
                                            Margin="0,1,0,0"/>
                             </StackPanel>
 

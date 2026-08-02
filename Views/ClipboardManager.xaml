@@ -134,7 +134,8 @@
                                                FontSize="{DynamicResource FontBase}"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimary}"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Preview}"/>
                                     <TextBlock Text="{Binding TimeAgo}"
                                                FontFamily="{DynamicResource Token.Font.Secondary}"
                                                FontSize="{DynamicResource FontSm}"

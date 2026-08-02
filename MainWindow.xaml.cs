@@ -171,6 +171,7 @@ public partial class MainWindow : Window
             _vm?.Reset();
             _queryWasEmpty = true;
             ApplySpotlightLayout(animate: false);
+            return;
         }
 
         SpurMotion.Hide(this, WindowScale, _vm?.Config.AnimationEnabled != false, () =>
@@ -198,19 +199,19 @@ public partial class MainWindow : Window
 
         var layoutProps = new[]
         {
-            nameof(MainViewModel.HasResults),
             nameof(MainViewModel.IsBrowsePanelVisible),
             nameof(MainViewModel.ActiveCategory),
             nameof(MainViewModel.Query),
-            nameof(MainViewModel.IsScopeBarVisible),
             nameof(MainViewModel.FooterHint),
             nameof(MainViewModel.ActiveActionPanel),
             nameof(MainViewModel.SelectedIndex),
             nameof(MainViewModel.IsFullPanelActive),
             nameof(MainViewModel.IsToastVisible),
         };
+        // These are re-raised from ResultsVm.PropertyChanged → MainViewModel.PropertyChanged
+        var resultsLayoutProps = new[] { "HasResults" };
 
-        if (layoutProps.Contains(e.PropertyName))
+        if (layoutProps.Contains(e.PropertyName) || resultsLayoutProps.Contains(e.PropertyName))
         {
             var fastAnchorHide = e.PropertyName == nameof(MainViewModel.Query)
                 && _vm is not null
@@ -224,6 +225,18 @@ public partial class MainWindow : Window
 
         if (e.PropertyName is nameof(MainViewModel.ActiveCategory) or nameof(MainViewModel.Query))
             Dispatcher.InvokeAsync(UpdateCategoryVisuals);
+
+        if (e.PropertyName == nameof(MainViewModel.SelectedIndex))
+            ScrollSelectedIntoView();
+    }
+
+    private void ScrollSelectedIntoView()
+    {
+        if (_vm is null) return;
+        int idx = _vm.SelectedIndex;
+        if (idx < 0) return;
+        var container = ResultsListBox.ItemContainerGenerator.ContainerFromIndex(idx) as FrameworkElement;
+        container?.BringIntoView();
     }
 
     /// <summary>
@@ -248,12 +261,13 @@ public partial class MainWindow : Window
 
         bool isCompactWindow = _vm.Config.WindowMode == "compact";
         bool isBrowse = _vm.IsBrowsePanelVisible;
-        bool hasResults = _vm.HasResults || isBrowse;
+        bool hasResults = _vm.ResultsVm.HasResults || isBrowse;
         bool hasQuery = !string.IsNullOrEmpty(_vm.Query);
         bool isExpandedHome = _vm.IsExpandedHome;
 
-        bool showContent = _vm.IsFullPanelActive || isBrowse || isExpandedHome
-            || (isCompactWindow ? (hasQuery && hasResults) : hasResults);
+        // Keep content open while user is typing — don't bounce on Clear()
+        bool showContent = _vm.IsFullPanelActive || isBrowse || isExpandedHome || hasQuery
+            || (isCompactWindow && hasResults);
 
         UpdatePanelVisibility(isBrowse, isExpandedHome);
 
@@ -277,8 +291,9 @@ public partial class MainWindow : Window
         HomePanelControl.Visibility = isExpandedHome ? Visibility.Visible : Visibility.Collapsed;
 
         ClipboardManagerControl.Visibility = isClipboard ? Visibility.Visible : Visibility.Collapsed;
-        UnifiedResultsControl.Visibility = _vm.IsFullPanelActive || isClipboard || isExpandedHome
-            ? Visibility.Collapsed : Visibility.Visible;
+        bool showResults = !_vm.IsFullPanelActive && !isClipboard && !isExpandedHome;
+        ResultsListBox.Visibility = showResults ? Visibility.Visible : Visibility.Collapsed;
+        // ContextMenuListBox and HistoryListBox are shown via their own triggers
         AddOnPanelControl.Visibility = _vm.IsFullPanelActive ? Visibility.Visible : Visibility.Collapsed;
         AnimateToast(_vm.IsToastVisible);
 
@@ -405,7 +420,7 @@ public partial class MainWindow : Window
     /// <summary>Expands the content area (with optional animation).</summary>
     private void AnimateContentExpand(bool animEnabled)
     {
-        bool showFooter = _vm!.SelectedResult is not null && !_vm.IsFullPanelActive;
+        bool showFooter = _vm!.ResultsVm.HasResults && !_vm.IsFullPanelActive;
 
         if (ContentArea.Visibility != Visibility.Visible)
         {
@@ -578,6 +593,26 @@ public partial class MainWindow : Window
         CategoryBackButton.Visibility = _vm.ActiveCategory is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void OnResultsListMouseClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject src)
+        {
+            var item = ItemsControl.ContainerFromElement(ResultsListBox, src) as ListBoxItem;
+            if (item?.DataContext is SearchResult result)
+            {
+                if (_vm is not null)
+                {
+                    int idx = _vm.ResultsVm.Results.IndexOf(result);
+                    if (idx >= 0)
+                        _vm.SelectedIndex = idx;
+
+                    _vm.OpenSelectedCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+    }
+
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
@@ -603,10 +638,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Tab && _vm.IsScopeBarVisible)
+        // Tab accepts autocomplete suggestion
+        if (e.Key == Key.Tab && !string.IsNullOrEmpty(_vm.SuggestionText))
         {
-            _vm.CycleScope();
+            if (_vm.SelectedResult is not null)
+                _vm.Query = _vm.SelectedResult.Name;
             e.Handled = true;
+            return;
         }
     }
 

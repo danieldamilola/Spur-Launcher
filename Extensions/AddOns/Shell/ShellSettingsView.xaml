@@ -25,7 +25,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Close terminal after execution" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding CloseAfterExecution, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding CloseAfterExecution, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Grid Margin="0,0,0,16">
@@ -34,7 +34,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Always run as Administrator" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding AlwaysRunAsAdministrator, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding AlwaysRunAsAdministrator, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Grid>
@@ -43,7 +43,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Use Windows Terminal (wt.exe)" Foreground="{DynamicResource TextSecondary}" FontFamily="{DynamicResource Token.Font.Primary}" FontSize="12" VerticalAlignment="Center"/>
-                    <local:ToggleSwitch Grid.Column="1" IsOn="{Binding UseWindowsTerminal, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    <ui:ToggleSwitch Grid.Column="1" IsOn="{Binding UseWindowsTerminal, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>

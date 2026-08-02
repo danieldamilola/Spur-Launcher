@@ -2,6 +2,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using Spur.Extensions;
 using Spur.ViewModels;
 
@@ -17,7 +18,13 @@ public partial class HomePanel : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+
+        CategoryCardCommand = new RelayCommand<string>(OnCategoryCardExecute);
+        AddOnCommand = new RelayCommand<AddOnDisplay>(OnAddOnExecute);
     }
+
+    public ICommand CategoryCardCommand { get; }
+    public ICommand AddOnCommand { get; }
 
     private MainViewModel? Vm => DataContext as MainViewModel;
 
@@ -57,6 +64,23 @@ public partial class HomePanel : UserControl
         }).ToList();
 
         AddOnsList.ItemsSource = items;
+    }
+
+    private void OnCategoryCardExecute(string? categoryId)
+    {
+        if (Vm is null || categoryId is null) return;
+        Vm.ActiveCategory = categoryId;
+    }
+
+    private void OnAddOnExecute(AddOnDisplay? display)
+    {
+        if (Vm is null || display is null) return;
+
+        var addOn = display.AddOn;
+        if (!string.IsNullOrEmpty(addOn.Keyword))
+            Vm.Query = addOn.Keyword + " ";
+        else if (addOn.IsGlobal)
+            Vm.Query = "= ";
     }
 
     /// <summary>Category card click — immediately switch to that category.</summary>

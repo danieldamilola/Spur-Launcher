@@ -34,7 +34,12 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="0,0,5,0"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="files"
+                        Focusable="True"
                         AutomationProperties.Name="Files">
+                    <Border.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="files"/>
+                        <KeyBinding Key="Space" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="files"/>
+                    </Border.InputBindings>
                     <Grid>
                         <!-- Hover overlay -->
                         <Border x:Name="FilesHoverOverlay"
@@ -85,7 +90,12 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="3,0,3,0"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="clipboard"
+                        Focusable="True"
                         AutomationProperties.Name="Clipboard history">
+                    <Border.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="clipboard"/>
+                        <KeyBinding Key="Space" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="clipboard"/>
+                    </Border.InputBindings>
                     <Grid>
                         <!-- Hover overlay -->
                         <Border x:Name="ClipHoverOverlay"
@@ -136,7 +146,12 @@
                         CornerRadius="{DynamicResource RadiusRow}"
                         Margin="5,0,0,0"
                         MouseLeftButtonDown="OnCategoryCardClick" Tag="actions"
+                        Focusable="True"
                         AutomationProperties.Name="Commands">
+                    <Border.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="actions"/>
+                        <KeyBinding Key="Space" Command="{Binding DataContext.CategoryCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="actions"/>
+                    </Border.InputBindings>
                     <Grid>
                         <!-- Hover overlay -->
                         <Border x:Name="CmdsHoverOverlay"
@@ -196,7 +211,12 @@
                     <DataTemplate>
                         <Grid Height="{DynamicResource RowHeight}" Cursor="Hand"
                               MouseLeftButtonDown="OnAddOnClick"
+                              Focusable="True"
                               Background="Transparent">
+                            <Grid.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding DataContext.AddOnCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <KeyBinding Key="Space" Command="{Binding DataContext.AddOnCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                            </Grid.InputBindings>
 
                             <!-- Hover overlay -->
                             <Border x:Name="HoverOverlay"
